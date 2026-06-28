@@ -1,0 +1,1211 @@
+// =============================================================================
+//  ui.ts — Rendu DOM minimal + contrôleur joueur (clic sort → clic cible).
+//  Aucune logique de combat ici : on lit l'état et on renvoie des Actions.
+// =============================================================================
+import { SORTS, DOFUS, DOFUS_DROP, CLASSES, ITEMS, PANOPLIES } from "./data";
+import { ciblesValides, estAvant, ELEMENTS, elementsForts, elementDeFrappe } from "./combat";
+import {
+  STAT_KEYS,
+  statsFinales,
+  pvMaxFor,
+  xpRequis,
+  coutPoint,
+  investir,
+} from "./progression";
+import { atteignables, noeud } from "./carte";
+import { chargerConfig, sauverConfig, libelleTouche, type Settings } from "./config";
+import { classesDisponibles, bonusEquipement, pvMaxPerso, equiper, desequiper, type PersoState } from "./run";
+import type {
+  Action,
+  Camp,
+  Combatant,
+  Element,
+  EquipSlot,
+  Item,
+  GameMap,
+  MapNode,
+  Meta,
+  NodeType,
+  Spell,
+  Stats,
+} from "./types";
+
+let root: HTMLElement;
+let combatants: Combatant[] = [];
+let logLines: string[] = [];
+let titre = "";
+
+// état du tour joueur en cours
+let activeActeur: Combatant | null = null;
+let selectedSpell: Spell | null = null;
+let resolver: ((a: Action | null) => void) | null = null;
+
+let config: Settings = chargerConfig();
+
+export function init(el: HTMLElement): void {
+  root = el;
+  initDofusTooltip();
+  // raccourcis clavier globaux : actifs uniquement pendant le tour du joueur
+  document.addEventListener("keydown", (e) => {
+    if (!resolver || !activeActeur) return;
+    if (e.key === config.toucheFinTour) {
+      e.preventDefault();
+      finir(null); // terminer le tour
+      return;
+    }
+    if (e.key === "Escape" && selectedSpell) {
+      selectedSpell = null; // annuler la sélection de sort
+      render();
+      return;
+    }
+    // touches 1-9 : slot 1 = corps à corps (réservé/vide), 2+ = sorts dans l'ordre
+    if (/^[1-9]$/.test(e.key)) {
+      const slot = Number(e.key);
+      if (slot === 1) return; // corps à corps : à venir
+      const sortId = activeActeur.sorts[slot - 2];
+      const s = sortId ? SORTS[sortId] : undefined;
+      if (s) {
+        e.preventDefault();
+        choisirSort(s);
+      }
+    }
+  });
+}
+
+/** Tooltip partagé pour la collection de Dofus (survol). */
+function initDofusTooltip(): void {
+  const tip = document.createElement("div");
+  tip.className = "dofus-tip";
+  tip.style.display = "none";
+  document.body.appendChild(tip);
+
+  const placer = (slot: HTMLElement) => {
+    const nom = slot.dataset.nom ?? "";
+    const effet = slot.dataset.effet ?? "";
+    const boss = slot.dataset.boss ?? "";
+    tip.innerHTML =
+      `<div class="tip-nom">${escapeHtml(nom)}</div>` +
+      `<div class="tip-effet">${escapeHtml(effet)}</div>` +
+      (boss
+        ? `<div class="tip-boss">🐲 Lâché par ${escapeHtml(boss)}</div>`
+        : `<div class="tip-muet">Pas encore obtenable</div>`);
+    tip.style.display = "block";
+    const r = slot.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    let left = r.left + r.width / 2 - t.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - t.width - 8));
+    let top = r.top - t.height - 10;
+    if (top < 8) top = r.bottom + 10; // bascule sous le slot si trop haut
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+  };
+
+  document.addEventListener("mouseover", (e) => {
+    const slot = (e.target as HTMLElement).closest?.(".dofus-slot") as HTMLElement | null;
+    if (slot) placer(slot);
+  });
+  document.addEventListener("mouseout", (e) => {
+    if ((e.target as HTMLElement).closest?.(".dofus-slot")) tip.style.display = "none";
+  });
+}
+
+/** Vrai si le combattant peut encore lancer au moins un sort (PA + cible). */
+function aUneActionPossible(acteur: Combatant, cs: Combatant[]): boolean {
+  return acteur.sorts
+    .map((id) => SORTS[id])
+    .some((s) => acteur.paActuels >= s.coutPA && ciblesValides(acteur, s, cs).length > 0);
+}
+
+const elNom: Record<Element, string> = {
+  terre: "Terre",
+  feu: "Feu",
+  eau: "Eau",
+  air: "Air",
+  wakfu: "Wakfu",
+  stasis: "Stasis",
+};
+
+// --- Log ---------------------------------------------------------------------
+export function log(msg: string): void {
+  logLines.push(msg);
+  if (logLines.length > 200) logLines.shift();
+  const journal = document.getElementById("journal");
+  if (journal) {
+    journal.innerHTML = logLines
+      .map((l) => `<div class="log-line">${escapeHtml(l)}</div>`)
+      .join("");
+    journal.scrollTop = journal.scrollHeight;
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(
+    /[&<>]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] as string,
+  );
+}
+
+/** Préfixe un chemin d'asset par la base de déploiement (GitHub Pages = /RogueLiteDofus/). */
+export const A = (p: string): string => import.meta.env.BASE_URL + p.replace(/^\/+/, "");
+
+/**
+ * Convention d'assets : le nom de fichier = l'id de l'entité.
+ * Dépose `public/assets/<categorie>/<id>.png` et il s'affiche ; absent, l'`onerror`
+ * de la balise <img> le retire (rien ne casse). Pas de câblage par ajout.
+ */
+function asset(
+  categorie: "classes" | "monstres" | "spells",
+  id: string,
+): string {
+  return A(`/assets/${categorie}/${id}.png`);
+}
+
+const PA_ICON = A("/assets/elements/pa.png");
+const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
+const classSymbol = (classeId: string): string => A(`/assets/class_symbol/${classeId}.png`);
+// Icônes de stats secondaires (cf. maquette de carte)
+const ICON_CRIT = A("/assets/elements/critique.png");
+const ICON_DMGCRIT = A("/assets/elements/dmgCritique.png");
+const ICON_SOIN = A("/assets/elements/soin.png");
+const ICON_PUISS = A("/assets/elements/puissance.png");
+const ICON_PP = A("/assets/elements/pp.png");
+const ICON_BOUCLIER = A("/assets/elements/bouclier.png");
+const resAsset: Record<Element, string> = {
+  terre: A("/assets/elements/resTerre.png"),
+  feu: A("/assets/elements/resFeu.png"),
+  eau: A("/assets/elements/resEau.png"),
+  air: A("/assets/elements/resAir.png"),
+  wakfu: A("/assets/elements/resWakfu.png"),
+  stasis: A("/assets/elements/resStasis.png"),
+};
+
+// --- Combat ------------------------------------------------------------------
+export function beginCombat(cs: Combatant[], titreCombat: string): void {
+  combatants = cs;
+  titre = titreCombat;
+  logLines = [];
+  activeActeur = null;
+  selectedSpell = null;
+  render();
+}
+
+/** Re-render entre deux actions (appelé par le moteur). */
+export function onUpdate(): void {
+  render();
+}
+
+/** Contrôleur joueur : résolu quand le joueur choisit une action ou termine. */
+export function playerController(
+  acteur: Combatant,
+  cs: Combatant[],
+): Promise<Action | null> {
+  combatants = cs;
+  activeActeur = acteur;
+  selectedSpell = null;
+  return new Promise((res) => {
+    resolver = res;
+    // auto-passe : si aucune action possible et l'option est active, on termine seul
+    if (config.autoFinTour && !aUneActionPossible(acteur, cs)) {
+      log(`${acteur.nom} n'a plus rien à jouer — tour passé.`);
+      render();
+      setTimeout(() => finir(null), 350);
+      return;
+    }
+    render();
+  });
+}
+
+function finir(action: Action | null): void {
+  const r = resolver;
+  activeActeur = null;
+  selectedSpell = null;
+  resolver = null;
+  render();
+  r?.(action);
+}
+
+/** Choisit un sort (clic ou raccourci) : lance direct si pas de cible à viser, sinon arme le ciblage. */
+function choisirSort(s: Spell): void {
+  const acteur = activeActeur;
+  if (!acteur || !resolver) return;
+  if (acteur.paActuels < s.coutPA) return; // pas assez de PA
+  if (s.cible === "soi" || s.cible === "allie_tous") {
+    finir({ sort: s, cibleRef: acteur.ref }); // pas de cible à choisir
+  } else {
+    selectedSpell = s;
+    render();
+  }
+}
+
+// Stats secondaires affichées sur la carte (mêmes formules que le moteur).
+const pctCrit = (s: Stats): number => Math.round(Math.min(0.5, s.force * 0.005) * 100);
+const pctDmgCrit = (s: Stats): number => Math.round(Math.min(0.6, 0.25 + s.agilite * 0.004) * 100);
+const pctSoin = (s: Stats): number => Math.round(Math.min(0.5, (s.soin ?? 0) * 0.005) * 100);
+const pctDgtsFinaux = (s: Stats): number => Math.round(Math.min(0.5, s.intelligence * 0.005) * 100);
+
+/**
+ * Rond d'élément. `rang` = 1 (plus fort) / 2 (second). `actif` = élément de frappe courant.
+ * `switchable` (alliés) rend le rond cliquable pour choisir l'élément de frappe.
+ */
+function elemRond(el: Element, rang: number, actif: boolean, switchable: boolean): string {
+  const cls = ["elem-rond", `elem-${el}`, actif ? "frappe" : "", switchable ? "switch" : ""]
+    .filter(Boolean).join(" ");
+  const titre = actif
+    ? `Élément de frappe — ${elNom[el]}`
+    : switchable
+      ? `Frapper en ${elNom[el]} (cliquer)`
+      : `Élément ${rang === 1 ? "principal" : "secondaire"} — ${elNom[el]}`;
+  return `<span class="${cls}" ${switchable ? `data-switch="${el}"` : ""} title="${titre}">
+    <img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><i>${rang}</i>${actif ? `<b class="frappe-pic">⚔</b>` : ""}</span>`;
+}
+
+function carteCombattant(c: Combatant, clickable: boolean): string {
+  const ko = c.pvActuels <= 0;
+  const pct = Math.max(0, Math.round((c.pvActuels / c.pvMax) * 100));
+  const [principal, secondaire] = elementsForts(c);
+  const actif = elementDeFrappe(c);
+  const switchable = c.camp === "joueur" && !c.estInvocation && !ko;
+  // chips de résistance : les 6 éléments, toujours affichés (0 % inclus)
+  const resChips = ELEMENTS.map((e) => {
+    const v = Math.round((c.resistances[e] ?? 0) * 100);
+    const etat = v < 0 ? "faible" : v === 0 ? "zero" : "";
+    return `<span class="res-chip ${etat}" title="Résistance ${elNom[e]}"><img src="${resAsset[e]}" alt="" onerror="this.remove()" />${v > 0 ? "+" : ""}${v}%</span>`;
+  }).join("");
+  const badges: string[] = [];
+  for (const e of c.effets) {
+    if (e.stat === "vitalite") badges.push(`+PV (${e.toursRestants})`);
+    else if (e.stat === "degatsInfliges")
+      badges.push(`−dégâts (${e.toursRestants})`);
+    else if (e.stat === "poison") badges.push(`☠ poison (${e.toursRestants})`);
+    else if (e.stat === "hot") badges.push(`♥ soin/t (${e.toursRestants})`);
+    else if (e.stat === "initiative")
+      badges.push(`⏳ init ${e.valeur} (${e.toursRestants})`);
+  }
+  if (c.provoque) badges.push(`🛡 Provoque`);
+  if (c.bonusOffensifProchain > 0)
+    badges.push(`+${Math.round(c.bonusOffensifProchain * 100)} % prochain`);
+  if (c.maxRollCharges > 0) badges.push(`Œil affûté ×${c.maxRollCharges}`);
+  if (c.retraitPANextTurn > 0) badges.push(`−${c.retraitPANextTurn} PA`);
+  if (c.paBonusNextTurn > 0) badges.push(`+${c.paBonusNextTurn} PA`);
+
+  const ligne = estAvant(c) ? "avant" : "arriere";
+
+  const classes = [
+    "carte",
+    c.camp === "joueur" ? "carte-joueur" : "carte-ennemi",
+    `ligne-${ligne}`,
+    ko ? "ko" : "",
+    c === activeActeur ? "actif" : "",
+    clickable ? "ciblable" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `
+    <div class="${classes}" data-ref="${c.ref}">
+      <div class="carte-tete">
+        <span class="carte-nom">${escapeHtml(c.nom)}</span>
+        <span class="rang rang-${ligne}">${ligne === "avant" ? "AVANT" : "ARR."}</span>
+      </div>
+      <div class="portrait-wrap">
+        ${c.img ? `<img class="portrait" src="${A(c.img)}" alt="" onerror="this.remove()" />` : `<div class="portrait"></div>`}
+        <span class="pa-gem" title="${c.paActuels} / ${c.paMax} PA"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${c.paActuels}</b></span>
+      </div>
+      <div class="elems">${elemRond(principal, 1, principal === actif, switchable)}${elemRond(secondaire, 2, secondaire === actif, switchable)}</div>
+      <div class="mini-stats">
+        <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(c.stats)}%</span>
+        <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(c.stats)}%</span>
+        <span class="ms" title="Soin (puissance de soin)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(c.stats)}%</span>
+        <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(c.stats)}%</span>
+      </div>
+      ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
+      <div class="barre-pv">
+        <div class="barre-pv-rempli" style="width:${pct}%"></div>
+        ${c.bouclier > 0 ? `<div class="barre-bouclier" style="width:${Math.min(100, Math.round((c.bouclier / c.pvMax) * 100))}%"></div>` : ""}
+        <span class="pv-txt">${Math.max(0, c.pvActuels)} / ${c.pvMax}</span>
+      </div>
+      ${c.bouclier > 0 ? `<div class="bouclier-row" title="Bouclier"><img src="${ICON_BOUCLIER}" alt="" onerror="this.remove()" /><b>${c.bouclier}</b></div>` : ""}
+      ${resChips ? `<div class="res-row">${resChips}</div>` : ""}
+      <div class="badges">${badges.map((b) => `<span class="badge">${escapeHtml(b)}</span>`).join("")}</div>
+      ${ko ? `<div class="ko-label">K.O.</div>` : ""}
+    </div>`;
+}
+
+function render(): void {
+  if (!root) return;
+
+  // cibles cliquables pour le sort sélectionné
+  const ciblesActuelles =
+    activeActeur && selectedSpell
+      ? ciblesValides(activeActeur, selectedSpell, combatants)
+      : [];
+  const estCiblable = (c: Combatant) =>
+    ciblesActuelles.some((t) => t.ref === c.ref);
+
+  // un camp = deux rangées de grille (avant = cases 0-3, arrière = 4-7), triées par colonne
+  const renderCamp = (camp: Camp): string => {
+    const membres = combatants
+      .filter((c) => c.camp === camp)
+      .sort((a, b) => a.position - b.position);
+    const grp = (titreLigne: string, liste: Combatant[]) =>
+      `<div class="ligne-groupe">
+         <span class="ligne-label">${titreLigne}</span>
+         <div class="ligne-cards">${liste.map((c) => carteCombattant(c, estCiblable(c))).join("") || `<span class="ligne-vide">—</span>`}</div>
+       </div>`;
+    return grp("Ligne avant", membres.filter(estAvant)) + grp("Ligne arrière", membres.filter((c) => !estAvant(c)));
+  };
+
+  root.innerHTML = `
+    <div class="combat">
+      <h2 class="titre-combat">${escapeHtml(titre)}</h2>
+      ${renderTimeline()}
+      <div class="plateau">
+        <div class="colonne">
+          <h3>Équipe</h3>
+          ${renderCamp("joueur")}
+        </div>
+        <div class="colonne">
+          <h3>Ennemis <span class="hint">— seuls les 2 premiers (AVANT) sont à portée des sorts de ligne</span></h3>
+          ${renderCamp("ennemi")}
+        </div>
+      </div>
+      <div class="barre-sorts">${renderBarreSorts()}</div>
+      <div id="journal" class="journal"></div>
+    </div>`;
+
+  // ré-affiche le log
+  const journal = document.getElementById("journal");
+  if (journal) {
+    journal.innerHTML = logLines
+      .map((l) => `<div class="log-line">${escapeHtml(l)}</div>`)
+      .join("");
+    journal.scrollTop = journal.scrollHeight;
+  }
+
+  // clics sur les cibles
+  if (activeActeur && selectedSpell) {
+    root.querySelectorAll<HTMLElement>(".carte.ciblable").forEach((card) => {
+      card.addEventListener("click", () => {
+        const ref = card.dataset.ref!;
+        finir({ sort: selectedSpell!, cibleRef: ref });
+      });
+    });
+  }
+
+  // choix de l'élément de frappe (alliés) : clic sur un rond d'élément
+  root.querySelectorAll<HTMLElement>(".elem-rond.switch").forEach((rond) => {
+    rond.addEventListener("click", (e) => {
+      e.stopPropagation(); // ne pas déclencher le ciblage de la carte
+      const ref = rond.closest<HTMLElement>(".carte")?.dataset.ref;
+      const el = rond.dataset.switch as Element | undefined;
+      const c = combatants.find((x) => x.ref === ref);
+      if (c && el) {
+        c.elementChoisi = el;
+        render();
+      }
+    });
+  });
+}
+
+/** Initiative effective (base + effets) — pour l'ordre des tours affiché. */
+function initEffective(c: Combatant): number {
+  return c.initiative + c.effets.filter((e) => e.stat === "initiative").reduce((s, e) => s + e.valeur, 0);
+}
+
+/** Timeline d'ordre des tours (combattants vivants triés par initiative). */
+function renderTimeline(): string {
+  const ordre = combatants
+    .filter((c) => c.pvActuels > 0 && !c.estInvocation)
+    .sort((a, b) => initEffective(b) - initEffective(a));
+  if (ordre.length < 2) return "";
+  const items = ordre
+    .map((c) => {
+      const camp = c.camp === "joueur" ? "joueur" : "ennemi";
+      const actif = c === activeActeur ? "actif" : "";
+      const inner = c.img
+        ? `<img src="${A(c.img)}" alt="" onerror="this.remove()" />`
+        : `<span class="tl-ini">${initEffective(c)}</span>`;
+      return `<div class="tl-pastille ${camp} ${actif}" title="${escapeHtml(c.nom)} · init ${initEffective(c)}">${inner}</div>`;
+    })
+    .join(`<span class="tl-fleche">›</span>`);
+  return `<div class="timeline verre">${items}</div>`;
+}
+
+function renderBarreSorts(): string {
+  if (!activeActeur) {
+    return `<div class="attente">En attente…</div>`;
+  }
+  const acteur = activeActeur;
+  // slot 1 réservé au corps à corps (vide pour l'instant)
+  const cac = `<div class="sort sort-cac" title="Corps à corps — à venir">
+      <span class="sort-touche">1</span>
+      <span class="sort-icon-vide">🗡️</span>
+      <span class="sort-nom">Corps à corps</span>
+    </div>`;
+  const boutons = cac + acteur.sorts
+    .map((id) => SORTS[id])
+    .map((s, i) => {
+      const abordable = acteur.paActuels >= s.coutPA;
+      const choisi = selectedSpell?.id === s.id;
+      return `<button class="sort ${choisi ? "choisi" : ""}" data-sort="${s.id}" ${
+        abordable ? "" : "disabled"
+      } title="${escapeHtml(`${s.nom} — ${s.desc ?? ""}`)}">
+        <span class="sort-touche">${i + 2}</span>
+        <span class="sort-pa-badge">${s.coutPA}</span>
+        <img class="sort-icon" src="${asset("spells", s.id)}" alt="" onerror="this.remove()" />
+        <span class="sort-nom">${escapeHtml(s.nom)}</span>
+      </button>`;
+    })
+    .join("");
+
+  // listeners attachés après insertion via microtask
+  queueMicrotask(() => {
+    root.querySelectorAll<HTMLButtonElement>("button.sort[data-sort]").forEach((btn) => {
+      btn.addEventListener("click", () => choisirSort(SORTS[btn.dataset.sort!]));
+    });
+    const fin = document.getElementById("fin-tour");
+    fin?.addEventListener("click", () => finir(null));
+  });
+
+  const aide = selectedSpell
+    ? `<div class="aide">Choisis une cible pour <b>${escapeHtml(selectedSpell.nom)}</b>.</div>`
+    : `<div class="aide">Tour de <b>${escapeHtml(acteur.nom)}</b> — choisis un sort.</div>`;
+
+  return `
+    <div class="pa-jauge" title="Points d'action restants"><img class="pa-jauge-ico" src="${PA_ICON}" alt="" /><b>${acteur.paActuels}</b></div>
+    <div class="sorts-liste">${boutons}</div>
+    <div class="barre-actions-fin"><button id="fin-tour" class="fin-tour primaire">Terminer le tour <kbd>${escapeHtml(libelleTouche(config.toucheFinTour))}</kbd></button></div>
+    ${aide}`;
+}
+
+// --- Écrans ------------------------------------------------------------------
+function ecran(html: string): void {
+  root.innerHTML = `<div class="ecran">${html}</div>`;
+}
+
+/**
+ * Collection de reliques (Dofus). Affiche TOUT le catalogue ; les Dofus non
+ * possédés sont grisés/transparents. `×n` si plusieurs copies.
+ */
+export function renderDofusRack(meta: Meta, compact = false): string {
+  const slots = Object.values(DOFUS)
+    .map((d) => {
+      const n = meta.dofus.filter((id) => id === d.id).length;
+      const possede = n > 0;
+      const boss = DOFUS_DROP[d.id] ?? "";
+      return `
+        <div class="dofus-slot ${possede ? "" : "locked"}" data-nom="${escapeHtml(d.nom)}" data-effet="${escapeHtml(d.desc)}" data-boss="${escapeHtml(boss)}">
+          <img src="${d.img ? A(d.img) : ""}" alt="${escapeHtml(d.nom)}" onerror="this.remove()" />
+          ${n > 1 ? `<span class="dofus-count">×${n}</span>` : ""}
+        </div>`;
+    })
+    .join("");
+  return `<div class="dofus-rack ${compact ? "compact" : ""}">${slots}</div>`;
+}
+
+export function showStart(meta: Meta, onReset: () => void): Promise<void> {
+  return new Promise((res) => {
+    const nbUniques = new Set(meta.dofus).size;
+    const total = Object.keys(DOFUS).length;
+
+    ecran(`
+      <h1>Roguelite Dofus — V0</h1>
+      <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
+      <h3>Dofus · ${nbUniques}/${total}</h3>
+      ${renderDofusRack(meta)}
+      <div class="boutons-ecran">
+        <button id="btn-start" class="primaire">Lancer une run</button>
+        <button id="btn-settings" class="secondaire">Paramètres</button>
+        ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
+      </div>
+    `);
+    document.getElementById("btn-settings")?.addEventListener("click", async () => {
+      await showSettings();
+      showStart(meta, onReset).then(res);
+    });
+    document
+      .getElementById("btn-start")
+      ?.addEventListener("click", () => res());
+    document.getElementById("btn-reset")?.addEventListener("click", () => {
+      onReset();
+      showStart(meta, onReset).then(res);
+    });
+  });
+}
+
+// Rôle court par classe (écran de choix d'équipe / recrutement).
+const ROLE_CLASSE: Record<string, string> = {
+  iop: "Bourrin — gros dégâts Terre au corps à corps",
+  cra: "Archère — dégâts Air à distance, esquive",
+  eniripsa: "Soigneuse — soins, boucliers, poisons",
+  sadida: "Invocateur — poupée, contrôle, dégâts sur la durée",
+  sram: "Assassin — DPT monocible & poisons",
+  feca: "Protecteur — boucliers, glyphes, réduction de dégâts",
+  ecaflip: "Joueur — mixte, hasard (dés & cartes)",
+};
+
+/** Carte de classe (portrait + rôle) pour le choix d'équipe / recrutement. */
+function carteClasse(classeId: string, sel: boolean, dataAttr: string): string {
+  const c = CLASSES[classeId];
+  return `<button class="classe-carte ${sel ? "sel" : ""}" ${dataAttr}="${classeId}">
+    <img class="classe-portrait" src="${classe_img(classeId)}" alt="" onerror="this.remove()" />
+    <span class="classe-nom">${escapeHtml(c.nom)}</span>
+    <span class="classe-role">${escapeHtml(ROLE_CLASSE[classeId] ?? "")}</span>
+  </button>`;
+}
+const classe_img = (classeId: string): string => A(CLASSES[classeId]?.img ?? `/assets/classes/${classeId}.png`);
+
+/** Écran de départ : choisir 2 classes parmi les 7 pour commencer la run. */
+export function showChoixEquipe(): Promise<string[]> {
+  return new Promise((res) => {
+    const choix: string[] = [];
+    const draw = () => {
+      const cartes = classesDisponibles()
+        .map((id) => carteClasse(id, choix.includes(id), "data-classe"))
+        .join("");
+      ecran(`
+        <h1>Compose ton équipe de départ</h1>
+        <p class="sous-titre">Choisis <b>2 classes</b> pour commencer. Tu pourras en recruter d'autres dans les tavernes (équipe de 4 max).</p>
+        <div class="choix-grille">${cartes}</div>
+        <div class="boutons-ecran">
+          <button id="choix-go" class="primaire" ${choix.length === 2 ? "" : "disabled"}>Lancer la run (${choix.length}/2)</button>
+        </div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".classe-carte").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.classe!;
+          const i = choix.indexOf(id);
+          if (i >= 0) choix.splice(i, 1);
+          else if (choix.length < 2) choix.push(id);
+          draw();
+        });
+      });
+      document.getElementById("choix-go")?.addEventListener("click", () => {
+        if (choix.length === 2) res([...choix]);
+      });
+    };
+    draw();
+  });
+}
+
+/** Décision prise à la taverne. */
+export type ActionTaverne =
+  | { type: "soin" }
+  | { type: "recrue"; classeId: string; remplace?: string };
+
+/**
+ * Taverne : soigner l'équipe OU recruter l'une des 2 classes proposées.
+ * Si l'équipe est pleine, recruter demande quel membre remplacer.
+ */
+export function showTaverne(
+  persos: PersoState[],
+  propositions: string[],
+  soinPct: number,
+): Promise<ActionTaverne> {
+  return new Promise((res) => {
+    let recrueEnCours: string | null = null; // classe choisie, en attente du remplacement
+    const pleine = persos.length >= 4;
+
+    const draw = () => {
+      if (recrueEnCours) {
+        // choisir le membre à remplacer
+        const membres = persos
+          .map((p) => carteClasse(p.classeId, false, "data-remplace"))
+          .join("");
+        ecran(`
+          <h1>🍺 Recruter ${escapeHtml(CLASSES[recrueEnCours].nom)}</h1>
+          <p class="sous-titre">L'équipe est pleine. Choisis le membre à remplacer.</p>
+          <div class="choix-grille">${membres}</div>
+          <div class="boutons-ecran"><button id="tav-annuler" class="secondaire">Annuler</button></div>
+        `);
+        root.querySelectorAll<HTMLButtonElement>(".classe-carte").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            res({ type: "recrue", classeId: recrueEnCours!, remplace: btn.dataset.remplace! }),
+          );
+        });
+        document.getElementById("tav-annuler")?.addEventListener("click", () => {
+          recrueEnCours = null;
+          draw();
+        });
+        return;
+      }
+
+      const recrues = propositions.length
+        ? `<h3>Recruter (2 candidats)</h3>
+           <div class="choix-grille">${propositions.map((id) => carteClasse(id, false, "data-recrue")).join("")}</div>`
+        : `<p class="muet">Aucune classe à recruter (toutes déjà dans l'équipe).</p>`;
+      ecran(`
+        <h1>🍺 Taverne</h1>
+        <p class="sous-titre">Soigne ton équipe, ou recrute un nouveau membre.</p>
+        <div class="boutons-ecran">
+          <button id="tav-soin" class="primaire">Soigner (+${Math.round(soinPct * 100)} % PV)</button>
+        </div>
+        ${recrues}
+      `);
+      document.getElementById("tav-soin")?.addEventListener("click", () => res({ type: "soin" }));
+      root.querySelectorAll<HTMLButtonElement>(".classe-carte").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.recrue!;
+          if (pleine) {
+            recrueEnCours = id;
+            draw();
+          } else {
+            res({ type: "recrue", classeId: id });
+          }
+        });
+      });
+    };
+    draw();
+  });
+}
+
+/**
+ * Écran Formation (depuis le plateau) : grille 4×2 (cases 0-3 = ligne avant,
+ * 4-7 = arrière). Place librement l'équipe (tout devant, mono-tank…) en
+ * sélectionnant un perso puis une case (vide = déplacer, occupée = échanger).
+ * Effet dès le prochain combat, sauvegardé pour les runs suivantes.
+ */
+export function showFormation(persos: PersoState[]): Promise<void> {
+  return new Promise((res) => {
+    let selCell = -1; // case sélectionnée
+    const occupant = (cell: number) => persos.find((p) => p.position === cell);
+    const enregistrer = () => {
+      config.formation = Object.fromEntries(persos.map((p) => [p.classeId, p.position]));
+      sauverConfig(config);
+    };
+
+    const cellule = (cell: number): string => {
+      const p = occupant(cell);
+      const sel = selCell === cell ? "sel" : "";
+      const inner = p
+        ? `<img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" /><span>${escapeHtml(CLASSES[p.classeId].nom)}</span>`
+        : `<span class="form-vide">+</span>`;
+      return `<button class="form-cell ${p ? "" : "vide"} ${sel}" data-cell="${cell}">${inner}</button>`;
+    };
+    const rangee = (cells: number[]) => cells.map(cellule).join("");
+
+    const draw = () => {
+      ecran(`
+        <h1>Formation</h1>
+        <p class="sous-titre">Sélectionne un perso puis une case pour le déplacer (ou échanger). La <b>ligne avant</b> encaisse les sorts de ligne ennemis ; la <b>ligne arrière</b> est protégée. Effet dès le prochain combat.</p>
+        <div class="formation-grille">
+          <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
+          <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
+        </div>
+        <div class="boutons-ecran"><button id="form-retour" class="primaire">Retour au plateau</button></div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".form-cell").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const cell = Number(btn.dataset.cell);
+          if (selCell < 0) {
+            if (occupant(cell)) selCell = cell; // on ne sélectionne qu'une case occupée
+          } else if (selCell === cell) {
+            selCell = -1;
+          } else {
+            const a = occupant(selCell);
+            const b = occupant(cell);
+            if (a) a.position = cell;
+            if (b) b.position = selCell; // échange si la case d'arrivée est occupée
+            selCell = -1;
+            enregistrer();
+          }
+          draw();
+        });
+      });
+      document.getElementById("form-retour")?.addEventListener("click", () => {
+        enregistrer();
+        res();
+      });
+    };
+    draw();
+  });
+}
+
+// --- Équipement --------------------------------------------------------------
+const SLOTS: EquipSlot[] = ["amulette", "coiffe", "cape", "ceinture", "bottes", "anneau"];
+const SLOT_NOM: Record<EquipSlot, string> = {
+  amulette: "Amulette", coiffe: "Coiffe", cape: "Cape", ceinture: "Ceinture", bottes: "Bottes", anneau: "Anneau",
+};
+const STAT_ABBR: Partial<Record<keyof Stats, string>> = {
+  vitalite: "Vita", force: "For", intelligence: "Int", agilite: "Agi",
+  chance: "Cha", wakfu: "Wak", stasis: "Sta", soin: "Soin", prospection: "PP",
+};
+const itemImg = (id: string): string => A(`/assets/items/${id}.png`);
+
+/** Résumé textuel des stats d'un objet (ou d'un set de stats). */
+function itemLignes(item: Item): string {
+  const parts: string[] = [];
+  if (item.pvBonus) parts.push(`+${item.pvBonus} PV`);
+  for (const k of Object.keys(item.stats ?? {}) as (keyof Stats)[]) {
+    const v = item.stats![k];
+    if (v) parts.push(`+${v} ${STAT_ABBR[k] ?? k}`);
+  }
+  for (const e of Object.keys(item.resistances ?? {}) as Element[]) {
+    const v = item.resistances![e];
+    if (v) parts.push(`+${Math.round(v * 100)} % rés ${elNom[e]}`);
+  }
+  return parts.join(" · ");
+}
+
+/** Écran Équipement : équiper/déséquiper les pièces trouvées, par personnage. */
+export function showInventaire(persos: PersoState[], inventaire: string[]): Promise<void> {
+  return new Promise((res) => {
+    let sel = 0; // index du perso sélectionné
+    const draw = () => {
+      const perso = persos[sel];
+      const onglets = persos
+        .map((p, i) => `<button class="equip-onglet ${i === sel ? "sel" : ""}" data-perso="${i}">
+          <img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />${escapeHtml(CLASSES[p.classeId].nom)}</button>`)
+        .join("");
+
+      const slots = SLOTS.map((slot) => {
+        const id = perso.equipement[slot];
+        const item = id ? ITEMS[id] : undefined;
+        return `<div class="equip-slot ${item ? "rempli" : "vide"}" ${item ? `data-desequip="${slot}"` : ""}>
+          <span class="slot-nom">${SLOT_NOM[slot]}</span>
+          ${item
+            ? `<img class="slot-img" src="${itemImg(item.id)}" alt="" onerror="this.remove()" /><span class="slot-item">${escapeHtml(item.nom)}<small>${itemLignes(item)}</small></span>`
+            : `<span class="slot-vide-txt">— vide —</span>`}
+        </div>`;
+      }).join("");
+
+      // bonus de panoplie en cours pour ce perso
+      const compte: Record<string, number> = {};
+      for (const s of SLOTS) { const it = perso.equipement[s] ? ITEMS[perso.equipement[s]!] : undefined; if (it) compte[it.panoplie] = (compte[it.panoplie] ?? 0) + 1; }
+      const panoTxt = Object.entries(compte)
+        .map(([pid, n]) => `${PANOPLIES[pid]?.nom ?? pid} ${n}/6`)
+        .join(" · ");
+
+      const inv = inventaire.length
+        ? inventaire.map((id) => {
+            const it = ITEMS[id];
+            return `<button class="item-carte" data-equip="${id}">
+              <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
+              <span class="item-nom">${escapeHtml(it?.nom ?? id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(it)}</small></span>
+            </button>`;
+          }).join("")
+        : `<p class="muet">Inventaire vide — gagne des combats pour trouver de l'équipement.</p>`;
+
+      const b = bonusEquipement(perso);
+      const totalTxt = itemLignes({ id: "", nom: "", slot: "amulette", panoplie: "", stats: b.stats, pvBonus: b.pvBonus, resistances: b.resistances }) || "aucun bonus";
+
+      ecran(`
+        <h1>Équipement</h1>
+        <div class="equip-onglets">${onglets}</div>
+        <div class="equip-corps">
+          <div class="equip-col">
+            <h3>${escapeHtml(CLASSES[perso.classeId].nom)} · PV max ${pvMaxPerso(perso)}</h3>
+            <div class="equip-slots">${slots}</div>
+            <p class="equip-pano">${panoTxt || "Aucune pièce équipée"}</p>
+            <p class="equip-total muet">Bonus total : ${totalTxt}</p>
+          </div>
+          <div class="equip-col">
+            <h3>Inventaire (${inventaire.length})</h3>
+            <div class="equip-inv">${inv}</div>
+          </div>
+        </div>
+        <div class="boutons-ecran"><button id="equip-retour" class="primaire">Retour au plateau</button></div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".equip-onglet").forEach((btn) =>
+        btn.addEventListener("click", () => { sel = Number(btn.dataset.perso); draw(); }));
+      root.querySelectorAll<HTMLButtonElement>(".item-carte").forEach((btn) =>
+        btn.addEventListener("click", () => { equiper(inventaire, perso, btn.dataset.equip!); draw(); }));
+      root.querySelectorAll<HTMLElement>(".equip-slot.rempli").forEach((el) =>
+        el.addEventListener("click", () => { desequiper(inventaire, perso, el.dataset.desequip as EquipSlot); draw(); }));
+      document.getElementById("equip-retour")?.addEventListener("click", () => res());
+    };
+    draw();
+  });
+}
+
+/** Écran Butin : annonce les pièces d'équipement obtenues après un combat. */
+export function showDrop(ids: string[]): Promise<void> {
+  return new Promise((res) => {
+    const cartes = ids.map((id) => {
+      const it = ITEMS[id];
+      return `<div class="drop-item">
+        <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
+        <span class="drop-nom">${escapeHtml(it?.nom ?? id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(it)}</small></span>
+      </div>`;
+    }).join("");
+    ecran(`
+      <h1>🎁 Butin !</h1>
+      <p class="sous-titre">L'équipe ramasse ${ids.length} pièce${ids.length > 1 ? "s" : ""} d'équipement.</p>
+      <div class="drop-liste">${cartes}</div>
+      <div class="boutons-ecran"><button id="drop-ok" class="primaire">Continuer</button></div>
+    `);
+    document.getElementById("drop-ok")?.addEventListener("click", () => res());
+  });
+}
+
+/** Écran Paramètres : touche de fin de tour (rebindable) + auto-passe. */
+export function showSettings(): Promise<void> {
+  return new Promise((res) => {
+    let capture = false;
+    const draw = () => {
+      ecran(`
+        <h1>Paramètres</h1>
+        <div class="settings">
+          <div class="setting-ligne">
+            <span class="setting-lbl">Touche « Terminer le tour »</span>
+            <button id="set-touche" class="secondaire">${capture ? "Appuie sur une touche…" : `<kbd>${escapeHtml(libelleTouche(config.toucheFinTour))}</kbd>`}</button>
+          </div>
+          <div class="setting-ligne">
+            <span class="setting-lbl">Passer le tour automatiquement<br><small class="muet">quand aucune action n'est possible</small></span>
+            <button id="set-auto" class="secondaire ${config.autoFinTour ? "on" : ""}">${config.autoFinTour ? "Activé" : "Désactivé"}</button>
+          </div>
+        </div>
+        <div class="boutons-ecran"><button id="set-retour" class="primaire">Retour</button></div>
+      `);
+      document.getElementById("set-touche")?.addEventListener("click", () => {
+        capture = true;
+        draw();
+        const onKey = (e: KeyboardEvent) => {
+          e.preventDefault();
+          document.removeEventListener("keydown", onKey, true);
+          config.toucheFinTour = e.key;
+          sauverConfig(config);
+          capture = false;
+          draw();
+        };
+        document.addEventListener("keydown", onKey, true);
+      });
+      document.getElementById("set-auto")?.addEventListener("click", () => {
+        config.autoFinTour = !config.autoFinTour;
+        sauverConfig(config);
+        draw();
+      });
+      document.getElementById("set-retour")?.addEventListener("click", () => res());
+    };
+    draw();
+  });
+}
+
+export function showTransition(
+  message: string,
+  sousTitre: string,
+): Promise<void> {
+  return new Promise((res) => {
+    ecran(`
+      <h1>${escapeHtml(message)}</h1>
+      <p class="sous-titre">${escapeHtml(sousTitre)}</p>
+      <div class="boutons-ecran"><button id="btn-next" class="primaire">Continuer</button></div>
+    `);
+    document.getElementById("btn-next")?.addEventListener("click", () => res());
+  });
+}
+
+export function showWipe(): Promise<void> {
+  return new Promise((res) => {
+    ecran(`
+      <h1 class="defaite">Équipe anéantie</h1>
+      <p class="sous-titre">La run s'arrête. Tes Dofus, eux, sont conservés.</p>
+      <div class="boutons-ecran"><button id="btn-retry" class="primaire">Retour à l'accueil</button></div>
+    `);
+    document
+      .getElementById("btn-retry")
+      ?.addEventListener("click", () => res());
+  });
+}
+
+export function showDofus(dofusId: string, totalCopies: number): Promise<void> {
+  return new Promise((res) => {
+    const d = DOFUS[dofusId];
+    ecran(`
+      <h1 class="victoire">Dofus obtenu !</h1>
+      ${d?.img ? `<img class="dofus-img" src="${A(d.img)}" alt="" onerror="this.remove()" />` : ""}
+      <h2>${escapeHtml(d?.nom ?? dofusId)}</h2>
+      <p class="sous-titre">${escapeHtml(d?.desc ?? "")}</p>
+      <p>Copies possédées : <b>×${totalCopies}</b>. La prochaine run sera plus facile.</p>
+      <div class="boutons-ecran"><button id="btn-continue" class="primaire">Retour à l'accueil</button></div>
+    `);
+    document
+      .getElementById("btn-continue")
+      ?.addEventListener("click", () => res());
+  });
+}
+
+// --- Panneau de personnages (niveaux & points) -------------------------------
+const STAT_NOM: Record<keyof Stats, string> = {
+  force: "Force",
+  intelligence: "Intelligence",
+  agilite: "Agilité",
+  chance: "Chance",
+  wakfu: "Wakfu",
+  stasis: "Stasis",
+  vitalite: "Vitalité",
+  soin: "Soin",
+  prospection: "Prospection",
+};
+const STAT_EFFET: Record<keyof Stats, string> = {
+  force: "dégâts Terre · crit",
+  intelligence: "dégâts Feu · puissance off.",
+  agilite: "dégâts Air · esquive · dég. crit",
+  chance: "dégâts Eau",
+  wakfu: "dégâts Wakfu",
+  stasis: "dégâts Stasis",
+  vitalite: "PV max",
+  soin: "puissance de soin",
+  prospection: "butin (à venir)",
+};
+
+function carteProgression(p: PersoState): string {
+  const classe = CLASSES[p.classeId];
+  const prog = p.progression;
+  const finals = statsFinales(classe, prog);
+  const pvMax = pvMaxFor(classe, prog);
+  const xpReq = xpRequis(prog.niveau);
+  const xpPct = Math.min(100, Math.round((prog.xp / xpReq) * 100));
+
+  const lignes = STAT_KEYS.map((stat) => {
+    const cout = coutPoint(prog.pointsInvestis[stat] ?? 0);
+    const peut = prog.pointsDispo >= cout;
+    const inv = prog.pointsInvestis[stat] ?? 0;
+    return `
+      <div class="stat-ligne">
+        <span class="stat-nom">${STAT_NOM[stat]}</span>
+        <span class="stat-val">${finals[stat]}${inv ? ` <span class="muet">(+${inv})</span>` : ""}</span>
+        <span class="stat-effet">${STAT_EFFET[stat]}</span>
+        <button class="stat-plus" data-perso="${p.classeId}" data-stat="${stat}" ${peut ? "" : "disabled"}>+ (${cout})</button>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="carte-prog">
+      <div class="prog-tete">
+        <span class="prog-nom">${escapeHtml(classe.nom)}</span>
+        <span class="prog-niv">Niv. ${prog.niveau}</span>
+      </div>
+      <div class="barre-xp"><div class="barre-xp-rempli" style="width:${xpPct}%"></div>
+        <span class="xp-txt">XP ${prog.xp} / ${xpReq}</span>
+      </div>
+      <div class="prog-pv">PV max : <b>${pvMax}</b> · PV actuels : ${Math.max(0, Math.round(p.pvActuels))}</div>
+      <div class="points-dispo ${prog.pointsDispo ? "actif" : ""}">Points à dépenser : <b>${prog.pointsDispo}</b></div>
+      <div class="stats-grille">${lignes}</div>
+    </div>`;
+}
+
+/**
+ * Panneau de progression : dépenser les points dans les stats.
+ * `titre`/`sousTitre` permettent de réutiliser l'écran pour l'Otomai.
+ */
+export function showStatPanel(
+  persos: PersoState[],
+  titre = "Personnages",
+  sousTitre = "Dépense tes points de caractéristique.",
+): Promise<void> {
+  return new Promise((res) => {
+    const draw = () => {
+      ecran(`
+        <h1>${escapeHtml(titre)}</h1>
+        <p class="sous-titre">${escapeHtml(sousTitre)}</p>
+        <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
+        <div class="boutons-ecran"><button id="prog-fermer" class="primaire">Continuer</button></div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".stat-plus").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const perso = persos.find((p) => p.classeId === btn.dataset.perso);
+          if (
+            perso &&
+            investir(perso.progression, btn.dataset.stat as keyof Stats)
+          )
+            draw();
+        });
+      });
+      document
+        .getElementById("prog-fermer")
+        ?.addEventListener("click", () => res());
+    };
+    draw();
+  });
+}
+
+export function showZaap(typeRevele: string): Promise<void> {
+  return showTransition("🌀 Zaap", `La rencontre se révèle : ${typeRevele}.`);
+}
+
+// --- Plateau (carte de nœuds) ------------------------------------------------
+const NODE_ICON: Record<NodeType, string> = {
+  combat: "⚔️",
+  combat_dur: "💀",
+  taverne: "🍺",
+  otomai: "🔄",
+  zaap: "🌀",
+  donjon: "🐉",
+};
+const NODE_LABEL: Record<NodeType, string> = {
+  combat: "Combat",
+  combat_dur: "Combat dur",
+  taverne: "Taverne",
+  otomai: "Otomai",
+  zaap: "Zaap",
+  donjon: "Donjon",
+};
+// fichier de tuile par type de nœud (le type "combat_dur" utilise l'asset "combat_elite")
+const CASE_FILE: Record<NodeType, string> = {
+  combat: "combat",
+  combat_dur: "combat_elite",
+  taverne: "taverne",
+  otomai: "otomai",
+  zaap: "zaap",
+  donjon: "donjon",
+};
+// La case Donjon affiche un sprite de boss plutôt qu'une tuile de case.
+const caseAsset = (t: NodeType): string =>
+  t === "donjon"
+    ? A("/assets/boss/bouftou_royal.png")
+    : A(`/assets/cases/${CASE_FILE[t]}.png`);
+
+const LARGEUR_CARTE = 720; // laisse la place à la sidebar d'équipe à gauche
+const ESPACE_LIGNE = 92;
+const MARGE_HAUT = 44;
+
+export function showCarte(
+  carte: GameMap,
+  persos: PersoState[],
+  meta: Meta,
+  zoneNom: string,
+  inventaire: string[] = [],
+): Promise<MapNode> {
+  return new Promise((res) => {
+    const draw = () => {
+      const maxL = Math.max(...carte.noeuds.map((n) => n.ligne));
+      const H = MARGE_HAUT * 2 + (maxL + 1) * ESPACE_LIGNE; // +1 rangée pour le Départ
+      const departPos = { x: LARGEUR_CARTE / 2, y: MARGE_HAUT };
+      const pos = new Map<string, { x: number; y: number }>();
+      for (let l = 0; l <= maxL; l++) {
+        const ln = carte.noeuds
+          .filter((n) => n.ligne === l)
+          .sort((a, b) => a.colonne - b.colonne);
+        ln.forEach((n, idx) => {
+          pos.set(n.id, {
+            x: ((idx + 1) / (ln.length + 1)) * LARGEUR_CARTE,
+            y: MARGE_HAUT + (l + 1) * ESPACE_LIGNE,
+          });
+        });
+      }
+
+      const reach = new Set(atteignables(carte).map((n) => n.id));
+      const depuisCourant = (nid: string) =>
+        carte.courant === nid ||
+        (carte.courant === null && noeud(carte, nid)?.ligne === 0);
+
+      const lignesSvg = carte.noeuds
+        .flatMap((n) =>
+          n.suivants.map((s) => {
+            const a = pos.get(n.id)!;
+            const b = pos.get(s)!;
+            const actif = reach.has(s) && depuisCourant(n.id);
+            return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="arete ${actif ? "arete-actif" : ""}"/>`;
+          }),
+        )
+        .join("");
+
+      // chemins du Départ vers les nœuds de la 1ʳᵉ rangée
+      const departSvg = carte.depart
+        .map((id) => {
+          const b = pos.get(id)!;
+          return `<line x1="${departPos.x}" y1="${departPos.y}" x2="${b.x}" y2="${b.y}" class="arete ${carte.courant === null ? "arete-actif" : ""}"/>`;
+        })
+        .join("");
+
+      const boutons = carte.noeuds
+        .map((n) => {
+          const p = pos.get(n.id)!;
+          const r = reach.has(n.id);
+          const cls = [
+            "map-node",
+            `t-${n.type}`,
+            n.visite ? "visite" : "",
+            n.id === carte.courant ? "courant" : "",
+            r ? "atteignable" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+          return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px">
+            <span class="case-art">
+              <img class="case-img" src="${caseAsset(n.type)}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
+              <span class="mn-icon" style="display:none">${NODE_ICON[n.type]}</span>
+            </span>
+            <span class="mn-lbl">${NODE_LABEL[n.type]}</span>
+          </button>`;
+        })
+        .join("");
+
+      const points = persos.reduce((s, p) => s + p.progression.pointsDispo, 0);
+      const asideEquipe = persos
+        .map((p) => {
+          const classe = CLASSES[p.classeId];
+          const pvMax = pvMaxFor(classe, p.progression);
+          const pct = Math.max(0, Math.round((p.pvActuels / pvMax) * 100));
+          return `
+            <div class="aside-perso">
+              <img class="aside-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
+              <div class="aside-info">
+                <div class="aside-nom">${escapeHtml(classe.nom)}<span class="aside-niv">Niv.${p.progression.niveau}</span></div>
+                <div class="barre-pv mini">
+                  <div class="barre-pv-rempli" style="width:${pct}%"></div>
+                  <span class="pv-txt">${Math.max(0, Math.round(p.pvActuels))} / ${pvMax}</span>
+                </div>
+              </div>
+            </div>`;
+        })
+        .join("");
+
+      root.innerHTML = `
+        <div class="carte-ecran map-layout">
+          <aside class="map-aside">
+            <h2>Équipe</h2>
+            <div class="aside-equipe">${asideEquipe}</div>
+            <button id="carte-persos" class="primaire aside-btn">Personnages${points ? ` · ${points} pts` : ""}</button>
+            <button id="carte-formation" class="secondaire aside-btn">Formation</button>
+            <button id="carte-equip" class="secondaire aside-btn">Équipement${inventaire.length ? ` · ${inventaire.length}` : ""}</button>
+            <div class="aside-dofus">
+              <h3>Dofus</h3>
+              ${renderDofusRack(meta, true)}
+            </div>
+          </aside>
+          <div class="map-main">
+            <h2 class="zone-titre">${escapeHtml(zoneNom)}</h2>
+            <div class="map-zone" style="height:${H}px">
+              <svg class="map-svg" width="${LARGEUR_CARTE}" height="${H}">${departSvg}${lignesSvg}</svg>
+              ${boutons}
+              <div class="map-depart" style="left:${departPos.x}px;top:${departPos.y}px">
+                <span class="case-art depart-art">🚩</span>
+                <span class="mn-lbl">Départ</span>
+              </div>
+            </div>
+            <p class="aide">Choisis un nœud accessible (surligné). Choisir un nœud, c'est renoncer à ses voisins.</p>
+          </div>
+        </div>`;
+
+      root
+        .querySelectorAll<HTMLButtonElement>(".map-node.atteignable")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const n = noeud(carte, btn.dataset.id!);
+            if (n) res(n);
+          });
+        });
+      document
+        .getElementById("carte-persos")
+        ?.addEventListener("click", async () => {
+          await showStatPanel(persos);
+          draw();
+        });
+      document
+        .getElementById("carte-formation")
+        ?.addEventListener("click", async () => {
+          await showFormation(persos);
+          draw();
+        });
+      document
+        .getElementById("carte-equip")
+        ?.addEventListener("click", async () => {
+          await showInventaire(persos, inventaire);
+          draw();
+        });
+    };
+    draw();
+  });
+}

@@ -1,0 +1,468 @@
+/* =========================================================================
+   Roguelite Dofus — UI « Dofus 3.0 » : verre bleu-gris froid, acier/cyan,
+   jauges PV vertes & PA bleues, accents ambre réservés à l'essentiel.
+   ========================================================================= */
+@font-face { font-family: "Nunito"; font-weight: 400; font-display: swap; src: url("./fonts/nunito-400.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-weight: 700; font-display: swap; src: url("./fonts/nunito-700.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-weight: 900; font-display: swap; src: url("./fonts/nunito-900.woff2") format("woff2"); }
+
+:root {
+  --police: "Nunito", "Segoe UI", system-ui, sans-serif;
+
+  --bg: #0d1420;
+  --bg-2: #0a0f18;
+  --panel: rgba(26, 36, 54, 0.92);
+  --panel-solide: #1a2436;
+  --panel-2: #223049;
+  --bord: #34506f;
+  --bord-clair: #5b86b0;
+  --cyan: #57d4e0;
+
+  --txt: #dce6f5;
+  --muet: #8aa0be;
+
+  --pa: #2f9be6;
+  --pv: #57c25f;
+  --or: #e8b54e;
+  --or-clair: #ffd06b;
+  --danger: #e2503e;
+
+  --terre: #d08a3a;
+  --feu: #ff6a3d;
+  --air: #4fb6ef;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--txt);
+  font-family: var(--police);
+  background:
+    radial-gradient(1200px 700px at 50% -12%, #1a2740, transparent 70%),
+    radial-gradient(900px 600px at 100% 110%, #15243a, transparent 70%),
+    linear-gradient(180deg, var(--bg), var(--bg-2));
+}
+
+#app { max-width: 1060px; margin: 0 auto; padding: 22px 16px 56px; }
+
+h1, h2, h3 { margin: 0 0 12px; font-weight: 900; letter-spacing: -.01em; }
+h1 { font-size: 1.9rem; }
+.tabnum { font-variant-numeric: tabular-nums; }
+
+/* --- Boutons --- */
+button {
+  font: inherit; font-weight: 700; cursor: pointer; color: var(--txt);
+  background: linear-gradient(180deg, var(--panel-2), #1b2741);
+  border: 1px solid var(--bord); border-radius: 10px; padding: 9px 16px;
+  box-shadow: inset 0 1px 0 #ffffff14, 0 2px 6px #0006;
+  transition: transform .06s ease, box-shadow .15s ease, filter .15s ease;
+}
+button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--cyan), 0 4px 12px #0007; }
+button:disabled { opacity: .42; cursor: not-allowed; }
+button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.primaire { background: linear-gradient(180deg, var(--or-clair), var(--or)); color: #2a1c02; border-color: var(--or-clair); font-weight: 900; }
+.secondaire { background: linear-gradient(180deg, #1d2840, #18202f); }
+
+/* --- Panneau de verre réutilisable --- */
+.verre {
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--bord);
+  box-shadow: inset 0 1px 0 #ffffff10, 0 10px 30px #0009;
+  border-radius: 14px;
+}
+
+/* --- Écrans plein cadre --- */
+.ecran {
+  text-align: center;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--bord);
+  box-shadow: inset 0 1px 0 #ffffff12, 0 18px 50px #000b;
+  border-radius: 16px; padding: 40px 34px; margin-top: 44px;
+}
+.sous-titre { color: var(--muet); margin-top: -2px; max-width: 56ch; margin-left: auto; margin-right: auto; }
+.muet { color: var(--muet); }
+.victoire { color: var(--pv); }
+.defaite { color: var(--danger); }
+.dofus-img { width: 130px; height: 130px; object-fit: contain; margin: 10px auto; display: block; filter: drop-shadow(0 0 22px var(--or)); }
+
+/* collection de reliques (toujours affichée ; non possédées = transparentes) */
+.dofus-rack { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 8px auto 4px; max-width: 470px; }
+.dofus-slot {
+  position: relative; width: 54px; height: 54px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 28%, #1b2840, #0c1422);
+  border: 1px solid var(--bord); box-shadow: inset 0 0 10px #0008;
+}
+.dofus-slot:not(.locked) { border-color: var(--or); box-shadow: 0 0 12px #e8b54e55, inset 0 0 10px #0008; }
+.dofus-slot img { width: 84%; height: 84%; object-fit: contain; }
+.dofus-slot:not(.locked) img { filter: drop-shadow(0 0 8px #e8b54e88); }
+.dofus-slot.locked img { filter: grayscale(1) brightness(.5); opacity: .32; }
+.dofus-count { position: absolute; bottom: -5px; right: -5px; background: var(--or); color: #2a1c02; font-size: .62rem; font-weight: 900; border-radius: 999px; padding: 0 5px; border: 1px solid #2a1c0255; }
+.dofus-rack.compact { gap: 7px; max-width: none; justify-content: flex-start; max-height: 188px; overflow-y: auto; padding-right: 4px; }
+.dofus-rack.compact .dofus-slot { width: 38px; height: 38px; border-radius: 9px; }
+.dofus-tip {
+  position: fixed; z-index: 1000; pointer-events: none; max-width: 240px;
+  background: rgba(13, 20, 32, 0.97); border: 1px solid var(--bord-clair);
+  border-radius: 10px; padding: 9px 11px; box-shadow: 0 8px 24px #000b;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.dofus-tip .tip-nom { font-weight: 900; color: var(--or-clair); font-size: .92rem; margin-bottom: 3px; }
+.dofus-tip .tip-effet { font-size: .8rem; color: var(--txt); }
+.dofus-tip .tip-boss { font-size: .74rem; color: var(--pv); margin-top: 5px; }
+.dofus-tip .tip-muet { font-size: .74rem; color: var(--muet); margin-top: 5px; font-style: italic; }
+
+.aside-dofus { margin-top: 14px; border-top: 1px solid var(--bord); padding-top: 12px; }
+.aside-dofus h3 { font-size: .78rem; color: var(--muet); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.boutons-ecran { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+kbd {
+  font-family: var(--police); font-size: .82em; font-weight: 800;
+  background: #0c1622; color: #bfe6ff; border: 1px solid var(--bord-clair);
+  border-radius: 6px; padding: 1px 7px; box-shadow: 0 1px 0 #000a; margin-left: 6px;
+}
+
+/* écran de choix d'équipe / recrutement */
+.choix-grille { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 16px auto; max-width: 760px; }
+.classe-carte {
+  width: 150px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 10px;
+  background: var(--panel-2); border: 1px solid var(--bord); border-radius: 14px; cursor: pointer; text-align: center;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.classe-carte:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--cyan), 0 6px 16px #0007; }
+.classe-carte.sel { border-color: var(--or); box-shadow: 0 0 0 2px var(--or), 0 0 16px #e8b54e55; }
+.classe-portrait {
+  width: 72px; height: 72px; object-fit: contain; border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #2b3a55, #131c2b); border: 2px solid var(--bord-clair);
+}
+.classe-nom { font-weight: 900; font-size: .95rem; }
+.classe-role { font-size: .68rem; color: var(--muet); line-height: 1.25; }
+
+/* écran Équipement */
+.equip-onglets { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+.equip-onglet { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
+.equip-onglet img { width: 22px; height: 22px; object-fit: contain; }
+.equip-onglet.sel { box-shadow: 0 0 0 2px var(--cyan); }
+.equip-corps { display: flex; gap: 16px; justify-content: center; align-items: flex-start; flex-wrap: wrap; max-width: 880px; margin: 0 auto; }
+.equip-col { flex: 1 1 360px; min-width: 320px; text-align: left; }
+.equip-slots { display: flex; flex-direction: column; gap: 6px; }
+.equip-slot { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--bord); border-radius: 10px; padding: 8px 10px; min-height: 46px; }
+.equip-slot.rempli { cursor: pointer; }
+.equip-slot.rempli:hover { box-shadow: 0 0 0 1px var(--danger); }
+.equip-slot.vide { opacity: .6; }
+.slot-nom { font-weight: 800; font-size: .72rem; color: var(--muet); width: 72px; flex: none; }
+.slot-img { width: 30px; height: 30px; object-fit: contain; }
+.slot-item, .item-nom, .drop-nom { display: flex; flex-direction: column; font-weight: 800; font-size: .8rem; }
+.slot-item small, .item-nom small, .drop-nom small { font-weight: 600; font-size: .64rem; color: var(--muet); }
+.slot-vide-txt { color: #44546e; font-size: .8rem; }
+.equip-pano { font-weight: 800; color: var(--or); margin-top: 8px; }
+.equip-total { font-size: .72rem; }
+.equip-inv { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
+.item-carte { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--panel-2); border: 1px solid var(--bord); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+.item-carte:hover { box-shadow: 0 0 0 1px var(--cyan); }
+.item-carte img, .drop-item img { width: 30px; height: 30px; object-fit: contain; }
+
+/* écran Butin */
+.drop-liste { display: flex; flex-direction: column; gap: 8px; max-width: 460px; margin: 16px auto; }
+.drop-item { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--or); border-radius: 10px; padding: 10px 12px; text-align: left; }
+
+/* écran Paramètres */
+.settings { max-width: 480px; margin: 12px auto 0; display: flex; flex-direction: column; gap: 12px; }
+.setting-ligne {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; text-align: left;
+  background: var(--panel-2); border: 1px solid var(--bord); border-radius: 12px; padding: 12px 14px;
+}
+.setting-lbl { font-weight: 700; }
+.setting-ligne button { min-width: 120px; }
+.setting-ligne button.on { background: linear-gradient(180deg, #2c7d44, #1f5e33); border-color: #3fae5e; color: #eafff0; }
+
+/* écran Formation — grille 4×2 */
+.formation-grille { max-width: 560px; margin: 14px auto 0; display: flex; flex-direction: column; gap: 12px; }
+.form-rangee { background: var(--panel-2); border: 1px solid var(--bord); border-radius: 12px; padding: 10px 12px; }
+.form-ligne-lbl { display: block; font-size: .66rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muet); margin-bottom: 8px; text-align: left; }
+.form-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.form-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; min-height: 66px; }
+.form-cell img { width: 30px; height: 30px; object-fit: contain; }
+.form-cell span { font-size: .72rem; }
+.form-cell.vide { border-style: dashed; opacity: .5; }
+.form-cell .form-vide { font-size: 1.2rem; color: var(--muet); }
+.form-cell.sel { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan); opacity: 1; }
+
+/* =========================================================================
+   COMBAT
+   ========================================================================= */
+.titre-combat { text-align: center; color: var(--txt); }
+
+/* timeline d'ordre des tours (signature) */
+.timeline {
+  display: flex; align-items: center; gap: 8px; justify-content: center; flex-wrap: wrap;
+  padding: 8px 12px; margin: 0 auto 14px; width: fit-content; max-width: 100%;
+}
+.tl-pastille {
+  position: relative; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--panel-solide); border: 2px solid var(--bord); overflow: hidden;
+  display: flex; align-items: center; justify-content: center; opacity: .7;
+  transition: transform .15s ease, opacity .15s ease;
+}
+.tl-pastille img { width: 100%; height: 100%; object-fit: contain; }
+.tl-pastille .tl-ini { font-size: .68rem; font-weight: 900; color: var(--muet); }
+.tl-pastille.joueur { border-color: var(--pa); }
+.tl-pastille.ennemi { border-color: var(--danger); }
+.tl-pastille.actif { opacity: 1; transform: scale(1.18); box-shadow: 0 0 0 2px var(--cyan), 0 0 14px var(--cyan); }
+.tl-fleche { color: var(--muet); font-size: .8rem; }
+
+.plateau { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+.colonne {
+  background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--bord); border-radius: 14px; padding: 12px;
+  box-shadow: inset 0 1px 0 #ffffff0e, 0 8px 22px #0008;
+}
+.colonne h3 { color: var(--muet); font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+.colonne h3 .hint { font-weight: 600; font-size: .66rem; color: #6f86a6; text-transform: none; letter-spacing: 0; }
+
+/* groupes de ligne (avant / arrière) au sein d'un camp — cartes verticales en grille */
+.ligne-groupe { margin-top: 8px; }
+.ligne-label { display: block; font-size: .62rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #6f86a6; margin: 0 0 6px 2px; }
+.ligne-groupe.arriere { } /* hook éventuel */
+.ligne-cards { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; min-height: 10px; }
+.ligne-vide { color: #44546e; font-size: .9rem; padding: 4px 2px; }
+
+/* carte de combattant — verticale */
+.carte {
+  width: 138px; color: var(--txt); position: relative; padding: 8px;
+  background: linear-gradient(180deg, #1f2c43, #18223400 160%), var(--panel-solide);
+  border: 1px solid var(--bord); border-radius: 12px; box-shadow: 0 4px 12px #0007;
+}
+.carte-joueur { border-top: 3px solid var(--pa); }
+.carte-ennemi { border-top: 3px solid var(--danger); }
+.carte.actif { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan), 0 0 18px #57d4e055; }
+.carte.ciblable { cursor: pointer; border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger), 0 0 16px #e2503e66; }
+.carte.ciblable:hover { filter: brightness(1.08); }
+.carte.ko { opacity: .5; filter: grayscale(.85); }
+
+.carte-tete { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.carte-nom { font-weight: 800; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.portrait {
+  display: block; width: 64px; height: 64px; margin: 5px auto; object-fit: contain; border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #2b3a55, #131c2b);
+  border: 2px solid var(--bord-clair); box-shadow: inset 0 0 12px #0009;
+}
+
+/* portrait en médaillon + gemme de PA (étoile cyan) dans le coin, façon maquette */
+.portrait-wrap { position: relative; width: 64px; margin: 5px auto 2px; }
+.pa-gem { position: absolute; top: -5px; right: -10px; width: 30px; height: 30px; display: grid; place-items: center; }
+.pa-gem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 4px #57d4e0cc); }
+.pa-gem b { position: relative; font-size: .72rem; font-weight: 900; color: #06222b; text-shadow: 0 1px 0 #ffffff66; }
+
+/* éléments : rond principal (1) + secondaire (2) */
+.elems { display: flex; gap: 8px; justify-content: center; margin: 2px 0 1px; }
+.elem-rond { position: relative; width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; background: #0f1826; border: 1px solid var(--bord); }
+.elem-rond img { width: 18px; height: 18px; object-fit: contain; }
+.elem-rond i { position: absolute; bottom: -4px; right: -5px; font-style: normal; font-size: .5rem; font-weight: 900; width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--bord); color: var(--txt); }
+/* élément de frappe actif vs second (cliquable pour switcher, côté allié) */
+.elem-rond:not(.frappe) { opacity: .5; }
+.elem-rond.frappe { opacity: 1; }
+.elem-rond.switch { cursor: pointer; }
+.elem-rond.switch:not(.frappe):hover { opacity: .85; }
+.elem-rond .frappe-pic { position: absolute; top: -7px; left: -7px; font-size: .56rem; font-weight: 900; width: 15px; height: 15px; display: grid; place-items: center; border-radius: 50%; background: var(--cyan); color: #06222b; box-shadow: 0 0 6px #57d4e0aa; }
+.elem-rond.elem-terre { box-shadow: 0 0 0 1px #d08a3a66, 0 0 8px #d08a3a33; }
+.elem-rond.elem-feu { box-shadow: 0 0 0 1px #ff6a3d66, 0 0 8px #ff6a3d33; }
+.elem-rond.elem-eau { box-shadow: 0 0 0 1px #3aa0e666, 0 0 8px #3aa0e633; }
+.elem-rond.elem-air { box-shadow: 0 0 0 1px #4fb6ef66, 0 0 8px #4fb6ef33; }
+.elem-rond.elem-wakfu { box-shadow: 0 0 0 1px #7bd24f66, 0 0 8px #7bd24f33; }
+.elem-rond.elem-stasis { box-shadow: 0 0 0 1px #9b6ad666, 0 0 8px #9b6ad633; }
+
+/* stats secondaires : grille 2×2 (crit / dégât crit / soin / dégâts finaux) */
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; justify-items: start; margin: 3px 2px 1px; }
+.ms { display: inline-flex; align-items: center; gap: 3px; font-size: .58rem; font-weight: 800; color: var(--muet); font-variant-numeric: tabular-nums; }
+.ms img { width: 14px; height: 14px; object-fit: contain; }
+
+/* prospection (affichage seul) */
+.pp-row { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 1px; font-size: .58rem; font-weight: 800; color: var(--muet); font-variant-numeric: tabular-nums; }
+.pp-row img { width: 13px; height: 13px; object-fit: contain; }
+
+/* bouclier (icône + valeur) + ligne de résistances */
+.bouclier-row { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 2px; font-size: .64rem; font-weight: 800; color: #b9c6ff; font-variant-numeric: tabular-nums; }
+.bouclier-row img { width: 14px; height: 14px; object-fit: contain; }
+.res-row { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 3px; }
+.res-chip { display: inline-flex; align-items: center; gap: 2px; font-size: .56rem; font-weight: 800; color: var(--txt); background: #0f1826; border: 1px solid var(--bord); border-radius: 6px; padding: 0 4px; font-variant-numeric: tabular-nums; }
+.res-chip.faible { color: #f0a08e; border-color: #5a2f2a; }
+.res-chip.zero { opacity: .42; }
+.res-chip img { width: 12px; height: 12px; object-fit: contain; }
+
+.barre-pv {
+  position: relative; height: 16px; border-radius: 6px; overflow: hidden; margin: 4px 0;
+  background: #0c1a14; border: 1px solid #00000066; box-shadow: inset 0 1px 3px #000;
+}
+.barre-pv-rempli { height: 100%; background: linear-gradient(180deg, #76e07e, var(--pv)); transition: width .25s ease; }
+.barre-bouclier { position: absolute; top: 0; left: 0; height: 100%; background: repeating-linear-gradient(45deg, #ffffff55 0 5px, #ffffff22 5px 10px); }
+.pv-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 800; color: #fff; text-shadow: 0 1px 2px #000; font-variant-numeric: tabular-nums; }
+
+.badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; justify-content: center; }
+.badge { font-size: .56rem; font-weight: 700; background: #0f1826; color: var(--txt); border: 1px solid var(--bord); border-radius: 6px; padding: 1px 5px; }
+.ko-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-10deg); color: var(--danger); font-weight: 900; font-size: 1.2rem; letter-spacing: .1em; }
+
+.rang { font-size: .54rem; font-weight: 900; padding: 1px 6px; border-radius: 999px; white-space: nowrap; letter-spacing: .04em; flex: none; }
+.rang-avant { background: var(--danger); color: #fff; }
+.rang-arriere { background: #ffffff18; color: var(--muet); }
+
+/* =========================================================================
+   BARRE DE SORTS
+   ========================================================================= */
+.barre-sorts {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--bord); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+  box-shadow: 0 8px 22px #0008;
+}
+.pa-jauge {
+  width: 60px; height: 60px; border-radius: 50%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0; flex: none;
+  background: radial-gradient(circle at 42% 32%, #173049, #0c1622);
+  border: 2px solid var(--pa); box-shadow: 0 0 14px #2f9be655, inset 0 0 10px #0008;
+}
+.pa-jauge-ico { width: 20px; height: 20px; object-fit: contain; margin-top: 2px; }
+.pa-jauge b { font-size: 1.2rem; font-weight: 900; color: #bfe6ff; line-height: 1; font-variant-numeric: tabular-nums; }
+.sorts-liste { display: flex; flex-wrap: wrap; gap: 10px; }
+.sort {
+  position: relative; width: 78px; padding: 7px 4px 6px; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; color: var(--txt);
+  background: linear-gradient(180deg, #20304a, #131d2e); border: 1px solid var(--bord); border-radius: 11px;
+}
+.sort:hover:not(:disabled) { box-shadow: 0 0 0 2px var(--cyan); }
+.sort:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.sort.choisi { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan), 0 0 12px #57d4e066; }
+.sort:disabled { opacity: .4; }
+.sort-icon { width: 36px; height: 36px; object-fit: contain; }
+.sort-touche {
+  position: absolute; top: -7px; left: -7px; width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  background: #0c1622; color: var(--muet); border: 1px solid var(--bord-clair);
+  border-radius: 5px; font-size: .66rem; font-weight: 900; box-shadow: 0 1px 2px #0008;
+}
+.sort-cac { opacity: .55; cursor: default; }
+.sort-cac .sort-icon-vide { font-size: 30px; line-height: 36px; filter: grayscale(1); }
+.sort-cac .sort-nom { color: var(--muet); }
+.sort-nom { font-size: .68rem; font-weight: 700; line-height: 1; text-align: center; color: #c3d2e8; }
+.sort-pa-badge {
+  position: absolute; top: -8px; right: -8px; min-width: 21px; height: 21px; padding: 0 5px;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 40% 30%, #bfe6ff, var(--pa)); color: #06243a;
+  font-size: .74rem; font-weight: 900; border-radius: 999px; border: 1px solid #06243a66; box-shadow: 0 1px 3px #0008;
+}
+.barre-actions-fin { display: flex; align-items: center; }
+.fin-tour { font-weight: 900; }
+.aide { grid-column: 1 / -1; color: var(--muet); font-size: .82rem; margin-top: 2px; }
+.attente { color: var(--muet); font-style: italic; }
+
+/* =========================================================================
+   PANNEAU DE PROGRESSION
+   ========================================================================= */
+.prog-grille { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin: 8px 0; }
+.carte-prog {
+  width: 330px; text-align: left; padding: 16px; border-radius: 14px; color: var(--txt);
+  background: var(--panel-solide); border: 1px solid var(--bord); box-shadow: 0 8px 22px #0008;
+}
+.prog-tete { display: flex; justify-content: space-between; align-items: baseline; }
+.prog-nom { font-weight: 900; font-size: 1.15rem; }
+.prog-niv { color: var(--or); font-weight: 900; }
+.barre-xp { position: relative; height: 16px; border-radius: 7px; background: #0c1622; overflow: hidden; margin: 8px 0; border: 1px solid #00000055; }
+.barre-xp-rempli { height: 100%; background: linear-gradient(180deg, #5fb0ff, var(--pa)); }
+.xp-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+.prog-pv { font-size: .85rem; color: var(--muet); }
+.points-dispo { margin: 8px 0; font-size: .9rem; }
+.points-dispo.actif { color: var(--or-clair); font-weight: 800; }
+.stats-grille { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.stat-ligne { display: grid; grid-template-columns: 1fr auto 1.4fr auto; gap: 8px; align-items: center; }
+.stat-nom { font-weight: 800; }
+.stat-val { font-variant-numeric: tabular-nums; }
+.stat-effet { font-size: .66rem; color: var(--muet); }
+.stat-plus { padding: 3px 10px; font-size: .8rem; }
+
+/* =========================================================================
+   PLATEAU (carte du monde sombre)
+   ========================================================================= */
+/* layout : sidebar équipe (gauche) + plateau (droite) */
+.map-layout { display: flex; gap: 18px; align-items: flex-start; }
+.map-aside {
+  width: 234px; flex: none; padding: 14px;
+  background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--bord); border-radius: 14px; box-shadow: 0 8px 22px #0008;
+}
+.map-aside h2 { margin: 0 0 12px; font-size: 1.2rem; }
+.map-main { flex: 1; min-width: 0; }
+.zone-titre { margin: 0 0 10px; color: var(--or-clair); font-size: 1.5rem; text-align: center; text-shadow: 0 2px 0 #00000060; }
+.aside-equipe { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.aside-perso { display: flex; align-items: center; gap: 10px; }
+.aside-sym { width: 34px; height: 34px; object-fit: contain; flex: none; filter: drop-shadow(0 1px 2px #000a); }
+.aside-info { flex: 1; min-width: 0; }
+.aside-nom { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: .86rem; margin-bottom: 3px; }
+.aside-niv { color: var(--or); font-size: .72rem; font-weight: 700; }
+.aside-btn { width: 100%; }
+.barre-pv.mini { height: 14px; }
+.barre-pv.mini .pv-txt { font-size: .64rem; }
+
+@media (max-width: 760px) {
+  .map-layout { flex-direction: column; }
+  .map-aside { width: auto; align-self: stretch; }
+}
+
+.map-zone {
+  position: relative; margin: 0 auto; width: 860px; max-width: 100%; border-radius: 16px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, #1a2841, transparent 70%),
+    radial-gradient(80% 70% at 50% 120%, #122036, transparent 70%),
+    linear-gradient(180deg, #131d2e, #0c1320);
+  border: 1px solid var(--bord); box-shadow: inset 0 0 80px #0009, 0 12px 34px #000a;
+}
+.map-svg { position: absolute; inset: 0; pointer-events: none; }
+.arete { stroke: #3a5273; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1 8; opacity: .8; }
+.arete-actif { stroke: var(--cyan); stroke-width: 4; opacity: 1; stroke-dasharray: 1 7; }
+
+.map-node {
+  position: absolute; transform: translate(-50%, -50%); background: transparent; border: none;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; color: var(--txt);
+}
+.case-art {
+  position: relative; width: 64px; height: 64px; border-radius: 13px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 28%, #2a3b58, #111a29);
+  border: 1px solid var(--bord-clair); box-shadow: 0 4px 10px #0009, inset 0 0 12px #0007;
+}
+.case-art .mn-icon { font-size: 1.8rem; }
+.case-img { position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); object-fit: contain; filter: drop-shadow(0 1px 2px #000a); }
+.mn-lbl { font-size: .72rem; font-weight: 700; color: #c3d2e8; padding: 1px 8px; border-radius: 999px; background: #0c1320cc; border: 1px solid #ffffff14; }
+
+.map-node.visite { opacity: .5; }
+.map-node.visite .case-art::after { content: "✔"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--pv); font-size: 1.5rem; font-weight: 900; text-shadow: 0 1px 3px #000; }
+.map-node.courant .case-art { box-shadow: 0 0 0 3px var(--cyan), 0 0 16px var(--cyan); }
+.map-node.t-donjon .case-art { border-color: var(--or); }
+.map-node.atteignable { cursor: pointer; }
+.map-node.atteignable .case-art { box-shadow: 0 0 0 2px var(--cyan), 0 0 16px #57d4e088; animation: pulse-case 1.4s ease-in-out infinite; }
+.map-node.t-donjon.atteignable .case-art { box-shadow: 0 0 0 2px var(--or), 0 0 18px #e8b54e99; }
+.map-node.atteignable:hover { transform: translate(-50%, -50%) translateY(-3px); }
+.map-node:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.map-node:disabled { cursor: default; }
+
+.map-depart { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; }
+.depart-art {
+  width: 56px; height: 56px; font-size: 1.6rem;
+  background: radial-gradient(circle at 50% 30%, #1b3a44, #0c1622) !important;
+  border-color: var(--cyan) !important; box-shadow: 0 0 0 2px var(--cyan), 0 0 16px #57d4e088 !important;
+}
+
+@keyframes pulse-case { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.22); } }
+@media (prefers-reduced-motion: reduce) { .map-node.atteignable .case-art { animation: none; } }
+
+/* =========================================================================
+   JOURNAL
+   ========================================================================= */
+.journal {
+  background: #0b121d; color: #aebfd6; border: 1px solid var(--bord); border-radius: 12px;
+  padding: 10px 12px; height: 150px; overflow-y: auto; font-size: .82rem; box-shadow: inset 0 0 24px #0008;
+}
+.log-line { padding: 1px 0; border-bottom: 1px solid #ffffff08; }

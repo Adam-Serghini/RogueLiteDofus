@@ -1,0 +1,68 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project state
+
+**V0 + V1 are implemented** (TS + Vite, vanilla DOM). The spec docs remain the source of truth for *intent*:
+
+- `V0-specs-roguelite-dofus.md` — combat + persistent Dofus (data model, formulas, spells, enemies).
+- `V1-specs-niveaux-plateau.md` — adds **in-run progression** (XP → levels → stat points) and the **board** (node map) that replaces the linear sequence.
+- `GDD-roguelite-dofus.md` — the full game vision. Background only; consult it for *why* a system exists, never to widen scope beyond the current tranche.
+
+Implemented beyond the original specs (added by playtest iteration): the **6-element system** (terre/feu/eau/air/wakfu/stasis with Chance/Wakfu/Stasis stats), **7 classes** (Iop/Cra/Eniripsa/Sadida/Sram/Feca/Ecaflip), a **recruitment system** (start with 2, recruit/heal at tavernes, team of 4 max), and **equipment** (`ITEMS`/`PANOPLIES` in `data.ts`; 6 slots; Aventurier set drops in Incarnam, Bouftou in Astrub via `BUTIN_ZONE`; **per-run** loot — `RunState.inventaire` + `PersoState.equipement`, lost on death; **Prospection** now boosts drop rate). Equipment stats/PV/resistances fold into the combatant via `bonusEquipement`/`pvMaxPerso` in `run.ts`.
+
+Still out of scope (next tranches): kamas & economy nodes (Commerce/Forgemagie/HDV), multi-world forks, weapon/pet/multi-ring slots, item level requirements.
+
+Both docs are in French; the game's domain vocabulary (PA, sorts, esquive, élément de frappe, Dofus…) is French and is kept as-is in code identifiers and data.
+
+## Commands
+
+- `npm run dev` — Vite dev server (hot reload) at http://localhost:5173
+- `npm test` — run the Vitest suite once. `npm run test:watch` to watch.
+- A single test: `npx vitest run src/combat.test.ts -t "règle de ligne"` (`-t` matches the `describe`/`it` name).
+- `npm run typecheck` — `tsc --noEmit`, strict mode.
+- `npm run build` — typecheck + production bundle to `dist/`.
+
+## What the game is
+
+A turn-based tactical roguelite in the Dofus universe, played in the browser. The single loop V0 must validate: **tactical combat + a permanent relic (Dofus) that survives death and makes the next run easier**. Everything is judged against one question — *is the combat fun?*
+
+## Tech stack
+
+- **TypeScript + Vite**, vanilla — **no React, no Canvas**. UI is plain DOM. The point is to test *feel*, not visuals.
+- **Data-driven**: classes, spells, monsters, encounters, map-generation params and tuning constants live in `src/data.ts`, not hardcoded in logic.
+- **Vitest** for the pure modules (`combat`, `progression`, `carte`) — validated headlessly, independent of the DOM.
+- Persistence: only the `Meta` object (owned Dofus) survives a run, saved to `localStorage` (key `rld_meta_v0`). Levels/points/HP live in `RunState` and reset on death.
+
+## Code map & architecture
+
+The hard line in this codebase: **`combat.ts` is pure** (no DOM, no `localStorage`) and **`ui.ts` is presentation only** (no game rules). Everything is wired in `main.ts`. Keep new logic on the correct side of that line — it's why the engine is unit-testable.
+
+- `src/types.ts` — the data model (interfaces straight from the spec): combat types, `Progression`, and map types (`MapNode`, `GameMap`).
+- `src/data.ts` — all content & tuning: `SORTS` (**7 classes**: Iop, Cra, Eniripsa, Sadida, **Sram**, **Feca**, **Ecaflip** + monsters), `CLASSES`, `MONSTRES` (bestiary across 3 zones), `DOFUS` (31-relic catalogue, only Pourpre has an effect), `COMBATS` (per-zone encounters; boss encounters = **boss + miniboss**), **`ZONES`** (Incarnam → Champs d'Astrub → Tainéla, each with `pools = {normales, elite, boss}`), `XP_PAR_TYPE`, `TAVERNE_PCT`, `GEN_CARTE`. Each class/monster has an optional `img` (path under `public/assets/…`). Sprites/icons are pulled from **DofusDB** (`api.dofusdb.fr` JSON + `/img/...` CDN; the website itself is a JS SPA and not fetchable).
+- `src/combat.ts` — **pure engine**. `runCombat()` is the async turn loop, decoupled from input via **controllers** (`Controller = (acteur, combatants) => Action | null`). The UI passes a promise-based controller for the player; `controllerIA` drives enemies. RNG injected (`hooks.rng`) for deterministic tests. Reads final `c.stats` (via `statsEffectives`, which adds temp stat buffs; it never knows about levels except `c.niveau`, baked for `+x/lvl` scaling). Handles the **support + new-class mechanics** (see below). Dedicated handlers `lancerTarot`/`lancerEspritFelin` for the random Ecaflip spells.
+- `src/progression.ts` — **pure**. Levels/XP/points: `xpRequis`, `coutPoint`, `gagnerXP`, `investir`, `restat`, `statsFinales`, `pvMaxFor`, `multOffensif`, `multSoin`. No DOM/storage. `STAT_KEYS` = investable stats (Soin & Prospection are class-only, not investable).
+- `src/carte.ts` — **pure**. `genererCarte(rng, pools)` builds one zone's node graph by rows with connectivity guarantees (combat ids drawn from the zone's `pools`); `atteignables(carte)` / `noeud(carte,id)` for navigation.
+- `src/run.ts` — `RunState`/`PersoState` (per-character progression + current HP + `elementChoisi`, persisted across nodes). **Dynamic roster**: `nouvelleRun(choix)` builds the team from chosen class ids (run starts with **2 of 7**); `recruter`/`propositionsRecrutement`/`classesHorsEquipe`/`equipePleine` drive Taverne recruitment (team max 4, recruit-at-team-level, swap when full). `EQUIPE_DEPART` is just the default used by tests. Combatant factories **bake final stats** into a `Combatant` (`combattantDepuisPerso`, `equipeCombattante`, `synchroniserPV` writes back HP + chosen element), `soignerEquipe`, `Meta` persistence (`bonusDegatsDofus`).
+- `src/ui.ts` — DOM rendering + player controller (click spell → click target) + screens: combat, **`showChoixEquipe`** (pick 2 of 7 at run start), **`showTaverne`** (heal OR recruit one of 2 random candidates; replace a member when full), start/transition/wipe/dofus, `showStatPanel` (level-up/Otomai), `showCarte` (SVG node graph), `showFormation`. Combatant cards show element ronds (clickable to switch strike element), crit/dégât-crit/soin/dgts-finaux mini-stats, all-6 resistances, prospection (allies only). Sprites/icons via the `asset(categorie, id)` convention (`/assets/<cat>/<id>.png`) with `onerror` fallback — drop a file, it shows; absent, it's removed (nothing breaks). **Missing assets**: `assets/classes/feca.png` & `ecaflip.png`, and the new spell icons, are not yet provided (graceful fallback).
+- `src/main.ts` — orchestration: accueil → for each of the 3 `ZONES`, `jouerZone` generates that zone's board and navigates it until the donjon (boss+miniboss) is beaten → its Dofus drops → next zone; wipe anywhere ends the run. HP/levels persist across zones; only `Meta.dofus` survives death.
+
+Two key seams keep things testable and decoupled:
+1. **Combatants are rebuilt per fight** from `RunState` — final stats and `pvMax` are computed in `run.ts` and baked into the `Combatant`, so `combat.ts` stays ignorant of levels/points. HP persists via `PersoState.pvActuels` (written back by `synchroniserPV`), not by keeping the combatant object around.
+2. **The async controller pattern**: `runCombat` `await`s the active camp's controller, so the same loop runs headless (IA vs IA in tests) or interactively (promise resolved by a DOM click) with no branching in the engine.
+
+### Core combat rules that are easy to get wrong
+
+- **Élément de frappe**: a character has no fixed element. Their *highest* elemental stat (force→terre, intelligence→feu, agilité→air) determines the element of all their damage. Resistances are applied per that element.
+- **Grid & line rule (SYMMETRIC, 4×2 per camp)**: `position` is a grid cell **0-7** — cells **0-3 = ligne avant**, 4-7 = arrière (`estAvant(c) = position < 4`, `combat.ts`). `ennemi_ligne` spells hit only the target camp's front-row living; if the front row is empty, the back becomes exposed (`ligneFront`). Applies to **both** camps. `ennemi_tous` ignores it; rebound (Flèche perçante) hops by ascending position; taunt (`provoque`) overrides. Placement is free: all-front, all-back, mono-tank, etc. Players placed via **formation** (`config.formation` = `{classeId: cell}` → `PersoState.position`), edited from the board grid (`showFormation`); enemies placed by encounter `position` cells in `data.ts` (up to 8). Combat cards are vertical, grouped into front/back rows per camp.
+- **Damage pipeline** (order matters, see `degatsCible` in `combat.ts`): esquive check (Agilité, capped) → roll (or max if `maxRoll` charge) → add élément-de-frappe stat × scaling → crit (Force, capped, *adds* damage via Agilité, does not double) → `degatsInfliges` debuff → rebound mult → resistance (unless `ignoreResistances`) → Dofus team bonus (`ctx.playerDamageBonus`, player camp only) → `multOffensif` (Intelligence, capped, all casters) → round, floor at 0.
+- **Support mechanics** (Eniripsa kit, all in `combat.ts`): damage goes through `infligerDegats` → **shield (`bouclier`) absorbs before HP**; `poison`/`hot` are timed effects in `effets[]` that **tick at the start of the actor's turn** in `effetsDebutTour` (poison can kill, then transmits to the combatant `derriere` if `transmet`); heals via `soigner` (incl. `soinComplet`, `allie_tous`, `soinEquipeRatio` lifesteal-to-team); `appliquerSoutien` applies bouclier/HoT/`dissipe`/`paGain`/`bonusProchainSortPct`; per-target **cooldowns** live on `acteur.cooldowns` and are enforced inside `ciblesValides`. `allie_tous`/`soi`/`invocation` spells resolve with no target click.
+- **Invocation & init (Sadida kit)**: the turn loop re-picks the next actor each step by **effective initiative** (`initOf` = base + `initiative` effects), so a mid-round init debuff (Déferlante/Étreinte) actually delays enemies that haven't acted yet. **Invocations** (`estInvocation`, e.g. the Poupée de garde via `invoquerPoupee`) occupy a slot, are skipped in the loop, and can `provoque` — enforced in `ciblesValides` (enemies must target a provoking ally first). One poupée per summoner. `Vigueur des bois` sets `bonusOffensifProchain`, a one-shot % consumed by the next damage cast.
+- **Secondary-stat caps are mandatory**: crit, esquive, puissance offensive are capped (~50%) in the formulas. Don't remove the `Math.min` caps.
+- **HP persists between fights/nodes** within a run — the Taverne node is the only heal. A wipe ends the run but **must not erase `Meta.dofus`**.
+- **PV model**: `pvMax = pvBase + vitalitéFinale × PV_PAR_VITA` (spec-literal). Monster damage in `data.ts` is tuned against the resulting (inflated) player HP — retune both together.
+
+## Scope discipline
+
+Each tranche is deliberately narrow; the spec's validation criteria define "done". Current build: **7 classes** (Iop/Cra/Eniripsa/Sadida/Sram/Feca/Ecaflip), **6 elements**, in-run levels/points, recruitment (start at 2, taverne recruit/heal, max 4), **equipment** (2 panoplies, per-run loot), **3 sequential zones** (Incarnam → Champs d'Astrub → Tainéla) each a generated board ending in a boss+miniboss donjon that drops a Dofus, and a 31-relic collection (only Dofus Pourpre has a gameplay effect so far). Everything in the "out of scope" list above is **deferred** — resist pulling it in. **Balance is unverified**: the new classes' damage and the start-at-2 difficulty are tuned by formula, not playtest — values in `data.ts`/`progression.ts` are meant to be adjusted. Crit is now a multiplicative bonus (affects players AND monsters).
