@@ -21,8 +21,10 @@ const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
 describe("élément de frappe", () => {
   it("est déterminé par la plus haute stat élémentaire", () => {
     const [iop, cra] = fabriquerEquipe();
-    expect(elementDeFrappe(iop)).toBe("terre"); // Force la plus haute
-    expect(elementDeFrappe(cra)).toBe("air"); // Agilité la plus haute
+    iop.stats = { ...iop.stats, force: 60 }; // build Terre
+    cra.stats = { ...cra.stats, agilite: 55 }; // build Air
+    expect(elementDeFrappe(iop)).toBe("terre");
+    expect(elementDeFrappe(cra)).toBe("air");
   });
 
   it("bascule sur les nouveaux éléments (eau / wakfu / stasis)", () => {
@@ -36,7 +38,8 @@ describe("élément de frappe", () => {
   });
 
   it("le joueur peut choisir son élément de frappe parmi les 2 plus forts", () => {
-    const [iop] = fabriquerEquipe(); // Terre (60) puis Air (20)
+    const [iop] = fabriquerEquipe();
+    iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // Terre (1er) puis Air (2e)
     expect(elementDeFrappe(iop)).toBe("terre");
     iop.elementChoisi = "air"; // 2e plus fort → autorisé
     expect(elementDeFrappe(iop)).toBe("air");
@@ -58,8 +61,10 @@ describe("élément de frappe", () => {
 describe("degatsCible", () => {
   it("applique jet max + scaling + résistance + puissance offensive", () => {
     const [iop] = fabriquerEquipe();
-    const [bouftou] = fabriquerEnnemis("combat_1"); // résiste +15 % à la Terre
-    const r = degatsCible(iop, SORTS.pression, bouftou, { useMax: true, mult: 1, ctx: ctx() });
+    iop.stats = { ...iop.stats, force: 60, intelligence: 10 };
+    const [cible] = fabriquerEnnemis("combat_1");
+    cible.resistances = { terre: 0.15 }; // résiste +15 % à la Terre
+    const r = degatsCible(iop, SORTS.pression, cible, { useMax: true, mult: 1, ctx: ctx() });
     // (12 + 60*0.3) * (1 - 0.15) * multOffensif(Int 10 = 1.05) = 25.5 * 1.05 = 26.775 → 27
     expect(r.dmg).toBe(27);
     expect(r.esquive).toBe(false);
@@ -78,6 +83,7 @@ describe("degatsCible", () => {
 
   it("ignoreResistances : Flèche intrusive ignore la ligne de résistance", () => {
     const [, cra] = fabriquerEquipe();
+    cra.stats = { ...cra.stats, agilite: 55, intelligence: 20 };
     const [bouftou] = fabriquerEnnemis("combat_1");
     const r = degatsCible(cra, SORTS.fleche_intrusive, bouftou, { useMax: true, mult: 1, ctx: ctx() });
     // (7 + 55*0.2) * multOffensif(Int 20 = 1.10) = 18 * 1.10 = 19.8 → 20, aucune résistance
@@ -85,7 +91,8 @@ describe("degatsCible", () => {
   });
 
   it("esquive (Agilité) annule les dégâts", () => {
-    const [iop, cra] = fabriquerEquipe(); // la Cra a 55 d'agilité
+    const [iop, cra] = fabriquerEquipe();
+    cra.stats = { ...cra.stats, agilite: 55 }; // esquive via Agilité
     const r = degatsCible(iop, SORTS.pression, cra, { useMax: true, mult: 1, ctx: ctx({ rng: rngZero }) });
     expect(r.esquive).toBe(true);
     expect(r.dmg).toBe(0);
@@ -93,6 +100,7 @@ describe("degatsCible", () => {
 
   it("le coup critique multiplie les dégâts (Dégât crit %)", () => {
     const [iop] = fabriquerEquipe();
+    iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // chance de crit via Force
     const [bouftou] = fabriquerEnnemis("combat_1");
     // séquence rng : pas d'esquive (0.9), crit déclenché (0.0)
     const seq = [0.9, 0.0];
@@ -140,9 +148,9 @@ describe("règle de ligne (grille avant/arrière)", () => {
 
 describe("bonusDegatsDofus", () => {
   it("cumule les copies du Dofus Pourpre", () => {
-    expect(bonusDegatsDofus({ dofus: [] })).toBeCloseTo(1);
-    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre"] })).toBeCloseTo(1.15);
-    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre", "dofus_pourpre"] })).toBeCloseTo(1.3);
+    expect(bonusDegatsDofus({ dofus: [], archis: [] })).toBeCloseTo(1);
+    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre"], archis: [] })).toBeCloseTo(1.15);
+    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre", "dofus_pourpre"], archis: [] })).toBeCloseTo(1.3);
   });
 });
 

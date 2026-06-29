@@ -2,7 +2,7 @@
 //  ui.ts — Rendu DOM minimal + contrôleur joueur (clic sort → clic cible).
 //  Aucune logique de combat ici : on lit l'état et on renvoie des Actions.
 // =============================================================================
-import { SORTS, DOFUS, DOFUS_DROP, CLASSES, ITEMS, PANOPLIES } from "./data";
+import { SORTS, DOFUS, DOFUS_DROP, CLASSES, ITEMS, PANOPLIES, MONSTRES, ZONES, monstresDeZone, OCRE_PALIERS, SORT_DOSSIER } from "./data";
 import { ciblesValides, estAvant, ELEMENTS, elementsForts, elementDeFrappe } from "./combat";
 import {
   STAT_KEYS,
@@ -10,11 +10,11 @@ import {
   pvMaxFor,
   xpRequis,
   coutPoint,
-  investir,
+  investirN,
 } from "./progression";
 import { atteignables, noeud } from "./carte";
 import { chargerConfig, sauverConfig, libelleTouche, type Settings } from "./config";
-import { classesDisponibles, bonusEquipement, pvMaxPerso, equiper, desequiper, type PersoState } from "./run";
+import { classesDisponibles, bonusEquipement, pvMaxPerso, equiper, desequiper, paliersOcre, type PersoState } from "./run";
 import type {
   Action,
   Camp,
@@ -34,6 +34,7 @@ let root: HTMLElement;
 let combatants: Combatant[] = [];
 let logLines: string[] = [];
 let titre = "";
+let metaCombat: Meta | null = null; // pour l'indicateur de capture d'Archimonstre sur les cartes
 
 // état du tour joueur en cours
 let activeActeur: Combatant | null = null;
@@ -149,16 +150,10 @@ function escapeHtml(s: string): string {
 export const A = (p: string): string => import.meta.env.BASE_URL + p.replace(/^\/+/, "");
 
 /**
- * Convention d'assets : le nom de fichier = l'id de l'entité.
- * Dépose `public/assets/<categorie>/<id>.png` et il s'affiche ; absent, l'`onerror`
- * de la balise <img> le retire (rien ne casse). Pas de câblage par ajout.
+ * Icône d'un sort, rangée par classe propriétaire : `/assets/spells/<classe>/<id>.png`
+ * (sorts de monstres → `/monstres/`). Absente → l'`onerror` de l'<img> la retire.
  */
-function asset(
-  categorie: "classes" | "monstres" | "spells",
-  id: string,
-): string {
-  return A(`/assets/${categorie}/${id}.png`);
-}
+const sortIcon = (id: string): string => A(`/assets/spells/${SORT_DOSSIER[id] ?? "monstres"}/${id}.png`);
 
 const PA_ICON = A("/assets/elements/pa.png");
 const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
@@ -180,9 +175,10 @@ const resAsset: Record<Element, string> = {
 };
 
 // --- Combat ------------------------------------------------------------------
-export function beginCombat(cs: Combatant[], titreCombat: string): void {
+export function beginCombat(cs: Combatant[], titreCombat: string, meta: Meta | null = null): void {
   combatants = cs;
   titre = titreCombat;
+  metaCombat = meta;
   logLines = [];
   activeActeur = null;
   selectedSpell = null;
@@ -259,6 +255,20 @@ function elemRond(el: Element, rang: number, actif: boolean, switchable: boolean
     <img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><i>${rang}</i>${actif ? `<b class="frappe-pic">⚔</b>` : ""}</span>`;
 }
 
+/**
+ * Indicateur de collection d'Archimonstre (coin haut-droit du mob) : présent
+ * uniquement sur les espèces qui ont un Archimonstre réel. Opaque si l'espèce
+ * est déjà capturée, translucide sinon.
+ */
+function archiIndicateur(c: Combatant): string {
+  if (c.camp !== "ennemi" || !c.archiNom) return "";
+  const capture = !!(c.monstreId && metaCombat?.archis.includes(c.monstreId));
+  const titre = capture
+    ? `Archimonstre capturé : ${c.archiNom}`
+    : `Archimonstre à capturer : ${c.archiNom}`;
+  return `<img class="archi-badge ${capture ? "capture" : ""}" src="${A("/assets/divers/Archmonster.webp")}" alt="" title="${escapeHtml(titre)}" onerror="this.remove()" />`;
+}
+
 function carteCombattant(c: Combatant, clickable: boolean): string {
   const ko = c.pvActuels <= 0;
   const pct = Math.max(0, Math.round((c.pvActuels / c.pvMax) * 100));
@@ -297,6 +307,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     ko ? "ko" : "",
     c === activeActeur ? "actif" : "",
     clickable ? "ciblable" : "",
+    c.archi ? "archi" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -309,6 +320,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
       </div>
       <div class="portrait-wrap">
         ${c.img ? `<img class="portrait" src="${A(c.img)}" alt="" onerror="this.remove()" />` : `<div class="portrait"></div>`}
+        ${archiIndicateur(c)}
         <span class="pa-gem" title="${c.paActuels} / ${c.paMax} PA"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${c.paActuels}</b></span>
       </div>
       <div class="elems">${elemRond(principal, 1, principal === actif, switchable)}${elemRond(secondaire, 2, secondaire === actif, switchable)}</div>
@@ -348,11 +360,15 @@ function render(): void {
       .filter((c) => c.camp === camp)
       .sort((a, b) => a.position - b.position);
     const grp = (titreLigne: string, liste: Combatant[]) =>
-      `<div class="ligne-groupe">
+      `<div class="ligne-col">
          <span class="ligne-label">${titreLigne}</span>
          <div class="ligne-cards">${liste.map((c) => carteCombattant(c, estCiblable(c))).join("") || `<span class="ligne-vide">—</span>`}</div>
        </div>`;
-    return grp("Ligne avant", membres.filter(estAvant)) + grp("Ligne arrière", membres.filter((c) => !estAvant(c)));
+    const avant = grp("Ligne avant", membres.filter(estAvant));
+    const arriere = grp("Ligne arrière", membres.filter((c) => !estAvant(c)));
+    // les deux lignes côte à côte ; l'arrière est « derrière » = côté extérieur
+    // (gauche pour le joueur, droite pour l'ennemi) → les lignes avant se font face au centre
+    return `<div class="camp-lignes ${camp}">${camp === "joueur" ? arriere + avant : avant + arriere}</div>`;
   };
 
   root.innerHTML = `
@@ -452,7 +468,7 @@ function renderBarreSorts(): string {
       } title="${escapeHtml(`${s.nom} — ${s.desc ?? ""}`)}">
         <span class="sort-touche">${i + 2}</span>
         <span class="sort-pa-badge">${s.coutPA}</span>
-        <img class="sort-icon" src="${asset("spells", s.id)}" alt="" onerror="this.remove()" />
+        <img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.remove()" />
         <span class="sort-nom">${escapeHtml(s.nom)}</span>
       </button>`;
     })
@@ -472,7 +488,6 @@ function renderBarreSorts(): string {
     : `<div class="aide">Tour de <b>${escapeHtml(acteur.nom)}</b> — choisis un sort.</div>`;
 
   return `
-    <div class="pa-jauge" title="Points d'action restants"><img class="pa-jauge-ico" src="${PA_ICON}" alt="" /><b>${acteur.paActuels}</b></div>
     <div class="sorts-liste">${boutons}</div>
     <div class="barre-actions-fin"><button id="fin-tour" class="fin-tour primaire">Terminer le tour <kbd>${escapeHtml(libelleTouche(config.toucheFinTour))}</kbd></button></div>
     ${aide}`;
@@ -515,10 +530,15 @@ export function showStart(meta: Meta, onReset: () => void): Promise<void> {
       ${renderDofusRack(meta)}
       <div class="boutons-ecran">
         <button id="btn-start" class="primaire">Lancer une run</button>
+        <button id="btn-bestiaire" class="secondaire">Bestiaire</button>
         <button id="btn-settings" class="secondaire">Paramètres</button>
         ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
       </div>
     `);
+    document.getElementById("btn-bestiaire")?.addEventListener("click", async () => {
+      await showBestiaire(meta);
+      showStart(meta, onReset).then(res);
+    });
     document.getElementById("btn-settings")?.addEventListener("click", async () => {
       await showSettings();
       showStart(meta, onReset).then(res);
@@ -680,14 +700,26 @@ export function showFormation(persos: PersoState[]): Promise<void> {
       const inner = p
         ? `<img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" /><span>${escapeHtml(CLASSES[p.classeId].nom)}</span>`
         : `<span class="form-vide">+</span>`;
-      return `<button class="form-cell ${p ? "" : "vide"} ${sel}" data-cell="${cell}">${inner}</button>`;
+      return `<button class="form-cell ${p ? "" : "vide"} ${sel}" data-cell="${cell}" ${p ? `draggable="true"` : ""}>${inner}</button>`;
     };
     const rangee = (cells: number[]) => cells.map(cellule).join("");
+
+    // déplace/échange l'occupant de `src` vers `dst`
+    const deplacer = (src: number, dst: number) => {
+      if (src === dst) return;
+      const a = occupant(src);
+      const b = occupant(dst);
+      if (a) a.position = dst;
+      if (b) b.position = src; // échange si la case d'arrivée est occupée
+      selCell = -1;
+      enregistrer();
+      draw();
+    };
 
     const draw = () => {
       ecran(`
         <h1>Formation</h1>
-        <p class="sous-titre">Sélectionne un perso puis une case pour le déplacer (ou échanger). La <b>ligne avant</b> encaisse les sorts de ligne ennemis ; la <b>ligne arrière</b> est protégée. Effet dès le prochain combat.</p>
+        <p class="sous-titre">Glisse-dépose un perso sur une case pour le déplacer (ou l'échanger) — ou clique-le puis clique la case. La <b>ligne avant</b> encaisse les sorts de ligne ennemis ; la <b>ligne arrière</b> est protégée. Effet dès le prochain combat.</p>
         <div class="formation-grille">
           <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
@@ -695,21 +727,32 @@ export function showFormation(persos: PersoState[]): Promise<void> {
         <div class="boutons-ecran"><button id="form-retour" class="primaire">Retour au plateau</button></div>
       `);
       root.querySelectorAll<HTMLButtonElement>(".form-cell").forEach((btn) => {
+        const cell = Number(btn.dataset.cell);
+        // — clic : sélection puis déplacement (fallback)
         btn.addEventListener("click", () => {
-          const cell = Number(btn.dataset.cell);
           if (selCell < 0) {
-            if (occupant(cell)) selCell = cell; // on ne sélectionne qu'une case occupée
+            if (occupant(cell)) { selCell = cell; draw(); } // on ne sélectionne qu'une case occupée
           } else if (selCell === cell) {
-            selCell = -1;
+            selCell = -1; draw();
           } else {
-            const a = occupant(selCell);
-            const b = occupant(cell);
-            if (a) a.position = cell;
-            if (b) b.position = selCell; // échange si la case d'arrivée est occupée
-            selCell = -1;
-            enregistrer();
+            deplacer(selCell, cell);
           }
-          draw();
+        });
+        // — glisser-déposer
+        btn.addEventListener("dragstart", (e) => {
+          if (!occupant(cell)) { e.preventDefault(); return; }
+          e.dataTransfer!.setData("text/plain", String(cell));
+          e.dataTransfer!.effectAllowed = "move";
+          btn.classList.add("drag-src");
+        });
+        btn.addEventListener("dragend", () => btn.classList.remove("drag-src"));
+        btn.addEventListener("dragover", (e) => { e.preventDefault(); btn.classList.add("drop-cible"); });
+        btn.addEventListener("dragleave", () => btn.classList.remove("drop-cible"));
+        btn.addEventListener("drop", (e) => {
+          e.preventDefault();
+          btn.classList.remove("drop-cible");
+          const src = Number(e.dataTransfer!.getData("text/plain"));
+          if (!Number.isNaN(src)) deplacer(src, cell);
         });
       });
       document.getElementById("form-retour")?.addEventListener("click", () => {
@@ -761,7 +804,7 @@ export function showInventaire(persos: PersoState[], inventaire: string[]): Prom
       const slots = SLOTS.map((slot) => {
         const id = perso.equipement[slot];
         const item = id ? ITEMS[id] : undefined;
-        return `<div class="equip-slot ${item ? "rempli" : "vide"}" ${item ? `data-desequip="${slot}"` : ""}>
+        return `<div class="equip-slot ${item ? "rempli" : "vide"}" data-slot="${slot}" ${item ? `data-desequip="${slot}" draggable="true"` : ""}>
           <span class="slot-nom">${SLOT_NOM[slot]}</span>
           ${item
             ? `<img class="slot-img" src="${itemImg(item.id)}" alt="" onerror="this.remove()" /><span class="slot-item">${escapeHtml(item.nom)}<small>${itemLignes(item)}</small></span>`
@@ -779,7 +822,7 @@ export function showInventaire(persos: PersoState[], inventaire: string[]): Prom
       const inv = inventaire.length
         ? inventaire.map((id) => {
             const it = ITEMS[id];
-            return `<button class="item-carte" data-equip="${id}">
+            return `<button class="item-carte" data-equip="${id}" draggable="true">
               <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
               <span class="item-nom">${escapeHtml(it?.nom ?? id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(it)}</small></span>
             </button>`;
@@ -806,12 +849,63 @@ export function showInventaire(persos: PersoState[], inventaire: string[]): Prom
         </div>
         <div class="boutons-ecran"><button id="equip-retour" class="primaire">Retour au plateau</button></div>
       `);
+      // glisser-déposer : payload "inv:<id>" (objet de l'inventaire) ou "slot:<slot>" (pièce équipée)
+      const equiperId = (id: string) => { if (inventaire.includes(id)) { equiper(inventaire, perso, id); draw(); } };
+      const desequiperSlot = (slot: EquipSlot) => { desequiper(inventaire, perso, slot); draw(); };
+
       root.querySelectorAll<HTMLButtonElement>(".equip-onglet").forEach((btn) =>
         btn.addEventListener("click", () => { sel = Number(btn.dataset.perso); draw(); }));
-      root.querySelectorAll<HTMLButtonElement>(".item-carte").forEach((btn) =>
-        btn.addEventListener("click", () => { equiper(inventaire, perso, btn.dataset.equip!); draw(); }));
-      root.querySelectorAll<HTMLElement>(".equip-slot.rempli").forEach((el) =>
-        el.addEventListener("click", () => { desequiper(inventaire, perso, el.dataset.desequip as EquipSlot); draw(); }));
+
+      root.querySelectorAll<HTMLButtonElement>(".item-carte").forEach((btn) => {
+        const id = btn.dataset.equip!;
+        btn.addEventListener("click", () => equiperId(id)); // clic = équiper (fallback)
+        btn.addEventListener("dragstart", (e) => {
+          e.dataTransfer!.setData("text/plain", `inv:${id}`);
+          e.dataTransfer!.effectAllowed = "move";
+          btn.classList.add("drag-src");
+        });
+        btn.addEventListener("dragend", () => btn.classList.remove("drag-src"));
+      });
+
+      root.querySelectorAll<HTMLElement>(".equip-slot").forEach((el) => {
+        const slot = el.dataset.slot as EquipSlot;
+        if (el.classList.contains("rempli")) {
+          el.addEventListener("click", () => desequiperSlot(slot)); // clic = déséquiper (fallback)
+          el.addEventListener("dragstart", (e) => {
+            e.dataTransfer!.setData("text/plain", `slot:${slot}`);
+            e.dataTransfer!.effectAllowed = "move";
+            el.classList.add("drag-src");
+          });
+          el.addEventListener("dragend", () => el.classList.remove("drag-src"));
+        }
+        // chaque slot accepte un objet de l'inventaire (rangé automatiquement dans le bon slot)
+        el.addEventListener("dragover", (e) => {
+          if (!(e.dataTransfer?.types.includes("text/plain"))) return;
+          e.preventDefault(); el.classList.add("drop-cible");
+        });
+        el.addEventListener("dragleave", () => el.classList.remove("drop-cible"));
+        el.addEventListener("drop", (e) => {
+          e.preventDefault(); el.classList.remove("drop-cible");
+          const data = e.dataTransfer!.getData("text/plain");
+          if (data.startsWith("inv:")) equiperId(data.slice(4));
+        });
+      });
+
+      // la zone d'inventaire accepte une pièce équipée → déséquipe
+      const invZone = root.querySelector<HTMLElement>(".equip-inv");
+      if (invZone) {
+        invZone.addEventListener("dragover", (e) => {
+          if (!(e.dataTransfer?.types.includes("text/plain"))) return;
+          e.preventDefault(); invZone.classList.add("drop-cible");
+        });
+        invZone.addEventListener("dragleave", () => invZone.classList.remove("drop-cible"));
+        invZone.addEventListener("drop", (e) => {
+          e.preventDefault(); invZone.classList.remove("drop-cible");
+          const data = e.dataTransfer!.getData("text/plain");
+          if (data.startsWith("slot:")) desequiperSlot(data.slice(5) as EquipSlot);
+        });
+      }
+
       document.getElementById("equip-retour")?.addEventListener("click", () => res());
     };
     draw();
@@ -937,17 +1031,21 @@ const STAT_NOM: Record<keyof Stats, string> = {
   soin: "Soin",
   prospection: "Prospection",
 };
-const STAT_EFFET: Record<keyof Stats, string> = {
-  force: "dégâts Terre · crit",
-  intelligence: "dégâts Feu · puissance off.",
-  agilite: "dégâts Air · esquive · dég. crit",
-  chance: "dégâts Eau",
-  wakfu: "dégâts Wakfu",
-  stasis: "dégâts Stasis",
-  vitalite: "PV max",
-  soin: "puissance de soin",
-  prospection: "butin (à venir)",
+// Description complète affichée au survol d'une caractéristique (peut contenir du HTML).
+const STAT_AIDE: Record<keyof Stats, string> = {
+  force: "Dégâts dans l'élément <b>Terre</b>.<br>Coup critique : <b>+0,5 %</b> par point (max 50 %).",
+  intelligence: "Dégâts dans l'élément <b>Feu</b>.<br>Dégâts finaux : <b>+0,5 %</b> par point (max 50 %).",
+  agilite: "Dégâts dans l'élément <b>Air</b>.<br>Esquive : <b>+0,2 %</b> par point (max 50 %).<br>Dégâts critiques : <b>+0,4 %</b> par point (max +60 %).",
+  chance: "Dégâts dans l'élément <b>Eau</b>.",
+  wakfu: "Dégâts dans l'élément <b>Wakfu</b>.",
+  stasis: "Dégâts dans l'élément <b>Stasis</b>.",
+  vitalite: "Points de vie maximum : <b>+1 PV</b> par point.",
+  soin: "Puissance des soins prodigués : <b>+0,5 %</b> par point (max 50 %).",
+  prospection: "Augmente les chances de butin d'équipement (cumulé sur toute l'équipe).",
 };
+// Ta plus haute stat élémentaire (Force/Int/Agi/Chance/Wakfu/Stasis) définit ton élément de frappe.
+const AIDE_ELEMENT = "<br><i class=\"aide-note\">L'élément de frappe est ta plus haute stat élémentaire.</i>";
+const STAT_ELEMENTAIRE = new Set<keyof Stats>(["force", "intelligence", "agilite", "chance", "wakfu", "stasis"]);
 
 function carteProgression(p: PersoState): string {
   const classe = CLASSES[p.classeId];
@@ -963,10 +1061,14 @@ function carteProgression(p: PersoState): string {
     const inv = prog.pointsInvestis[stat] ?? 0;
     return `
       <div class="stat-ligne">
-        <span class="stat-nom">${STAT_NOM[stat]}</span>
-        <span class="stat-val">${finals[stat]}${inv ? ` <span class="muet">(+${inv})</span>` : ""}</span>
-        <span class="stat-effet">${STAT_EFFET[stat]}</span>
-        <button class="stat-plus" data-perso="${p.classeId}" data-stat="${stat}" ${peut ? "" : "disabled"}>+ (${cout})</button>
+        <span class="stat-nom" tabindex="0">${STAT_NOM[stat]}<span class="stat-info">ⓘ</span><span class="stat-aide">${STAT_AIDE[stat]}${STAT_ELEMENTAIRE.has(stat) ? AIDE_ELEMENT : ""}</span></span>
+        <span class="stat-val">${finals[stat]}${inv ? ` <span class="muet">(+${inv})</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
+        <span class="stat-actions">
+          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="1" ${peut ? "" : "disabled"}>+1</button>
+          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="5" ${peut ? "" : "disabled"}>+5</button>
+          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="max" ${peut ? "" : "disabled"}>Max</button>
+          <button class="stat-champ" data-perso="${p.classeId}" data-stat="${stat}" ${peut ? "" : "disabled"} title="Montant libre">+…</button>
+        </span>
       </div>`;
   }).join("");
 
@@ -1002,14 +1104,36 @@ export function showStatPanel(
         <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
         <div class="boutons-ecran"><button id="prog-fermer" class="primaire">Continuer</button></div>
       `);
-      root.querySelectorAll<HTMLButtonElement>(".stat-plus").forEach((btn) => {
+      const persoDe = (el: HTMLElement) => persos.find((p) => p.classeId === el.dataset.perso);
+      // +1 / +5 / Max
+      root.querySelectorAll<HTMLButtonElement>(".stat-alloc").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const perso = persos.find((p) => p.classeId === btn.dataset.perso);
-          if (
-            perso &&
-            investir(perso.progression, btn.dataset.stat as keyof Stats)
-          )
+          const perso = persoDe(btn);
+          if (!perso) return;
+          const n = btn.dataset.n === "max" ? Infinity : Number(btn.dataset.n);
+          if (investirN(perso.progression, btn.dataset.stat as keyof Stats, n) > 0) draw();
+        });
+      });
+      // montant libre : un champ nombre s'ouvre à la place des boutons
+      root.querySelectorAll<HTMLButtonElement>(".stat-champ").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const actions = btn.closest<HTMLElement>(".stat-actions");
+          if (!actions) return;
+          actions.innerHTML = `<input class="stat-champ-input" type="number" min="1" step="1" value="1" /><button class="stat-champ-ok">OK</button>`;
+          const input = actions.querySelector<HTMLInputElement>(".stat-champ-input")!;
+          input.focus();
+          input.select();
+          const valider = () => {
+            const perso = persoDe(btn);
+            const n = Math.max(0, Math.floor(Number(input.value) || 0));
+            if (perso && n > 0) investirN(perso.progression, btn.dataset.stat as keyof Stats, n);
             draw();
+          };
+          actions.querySelector<HTMLButtonElement>(".stat-champ-ok")?.addEventListener("click", valider);
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") valider();
+            else if (e.key === "Escape") draw();
+          });
         });
       });
       document
@@ -1017,6 +1141,81 @@ export function showStatPanel(
         ?.addEventListener("click", () => res());
     };
     draw();
+  });
+}
+
+/**
+ * Otomai : explique l'effet et propose de réinitialiser UN seul personnage.
+ * Renvoie le perso choisi (à restater), ou null si le joueur passe.
+ */
+export function showOtomai(persos: PersoState[]): Promise<PersoState | null> {
+  return new Promise((res) => {
+    ecran(`
+      <h1>🔄 Fontaine d'Otomai</h1>
+      <p class="sous-titre">La fontaine <b>réinitialise les caractéristiques d'un seul personnage</b> : tous ses points investis lui sont rendus, à toi de les réattribuer (changer d'élément, corriger un build…). Les autres ne sont pas touchés. Choisis qui plonger dans la fontaine.</p>
+      <div class="choix-grille">${persos.map((p) => carteClasse(p.classeId, false, "data-otomai")).join("")}</div>
+      <div class="boutons-ecran"><button id="otomai-skip" class="secondaire">Ne rien faire</button></div>
+    `);
+    root.querySelectorAll<HTMLButtonElement>(".classe-carte").forEach((btn) =>
+      btn.addEventListener("click", () => res(persos.find((p) => p.classeId === btn.dataset.otomai) ?? null)));
+    document.getElementById("otomai-skip")?.addEventListener("click", () => res(null));
+  });
+}
+
+/** Texte d'effet d'un palier Ocre. */
+function ocreEffetTxt(paBonus: number, degats: number): string {
+  if (!paBonus && !degats) return "aucun";
+  const parts: string[] = [];
+  if (paBonus) parts.push(`+${paBonus} PA`);
+  if (degats) parts.push(`+${Math.round(degats * 100)} % dégâts`);
+  return parts.join(" · ");
+}
+
+/** Bestiaire par zone : suit les Archimonstres capturés et la progression du Dofus Ocre. */
+export function showBestiaire(meta: Meta): Promise<void> {
+  return new Promise((res) => {
+    // seules les espèces ayant un Archimonstre réel (archiNom) sont capturables
+    const capturables = (z: typeof ZONES[number]) => monstresDeZone(z).filter((id) => MONSTRES[id]?.archiNom);
+    const total = new Set(ZONES.flatMap(capturables)).size;
+    const captures = meta.archis.length;
+    const ocre = paliersOcre(meta);
+    const prochain = OCRE_PALIERS.find((p) => captures < p.seuil);
+    const zonesHtml = ZONES.map((z) => {
+      const ids = capturables(z);
+      const cards = ids.map((id) => {
+        const m = MONSTRES[id]!;
+        const capt = meta.archis.includes(id);
+        return `<div class="archi-mon ${capt ? "capt" : "manquant"}" title="${escapeHtml(m.archiNom!)} — Archimonstre de ${escapeHtml(m.nom)}${capt ? " (capturé)" : " (non capturé)"}">
+          <img src="${A(m.img ?? "")}" alt="" onerror="this.remove()" />
+          ${capt ? `<img class="archi-mark" src="${A("/assets/divers/Archmonster.webp")}" alt="" onerror="this.remove()" />` : ""}
+          <span>${escapeHtml(m.archiNom!)}</span>
+          <small>${escapeHtml(m.nom)}</small>
+        </div>`;
+      }).join("");
+      const corps = cards || `<p class="muet">Aucun Archimonstre dans cette zone.</p>`;
+      return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} <span class="archi-zone-compte">${ids.filter((id) => meta.archis.includes(id)).length}/${ids.length}</span></h3><div class="archi-grid">${corps}</div></div>`;
+    }).join("");
+    ecran(`
+      <h1>📖 Bestiaire — Archimonstres</h1>
+      <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
+      <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : <b>palier ${ocre.tier}</b> (${ocreEffetTxt(ocre.paBonus, ocre.degats)})${prochain ? ` · prochain palier à ${prochain.seuil}` : " · max atteint"}</p>
+      ${zonesHtml}
+      <div class="boutons-ecran"><button id="best-retour" class="primaire">Retour</button></div>
+    `);
+    document.getElementById("best-retour")?.addEventListener("click", () => res());
+  });
+}
+
+/** Petit écran de feedback quand on capture une ou plusieurs âmes d'Archimonstre. */
+export function showCapture(especes: string[]): Promise<void> {
+  return new Promise((res) => {
+    const s = especes.length > 1;
+    ecran(`
+      <h1>✨ Âme${s ? "s" : ""} d'Archimonstre capturée${s ? "s" : ""} !</h1>
+      <p class="sous-titre">${especes.map(escapeHtml).join(", ")} ${s ? "rejoignent" : "rejoint"} ton bestiaire (Dofus Ocre).</p>
+      <div class="boutons-ecran"><button id="capt-ok" class="primaire">Continuer</button></div>
+    `);
+    document.getElementById("capt-ok")?.addEventListener("click", () => res());
   });
 }
 
@@ -1160,6 +1359,7 @@ export function showCarte(
             <button id="carte-persos" class="primaire aside-btn">Personnages${points ? ` · ${points} pts` : ""}</button>
             <button id="carte-formation" class="secondaire aside-btn">Formation</button>
             <button id="carte-equip" class="secondaire aside-btn">Équipement${inventaire.length ? ` · ${inventaire.length}` : ""}</button>
+            <button id="carte-bestiaire" class="secondaire aside-btn">Bestiaire</button>
             <div class="aside-dofus">
               <h3>Dofus</h3>
               ${renderDofusRack(meta, true)}
@@ -1203,6 +1403,12 @@ export function showCarte(
         .getElementById("carte-equip")
         ?.addEventListener("click", async () => {
           await showInventaire(persos, inventaire);
+          draw();
+        });
+      document
+        .getElementById("carte-bestiaire")
+        ?.addEventListener("click", async () => {
+          await showBestiaire(meta);
           draw();
         });
     };

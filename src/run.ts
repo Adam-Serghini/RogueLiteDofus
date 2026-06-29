@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA } from "./progression";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, Meta, Monstre, Progression, Stats } from "./types";
@@ -297,6 +297,8 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
     camp: "ennemi",
     position,
     niveau: 1,
+    monstreId: m.id,
+    archiNom: m.archiNom,
     ia: m.ia,
     effets: [],
     img: m.img,
@@ -319,17 +321,43 @@ export function fabriquerEnnemis(combatKey: string): Combatant[] {
   return def.ennemis.map((e, i) => depuisMonstre(MONSTRES[e.monstre], `e${i}_${e.monstre}`, e.position));
 }
 
+/** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */
+export function appliquerArchimonstres(enemies: Combatant[], rng: () => number, chance = ARCHI.chance): void {
+  for (const e of enemies) {
+    if (!e.archiNom) continue; // seules les espèces ayant un Archimonstre réel peuvent muter
+    if (rng() >= chance) continue;
+    e.archi = true;
+    e.nom = e.archiNom; // vrai nom d'Archimonstre (DofusDB)
+    e.pvMax = Math.round(e.pvMax * ARCHI.pvMult);
+    e.pvBase = e.pvMax;
+    e.pvActuels = e.pvMax;
+    const s = e.stats;
+    e.stats = {
+      force: Math.round(s.force * ARCHI.statMult),
+      intelligence: Math.round(s.intelligence * ARCHI.statMult),
+      agilite: Math.round(s.agilite * ARCHI.statMult),
+      vitalite: Math.round(s.vitalite * ARCHI.statMult),
+      chance: Math.round((s.chance ?? 0) * ARCHI.statMult),
+      wakfu: Math.round((s.wakfu ?? 0) * ARCHI.statMult),
+      stasis: Math.round((s.stasis ?? 0) * ARCHI.statMult),
+    };
+  }
+}
+
 // --- Meta (persistance) ------------------------------------------------------
 const STORAGE_KEY = "rld_meta_v0";
 
 export function chargerMeta(): Meta {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Meta;
+    if (raw) {
+      const m = JSON.parse(raw) as Partial<Meta>;
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [] }; // rétro-compat
+    }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
   }
-  return { dofus: [] };
+  return { dofus: [], archis: [] };
 }
 
 export function sauverMeta(meta: Meta): void {
@@ -358,4 +386,28 @@ export function bonusDegatsDofus(meta: Meta): number {
     if (d) bonus += d.bonusDegatsParCopie;
   }
   return bonus;
+}
+
+/** Capture l'âme d'une espèce d'Archimonstre (unique). Renvoie true si nouvelle. */
+export function capturerArchi(meta: Meta, monstreId: string): boolean {
+  if (meta.archis.includes(monstreId)) return false;
+  meta.archis.push(monstreId);
+  sauverMeta(meta);
+  return true;
+}
+
+/** Palier de Dofus Ocre atteint selon le nombre d'archis capturés (null si < 50). */
+export function paliersOcre(meta: Meta): { tier: number; paBonus: number; degats: number } {
+  const n = meta.archis.length;
+  let tier = 0, paBonus = 0, degats = 0;
+  OCRE_PALIERS.forEach((p, i) => {
+    if (n >= p.seuil) { tier = i + 1; paBonus = p.paBonus; degats = p.degats; }
+  });
+  return { tier, paBonus, degats };
+}
+
+/** Bonus d'équipe combinés (Dofus + paliers Ocre) appliqués en combat. */
+export function bonusEquipe(meta: Meta): { damageMult: number; paBonus: number } {
+  const ocre = paliersOcre(meta);
+  return { damageMult: bonusDegatsDofus(meta) + ocre.degats, paBonus: ocre.paBonus };
 }

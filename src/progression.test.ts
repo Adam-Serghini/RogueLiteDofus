@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   progressionInitiale, xpRequis, coutPoint, gagnerXP, investir, restat,
-  statsFinales, pvMaxFor, multOffensif, multSoin, STAT_KEYS,
+  statsFinales, pvMaxFor, multOffensif, multSoin, STAT_KEYS, investirN,
 } from "./progression";
 import { CLASSES } from "./data";
 
@@ -61,6 +61,16 @@ describe("investir / restat", () => {
     p.pointsDispo = 0;
     expect(investir(p, "vitalite")).toBe(false);
     expect(p.pointsInvestis.vitalite).toBe(0);
+  });
+
+  it("investirN dépense jusqu'à n points ; Max vide le pool", () => {
+    const p = progressionInitiale();
+    p.pointsDispo = 10;
+    expect(investirN(p, "force", 3)).toBe(3);
+    expect(p.pointsInvestis.force).toBe(3);
+    expect(p.pointsDispo).toBe(7);
+    expect(investirN(p, "agilite", Infinity)).toBe(7); // « Max »
+    expect(p.pointsDispo).toBe(0);
   });
 
   it("restat rembourse tout dans le pool", () => {

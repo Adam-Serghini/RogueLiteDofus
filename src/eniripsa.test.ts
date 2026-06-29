@@ -79,7 +79,7 @@ describe("bouclier", () => {
 describe("poison", () => {
   it("Fiole de douleur applique un poison transmissible", () => {
     const [, , eni] = equipe();
-    const boss = fabriquerEnnemis("boss")[0]; // 140 PV : survit au coup
+    const boss = fabriquerEnnemis("boss")[0]; // Tournesol Affamé, gros PV : survit au coup
     lancerSort(eni, SORTS.fiole_douleur, boss.ref, [eni, boss], ctx());
     expect(boss.pvActuels).toBeGreaterThan(0);
     expect(boss.effets.some((e) => e.stat === "poison" && e.transmet)).toBe(true);

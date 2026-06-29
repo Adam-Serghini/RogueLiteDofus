@@ -77,9 +77,9 @@ describe("drops", () => {
   });
 
   it("la prospection de l'équipe augmente le taux de drop", () => {
-    const faible = nouvelleRun(["iop"]);        // prospection 100 → p ≈ 0,275
-    const forte = nouvelleRun(["cra", "sram"]); // prospection 140+130 → p ≈ 0,317
-    const rng = () => 0.3;
+    const faible = nouvelleRun(["iop"]);        // prospection 100 → p = 0,25×1,10 = 0,275
+    const forte = nouvelleRun(["cra", "sram"]); // prospection 200 → p = 0,25×1,20 = 0,300
+    const rng = () => 0.29; // entre les deux seuils
     expect(tenterButin(faible, "aventurier", "combat", rng).length).toBe(0);
     expect(tenterButin(forte, "aventurier", "combat", rng).length).toBeGreaterThan(0);
   });

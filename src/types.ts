@@ -191,6 +191,7 @@ export interface Monstre {
   ia: IA;
   boss?: boolean;
   dofus?: string; // id du Dofus lâché (boss uniquement)
+  archiNom?: string; // vrai nom d'Archimonstre (DofusDB) ; absent = pas d'archi → non capturable
   img?: string; // chemin du sprite (public/assets)
 }
 
@@ -218,6 +219,9 @@ export interface Combatant {
   camp: Camp;
   position: number; // 1..n, ordre dans la ligne (sert surtout aux ennemis)
   niveau: number; // niveau du personnage (1 pour les monstres) ; scaling « +x/lvl »
+  monstreId?: string; // espèce (ennemis) — sert à la capture d'Archimonstre
+  archi?: boolean; // variante Archimonstre (boostée, capturable)
+  archiNom?: string; // vrai nom d'Archimonstre de l'espèce (absent = non capturable)
   ia?: IA;
   effets: EffetActif[];
   img?: string; // chemin du portrait/sprite
@@ -253,6 +257,7 @@ export interface Progression {
 /** État persistant — la seule chose qui survit à la mort. */
 export interface Meta {
   dofus: string[]; // ids des Dofus possédés (peut contenir des doublons)
+  archis: string[]; // ids d'espèces de monstres capturées en Archimonstre (uniques)
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

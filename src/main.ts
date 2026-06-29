@@ -2,14 +2,15 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, ZONES, BUTIN_ZONE, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, ZONES, BUTIN_ZONE, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
 import { gagnerXP, restat } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
-  chargerMeta, ajouterDofus, reinitialiserMeta, bonusDegatsDofus,
-  propositionsRecrutement, recruter, tenterButin, type RunState,
+  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe,
+  propositionsRecrutement, recruter, tenterButin,
+  appliquerArchimonstres, capturerArchi, type RunState,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -35,8 +36,14 @@ interface ResultatCombat {
 
 async function resoudreCombat(run: RunState, combatId: string): Promise<ResultatCombat> {
   const titre = COMBATS[combatId]?.nom ?? "Combat";
-  const combatants = [...equipeCombattante(run), ...fabriquerEnnemis(combatId)];
-  ui.beginCombat(combatants, titre);
+  const equipe = equipeCombattante(run);
+  const ennemis = fabriquerEnnemis(combatId);
+  appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
+  // bonus d'équipe (Dofus + paliers Ocre)
+  const { damageMult, paBonus } = bonusEquipe(meta);
+  if (paBonus) for (const c of equipe) { c.paMax += paBonus; c.paActuels = c.paMax; }
+  const combatants = [...equipe, ...ennemis];
+  ui.beginCombat(combatants, titre, meta);
   const gagne = await runCombat(combatants, {
     controllers: { joueur: ui.playerController, ennemi: enemyController },
     log: ui.log,
@@ -44,9 +51,10 @@ async function resoudreCombat(run: RunState, combatId: string): Promise<Resultat
       ui.onUpdate();
       await sleep(60);
     },
-    playerDamageBonus: bonusDegatsDofus(meta),
+    playerDamageBonus: damageMult,
   });
   synchroniserPV(run, combatants); // PV conservés d'un nœud à l'autre
+  if (gagne) await capturerArchis(combatants); // captures d'Archimonstres
   return { gagne, combatants };
 }
 
@@ -54,6 +62,17 @@ async function recompenserXP(run: RunState, gain: number): Promise<void> {
   let levelUp = false;
   for (const p of run.persos) if (gagnerXP(p.progression, gain) > 0) levelUp = true;
   if (levelUp) await ui.showStatPanel(run.persos, "Niveau gagné !", "Tu as des points à dépenser.");
+}
+
+/** Capture les âmes des Archimonstres vaincus (uniques) et annonce les nouvelles. */
+async function capturerArchis(combatants: Combatant[]): Promise<void> {
+  const nouvelles: string[] = [];
+  for (const c of combatants) {
+    if (c.camp === "ennemi" && c.archi && c.monstreId && capturerArchi(meta, c.monstreId)) {
+      nouvelles.push(MONSTRES[c.monstreId]?.nom ?? c.monstreId);
+    }
+  }
+  if (nouvelles.length) await ui.showCapture(nouvelles);
 }
 
 /** Tire le butin d'équipement de la zone après une victoire et l'annonce. */
@@ -94,10 +113,14 @@ async function resoudreType(
       }
       return "continue";
     }
-    case "otomai":
-      run.persos.forEach((p) => restat(p.progression));
-      await ui.showStatPanel(run.persos, "🔄 Otomai", "Points remboursés — réattribue-les librement.");
+    case "otomai": {
+      const cible = await ui.showOtomai(run.persos);
+      if (cible) {
+        restat(cible.progression);
+        await ui.showStatPanel([cible], "🔄 Otomai", `Points de ${CLASSES[cible.classeId].nom} remboursés — réattribue-les librement.`);
+      }
       return "continue";
+    }
     case "donjon": {
       const { gagne, combatants } = await resoudreCombat(run, combatId!);
       if (!gagne) return "wipe";

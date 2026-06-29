@@ -60,6 +60,13 @@ export function investir(p: Progression, stat: keyof Stats): boolean {
   return true;
 }
 
+/** Dépense jusqu'à `n` points dans une stat (n = Infinity pour « Max »). Renvoie le nombre réellement dépensé. */
+export function investirN(p: Progression, stat: keyof Stats, n: number): number {
+  let count = 0;
+  while (count < n && investir(p, stat)) count++;
+  return count;
+}
+
 /** Rembourse tous les points investis dans le pool disponible (Otomai / mort). */
 export function restat(p: Progression): void {
   for (const k of STAT_KEYS) {

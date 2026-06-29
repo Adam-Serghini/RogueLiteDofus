@@ -8,12 +8,12 @@ import type { Classe, Item, Monstre, Panoplie, Spell } from "./types";
 export const SORTS: Record<string, Spell> = {
   // ---- Iop : bruiser de mêlée ----
   pression: {
-    id: "pression", nom: "Pression", type: "degats", coutPA: 3,
+    id: "pression", nom: "Épée céleste", type: "degats", coutPA: 3,
     cible: "ennemi_ligne", baseMin: 8, baseMax: 12, scaling: 0.3,
     desc: "Dégâts simples sur un ennemi de la ligne.",
   },
   epee_hostile: {
-    id: "epee_hostile", nom: "Épée hostile", type: "degats", coutPA: 5,
+    id: "epee_hostile", nom: "Épée du jugement", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 10, baseMax: 14, scaling: 0.4,
     siCibleMeurt: { rebondDegatsX: 2 },
     desc: "Si la cible meurt, rebondit sur un autre ennemi en infligeant le double.",
@@ -25,7 +25,7 @@ export const SORTS: Record<string, Spell> = {
     desc: "Gros dégâts + retire 3 PA à la cible au prochain tour.",
   },
   colere: {
-    id: "colere", nom: "Colère", type: "degats", coutPA: 6,
+    id: "colere", nom: "Colère de Iop", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 18, baseMax: 24, scaling: 0.6,
     passeTourSiSurvie: true,
     desc: "Très gros dégâts ; le Iop passe son prochain tour si la cible survit.",
@@ -44,7 +44,7 @@ export const SORTS: Record<string, Spell> = {
     desc: "Dégâts simples sur un ennemi de la ligne.",
   },
   fleche_corrosive: {
-    id: "fleche_corrosive", nom: "Flèche corrosive", type: "degats", coutPA: 4,
+    id: "fleche_corrosive", nom: "Flèche explosive", type: "degats", coutPA: 4,
     cible: "ennemi_ligne", baseMin: 6, baseMax: 9, scaling: 0.25,
     rebond: { sauts: 1, bonusParSaut: 0 },
     effet: { stat: "degatsInfliges", valeur: -0.1, duree: 2 },
@@ -71,7 +71,7 @@ export const SORTS: Record<string, Spell> = {
 
   // ---- Eniripsa : soutien défensif ----
   fiole_douleur: {
-    id: "fiole_douleur", nom: "Fiole de douleur", type: "degats", coutPA: 5,
+    id: "fiole_douleur", nom: "Mot interdit", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 14, baseMax: 18, scaling: 0.5,
     poison: { degats: 6, duree: 2, transmet: true },
     desc: "Gros dégâts + poison (2t). Si la cible meurt du poison, il passe au monstre derrière.",
@@ -83,7 +83,7 @@ export const SORTS: Record<string, Spell> = {
     desc: "Dégâts modérés ; soigne l'équipe de 25 % des dégâts infligés.",
   },
   mot_reconfortant: {
-    id: "mot_reconfortant", nom: "Mot réconfortant", type: "soin", coutPA: 3,
+    id: "mot_reconfortant", nom: "Mot soignant", type: "soin", coutPA: 3,
     cible: "allie", baseMin: 14, baseMax: 20, scaling: 0,
     desc: "Soigne modérément un allié.",
   },
@@ -94,24 +94,24 @@ export const SORTS: Record<string, Spell> = {
     desc: "Soigne entièrement un allié.",
   },
   mot_entraide: {
-    id: "mot_entraide", nom: "Mot d'entraide", type: "soin", coutPA: 3,
+    id: "mot_entraide", nom: "Mot de jouvence", type: "soin", coutPA: 3,
     cible: "allie_tous", baseMin: 8, baseMax: 12, scaling: 0,
     desc: "Soin faible sur toute l'équipe.",
   },
   mot_preventif: {
-    id: "mot_preventif", nom: "Mot préventif", type: "buff", coutPA: 4,
+    id: "mot_preventif", nom: "Mot de prévention", type: "buff", coutPA: 4,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
     bouclierPct: 0.15, hotPct: 0.05, hotDuree: 3,
     desc: "Bouclier (15 % PV) + soin sur la durée (5 % vita / 3t).",
   },
   antivenin: {
-    id: "antivenin", nom: "Antivenin", type: "buff", coutPA: 2,
+    id: "antivenin", nom: "Mot revitalisant", type: "buff", coutPA: 2,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
     dissipe: true, hotPct: 0.05, hotDuree: 2,
     desc: "Dissipe les effets négatifs + soin sur la durée (5 % vita / 2t).",
   },
   mot_ivation: {
-    id: "mot_ivation", nom: "Mot d'ivation", type: "buff", coutPA: 2,
+    id: "mot_ivation", nom: "Mot stimulant", type: "buff", coutPA: 2,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
     paGain: 2, cooldown: 3,
     desc: "Octroie 2 PA à un allié (prochain tour). Non relançable sur la même cible (3t).",
@@ -195,7 +195,7 @@ export const SORTS: Record<string, Spell> = {
     desc: "10 lames sur des ennemis au hasard ; 20 % de poison (1t) par lame.",
   },
   coup_double: {
-    id: "coup_double", nom: "Coup double", type: "degats", coutPA: 4,
+    id: "coup_double", nom: "Coup sournois", type: "degats", coutPA: 4,
     cible: "ennemi_ligne", baseMin: 0, baseMax: 0, scaling: 0,
     coups: [
       { baseMin: 8, baseMax: 12, scaling: 0.3, proc: { p: 0.3, poison: { degats: 5, duree: 2 } } },
@@ -211,7 +211,7 @@ export const SORTS: Record<string, Spell> = {
     desc: "+25 % d'esquive (3t) et boost d'Agilité (15 + 0,5/niv, 2t).",
   },
   arsenic: {
-    id: "arsenic", nom: "Arsenic", type: "buff", coutPA: 2,
+    id: "arsenic", nom: "Expert des poisons", type: "buff", coutPA: 2,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
     poisonAmpli: 2,
     desc: "Double les dégâts des poisons appliqués pendant 2 tours.",
@@ -357,21 +357,21 @@ export const SORTS: Record<string, Spell> = {
 export const CLASSES: Record<string, Classe> = {
   iop: {
     id: "iop", nom: "Iop", pvBase: 60,
-    stats: { force: 60, intelligence: 10, agilite: 20, vitalite: 50, prospection: 100 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 8,
     sorts: ["pression", "epee_hostile", "fracas", "colere", "vitalite"],
     img: "/assets/classes/iop.png",
-  }, // élément de frappe = Terre (Force la plus haute) ; crit ≈ 30 %
+  }, // stats de build à 0 : le joueur choisit son élément/build au level-up
   cra: {
     id: "cra", nom: "Cra", pvBase: 45,
-    stats: { force: 15, intelligence: 20, agilite: 55, vitalite: 40, prospection: 140 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 12,
     sorts: ["fleche_magique", "fleche_corrosive", "fleche_percante", "fleche_intrusive", "oeil_affute"],
     img: "/assets/classes/cra.png", // PNG transparent (meilleur rendu sur la carte)
-  }, // élément de frappe = Air ; esquive ≈ 11 %
+  },
   eniripsa: {
     id: "eniripsa", nom: "Eniripsa", pvBase: 50,
-    stats: { force: 10, intelligence: 40, agilite: 20, vitalite: 45, soin: 60, prospection: 120 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, soin: 20, prospection: 100 },
     pa: 6, initiative: 11,
     sorts: [
       "fiole_douleur", "mot_vampirique", "mot_reconfortant", "mot_reconstitution",
@@ -381,7 +381,7 @@ export const CLASSES: Record<string, Classe> = {
   }, // élément de frappe = Feu (Intelligence) ; soutien défensif
   sadida: {
     id: "sadida", nom: "Sadida", pvBase: 55,
-    stats: { force: 10, intelligence: 25, agilite: 40, vitalite: 45, soin: 25, prospection: 110 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 9,
     sorts: [
       "crachat_de_seve", "deferlante", "lame_liquide", "etreinte_ronces",
@@ -391,7 +391,7 @@ export const CLASSES: Record<string, Classe> = {
   }, // élément de frappe = Air (Agilité) ; contrôleur / invocateur
   sram: {
     id: "sram", nom: "Sram", pvBase: 48,
-    stats: { force: 20, intelligence: 10, agilite: 55, vitalite: 38, prospection: 130 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 13,
     sorts: [
       "coupe_jarret", "dagues_insidieuses", "coup_double", "flasque_venimeuse",
@@ -401,7 +401,7 @@ export const CLASSES: Record<string, Classe> = {
   }, // élément de frappe = Air (Agilité) ; DPT monocible & poisons
   feca: {
     id: "feca", nom: "Feca", pvBase: 72,
-    stats: { force: 10, intelligence: 35, agilite: 15, vitalite: 60, prospection: 90 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 7,
     sorts: [
       "attaque_celeste", "glyphe_naturel", "ouragan", "onde",
@@ -411,7 +411,7 @@ export const CLASSES: Record<string, Classe> = {
   }, // élément de frappe = Feu (Intelligence) ; tank / support défensif
   ecaflip: {
     id: "ecaflip", nom: "Ecaflip", pvBase: 58,
-    stats: { force: 35, intelligence: 20, agilite: 25, chance: 25, vitalite: 45, prospection: 120 },
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 10,
     sorts: [
       "pelote_chaude", "pattounes", "all_in", "langue_rapeuse",
@@ -423,142 +423,169 @@ export const CLASSES: Record<string, Classe> = {
 
 // --- Monstres ----------------------------------------------------------------
 // resistances : fraction par élément. 0.25 = −25 % subis ; négatif = faiblesse.
+// Stats/PV en échelle « jeu » (PV joueur gonflés) ; résistances inspirées de
+// DofusDB (signe/élément réels, ÷100). archiNom = vrai nom d'Archimonstre.
 export const MONSTRES: Record<string, Monstre> = {
-  // ===== Incarnam (tier 1) =====
-  tofu: {
-    id: "tofu", nom: "Tofu", pv: 18,
-    stats: { force: 5, intelligence: 8, agilite: 25, vitalite: 15 },
-    pa: 4, initiative: 14,
-    resistances: { terre: -0.3 }, // faible à la Terre, rapide
-    sorts: ["coup_de_bec"], ia: "agressif",
-    img: "/assets/monstres/tofu.png",
-  },
-  larve_bleue: {
-    id: "larve_bleue", nom: "Larve Bleue", pv: 22,
-    stats: { force: 16, intelligence: 5, agilite: 8, vitalite: 22 },
-    pa: 3, initiative: 5,
-    resistances: { feu: -0.25 },
+  // ===== Incarnam — Crypte de Kardorim (tier 1, morts-vivants) =====
+  // Les Chafers de la crypte n'ont pas d'Archimonstre dans Dofus → non capturables.
+  chafer_debutant: {
+    id: "chafer_debutant", nom: "Chafer Débutant", pv: 16,
+    stats: { force: 16, intelligence: 4, agilite: 6, vitalite: 12 },
+    pa: 4, initiative: 7,
+    resistances: { feu: -0.2 }, // morts-vivants : brûlent
     sorts: ["morsure"], ia: "agressif",
-    img: "/assets/monstres/larve_bleue.png",
+    img: "/assets/monstres/chafer_debutant.png",
   },
-  arakne: {
-    id: "arakne", nom: "Arakne", pv: 16,
-    stats: { force: 8, intelligence: 10, agilite: 18, vitalite: 14 },
-    pa: 4, initiative: 12,
-    resistances: { feu: -0.2 },
-    sorts: ["picotement"], ia: "agressif",
-    img: "/assets/monstres/arakne.png",
-  },
-  moskito: {
-    id: "moskito", nom: "Moskito", pv: 14,
-    stats: { force: 5, intelligence: 6, agilite: 22, vitalite: 10 },
-    pa: 3, initiative: 16,
-    resistances: { terre: -0.2 },
-    sorts: ["picotement"], ia: "agressif",
-    img: "/assets/monstres/moskito.png",
-  },
-  tofu_malefique: {
-    id: "tofu_malefique", nom: "Tofu Maléfique", pv: 40,
-    stats: { force: 5, intelligence: 22, agilite: 15, vitalite: 30 },
+  chafer_eclaireur: {
+    id: "chafer_eclaireur", nom: "Chafer Éclaireur", pv: 15,
+    stats: { force: 4, intelligence: 18, agilite: 10, vitalite: 11 },
     pa: 5, initiative: 11,
-    resistances: {},
-    sorts: ["soin_noir", "picotement"], ia: "soutien", // miniboss soigneur
-    img: "/assets/monstres/tofu_malefique.png",
+    resistances: { terre: 0.1, feu: -0.15 },
+    sorts: ["picotement"], ia: "agressif", // tireur
+    img: "/assets/monstres/chafer_eclaireur.png",
   },
-  milimilou: {
-    id: "milimilou", nom: "Milimilou", pv: 130,
-    stats: { force: 35, intelligence: 25, agilite: 20, vitalite: 55 },
+  chafer_furtif: {
+    id: "chafer_furtif", nom: "Chafer Furtif", pv: 17,
+    stats: { force: 8, intelligence: 4, agilite: 22, vitalite: 12 },
+    pa: 5, initiative: 13,
+    resistances: { air: 0.1, feu: -0.15 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/chafer_furtif.png",
+  },
+  chafer_piquier: {
+    id: "chafer_piquier", nom: "Chafer Piquier", pv: 22,
+    stats: { force: 20, intelligence: 5, agilite: 8, vitalite: 16 },
+    pa: 5, initiative: 8,
+    resistances: { eau: 0.1, feu: -0.15 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/chafer_piquier.png",
+  },
+  sergent_chafer: {
+    id: "sergent_chafer", nom: "Sergent Chafer", pv: 48,
+    stats: { force: 28, intelligence: 24, agilite: 12, vitalite: 30 },
     pa: 6, initiative: 9,
-    resistances: { air: -0.2, terre: 0.15, eau: 0.2, wakfu: 0.1 },
+    resistances: { feu: 0.1 },
+    sorts: ["soin_noir", "picotement"], ia: "soutien", // miniboss : soigne ses Chafers
+    img: "/assets/monstres/sergent_chafer.png",
+  },
+  kardorim: {
+    id: "kardorim", nom: "Kardorim", pv: 130,
+    stats: { force: 30, intelligence: 38, agilite: 20, vitalite: 55 },
+    pa: 6, initiative: 9,
+    resistances: { feu: 0.25, air: 0.1, stasis: 0.1, terre: -0.2, eau: -0.15 },
     sorts: ["charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofus_turquoise",
-    img: "/assets/monstres/milimilou.png",
+    img: "/assets/monstres/kardorim.png",
   },
 
-  // ===== Champs d'Astrub (tier 2) =====
+  // ===== Champs d'Astrub — fleurs (tier 2) =====
+  tournesol_sauvage: {
+    id: "tournesol_sauvage", nom: "Tournesol Sauvage", pv: 42,
+    stats: { force: 12, intelligence: 34, agilite: 14, vitalite: 36 },
+    pa: 5, initiative: 10,
+    resistances: { eau: 0.1, terre: 0.05, feu: -0.1, air: -0.15 },
+    sorts: ["picotement"], ia: "agressif",
+    archiNom: "Tour le Vice",
+    img: "/assets/monstres/tournesol_sauvage.png",
+  },
+  rose_demoniaque: {
+    id: "rose_demoniaque", nom: "Rose Démoniaque", pv: 44,
+    stats: { force: 14, intelligence: 36, agilite: 16, vitalite: 34 },
+    pa: 5, initiative: 11,
+    resistances: { feu: 0.3, air: 0.05, terre: -0.2, eau: -0.1 },
+    sorts: ["picotement"], ia: "agressif",
+    archiNom: "Roz la Magicienne",
+    img: "/assets/monstres/rose_demoniaque.png",
+  },
+  pissenlit_diabolique: {
+    id: "pissenlit_diabolique", nom: "Pissenlit Diabolique", pv: 46,
+    stats: { force: 12, intelligence: 32, agilite: 18, vitalite: 38 },
+    pa: 5, initiative: 10,
+    resistances: { terre: 0.15, air: 0.1, feu: -0.1 },
+    sorts: ["picotement"], ia: "agressif",
+    archiNom: "Pissdane l'Insipide",
+    img: "/assets/monstres/pissenlit_diabolique.png",
+  },
+  epouvanteur: {
+    id: "epouvanteur", nom: "Épouvanteur", pv: 60,
+    stats: { force: 34, intelligence: 8, agilite: 12, vitalite: 46 },
+    pa: 5, initiative: 8,
+    resistances: { eau: 0.1, air: 0.05, feu: -0.1 },
+    sorts: ["morsure"], ia: "agressif", // épouvantail de mêlée, encaisse
+    img: "/assets/monstres/epouvanteur.png",
+  },
+  gardienne_champetre: {
+    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 95,
+    stats: { force: 18, intelligence: 30, agilite: 28, vitalite: 50 },
+    pa: 6, initiative: 11,
+    resistances: { air: 0.2, eau: 0.15, terre: -0.1, feu: -0.15 },
+    sorts: ["soin_noir", "picotement"], ia: "soutien", // miniboss : soigne les fleurs
+    img: "/assets/monstres/gardienne_champetre.png",
+  },
+  tournesol_affame: {
+    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 200,
+    stats: { force: 20, intelligence: 55, agilite: 18, vitalite: 75 },
+    pa: 6, initiative: 9,
+    resistances: { terre: 0.25, feu: 0.25, wakfu: 0.2, stasis: 0.2, eau: -0.1, air: -0.15 },
+    sorts: ["charge", "picotement"], ia: "agressif",
+    boss: true, dofus: "dofus_emeraude",
+    img: "/assets/monstres/tournesol_affame.png",
+  },
+
+  // ===== Tainéla — Donjon Bouftou (tier 3) =====
+  // Iconique : toute la famille est faible à l'Air.
   bouftou: {
-    id: "bouftou", nom: "Bouftou", pv: 35,
-    stats: { force: 30, intelligence: 5, agilite: 10, vitalite: 30 },
-    pa: 4, initiative: 6,
-    resistances: { air: -0.3, terre: 0.15 }, // faible à l'Air
+    id: "bouftou", nom: "Bouftou", pv: 45,
+    stats: { force: 32, intelligence: 6, agilite: 14, vitalite: 36 },
+    pa: 4, initiative: 7,
+    resistances: { air: -0.3, eau: 0.05, terre: 0.1, feu: -0.1 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Boufdégou le Refoulant",
     img: "/assets/monstres/bouftou.png",
   },
+  boufton_blanc: {
+    id: "boufton_blanc", nom: "Boufton Blanc", pv: 40,
+    stats: { force: 24, intelligence: 8, agilite: 24, vitalite: 30 },
+    pa: 4, initiative: 13,
+    resistances: { terre: 0.15, air: 0.1, eau: -0.15, feu: -0.1 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Boudalf le Blanc",
+    img: "/assets/monstres/boufton_blanc.png",
+  },
+  boufton_noir: {
+    id: "boufton_noir", nom: "Boufton Noir", pv: 42,
+    stats: { force: 30, intelligence: 8, agilite: 16, vitalite: 30 },
+    pa: 4, initiative: 11,
+    resistances: { eau: 0.15, feu: 0.1, terre: -0.15, air: -0.1 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Boulgourvil le Lointain",
+    img: "/assets/monstres/boufton_noir.png",
+  },
   bouftou_noir: {
-    id: "bouftou_noir", nom: "Bouftou Noir", pv: 55,
-    stats: { force: 42, intelligence: 5, agilite: 10, vitalite: 42 },
+    id: "bouftou_noir", nom: "Bouftou Noir", pv: 60,
+    stats: { force: 44, intelligence: 6, agilite: 12, vitalite: 46 },
     pa: 5, initiative: 7,
-    resistances: { air: -0.25, terre: 0.2 },
+    resistances: { feu: 0.15, eau: 0.1, terre: -0.1, air: -0.15 },
     sorts: ["morsure"], ia: "agressif",
     img: "/assets/monstres/bouftou_noir.png",
   },
-  boufton_noir: {
-    id: "boufton_noir", nom: "Boufton Noir", pv: 28,
-    stats: { force: 20, intelligence: 5, agilite: 18, vitalite: 22 },
-    pa: 4, initiative: 12,
-    resistances: { air: -0.2 },
-    sorts: ["coup_de_bec"], ia: "agressif",
-    img: "/assets/monstres/boufton_noir.png",
-  },
-  prespic: {
-    id: "prespic", nom: "Prespic", pv: 48,
-    stats: { force: 28, intelligence: 8, agilite: 12, vitalite: 42 },
-    pa: 4, initiative: 8,
-    resistances: { feu: 0.2, air: -0.2 }, // piquant, encaisse
-    sorts: ["morsure"], ia: "agressif",
-    img: "/assets/monstres/prespic.png",
-  },
-  bouftou_royal: {
-    id: "bouftou_royal", nom: "Bouftou Royal", pv: 95,
-    stats: { force: 40, intelligence: 8, agilite: 12, vitalite: 52 },
-    pa: 5, initiative: 8,
-    resistances: { air: -0.2, terre: 0.2 },
-    sorts: ["charge", "morsure"], ia: "agressif", // miniboss
-    img: "/assets/monstres/bouftou_royal.png",
-  },
   chef_de_guerre_bouftou: {
-    id: "chef_de_guerre_bouftou", nom: "Chef de Guerre Bouftou", pv: 185,
-    stats: { force: 48, intelligence: 10, agilite: 15, vitalite: 65 },
-    pa: 6, initiative: 7,
-    resistances: { air: -0.25, terre: 0.25, stasis: 0.15, eau: -0.15 }, // faible à l'Air/Eau
-    sorts: ["charge", "morsure"], ia: "agressif",
-    boss: true, dofus: "dofus_pourpre",
+    id: "chef_de_guerre_bouftou", nom: "Chef de Guerre Bouftou", pv: 150,
+    stats: { force: 50, intelligence: 12, agilite: 18, vitalite: 64 },
+    pa: 6, initiative: 8,
+    resistances: { air: 0.1, terre: 0.1, eau: -0.1 },
+    sorts: ["charge", "morsure"], ia: "agressif", // miniboss
+    archiNom: "Bouflet le Puéril",
     img: "/assets/monstres/chef_de_guerre_bouftou.png",
   },
-
-  // ===== Tainéla (tier 3) =====
-  pissenlit_diabolique: {
-    id: "pissenlit_diabolique", nom: "Pissenlit Diabolique", pv: 52,
-    stats: { force: 10, intelligence: 35, agilite: 15, vitalite: 42 },
-    pa: 5, initiative: 10,
-    resistances: { terre: 0.2, air: -0.2 },
-    sorts: ["picotement"], ia: "agressif",
-    img: "/assets/monstres/pissenlit_diabolique.png",
-  },
-  boufton_blanc: {
-    id: "boufton_blanc", nom: "Boufton Blanc", pv: 38,
-    stats: { force: 26, intelligence: 8, agilite: 20, vitalite: 28 },
-    pa: 4, initiative: 13,
-    resistances: { air: -0.25 },
-    sorts: ["coup_de_bec"], ia: "agressif",
-    img: "/assets/monstres/boufton_blanc.png",
-  },
-  bouftou_halouine: {
-    id: "bouftou_halouine", nom: "Bouftou d'Halouine", pv: 115,
-    stats: { force: 45, intelligence: 15, agilite: 15, vitalite: 58 },
+  bouftou_royal: {
+    id: "bouftou_royal", nom: "Bouftou Royal", pv: 240,
+    stats: { force: 56, intelligence: 15, agilite: 20, vitalite: 80 },
     pa: 6, initiative: 8,
-    resistances: { air: -0.2, feu: 0.2 },
-    sorts: ["charge", "morsure"], ia: "agressif", // miniboss
-    img: "/assets/monstres/bouftou_halouine.png",
-  },
-  tournesol_affame: {
-    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 205,
-    stats: { force: 15, intelligence: 50, agilite: 18, vitalite: 70 },
-    pa: 6, initiative: 9,
-    resistances: { feu: 0.3, air: -0.2, eau: -0.25, wakfu: 0.2, stasis: 0.2 },
-    sorts: ["charge", "picotement"], ia: "agressif",
-    boss: true, dofus: "dofus_ocre",
-    img: "/assets/monstres/tournesol_affame.png",
+    resistances: { eau: 0.25, terre: 0.2, feu: 0.2, wakfu: 0.25, stasis: 0.25, air: 0.05 },
+    sorts: ["charge", "morsure"], ia: "agressif",
+    boss: true, dofus: "dofus_pourpre",
+    img: "/assets/monstres/bouftou_royal.png",
   },
 };
 
@@ -626,58 +653,58 @@ export interface CombatDef {
 }
 
 export const COMBATS: Record<string, CombatDef> = {
-  // ===== Incarnam =====
-  inc_1: { nom: "Tofus égarés", ennemis: [
-    { monstre: "tofu", position: 0 }, { monstre: "larve_bleue", position: 1 },
+  // ===== Incarnam — Crypte de Kardorim =====
+  inc_1: { nom: "Chafers égarés", ennemis: [
+    { monstre: "chafer_debutant", position: 0 }, { monstre: "chafer_eclaireur", position: 4 }, // tireur protégé derrière
   ] },
-  inc_2: { nom: "Nuée d'Araknes", ennemis: [
-    { monstre: "arakne", position: 0 }, { monstre: "moskito", position: 1 }, { monstre: "tofu", position: 2 },
+  inc_2: { nom: "Patrouille de la crypte", ennemis: [
+    { monstre: "chafer_furtif", position: 0 }, { monstre: "chafer_debutant", position: 1 }, { monstre: "chafer_eclaireur", position: 4 },
   ] },
-  inc_3: { nom: "Larves & Tofus", ennemis: [
-    { monstre: "larve_bleue", position: 0 }, { monstre: "tofu", position: 1 }, { monstre: "arakne", position: 4 },
+  inc_3: { nom: "Embuscade morte-vivante", ennemis: [
+    { monstre: "chafer_piquier", position: 0 }, { monstre: "chafer_furtif", position: 1 }, { monstre: "chafer_debutant", position: 2 },
   ] },
-  inc_elite: { nom: "Essaim (dur)", ennemis: [
-    { monstre: "tofu", position: 0 }, { monstre: "arakne", position: 1 },
-    { monstre: "moskito", position: 2 }, { monstre: "larve_bleue", position: 3 },
+  inc_elite: { nom: "Garde de la crypte (dur)", ennemis: [
+    { monstre: "chafer_piquier", position: 0 }, { monstre: "chafer_furtif", position: 1 },
+    { monstre: "chafer_eclaireur", position: 2 }, { monstre: "sergent_chafer", position: 4 }, // sergent-soigneur protégé
   ] },
-  inc_boss: { nom: "Donjon — Milimilou", ennemis: [
-    { monstre: "milimilou", position: 0 }, { monstre: "tofu_malefique", position: 4 }, // boss devant, soigneur protégé derrière
+  inc_boss: { nom: "Donjon — Kardorim", ennemis: [
+    { monstre: "kardorim", position: 0 }, { monstre: "sergent_chafer", position: 1 }, // boss + miniboss devant
   ] },
 
-  // ===== Champs d'Astrub (ids historiques, conservés) =====
-  combat_1: { nom: "Bouftous des champs", ennemis: [
-    { monstre: "bouftou", position: 0 }, { monstre: "boufton_noir", position: 1 },
+  // ===== Champs d'Astrub — fleurs (ids historiques, conservés) =====
+  combat_1: { nom: "Parterre hostile", ennemis: [
+    { monstre: "tournesol_sauvage", position: 0 }, { monstre: "pissenlit_diabolique", position: 1 },
   ] },
-  combat_2: { nom: "Troupeau noir", ennemis: [
-    { monstre: "bouftou", position: 0 }, { monstre: "bouftou_noir", position: 1 }, { monstre: "boufton_noir", position: 4 },
+  combat_2: { nom: "Roseraie maudite", ennemis: [
+    { monstre: "rose_demoniaque", position: 0 }, { monstre: "tournesol_sauvage", position: 1 }, { monstre: "pissenlit_diabolique", position: 4 },
   ] },
-  combat_3: { nom: "Embuscade", ennemis: [
-    { monstre: "prespic", position: 0 }, { monstre: "bouftou", position: 1 }, { monstre: "boufton_noir", position: 2 },
+  combat_3: { nom: "Épouvante", ennemis: [
+    { monstre: "epouvanteur", position: 0 }, { monstre: "pissenlit_diabolique", position: 1 }, { monstre: "rose_demoniaque", position: 2 },
   ] },
-  combat_elite: { nom: "Harde furieuse (dur)", ennemis: [
+  combat_elite: { nom: "Jardin déchaîné (dur)", ennemis: [
+    { monstre: "epouvanteur", position: 0 }, { monstre: "rose_demoniaque", position: 1 },
+    { monstre: "tournesol_sauvage", position: 2 }, { monstre: "pissenlit_diabolique", position: 3 },
+  ] },
+  boss: { nom: "Donjon — Tournesol Affamé", ennemis: [
+    { monstre: "tournesol_affame", position: 0 }, { monstre: "gardienne_champetre", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Tainéla — Donjon Bouftou =====
+  tai_1: { nom: "Troupeau de Bouftous", ennemis: [
+    { monstre: "bouftou", position: 0 }, { monstre: "boufton_blanc", position: 1 },
+  ] },
+  tai_2: { nom: "Harde noire", ennemis: [
+    { monstre: "bouftou_noir", position: 0 }, { monstre: "boufton_noir", position: 1 }, { monstre: "bouftou", position: 4 },
+  ] },
+  tai_3: { nom: "Charge sauvage", ennemis: [
+    { monstre: "bouftou", position: 0 }, { monstre: "bouftou_noir", position: 1 }, { monstre: "boufton_blanc", position: 2 },
+  ] },
+  tai_elite: { nom: "Furie ovine (dur)", ennemis: [
     { monstre: "bouftou_noir", position: 0 }, { monstre: "bouftou", position: 1 },
-    { monstre: "prespic", position: 2 }, { monstre: "boufton_noir", position: 3 },
+    { monstre: "boufton_noir", position: 2 }, { monstre: "boufton_blanc", position: 3 },
   ] },
-  boss: { nom: "Donjon — Chef de Guerre Bouftou", ennemis: [
-    { monstre: "chef_de_guerre_bouftou", position: 0 }, { monstre: "bouftou_royal", position: 1 }, // boss + miniboss devant
-  ] },
-
-  // ===== Tainéla =====
-  tai_1: { nom: "Pousses hostiles", ennemis: [
-    { monstre: "boufton_blanc", position: 0 }, { monstre: "pissenlit_diabolique", position: 4 }, // plante protégée derrière
-  ] },
-  tai_2: { nom: "Lande empoisonnée", ennemis: [
-    { monstre: "boufton_blanc", position: 0 }, { monstre: "arakne", position: 1 }, { monstre: "pissenlit_diabolique", position: 4 },
-  ] },
-  tai_3: { nom: "Vol nocturne", ennemis: [
-    { monstre: "boufton_blanc", position: 0 }, { monstre: "moskito", position: 1 }, { monstre: "pissenlit_diabolique", position: 4 },
-  ] },
-  tai_elite: { nom: "Ronceraie (dur)", ennemis: [
-    { monstre: "boufton_blanc", position: 0 }, { monstre: "arakne", position: 1 },
-    { monstre: "pissenlit_diabolique", position: 4 }, { monstre: "pissenlit_diabolique", position: 5 }, // 2 plantes derrière
-  ] },
-  tai_boss: { nom: "Donjon — Tournesol Affamé", ennemis: [
-    { monstre: "tournesol_affame", position: 0 }, { monstre: "bouftou_halouine", position: 1 }, // boss + miniboss devant
+  tai_boss: { nom: "Donjon — Bouftou Royal", ennemis: [
+    { monstre: "bouftou_royal", position: 0 }, { monstre: "chef_de_guerre_bouftou", position: 1 }, // boss + miniboss devant
   ] },
 };
 
@@ -753,7 +780,7 @@ export const PANOPLIES: Record<string, Panoplie> = {
 /** Panoplie qui droppe dans chaque zone (id de zone → id de panoplie). */
 export const BUTIN_ZONE: Record<string, string> = {
   incarnam: "aventurier",
-  astrub: "bouftou",
+  tainela: "bouftou", // les bouftous (et leur panoplie) vivent désormais à Tainéla
 };
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */
@@ -762,3 +789,40 @@ export const DROP = {
   coefProspection: 0.001, // dropChance ×= 1 + min(cap, prospectionÉquipe × coef)
   capProspection: 0.75,
 };
+
+// --- Archimonstres & Dofus Ocre ----------------------------------------------
+/** Paramètres des Archimonstres (variante rare et boostée, capturable). */
+export const ARCHI = {
+  chance: 0.08, // probabilité par ennemi d'apparaître en Archimonstre
+
+  pvMult: 2, // multiplicateur de PV
+  statMult: 1.5, // multiplicateur des caractéristiques
+};
+
+/** Paliers du Dofus Ocre : tous les 50 archis (valeur TOTALE du Dofus à ce palier). */
+export interface OcrePalier { seuil: number; paBonus: number; degats: number }
+export const OCRE_PALIERS: OcrePalier[] = [
+  { seuil: 50, paBonus: 1, degats: 0 },
+  { seuil: 100, paBonus: 2, degats: 0.1 },
+  { seuil: 150, paBonus: 2, degats: 0.2 },
+  { seuil: 200, paBonus: 3, degats: 0.2 },
+  { seuil: 250, paBonus: 3, degats: 0.3 },
+];
+
+/** Sous-dossier d'icône de chaque sort (rangé par classe propriétaire ; sorts de mobs → « monstres »). */
+export const SORT_DOSSIER: Record<string, string> = (() => {
+  const m: Record<string, string> = {};
+  for (const c of Object.values(CLASSES)) for (const s of c.sorts) m[s] = c.id;
+  for (const mon of Object.values(MONSTRES)) for (const s of mon.sorts) if (!(s in m)) m[s] = "monstres";
+  return m;
+})();
+
+/** Espèces de monstres apparaissant dans une zone (uniques) — pour l'encyclopédie. */
+export function monstresDeZone(zone: ZoneDef): string[] {
+  const combatIds = [...zone.pools.normales, ...zone.pools.elite, zone.pools.boss];
+  const ids = new Set<string>();
+  for (const cid of combatIds) {
+    for (const e of COMBATS[cid]?.ennemis ?? []) ids.add(e.monstre);
+  }
+  return [...ids];
+}

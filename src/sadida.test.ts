@@ -86,7 +86,7 @@ describe("réduction d'initiative", () => {
 
   it("un malus d'initiative change l'ordre des tours", async () => {
     const [iop] = fabriquerEquipe(); // initiative 8
-    const tofu = fabriquerEnnemis("inc_1").find((e) => e.nom === "Tofu")!; // initiative 14
+    const mob = fabriquerEnnemis("inc_1").find((e) => e.nom === "Chafer Éclaireur")!; // initiative 11
 
     const premier = async (cs: typeof iop[]): Promise<string> => {
       const ordre: string[] = [];
@@ -95,9 +95,9 @@ describe("réduction d'initiative", () => {
       return ordre[0];
     };
 
-    expect(await premier([iop, tofu])).toBe(tofu.ref); // le Tofu (init 14) d'abord
-    tofu.effets.push({ stat: "initiative", valeur: -10, toursRestants: 99 }); // 14 → 4
-    expect(await premier([iop, tofu])).toBe(iop.ref); // l'Iop (init 8) passe devant
+    expect(await premier([iop, mob])).toBe(mob.ref); // le Chafer (init 11) d'abord
+    mob.effets.push({ stat: "initiative", valeur: -10, toursRestants: 99 }); // 11 → 1
+    expect(await premier([iop, mob])).toBe(iop.ref); // l'Iop (init 8) passe devant
   });
 });
 
