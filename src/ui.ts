@@ -2,7 +2,7 @@
 //  ui.ts — Rendu DOM minimal + contrôleur joueur (clic sort → clic cible).
 //  Aucune logique de combat ici : on lit l'état et on renvoie des Actions.
 // =============================================================================
-import { SORTS, DOFUS, DOFUS_DROP, CLASSES, ITEMS, PANOPLIES, MONSTRES, ZONES, monstresDeZone, OCRE_PALIERS, SORT_DOSSIER } from "./data";
+import { SORTS, DOFUS, DOFUS_DROP, CLASSES, COMBATS, ITEMS, PANOPLIES, MONSTRES, ZONES, monstresDeZone, OCRE_PALIERS, SORT_DOSSIER } from "./data";
 import { ciblesValides, estAvant, ELEMENTS, elementsForts, elementDeFrappe } from "./combat";
 import {
   STAT_KEYS,
@@ -1249,11 +1249,17 @@ const CASE_FILE: Record<NodeType, string> = {
   zaap: "zaap",
   donjon: "donjon",
 };
-// La case Donjon affiche un sprite de boss plutôt qu'une tuile de case.
-const caseAsset = (t: NodeType): string =>
-  t === "donjon"
-    ? A("/assets/boss/bouftou_royal.png")
-    : A(`/assets/cases/${CASE_FILE[t]}.png`);
+/** Sprite du boss d'un nœud donjon (résolu depuis son combat → 1er ennemi « boss »). */
+function bossImg(n: MapNode): string | null {
+  const ennemis = n.combatId ? COMBATS[n.combatId]?.ennemis : undefined;
+  const ent = ennemis?.find((e) => MONSTRES[e.monstre]?.boss) ?? ennemis?.[0];
+  const img = ent ? MONSTRES[ent.monstre]?.img : undefined;
+  return img ? A(img) : null;
+}
+
+// La case Donjon affiche le sprite du boss de la zone plutôt qu'une tuile de case.
+const caseAsset = (n: MapNode): string =>
+  (n.type === "donjon" ? bossImg(n) : null) ?? A(`/assets/cases/${CASE_FILE[n.type]}.png`);
 
 const LARGEUR_CARTE = 720; // laisse la place à la sidebar d'équipe à gauche
 const ESPACE_LIGNE = 92;
@@ -1323,7 +1329,7 @@ export function showCarte(
             .join(" ");
           return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px">
             <span class="case-art">
-              <img class="case-img" src="${caseAsset(n.type)}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
+              <img class="case-img" src="${caseAsset(n)}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
               <span class="mn-icon" style="display:none">${NODE_ICON[n.type]}</span>
             </span>
             <span class="mn-lbl">${NODE_LABEL[n.type]}</span>
