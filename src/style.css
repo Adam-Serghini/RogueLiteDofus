@@ -158,6 +158,11 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .btn-retour img { height: 48px; display: block; }
 .btn-retour:hover:not(:disabled) { transform: none; box-shadow: none; }
 .btn-retour:hover img { filter: brightness(1.05); transform: translateX(-2px); }
+.btn-continuer { background: none; border: none; box-shadow: none; padding: 0; }
+.btn-continuer img { height: 48px; display: block; }
+.btn-continuer:hover:not(:disabled) { transform: none; box-shadow: none; }
+.btn-continuer:hover img { filter: brightness(1.05); transform: translateX(2px); }
+.choix-compte { font-weight: 900; color: var(--or); font-size: 1.05rem; align-self: center; }
 
 /* plateau : boutons d'action en icône seule (libellé en tooltip) */
 .aside-actions { display: flex; gap: 6px; justify-content: space-between; flex-wrap: nowrap; margin: 10px 0; }
@@ -344,15 +349,16 @@ kbd {
 }
 
 /* portrait en médaillon + gemme de PA (étoile cyan) dans le coin, façon maquette */
-.portrait-wrap { position: relative; width: 78px; margin: 5px auto 18px; }
+.portrait-wrap { position: relative; width: 78px; margin: 5px auto 22px; }
 /* PV : grosse gemme cœur centrée sous le portrait (cf. maquette) */
-.pv-gem { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; display: grid; place-items: center; z-index: 3; }
+.pv-gem { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); width: 54px; height: 54px; display: grid; place-items: center; z-index: 3; }
 .pv-gem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 3px #0009); }
-.pv-gem b { position: relative; font-size: .82rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #0008; }
+.pv-gem b { position: relative; font-size: .9rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #0008; }
 .pv-gem.ko { filter: grayscale(.7) brightness(.7); }
-.pa-gem { position: absolute; top: -10px; left: -12px; width: 42px; height: 42px; display: grid; place-items: center; z-index: 3; }
+/* étoile de PA : coin haut-gauche du portrait (loin du cœur et du badge archi) */
+.pa-gem { position: absolute; top: -12px; left: -14px; width: 42px; height: 42px; display: grid; place-items: center; z-index: 4; }
 .pa-gem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 3px #0008); }
-.pa-gem b { position: relative; font-size: .86rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #0008; }
+.pa-gem b { position: relative; font-size: .72rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #0008; }
 
 /* éléments : rond principal (1) + secondaire (2) */
 .elems { display: flex; gap: 8px; justify-content: center; margin: 2px 0 1px; }

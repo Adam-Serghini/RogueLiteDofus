@@ -313,6 +313,7 @@ const ICON_COEUR = A("/assets/divers/coeur.png"); // PV
 const LOGO = A("/assets/divers/Roguefus_lite.png");
 const BTN_JOUER = A("/assets/menu/Jouer.png");
 const BTN_RETOUR = A("/assets/menu/retour.png");
+const BTN_CONTINUER = A("/assets/menu/continuer.png");
 const MENU_PERSOS = A("/assets/menu/Caracteristiques.png");
 const MENU_FORMATION = A("/assets/menu/Formation.png");
 const MENU_INVENTAIRE = A("/assets/menu/Inventaire.png");
@@ -740,16 +741,9 @@ export function showStart(meta: Meta, onReset: () => void): Promise<void> {
       <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
       <div class="boutons-ecran">
         <button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>
-        <button id="btn-bestiaire" class="secondaire">Bestiaire</button>
         ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
       </div>
     `);
-    document
-      .getElementById("btn-bestiaire")
-      ?.addEventListener("click", async () => {
-        await showBestiaire(meta);
-        showStart(meta, onReset).then(res);
-      });
     document
       .getElementById("btn-settings")
       ?.addEventListener("click", async () => {
@@ -802,7 +796,8 @@ export function showChoixEquipe(): Promise<string[]> {
         <p class="sous-titre">Choisis <b>2 classes</b> pour commencer. Tu pourras en recruter d'autres dans les tavernes (équipe de 4 max).</p>
         <div class="choix-grille">${cartes}</div>
         <div class="boutons-ecran">
-          <button id="choix-go" class="primaire" ${choix.length === 2 ? "" : "disabled"}>Lancer la run (${choix.length}/2)</button>
+          <button id="choix-go" class="btn-jouer" title="Jouer" ${choix.length === 2 ? "" : "disabled"}><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>
+          <span class="choix-compte">${choix.length}/2</span>
         </div>
       `);
       root
@@ -1238,7 +1233,7 @@ export function showDrop(ids: string[]): Promise<void> {
       <h1>🎁 Butin !</h1>
       <p class="sous-titre">L'équipe ramasse ${ids.length} pièce${ids.length > 1 ? "s" : ""} d'équipement.</p>
       <div class="drop-liste">${cartes}</div>
-      <div class="boutons-ecran"><button id="drop-ok" class="primaire">Continuer</button></div>
+      <div class="boutons-ecran"><button id="drop-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
     `);
     document.getElementById("drop-ok")?.addEventListener("click", () => res());
   });
@@ -1297,7 +1292,7 @@ export function showTransition(
     ecran(`
       <h1>${escapeHtml(message)}</h1>
       <p class="sous-titre">${escapeHtml(sousTitre)}</p>
-      <div class="boutons-ecran"><button id="btn-next" class="primaire">Continuer</button></div>
+      <div class="boutons-ecran"><button id="btn-next" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
     `);
     document.getElementById("btn-next")?.addEventListener("click", () => res());
   });
@@ -1419,8 +1414,9 @@ function carteProgression(p: PersoState): string {
  */
 export function showStatPanel(
   persos: PersoState[],
-  titre = "Personnages",
+  titre = "Caractéristiques",
   sousTitre = "Dépense tes points de caractéristique.",
+  retour = false,
 ): Promise<void> {
   return new Promise((res) => {
     const draw = () => {
@@ -1428,7 +1424,9 @@ export function showStatPanel(
         <h1>${escapeHtml(titre)}</h1>
         <p class="sous-titre">${escapeHtml(sousTitre)}</p>
         <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
-        <div class="boutons-ecran"><button id="prog-fermer" class="primaire">Continuer</button></div>
+        <div class="boutons-ecran">${retour
+          ? `<button id="prog-fermer" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button>`
+          : `<button id="prog-fermer" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button>`}</div>
       `);
       const persoDe = (el: HTMLElement) =>
         persos.find((p) => p.classeId === el.dataset.perso);
@@ -1560,7 +1558,7 @@ export function showCapture(especes: string[]): Promise<void> {
     ecran(`
       <h1>✨ Âme${s ? "s" : ""} d'Archimonstre capturée${s ? "s" : ""} !</h1>
       <p class="sous-titre">${especes.map(escapeHtml).join(", ")} ${s ? "rejoignent" : "rejoint"} ton bestiaire (Dofus Ocre).</p>
-      <div class="boutons-ecran"><button id="capt-ok" class="primaire">Continuer</button></div>
+      <div class="boutons-ecran"><button id="capt-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
     `);
     document.getElementById("capt-ok")?.addEventListener("click", () => res());
   });
@@ -1709,7 +1707,7 @@ export function showCarte(
         <div class="carte-ecran map-layout">
           <aside class="map-menus">
             <div class="aside-actions">
-              <button id="carte-persos" class="aside-icone" title="Personnages${points ? ` · ${points} pts à dépenser` : ""}"><img src="${MENU_PERSOS}" alt="Personnages" onerror="this.remove()" />${points ? `<span class="aside-compte">${points}</span>` : ""}</button>
+              <button id="carte-persos" class="aside-icone" title="Caractéristiques${points ? ` · ${points} pts à dépenser` : ""}"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" />${points ? `<span class="aside-compte">${points}</span>` : ""}</button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>
               <button id="carte-equip" class="aside-icone" title="Équipement${inventaire.length ? ` · ${inventaire.length} objet(s)` : ""}"><img src="${MENU_INVENTAIRE}" alt="Équipement" onerror="this.remove()" />${inventaire.length ? `<span class="aside-compte">${inventaire.length}</span>` : ""}</button>
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
@@ -1748,7 +1746,7 @@ export function showCarte(
       document
         .getElementById("carte-persos")
         ?.addEventListener("click", async () => {
-          await showStatPanel(persos);
+          await showStatPanel(persos, undefined, undefined, true);
           draw();
         });
       document
