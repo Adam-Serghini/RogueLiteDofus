@@ -77,6 +77,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
 /* --- Écrans plein cadre --- */
 .ecran {
+  position: relative;
   text-align: center;
   background: var(--panel);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
@@ -116,9 +117,55 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .dofus-tip .tip-boss { font-size: .74rem; color: var(--pv); margin-top: 5px; }
 .dofus-tip .tip-muet { font-size: .74rem; color: var(--muet); margin-top: 5px; font-style: italic; }
 
+/* tooltip stylé des sorts (survol en combat) */
+.sort-tip {
+  position: fixed; z-index: 1000; pointer-events: none; max-width: 270px;
+  background: linear-gradient(180deg, var(--panel-solide), var(--panel-2));
+  border: 1px solid var(--bord); border-radius: 12px; padding: 10px 12px;
+  box-shadow: 0 12px 30px #0008;
+}
+.sort-tip .tip-nom { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 900; color: var(--txt); font-size: .96rem; }
+.sort-tip .tip-pa { flex: none; background: var(--pa); color: #fff; font-size: .68rem; font-weight: 900; border-radius: 999px; padding: 1px 8px; }
+.sort-tip .tip-stat { margin: 7px 0 5px; display: flex; align-items: center; gap: 9px; }
+.sort-tip .tip-val { font-size: 1.12rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.sort-tip .tip-val.dgt { color: var(--danger); }
+.sort-tip .tip-val.soin { color: var(--pv); }
+.sort-tip .tip-unite { font-size: .68rem; color: var(--muet); text-transform: uppercase; letter-spacing: .04em; }
+.sort-tip .tip-el { font-size: .7rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: #00000014; color: var(--txt); }
+.sort-tip .tip-el.el-terre { background: var(--terre); color: #fff; }
+.sort-tip .tip-el.el-feu { background: var(--feu); color: #fff; }
+.sort-tip .tip-el.el-air { background: var(--air); color: #fff; }
+.sort-tip .tip-effet { font-size: .8rem; color: var(--txt); line-height: 1.32; }
+.sort-tip .tip-cible { margin-top: 7px; padding-top: 6px; border-top: 1px solid #00000016; font-size: .72rem; color: var(--muet); }
+
 .aside-dofus { margin-top: 14px; border-top: 1px solid var(--bord); padding-top: 12px; }
 .aside-dofus h3 { font-size: .78rem; color: var(--muet); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
-.boutons-ecran { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.boutons-ecran { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; align-items: center; }
+
+/* accueil : logo + bouton image "Jouer" + roue de paramètres en haut-droite */
+.logo-accueil { display: block; margin: 4px auto 6px; width: min(360px, 62%); height: auto; }
+.accueil-dofus-compte { color: var(--muet); font-size: .9rem; margin-top: 6px; }
+.accueil-dofus-compte b { color: var(--or); }
+.coin-param { position: absolute; top: 12px; right: 12px; background: none; border: none; box-shadow: none; padding: 0; }
+.coin-param img { width: 40px; height: 40px; object-fit: contain; display: block; transition: transform .12s ease; }
+.coin-param:hover:not(:disabled) { transform: none; box-shadow: none; }
+.coin-param:hover img { transform: rotate(35deg); }
+.btn-jouer { background: none; border: none; box-shadow: none; padding: 0; }
+.btn-jouer img { height: 52px; display: block; }
+.btn-jouer:hover:not(:disabled) { transform: none; box-shadow: none; }
+.btn-jouer:hover img { filter: brightness(1.05); transform: translateY(-1px); }
+.btn-retour { background: none; border: none; box-shadow: none; padding: 0; }
+.btn-retour img { height: 48px; display: block; }
+.btn-retour:hover:not(:disabled) { transform: none; box-shadow: none; }
+.btn-retour:hover img { filter: brightness(1.05); transform: translateX(-2px); }
+
+/* plateau : boutons d'action en icône seule (libellé en tooltip) */
+.aside-actions { display: flex; gap: 6px; justify-content: space-between; flex-wrap: nowrap; margin: 10px 0; }
+.aside-icone { position: relative; background: none; border: none; box-shadow: none; padding: 2px; flex: 0 1 auto; }
+.aside-icone img { width: 44px; height: 44px; max-width: 100%; object-fit: contain; display: block; transition: transform .1s ease; }
+.aside-icone:hover:not(:disabled) { transform: none; box-shadow: none; }
+.aside-icone:hover img { transform: translateY(-2px); filter: brightness(1.06); }
+.aside-compte { position: absolute; top: -3px; right: -3px; background: var(--or); color: #2a1c02; font-size: .6rem; font-weight: 900; border-radius: 999px; padding: 0 5px; border: 1px solid #2a1c0255; }
 
 kbd {
   font-family: var(--police); font-size: .82em; font-weight: 800;
@@ -232,9 +279,16 @@ kbd {
 
 /* timeline d'ordre des tours (signature) */
 .timeline {
-  display: flex; align-items: center; gap: 8px; justify-content: center; flex-wrap: wrap;
-  padding: 8px 12px; margin: 0 auto 14px; width: fit-content; max-width: 100%;
+  position: fixed; right: 16px; bottom: 16px; z-index: 60;
+  display: flex; flex-direction: row; align-items: center; gap: 10px;
+  padding: 7px 12px; border-radius: 16px; max-width: calc(100vw - 32px); overflow-x: auto;
+  background: rgb(54, 39, 22); border: 1px solid var(--bord-clair);
+  box-shadow: 0 12px 30px #0009;
 }
+/* hôtes de sections (mis à jour par innerHTML) : transparents au layout */
+#cb-timeline, .camp-host { display: contents; }
+.tl-titre { flex: none; font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--or-clair); }
+.tl-liste { display: flex; flex-direction: row; align-items: center; gap: 8px; }
 .tl-pastille {
   position: relative; width: 40px; height: 40px; border-radius: 50%;
   background: var(--panel-solide); border: 2px solid var(--bord); overflow: hidden;
@@ -290,10 +344,15 @@ kbd {
 }
 
 /* portrait en médaillon + gemme de PA (étoile cyan) dans le coin, façon maquette */
-.portrait-wrap { position: relative; width: 78px; margin: 5px auto 2px; }
-.pa-gem { position: absolute; top: -5px; left: -10px; width: 30px; height: 30px; display: grid; place-items: center; }
-.pa-gem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 4px #ef7d1acc); }
-.pa-gem b { position: relative; font-size: .72rem; font-weight: 900; color: #06222b; text-shadow: 0 1px 0 #ffffff66; }
+.portrait-wrap { position: relative; width: 78px; margin: 5px auto 18px; }
+/* PV : grosse gemme cœur centrée sous le portrait (cf. maquette) */
+.pv-gem { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; display: grid; place-items: center; z-index: 3; }
+.pv-gem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 3px #0009); }
+.pv-gem b { position: relative; font-size: .82rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #0008; }
+.pv-gem.ko { filter: grayscale(.7) brightness(.7); }
+.pa-gem { position: absolute; top: -10px; left: -12px; width: 42px; height: 42px; display: grid; place-items: center; z-index: 3; }
+.pa-gem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 3px #0008); }
+.pa-gem b { position: relative; font-size: .86rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #0008; }
 
 /* éléments : rond principal (1) + secondaire (2) */
 .elems { display: flex; gap: 8px; justify-content: center; margin: 2px 0 1px; }
@@ -331,6 +390,9 @@ kbd {
 .res-chip.zero { opacity: .42; }
 .res-chip img { width: 13px; height: 13px; object-fit: contain; }
 
+.pv-row { display: flex; align-items: center; gap: 5px; }
+.pv-row .barre-pv { flex: 1; }
+.pv-coeur { width: 16px; height: 16px; object-fit: contain; flex: none; filter: drop-shadow(0 1px 1px #0006); }
 .barre-pv {
   position: relative; height: 16px; border-radius: 6px; overflow: hidden; margin: 4px 0;
   background: #4a3a26; border: 1px solid #00000066; box-shadow: inset 0 1px 3px #000;
@@ -350,23 +412,32 @@ kbd {
 /* =========================================================================
    BARRE DE SORTS
    ========================================================================= */
+/* bas de l'écran scindé : chat à gauche, sorts à droite */
+.zone-bas { display: flex; gap: 14px; align-items: stretch; margin-bottom: 14px; min-height: 176px; }
+.zone-bas .journal { flex: 1 1 38%; min-width: 0; height: auto; margin: 0; }
+.zone-bas .barre-sorts { flex: 1 1 62%; margin: 0; }
+
 .barre-sorts {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
-  background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  border: 1px solid var(--bord); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+  position: relative;
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--panel-solide);
+  border: 1px solid var(--bord); border-radius: 14px; padding: 12px 14px;
   box-shadow: 0 8px 22px #0008;
 }
-.sorts-liste { display: flex; flex-wrap: wrap; gap: 10px; }
+.sorts-rangee { display: flex; align-items: center; gap: 14px; }
+.sorts-rangee .sorts-zone { flex: 1 1 auto; }
+.sorts-rangee .barre-actions-fin { flex: none; }
+.sorts-liste { display: flex; flex-wrap: wrap; gap: 8px; }
 .sort {
-  position: relative; width: 78px; padding: 7px 4px 6px; display: flex; flex-direction: column;
-  align-items: center; gap: 4px; color: var(--txt);
+  position: relative; width: 50px; height: 50px; padding: 7px; display: flex;
+  align-items: center; justify-content: center; color: var(--txt);
   background: linear-gradient(180deg, #efe3c6, #d9c79e); border: 1px solid var(--bord); border-radius: 11px;
 }
 .sort:hover:not(:disabled) { box-shadow: 0 0 0 2px var(--cyan); }
 .sort:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .sort.choisi { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan), 0 0 12px #ef7d1a66; }
 .sort:disabled { opacity: .4; }
-.sort-icon { width: 36px; height: 36px; object-fit: contain; }
+.sort-icon { width: 34px; height: 34px; object-fit: contain; }
 .sort-touche {
   position: absolute; top: -7px; left: -7px; width: 18px; height: 18px;
   display: flex; align-items: center; justify-content: center;
@@ -383,8 +454,9 @@ kbd {
   background: radial-gradient(circle at 40% 30%, #bfe6ff, var(--pa)); color: #06243a;
   font-size: .74rem; font-weight: 900; border-radius: 999px; border: 1px solid #06243a66; box-shadow: 0 1px 3px #0008;
 }
-.barre-actions-fin { display: flex; align-items: center; }
-.fin-tour { font-weight: 900; }
+.barre-actions-fin { display: flex; align-items: center; justify-content: flex-end; }
+.fin-tour { font-weight: 800; padding: 7px 10px; font-size: .74rem; white-space: nowrap; border-radius: 9px; }
+.fin-tour kbd { font-size: .66em; margin-left: 5px; padding: 1px 4px; }
 .aide { grid-column: 1 / -1; color: var(--muet); font-size: .82rem; margin-top: 2px; }
 .attente { color: var(--muet); font-style: italic; }
 
@@ -435,12 +507,20 @@ kbd {
    ========================================================================= */
 /* layout : sidebar équipe (gauche) + plateau (droite) */
 .map-layout { display: flex; gap: 18px; align-items: flex-start; }
-.map-aside {
+/* colonne de menus à gauche (icônes verticales) */
+.map-menus {
+  flex: none; padding: 10px 8px;
+  background: var(--panel-solide); border: 1px solid var(--bord);
+  border-radius: 14px; box-shadow: 0 8px 22px #0008;
+}
+.map-menus .aside-actions { flex-direction: column; justify-content: flex-start; gap: 10px; margin: 0; }
+/* panneau d'équipe à droite */
+.map-equipe {
   width: 234px; flex: none; padding: 14px;
-  background: var(--panel); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  background: var(--panel-solide);
   border: 1px solid var(--bord); border-radius: 14px; box-shadow: 0 8px 22px #0008;
 }
-.map-aside h2 { margin: 0 0 12px; font-size: 1.2rem; }
+.map-equipe h2 { margin: 0 0 12px; font-size: 1.2rem; }
 .map-main { flex: 1; min-width: 0; }
 .zone-titre { margin: 0 0 10px; color: var(--or-clair); font-size: 1.5rem; text-align: center; text-shadow: 0 2px 0 #00000060; }
 .aside-equipe { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
@@ -455,7 +535,8 @@ kbd {
 
 @media (max-width: 760px) {
   .map-layout { flex-direction: column; }
-  .map-aside { width: auto; align-self: stretch; }
+  .map-menus, .map-equipe { width: auto; align-self: stretch; }
+  .map-menus .aside-actions { flex-direction: row; justify-content: center; }
 }
 
 .map-zone {
@@ -491,7 +572,8 @@ kbd {
 .map-node.atteignable { cursor: pointer; }
 .map-node.atteignable .case-art { box-shadow: 0 0 0 2px var(--cyan), 0 0 16px #ef7d1a88; animation: pulse-case 1.4s ease-in-out infinite; }
 .map-node.t-donjon.atteignable .case-art { box-shadow: 0 0 0 2px var(--or), 0 0 18px #e8b54e99; }
-.map-node.atteignable:hover { transform: translate(-50%, -50%) translateY(-3px); }
+.map-node.atteignable:hover { transform: translate(-50%, -50%); box-shadow: none; }
+.map-node.atteignable:hover .case-art { filter: brightness(1.07); }
 .map-node:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .map-node:disabled { cursor: default; }
 
@@ -509,7 +591,37 @@ kbd {
    JOURNAL
    ========================================================================= */
 .journal {
-  background: #e7d9b6; color: #5a4632; border: 1px solid var(--bord); border-radius: 12px;
-  padding: 10px 12px; height: 150px; overflow-y: auto; font-size: .82rem; box-shadow: inset 0 0 24px #0008;
+  background: linear-gradient(180deg, #efe3c6, #e6d6ad); color: var(--txt);
+  border: 1px solid var(--bord); border-radius: 12px;
+  padding: 6px 12px;
+  height: 156px; overflow-y: auto; font-size: .82rem; line-height: 1.45;
+  box-shadow: inset 0 0 18px #0003;
 }
-.log-line { padding: 1px 0; border-bottom: 1px solid #ffffff08; }
+.log-line { padding: 2px 8px; border-radius: 6px; }
+.log-line + .log-line { margin-top: 2px; }
+.log-tour { font-weight: 800; color: var(--txt); background: #8a6d4222; border-left: 3px solid var(--or); margin-top: 6px !important; }
+.log-degats { color: #8a3326; }
+.log-soin { color: #46701f; }
+.log-poison { color: #5f7a2a; }
+.log-info { color: var(--muet); }
+
+/* barre de sorts : sélecteur d'élément (vertical) à gauche des sorts */
+.sorts-zone { display: flex; align-items: stretch; gap: 12px; }
+.elem-select {
+  position: relative;
+  display: flex; flex-direction: row; align-items: center; gap: 8px;
+  padding-right: 12px; border-right: 1px solid var(--bord);
+}
+.elem-info {
+  position: absolute; top: -7px; right: 6px; z-index: 2;
+  width: 14px; height: 14px; display: grid; place-items: center; cursor: help;
+  font-size: .52rem; font-weight: 900; font-style: italic; line-height: 1;
+  color: var(--muet); background: var(--panel-solide); border: 1px solid var(--bord); border-radius: 50%;
+}
+.elem-info:hover { color: var(--txt); border-color: var(--or); box-shadow: 0 0 0 2px var(--or-clair); }
+.elem-select .elem-rond { width: 40px; height: 40px; }
+.elem-select .elem-rond img { width: 24px; height: 24px; }
+.elem-select .elem-rond.switch:hover { transform: scale(1.08); }
+.elem-select .frappe-pic { display: none; } /* pastille ⚔ inutile ici : l'anneau or suffit */
+.elem-select .elem-rond i { font-size: .46rem; } /* rang 1/2 discret */
+.elem-select .elem-rond.frappe { outline: 2px solid var(--or); outline-offset: 2px; }

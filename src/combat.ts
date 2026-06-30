@@ -641,6 +641,7 @@ export function lancerSort(
   // --- MIXTE : ennemi → dégâts ; allié → soutien ---
   if (sort.cible === "mixte" && cible) {
     if (cible.camp === lanceur.camp && sort.mixte) {
+      ctx.log(`${lanceur.nom} lance ${sort.nom} sur ${cible.nom}.`); // annonce avant les effets
       const sa = sort.mixte.surAllie;
       if (sa.bouclierPct && !aFriction(cible)) {
         const b = Math.round(cible.pvMax * sa.bouclierPct);
@@ -651,7 +652,6 @@ export function lancerSort(
         if (sa.nonCumulable) cible.effets = cible.effets.filter((e) => e.stat !== sa.effet!.stat);
         appliquerEffet(cible, sa.effet);
       }
-      ctx.log(`${lanceur.nom} lance ${sort.nom} sur ${cible.nom}.`);
       poseCooldown(cible);
       return;
     }
@@ -666,6 +666,7 @@ export function lancerSort(
 
   // --- SOIN ---
   if (sort.type === "soin") {
+    ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
     const cibles = sort.cible === "allie_tous" ? allies(lanceur, cs) : cible ? [cible] : [];
     for (const t of cibles) {
       const montant = sort.soinComplet
@@ -674,12 +675,12 @@ export function lancerSort(
       soigner(t, montant, ctx);
       poseCooldown(t);
     }
-    ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
     return;
   }
 
   // --- BUFF / DEBUFF (soutien) ---
   if (sort.type === "buff" || sort.type === "debuff") {
+    ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
     // Tactique féline : +PA aux alliés des cases adjacentes
     if (sort.paGainAdjacents) {
       const voisines = adjacents(lanceur.position);
@@ -708,7 +709,6 @@ export function lancerSort(
       appliquerSoutien(sort, t, lanceur, ctx);
       poseCooldown(t);
     }
-    ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
     return;
   }
 

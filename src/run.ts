@@ -247,6 +247,12 @@ export function prospectionEquipe(run: RunState): number {
   }, 0);
 }
 
+/** Choisit une panoplie au hasard (butin non lié à la zone). */
+export function panoplieAleatoire(rng: () => number): string {
+  const ids = Object.keys(PANOPLIES);
+  return ids[Math.floor(rng() * ids.length)] ?? ids[0];
+}
+
 /** Tire le butin d'une victoire : ajoute les pièces tombées à l'inventaire, les renvoie. */
 export function tenterButin(run: RunState, panoplieId: string, type: string, rng: () => number): string[] {
   const taux = DROP.taux[type] ?? 0;
