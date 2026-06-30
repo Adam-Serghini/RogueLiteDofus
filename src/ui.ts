@@ -84,6 +84,7 @@ export function init(el: HTMLElement): void {
   root = el;
   initDofusTooltip();
   initSortTooltip();
+  initAideTooltip();
   // raccourcis clavier globaux : actifs uniquement pendant le tour du joueur
   document.addEventListener("keydown", (e) => {
     if (!resolver || !activeActeur) return;
@@ -97,9 +98,12 @@ export function init(el: HTMLElement): void {
       render();
       return;
     }
-    // touches 1-9 : slot 1 = corps à corps (réservé/vide), 2+ = sorts dans l'ordre
-    if (/^[1-9]$/.test(e.key)) {
-      const slot = Number(e.key);
+    // touches 1-9 : slot 1 = corps à corps (réservé/vide), 2+ = sorts dans l'ordre.
+    // On lit e.code (touche physique) et non e.key : sur un clavier AZERTY les chiffres
+    // exigeraient sinon Maj. Digit1-9 (rangée du haut) et Numpad1-9 (pavé) sont gérés.
+    const touche = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
+    if (touche) {
+      const slot = Number(touche[1]);
       if (slot === 1) return; // corps à corps : à venir
       const sortId = activeActeur.sorts[slot - 2];
       const s = sortId ? SORTS[sortId] : undefined;
@@ -246,6 +250,44 @@ function initSortTooltip(): void {
   });
 }
 
+/**
+ * Tooltip d'aide générique piloté par `data-tip` (texte multiligne, `\n` rendus
+ * via white-space: pre-line). Remplace le `title` natif peu fiable du sélecteur
+ * d'élément (cible minuscule + texte long). Réutilisable sur tout `[data-tip]`.
+ */
+function initAideTooltip(): void {
+  const tip = document.createElement("div");
+  tip.className = "aide-tip";
+  tip.style.display = "none";
+  document.body.appendChild(tip);
+
+  const placer = (host: HTMLElement) => {
+    const txt = host.dataset.tip;
+    if (!txt) return;
+    tip.textContent = txt;
+    tip.style.display = "block";
+    const r = host.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    let left = r.left + r.width / 2 - t.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - t.width - 8));
+    let top = r.top - t.height - 10;
+    if (top < 8) top = r.bottom + 10; // bascule sous la cible si trop haut
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+  };
+
+  document.addEventListener("mouseover", (e) => {
+    const host = (e.target as HTMLElement).closest?.(
+      "[data-tip]",
+    ) as HTMLElement | null;
+    if (host) placer(host);
+  });
+  document.addEventListener("mouseout", (e) => {
+    if ((e.target as HTMLElement).closest?.("[data-tip]"))
+      tip.style.display = "none";
+  });
+}
+
 /** Vrai si le combattant peut encore lancer au moins un sort (PA + cible). */
 function aUneActionPossible(acteur: Combatant, cs: Combatant[]): boolean {
   return acteur.sorts
@@ -352,11 +394,98 @@ export function beginCombat(
   selectedSpell = null;
   combatMonte = false; // nouveau combat → (re)construire le squelette une fois
   render();
+  snapshotFx(cs); // état de départ : aucun « delta » au premier affichage
 }
 
 /** Re-render entre deux actions (appelé par le moteur). */
 export function onUpdate(): void {
   render();
+  flushFx(); // nombres flottants / flash / mort, déduits du diff d'état
+}
+
+// --- Effets visuels de combat (« juice ») ------------------------------------
+// Découplé du moteur (qui reste pur) : on déduit dégâts/soin/mort en comparant
+// l'état courant des combattants à un instantané pris au render précédent. Les
+// éléments vivent dans une couche overlay (fixed) qui survit au re-render des cartes.
+interface FxSnap {
+  pv: number;
+  bouclier: number;
+  mort: boolean;
+}
+const fxSnap = new Map<string, FxSnap>();
+let fxLayer: HTMLElement | null = null;
+let fxJitter = 0; // décale légèrement les nombres successifs pour éviter le chevauchement
+
+function ensureFxLayer(): HTMLElement {
+  if (!fxLayer || !fxLayer.isConnected) {
+    fxLayer = document.createElement("div");
+    fxLayer.className = "fx-layer";
+    document.body.appendChild(fxLayer);
+  }
+  return fxLayer;
+}
+
+/** Mémorise l'état PV/bouclier/mort de chaque combattant (référence du diff). */
+function snapshotFx(cs: Combatant[]): void {
+  fxSnap.clear();
+  for (const c of cs)
+    fxSnap.set(c.ref, {
+      pv: c.pvActuels,
+      bouclier: c.bouclier,
+      mort: c.pvActuels <= 0,
+    });
+}
+
+/** Spawn d'un nombre flottant au-dessus de la carte du combattant `ref`. */
+function spawnFloat(ref: string, texte: string, kind: string): void {
+  const card = root.querySelector<HTMLElement>(`.carte[data-ref="${ref}"]`);
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const el = document.createElement("div");
+  el.className = `fx-num ${kind}`;
+  el.textContent = texte;
+  const jitter = (fxJitter++ % 3) * 16 - 16; // -16, 0, +16 px
+  el.style.left = `${r.left + r.width / 2 + jitter}px`;
+  el.style.top = `${r.top + r.height * 0.32}px`;
+  el.addEventListener("animationend", () => el.remove());
+  ensureFxLayer().appendChild(el);
+}
+
+/** Flash bref sur la carte touchée (pulse rouge) — indépendant du re-render. */
+function spawnFlash(ref: string): void {
+  const card = root.querySelector<HTMLElement>(`.carte[data-ref="${ref}"]`);
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const el = document.createElement("div");
+  el.className = "fx-flash";
+  el.style.left = `${r.left}px`;
+  el.style.top = `${r.top}px`;
+  el.style.width = `${r.width}px`;
+  el.style.height = `${r.height}px`;
+  el.addEventListener("animationend", () => el.remove());
+  ensureFxLayer().appendChild(el);
+}
+
+/** Compare l'état courant à l'instantané et déclenche les effets, puis ré-instantane. */
+function flushFx(): void {
+  for (const c of combatants) {
+    const prev = fxSnap.get(c.ref);
+    if (!prev) continue; // combattant inconnu (ne devrait pas arriver)
+    const pvLoss = Math.max(0, prev.pv - c.pvActuels);
+    const shieldLoss = Math.max(0, prev.bouclier - c.bouclier);
+    const degats = pvLoss + shieldLoss; // dégâts encaissés (PV + bouclier absorbé)
+    const soin = Math.max(0, c.pvActuels - prev.pv);
+    const bouclierGagne = Math.max(0, c.bouclier - prev.bouclier);
+
+    if (degats > 0) {
+      spawnFloat(c.ref, `-${degats}`, "dmg");
+      spawnFlash(c.ref);
+    }
+    if (soin > 0) spawnFloat(c.ref, `+${soin}`, "soin");
+    if (bouclierGagne > 0) spawnFloat(c.ref, `+${bouclierGagne}`, "bouclier");
+    if (!prev.mort && c.pvActuels <= 0) spawnFloat(c.ref, "K.O.", "mort");
+  }
+  snapshotFx(combatants);
 }
 
 /** Contrôleur joueur : résolu quand le joueur choisit une action ou termine. */
@@ -435,7 +564,7 @@ function elemRond(
     : switchable
       ? `Frapper en ${elNom[el]} (cliquer)`
       : `Élément ${rang === 1 ? "principal" : "secondaire"} — ${elNom[el]}`;
-  return `<span class="${cls}" ${switchable ? `data-switch="${el}"` : ""} title="${titre}">
+  return `<span class="${cls}" ${switchable ? `data-switch="${el}"` : ""} data-tip="${escapeHtml(titre)}">
     <img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><i>${rang}</i>${actif ? `<b class="frappe-pic">⚔</b>` : ""}</span>`;
 }
 
@@ -671,7 +800,7 @@ function renderBarreSorts(): string {
           abordable ? "" : "disabled"
         }>
         <span class="sort-touche">${i + 2}</span>
-        <span class="sort-pa-badge">${s.coutPA}</span>
+        <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${s.coutPA}</b></span>
         <span class="sort-icon-wrap"><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
       </button>`;
       })
@@ -700,7 +829,7 @@ function renderBarreSorts(): string {
   const selecteur =
     acteur.camp === "joueur"
       ? `<div class="elem-select">
-         <span class="elem-info" title="${escapeHtml(ELEMENT_AIDE)}">i</span>
+         <span class="elem-info" data-tip="${escapeHtml(ELEMENT_AIDE)}">i</span>
          ${elemRond(principal, 1, principal === actif, true)}
          ${elemRond(secondaire, 2, secondaire === actif, true)}
        </div>`
