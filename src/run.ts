@@ -6,7 +6,7 @@
 import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA } from "./progression";
 import { chargerConfig } from "./config";
-import type { Combatant, Element, EquipSlot, GameMap, Meta, Monstre, Progression, Stats } from "./types";
+import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -15,13 +15,13 @@ export interface PersoState {
   pvActuels: number; // PV conservés d'un nœud à l'autre
   position: number; // case de grille 0..7 (0-3 ligne avant, 4-7 arrière)
   elementChoisi?: Element; // élément de frappe choisi, conservé d'un combat à l'autre
-  equipement: Partial<Record<EquipSlot, string>>; // objet équipé par slot (id d'objet)
+  equipement: Partial<Record<EquipSlot, ItemInstance>>; // exemplaire équipé par slot
 }
 
 export interface RunState {
   persos: PersoState[];
   carte: GameMap | null;
-  inventaire: string[]; // objets non équipés trouvés cette run (perdus à la mort)
+  inventaire: ItemInstance[]; // exemplaires non équipés trouvés cette run (perdus à la mort)
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "sadida"]; // roster par défaut (tests)
@@ -141,9 +141,10 @@ export function bonusEquipement(state: PersoState): {
   const resistances: Partial<Record<Element, number>> = {};
   const comptePano: Record<string, number> = {};
   for (const slot of Object.keys(state.equipement) as EquipSlot[]) {
-    const item = state.equipement[slot] ? ITEMS[state.equipement[slot]!] : undefined;
-    if (!item) continue;
-    ajouterStats(stats, item.stats);
+    const inst = state.equipement[slot];
+    const item = inst ? ITEMS[inst.id] : undefined;
+    if (!inst || !item) continue;
+    ajouterStats(stats, inst.stats); // stats rollées de l'exemplaire
     pvBonus += item.pvBonus ?? 0;
     ajouterRes(resistances, item.resistances);
     comptePano[item.panoplie] = (comptePano[item.panoplie] ?? 0) + 1;
@@ -230,13 +231,15 @@ export function soignerEquipe(run: RunState, pct: number): void {
 }
 
 // --- Butin (drops d'équipement) ----------------------------------------------
-/** Pièces d'une panoplie ni équipées ni déjà dans l'inventaire. */
-export function piecesEligibles(run: RunState, panoplieId: string): string[] {
-  const pano = PANOPLIES[panoplieId];
-  if (!pano) return [];
-  const possedees = new Set<string>(run.inventaire);
-  for (const p of run.persos) for (const id of Object.values(p.equipement)) if (id) possedees.add(id);
-  return pano.pieces.filter((id) => !possedees.has(id));
+/** Crée un exemplaire d'item en tirant chaque stat dans sa fourchette (jet façon Dofus). */
+export function rollItem(itemId: string, rng: () => number): ItemInstance {
+  const stats: Partial<Stats> = {};
+  const rolls = ITEMS[itemId]?.rolls ?? {};
+  for (const k of Object.keys(rolls) as (keyof Stats)[]) {
+    const [lo, hi] = rolls[k]!;
+    stats[k] = lo + Math.floor(rng() * (hi - lo + 1));
+  }
+  return { id: itemId, stats };
 }
 
 /** Prospection cumulée de l'équipe (stat de classe + équipement). */
@@ -247,43 +250,40 @@ export function prospectionEquipe(run: RunState): number {
   }, 0);
 }
 
-/** Choisit une panoplie au hasard (butin non lié à la zone). */
-export function panoplieAleatoire(rng: () => number): string {
-  const ids = Object.keys(PANOPLIES);
-  return ids[Math.floor(rng() * ids.length)] ?? ids[0];
-}
-
-/** Tire le butin d'une victoire : ajoute les pièces tombées à l'inventaire, les renvoie. */
-export function tenterButin(run: RunState, panoplieId: string, type: string, rng: () => number): string[] {
+/**
+ * Tire le butin d'une victoire : chaque pièce de la panoplie de zone a une chance
+ * de tomber. Les doublons sont autorisés (on pourra valoriser les doublons plus tard).
+ */
+export function tenterButin(run: RunState, panoplieId: string, type: string, rng: () => number): ItemInstance[] {
   const taux = DROP.taux[type] ?? 0;
   if (taux <= 0) return [];
   const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
   const p = taux * mult;
-  const drops: string[] = [];
-  for (const id of piecesEligibles(run, panoplieId)) {
-    if (rng() < p) { run.inventaire.push(id); drops.push(id); }
+  const drops: ItemInstance[] = [];
+  for (const id of PANOPLIES[panoplieId]?.pieces ?? []) {
+    if (rng() < p) { const inst = rollItem(id, rng); run.inventaire.push(inst); drops.push(inst); }
   }
   return drops;
 }
 
-/** Équipe un objet de l'inventaire sur un perso (l'ancienne pièce du slot y retourne). */
-export function equiper(inventaire: string[], perso: PersoState, itemId: string): void {
-  const item = ITEMS[itemId];
-  const idx = inventaire.indexOf(itemId);
-  if (!item || idx < 0) return;
-  inventaire.splice(idx, 1);
+/** Équipe l'exemplaire d'inventaire `index` sur son perso (l'ancien du slot y retourne). */
+export function equiper(inventaire: ItemInstance[], perso: PersoState, index: number): void {
+  const inst = inventaire[index];
+  const item = inst ? ITEMS[inst.id] : undefined;
+  if (!inst || !item) return;
+  inventaire.splice(index, 1);
   const ancien = perso.equipement[item.slot];
   if (ancien) inventaire.push(ancien);
-  perso.equipement[item.slot] = itemId;
+  perso.equipement[item.slot] = inst;
   perso.pvActuels = Math.min(perso.pvActuels, pvMaxPerso(perso));
 }
 
-/** Déséquipe le slot d'un perso (l'objet retourne à l'inventaire). */
-export function desequiper(inventaire: string[], perso: PersoState, slot: EquipSlot): void {
-  const id = perso.equipement[slot];
-  if (!id) return;
+/** Déséquipe le slot d'un perso (l'exemplaire retourne à l'inventaire). */
+export function desequiper(inventaire: ItemInstance[], perso: PersoState, slot: EquipSlot): void {
+  const inst = perso.equipement[slot];
+  if (!inst) return;
   delete perso.equipement[slot];
-  inventaire.push(id);
+  inventaire.push(inst);
   perso.pvActuels = Math.min(perso.pvActuels, pvMaxPerso(perso));
 }
 

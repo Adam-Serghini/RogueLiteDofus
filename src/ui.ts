@@ -57,7 +57,7 @@ import type {
   Combatant,
   Element,
   EquipSlot,
-  Item,
+  ItemInstance,
   GameMap,
   MapNode,
   Meta,
@@ -309,7 +309,7 @@ const sortIcon = (id: string): string =>
   A(`/assets/spells/${SORT_DOSSIER[id] ?? "monstres"}/${id}.png`);
 
 const PA_ICON = A("/assets/divers/etoile.png"); // gemme de PA des cartes
-const ICON_COEUR = A("/assets/divers/coeur.png"); // PV
+const COEUR_PLEIN = A("/assets/divers/coeur_base.png"); // texture du cœur de PV (combat)
 const LOGO = A("/assets/divers/Roguefus_lite.png");
 const BTN_JOUER = A("/assets/menu/Jouer.png");
 const BTN_RETOUR = A("/assets/menu/retour.png");
@@ -455,6 +455,10 @@ function archiIndicateur(c: Combatant): string {
 
 function carteCombattant(c: Combatant, clickable: boolean): string {
   const ko = c.pvActuels <= 0;
+  const pvCur = Math.max(0, Math.round(c.pvActuels));
+  const pvPct = c.pvMax > 0
+    ? Math.max(0, Math.min(100, Math.round((c.pvActuels / c.pvMax) * 100)))
+    : 0;
   // chips de résistance : les 6 éléments, toujours affichés (0 % inclus)
   const resChips = ELEMENTS.map((e) => {
     const v = Math.round((c.resistances[e] ?? 0) * 100);
@@ -502,7 +506,11 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         ${c.img ? `<img class="portrait" src="${A(c.img)}" alt="" onerror="this.remove()" />` : `<div class="portrait"></div>`}
         ${archiIndicateur(c)}
         <span class="pa-gem" title="${c.paActuels} / ${c.paMax} PA"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${c.paActuels}</b></span>
-        <span class="pv-gem ${ko ? "ko" : ""}" title="${Math.max(0, c.pvActuels)} / ${c.pvMax} PV"><img src="${ICON_COEUR}" alt="" onerror="this.remove()" /><b>${Math.max(0, c.pvActuels)}</b></span>
+        <span class="pv-gem ${ko ? "ko" : ""}" title="${pvCur} / ${c.pvMax} PV" style="--pv-pct:${pvPct}%">
+          <img class="pv-vide" src="${COEUR_PLEIN}" alt="" onerror="this.remove()" />
+          <img class="pv-plein" src="${COEUR_PLEIN}" alt="" onerror="this.remove()" />
+          <b class="pv-num">${pvCur}<span>/${c.pvMax}</span></b>
+        </span>
       </div>
       <div class="mini-stats">
         <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(c.stats)}%</span>
@@ -544,9 +552,11 @@ function render(): void {
       "Ligne arrière",
       membres.filter((c) => !estAvant(c)),
     );
+    const sep = `<img class="ligne-sep" src="${A("/assets/divers/delimiter.png")}" alt="" onerror="this.remove()" />`;
     // les deux lignes côte à côte ; l'arrière est « derrière » = côté extérieur
-    // (gauche pour le joueur, droite pour l'ennemi) → les lignes avant se font face au centre
-    return `<div class="camp-lignes ${camp}">${camp === "joueur" ? arriere + avant : avant + arriere}</div>`;
+    // (gauche pour le joueur, droite pour l'ennemi) → les lignes avant se font face au centre,
+    // séparées par le délimiteur avant/arrière
+    return `<div class="camp-lignes ${camp}">${camp === "joueur" ? arriere + sep + avant : avant + sep + arriere}</div>`;
   };
 
   // Squelette construit UNE fois par combat : le chrome statique (titre, panneaux,
@@ -662,7 +672,7 @@ function renderBarreSorts(): string {
         }>
         <span class="sort-touche">${i + 2}</span>
         <span class="sort-pa-badge">${s.coutPA}</span>
-        <img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.remove()" />
+        <span class="sort-icon-wrap"><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
       </button>`;
       })
       .join("");
@@ -1003,6 +1013,7 @@ export function showFormation(persos: PersoState[]): Promise<void> {
 
 // --- Équipement --------------------------------------------------------------
 const SLOTS: EquipSlot[] = [
+  "arme",
   "amulette",
   "coiffe",
   "cape",
@@ -1011,6 +1022,7 @@ const SLOTS: EquipSlot[] = [
   "anneau",
 ];
 const SLOT_NOM: Record<EquipSlot, string> = {
+  arme: "Arme",
   amulette: "Amulette",
   coiffe: "Coiffe",
   cape: "Cape",
@@ -1031,16 +1043,20 @@ const STAT_ABBR: Partial<Record<keyof Stats, string>> = {
 };
 const itemImg = (id: string): string => A(`/assets/items/${id}.png`);
 
-/** Résumé textuel des stats d'un objet (ou d'un set de stats). */
-function itemLignes(item: Item): string {
+/** Résumé textuel d'un set de stats rollées (+ PV plats / résistances optionnels). */
+function itemLignes(
+  stats: Partial<Stats>,
+  pvBonus = 0,
+  resistances: Partial<Record<Element, number>> = {},
+): string {
   const parts: string[] = [];
-  if (item.pvBonus) parts.push(`+${item.pvBonus} PV`);
-  for (const k of Object.keys(item.stats ?? {}) as (keyof Stats)[]) {
-    const v = item.stats![k];
+  if (pvBonus) parts.push(`+${pvBonus} PV`);
+  for (const k of Object.keys(stats) as (keyof Stats)[]) {
+    const v = stats[k];
     if (v) parts.push(`+${v} ${STAT_ABBR[k] ?? k}`);
   }
-  for (const e of Object.keys(item.resistances ?? {}) as Element[]) {
-    const v = item.resistances![e];
+  for (const e of Object.keys(resistances) as Element[]) {
+    const v = resistances[e];
     if (v) parts.push(`+${Math.round(v * 100)} % rés ${elNom[e]}`);
   }
   return parts.join(" · ");
@@ -1049,7 +1065,7 @@ function itemLignes(item: Item): string {
 /** Écran Équipement : équiper/déséquiper les pièces trouvées, par personnage. */
 export function showInventaire(
   persos: PersoState[],
-  inventaire: string[],
+  inventaire: ItemInstance[],
 ): Promise<void> {
   return new Promise((res) => {
     let sel = 0; // index du perso sélectionné
@@ -1066,13 +1082,13 @@ export function showInventaire(
         .join("");
 
       const slots = SLOTS.map((slot) => {
-        const id = perso.equipement[slot];
-        const item = id ? ITEMS[id] : undefined;
+        const inst = perso.equipement[slot];
+        const item = inst ? ITEMS[inst.id] : undefined;
         return `<div class="equip-slot ${item ? "rempli" : "vide"}" data-slot="${slot}" ${item ? `data-desequip="${slot}" draggable="true"` : ""}>
           <span class="slot-nom">${SLOT_NOM[slot]}</span>
           ${
-            item
-              ? `<img class="slot-img" src="${itemImg(item.id)}" alt="" onerror="this.remove()" /><span class="slot-item">${escapeHtml(item.nom)}<small>${itemLignes(item)}</small></span>`
+            item && inst
+              ? `<img class="slot-img" src="${itemImg(item.id)}" alt="" onerror="this.remove()" /><span class="slot-item">${escapeHtml(item.nom)}<small>${itemLignes(inst.stats) || "—"}</small></span>`
               : `<span class="slot-vide-txt">— vide —</span>`
           }
         </div>`;
@@ -1081,38 +1097,28 @@ export function showInventaire(
       // bonus de panoplie en cours pour ce perso
       const compte: Record<string, number> = {};
       for (const s of SLOTS) {
-        const it = perso.equipement[s]
-          ? ITEMS[perso.equipement[s]!]
-          : undefined;
+        const inst = perso.equipement[s];
+        const it = inst ? ITEMS[inst.id] : undefined;
         if (it) compte[it.panoplie] = (compte[it.panoplie] ?? 0) + 1;
       }
       const panoTxt = Object.entries(compte)
-        .map(([pid, n]) => `${PANOPLIES[pid]?.nom ?? pid} ${n}/6`)
+        .map(([pid, n]) => `${PANOPLIES[pid]?.nom ?? pid} ${n}/${PANOPLIES[pid]?.pieces.length ?? 6}`)
         .join(" · ");
 
       const inv = inventaire.length
         ? inventaire
-            .map((id) => {
-              const it = ITEMS[id];
-              return `<button class="item-carte" data-equip="${id}" draggable="true">
-              <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
-              <span class="item-nom">${escapeHtml(it?.nom ?? id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(it)}</small></span>
+            .map((inst, i) => {
+              const it = ITEMS[inst.id];
+              return `<button class="item-carte" data-index="${i}" draggable="true">
+              <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
+              <span class="item-nom">${escapeHtml(it?.nom ?? inst.id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(inst.stats) || "—"}</small></span>
             </button>`;
             })
             .join("")
         : `<p class="muet">Inventaire vide — gagne des combats pour trouver de l'équipement.</p>`;
 
       const b = bonusEquipement(perso);
-      const totalTxt =
-        itemLignes({
-          id: "",
-          nom: "",
-          slot: "amulette",
-          panoplie: "",
-          stats: b.stats,
-          pvBonus: b.pvBonus,
-          resistances: b.resistances,
-        }) || "aucun bonus";
+      const totalTxt = itemLignes(b.stats, b.pvBonus, b.resistances) || "aucun bonus";
 
       ecran(`
         <h1>Équipement</h1>
@@ -1131,10 +1137,10 @@ export function showInventaire(
         </div>
         <div class="boutons-ecran"><button id="equip-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
-      // glisser-déposer : payload "inv:<id>" (objet de l'inventaire) ou "slot:<slot>" (pièce équipée)
-      const equiperId = (id: string) => {
-        if (inventaire.includes(id)) {
-          equiper(inventaire, perso, id);
+      // glisser-déposer : payload "inv:<index>" (exemplaire d'inventaire) ou "slot:<slot>" (pièce équipée)
+      const equiperIndex = (index: number) => {
+        if (index >= 0 && index < inventaire.length) {
+          equiper(inventaire, perso, index);
           draw();
         }
       };
@@ -1151,10 +1157,10 @@ export function showInventaire(
       );
 
       root.querySelectorAll<HTMLButtonElement>(".item-carte").forEach((btn) => {
-        const id = btn.dataset.equip!;
-        btn.addEventListener("click", () => equiperId(id)); // clic = équiper (fallback)
+        const index = Number(btn.dataset.index);
+        btn.addEventListener("click", () => equiperIndex(index)); // clic = équiper (fallback)
         btn.addEventListener("dragstart", (e) => {
-          e.dataTransfer!.setData("text/plain", `inv:${id}`);
+          e.dataTransfer!.setData("text/plain", `inv:${index}`);
           e.dataTransfer!.effectAllowed = "move";
           btn.classList.add("drag-src");
         });
@@ -1185,7 +1191,7 @@ export function showInventaire(
           e.preventDefault();
           el.classList.remove("drop-cible");
           const data = e.dataTransfer!.getData("text/plain");
-          if (data.startsWith("inv:")) equiperId(data.slice(4));
+          if (data.startsWith("inv:")) equiperIndex(Number(data.slice(4)));
         });
       });
 
@@ -1218,20 +1224,20 @@ export function showInventaire(
 }
 
 /** Écran Butin : annonce les pièces d'équipement obtenues après un combat. */
-export function showDrop(ids: string[]): Promise<void> {
+export function showDrop(drops: ItemInstance[]): Promise<void> {
   return new Promise((res) => {
-    const cartes = ids
-      .map((id) => {
-        const it = ITEMS[id];
+    const cartes = drops
+      .map((inst) => {
+        const it = ITEMS[inst.id];
         return `<div class="drop-item">
-        <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
-        <span class="drop-nom">${escapeHtml(it?.nom ?? id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(it)}</small></span>
+        <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
+        <span class="drop-nom">${escapeHtml(it?.nom ?? inst.id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(inst.stats) || "—"}</small></span>
       </div>`;
       })
       .join("");
     ecran(`
       <h1>🎁 Butin !</h1>
-      <p class="sous-titre">L'équipe ramasse ${ids.length} pièce${ids.length > 1 ? "s" : ""} d'équipement.</p>
+      <p class="sous-titre">L'équipe ramasse ${drops.length} pièce${drops.length > 1 ? "s" : ""} d'équipement.</p>
       <div class="drop-liste">${cartes}</div>
       <div class="boutons-ecran"><button id="drop-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
     `);
@@ -1616,7 +1622,7 @@ export function showCarte(
   persos: PersoState[],
   meta: Meta,
   zoneNom: string,
-  inventaire: string[] = [],
+  inventaire: ItemInstance[] = [],
 ): Promise<MapNode> {
   return new Promise((res) => {
     const draw = () => {

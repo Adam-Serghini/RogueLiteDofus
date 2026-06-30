@@ -18,17 +18,26 @@ export interface Stats {
 }
 
 // --- Équipement --------------------------------------------------------------
-export type EquipSlot = "amulette" | "coiffe" | "cape" | "ceinture" | "bottes" | "anneau";
+export type EquipSlot = "arme" | "amulette" | "coiffe" | "cape" | "ceinture" | "bottes" | "anneau";
+
+/** Fourchette de jet [min, max] d'une stat sur un item. */
+export type StatRolls = Partial<Record<keyof Stats, [number, number]>>;
 
 export interface Item {
   id: string;
   nom: string;
   slot: EquipSlot;
   panoplie: string; // id de la panoplie
-  stats?: Partial<Stats>;
-  pvBonus?: number; // PV max plats
+  rolls?: StatRolls; // fourchettes de stats (tirées au drop)
+  pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   img?: string;
+}
+
+/** Exemplaire d'item (inventaire/équipement) : stats rollées dans les fourchettes au drop. */
+export interface ItemInstance {
+  id: string; // id de l'Item de base
+  stats: Partial<Stats>; // valeurs tirées
 }
 
 /** Bonus de panoplie accordé à partir de `seuil` pièces équipées. */

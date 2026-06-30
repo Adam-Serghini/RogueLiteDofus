@@ -740,22 +740,34 @@ export const GEN_CARTE = {
 };
 
 // --- Équipement & panoplies --------------------------------------------------
+// Stats en FOURCHETTES (rolls) tirées au drop — valeurs réelles DofusDB,
+// filtrées aux stats gérées par le moteur (vita/force/int/agi/chance/prospection).
 export const ITEMS: Record<string, Item> = {
-  // ===== Panoplie de l'Aventurier (Incarnam, bas niveau, générique) =====
-  aventurier_amulette: { id: "aventurier_amulette", nom: "Amulette de l'Aventurier", slot: "amulette", panoplie: "aventurier", stats: { vitalite: 10, soin: 5 } },
-  aventurier_coiffe: { id: "aventurier_coiffe", nom: "Coiffe de l'Aventurier", slot: "coiffe", panoplie: "aventurier", stats: { vitalite: 12 } },
-  aventurier_cape: { id: "aventurier_cape", nom: "Cape de l'Aventurier", slot: "cape", panoplie: "aventurier", stats: { agilite: 6, prospection: 20 } },
-  aventurier_ceinture: { id: "aventurier_ceinture", nom: "Ceinture de l'Aventurier", slot: "ceinture", panoplie: "aventurier", stats: { force: 6 } },
-  aventurier_bottes: { id: "aventurier_bottes", nom: "Bottes de l'Aventurier", slot: "bottes", panoplie: "aventurier", stats: { agilite: 8 } },
-  aventurier_anneau: { id: "aventurier_anneau", nom: "Anneau de l'Aventurier", slot: "anneau", panoplie: "aventurier", stats: { vitalite: 8, force: 4 } },
+  // ===== Panoplie de l'Aventurier (Incarnam, set #5 : +toutes carac) =====
+  aventurier_amulette: { id: "aventurier_amulette", nom: "Amulette de l'Aventurier", slot: "amulette", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
+  aventurier_coiffe: { id: "aventurier_coiffe", nom: "Chapeau de l'Aventurier", slot: "coiffe", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
+  aventurier_cape: { id: "aventurier_cape", nom: "Cape de l'Aventurier", slot: "cape", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
+  aventurier_ceinture: { id: "aventurier_ceinture", nom: "Ceinture de l'Aventurier", slot: "ceinture", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
+  aventurier_bottes: { id: "aventurier_bottes", nom: "Bottes de l'Aventurier", slot: "bottes", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
+  aventurier_anneau: { id: "aventurier_anneau", nom: "Anneau de l'Aventurier", slot: "anneau", panoplie: "aventurier", rolls: { force: [0, 2], intelligence: [0, 2], chance: [0, 2], agilite: [0, 2] } },
 
-  // ===== Panoplie du Bouftou (Champs d'Astrub, vita/force-Terre, plus fort) =====
-  bouftou_amulette: { id: "bouftou_amulette", nom: "Amulette du Bouftou", slot: "amulette", panoplie: "bouftou", stats: { vitalite: 20, force: 8 } },
-  bouftou_coiffe: { id: "bouftou_coiffe", nom: "Coiffe du Bouftou", slot: "coiffe", panoplie: "bouftou", stats: { vitalite: 25 } },
-  bouftou_cape: { id: "bouftou_cape", nom: "Cape Boufton", slot: "cape", panoplie: "bouftou", stats: { force: 12, agilite: 6 } },
-  bouftou_ceinture: { id: "bouftou_ceinture", nom: "Ceinture du Bouftou", slot: "ceinture", panoplie: "bouftou", stats: { force: 15 } },
-  bouftou_bottes: { id: "bouftou_bottes", nom: "Bottes du Bouftou", slot: "bottes", panoplie: "bouftou", stats: { vitalite: 15, agilite: 6 } },
-  bouftou_anneau: { id: "bouftou_anneau", nom: "Anneau Royal Bouftou", slot: "anneau", panoplie: "bouftou", stats: { force: 10, prospection: 30 } },
+  // ===== Panoplie du Paysan (Champs d'Astrub, set #47 : vita / chance) =====
+  paysan_amulette: { id: "paysan_amulette", nom: "Amulette Paysanne", slot: "amulette", panoplie: "paysan", rolls: { chance: [11, 15] } },
+  paysan_coiffe: { id: "paysan_coiffe", nom: "Bob du Paysan", slot: "coiffe", panoplie: "paysan", rolls: { vitalite: [26, 30] } },
+  paysan_cape: { id: "paysan_cape", nom: "Sac du Paysan", slot: "cape", panoplie: "paysan", rolls: { chance: [16, 20] } },
+  paysan_ceinture: { id: "paysan_ceinture", nom: "Ceinturemuda du Paysan", slot: "ceinture", panoplie: "paysan", rolls: { vitalite: [16, 20], chance: [16, 20] } },
+  paysan_bottes: { id: "paysan_bottes", nom: "Bottes Paysannes", slot: "bottes", panoplie: "paysan", rolls: { vitalite: [16, 20], chance: [7, 10] } },
+  paysan_anneau: { id: "paysan_anneau", nom: "Mitaines Mitées du Paysan", slot: "anneau", panoplie: "paysan", rolls: {} },
+  paysan_arme: { id: "paysan_arme", nom: "Faux usée du Paysan", slot: "arme", panoplie: "paysan", rolls: { vitalite: [16, 20] } },
+
+  // ===== Panoplie du Bouftou (Tainéla, set #1 : vita/force/int) =====
+  bouftou_amulette: { id: "bouftou_amulette", nom: "Amulette du Bouftou", slot: "amulette", panoplie: "bouftou", rolls: { vitalite: [11, 15], force: [11, 15], intelligence: [11, 15] } },
+  bouftou_coiffe: { id: "bouftou_coiffe", nom: "Coiffe du Bouftou", slot: "coiffe", panoplie: "bouftou", rolls: { force: [16, 20], intelligence: [16, 20] } },
+  bouftou_cape: { id: "bouftou_cape", nom: "Cape Bouffante", slot: "cape", panoplie: "bouftou", rolls: { vitalite: [36, 40] } },
+  bouftou_ceinture: { id: "bouftou_ceinture", nom: "Ceinture du Bouftou", slot: "ceinture", panoplie: "bouftou", rolls: { force: [11, 15], intelligence: [11, 15] } },
+  bouftou_bottes: { id: "bouftou_bottes", nom: "Boufbottes", slot: "bottes", panoplie: "bouftou", rolls: { vitalite: [16, 20] } },
+  bouftou_anneau: { id: "bouftou_anneau", nom: "Anneau de Bouze le Clerc", slot: "anneau", panoplie: "bouftou", rolls: { vitalite: [21, 30] } },
+  bouftou_arme: { id: "bouftou_arme", nom: "Marteau du Bouftou", slot: "arme", panoplie: "bouftou", rolls: { vitalite: [16, 20] } },
 };
 
 export const PANOPLIES: Record<string, Panoplie> = {
@@ -767,9 +779,17 @@ export const PANOPLIES: Record<string, Panoplie> = {
       { seuil: 6, stats: { vitalite: 15 }, resistances: { terre: 0.05, feu: 0.05, eau: 0.05, air: 0.05, wakfu: 0.05, stasis: 0.05 } },
     ],
   },
+  paysan: {
+    id: "paysan", nom: "Panoplie du Paysan",
+    pieces: ["paysan_amulette", "paysan_coiffe", "paysan_cape", "paysan_ceinture", "paysan_bottes", "paysan_anneau", "paysan_arme"],
+    bonus: [
+      { seuil: 3, stats: { vitalite: 12, chance: 8 } },
+      { seuil: 6, stats: { vitalite: 18, prospection: 30 } },
+    ],
+  },
   bouftou: {
     id: "bouftou", nom: "Panoplie du Bouftou",
-    pieces: ["bouftou_amulette", "bouftou_coiffe", "bouftou_cape", "bouftou_ceinture", "bouftou_bottes", "bouftou_anneau"],
+    pieces: ["bouftou_amulette", "bouftou_coiffe", "bouftou_cape", "bouftou_ceinture", "bouftou_bottes", "bouftou_anneau", "bouftou_arme"],
     bonus: [
       { seuil: 3, stats: { force: 15 }, pvBonus: 20 },
       { seuil: 6, stats: { force: 30 }, resistances: { terre: 0.15 } },
@@ -780,7 +800,8 @@ export const PANOPLIES: Record<string, Panoplie> = {
 /** Panoplie qui droppe dans chaque zone (id de zone → id de panoplie). */
 export const BUTIN_ZONE: Record<string, string> = {
   incarnam: "aventurier",
-  tainela: "bouftou", // les bouftous (et leur panoplie) vivent désormais à Tainéla
+  astrub: "paysan",
+  tainela: "bouftou",
 };
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */
