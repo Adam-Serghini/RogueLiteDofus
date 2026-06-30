@@ -28,7 +28,6 @@ import {
 import {
   STAT_KEYS,
   statsFinales,
-  pvMaxFor,
   xpRequis,
   coutPoint,
   investirN,
@@ -370,7 +369,6 @@ const ICON_DMGCRIT = A("/assets/elements/dmgCritique.png");
 const ICON_SOIN = A("/assets/elements/soin.png");
 const ICON_PUISS = A("/assets/elements/puissance.png");
 const ICON_PP = A("/assets/elements/pp.png");
-const ICON_BOUCLIER = A("/assets/elements/bouclier.png");
 const resAsset: Record<Element, string> = {
   terre: A("/assets/elements/resTerre.png"),
   feu: A("/assets/elements/resFeu.png"),
@@ -588,6 +586,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
   const pvPct = c.pvMax > 0
     ? Math.max(0, Math.min(100, Math.round((c.pvActuels / c.pvMax) * 100)))
     : 0;
+  const bouclier = Math.round(c.bouclier);
   // chips de résistance : les 6 éléments, toujours affichés (0 % inclus)
   const resChips = ELEMENTS.map((e) => {
     const v = Math.round((c.resistances[e] ?? 0) * 100);
@@ -635,10 +634,11 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         ${c.img ? `<img class="portrait" src="${A(c.img)}" alt="" onerror="this.remove()" />` : `<div class="portrait"></div>`}
         ${archiIndicateur(c)}
         <span class="pa-gem" title="${c.paActuels} / ${c.paMax} PA"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${c.paActuels}</b></span>
-        <span class="pv-gem ${ko ? "ko" : ""}" title="${pvCur} / ${c.pvMax} PV" style="--pv-pct:${pvPct}%">
+        <span class="pv-gem ${ko ? "ko" : ""} ${bouclier > 0 ? "protege" : ""}" title="${pvCur} / ${c.pvMax} PV${bouclier > 0 ? ` · ${bouclier} bouclier` : ""}" style="--pv-pct:${pvPct}%">
           <img class="pv-vide" src="${COEUR_PLEIN}" alt="" onerror="this.remove()" />
           <img class="pv-plein" src="${COEUR_PLEIN}" alt="" onerror="this.remove()" />
           <b class="pv-num">${pvCur}<span>/${c.pvMax}</span></b>
+          ${bouclier > 0 ? `<span class="pv-bouclier" title="Bouclier">${bouclier}</span>` : ""}
         </span>
       </div>
       <div class="mini-stats">
@@ -648,7 +648,6 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(c.stats)}%</span>
       </div>
       ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
-      ${c.bouclier > 0 ? `<div class="bouclier-row" title="Bouclier"><img src="${ICON_BOUCLIER}" alt="" onerror="this.remove()" /><b>${c.bouclier}</b></div>` : ""}
       ${resChips ? `<div class="res-row">${resChips}</div>` : ""}
       <div class="badges">${badges.map((b) => `<span class="badge">${escapeHtml(b)}</span>`).join("")}</div>
       ${ko ? `<div class="ko-label">K.O.</div>` : ""}
@@ -1507,7 +1506,8 @@ function carteProgression(p: PersoState): string {
   const classe = CLASSES[p.classeId];
   const prog = p.progression;
   const finals = statsFinales(classe, prog);
-  const pvMax = pvMaxFor(classe, prog);
+  const bonus = bonusEquipement(p); // stats d'équipement + bonus de panoplie
+  const pvMax = pvMaxPerso(p); // PV max équipement inclus
   const xpReq = xpRequis(prog.niveau);
   const xpPct = Math.min(100, Math.round((prog.xp / xpReq) * 100));
 
@@ -1515,10 +1515,12 @@ function carteProgression(p: PersoState): string {
     const cout = coutPoint(prog.pointsInvestis[stat] ?? 0);
     const peut = prog.pointsDispo >= cout;
     const inv = prog.pointsInvestis[stat] ?? 0;
+    const equip = bonus.stats[stat] ?? 0; // apport de l'équipement pour cette stat
+    const total = (finals[stat] ?? 0) + equip;
     return `
       <div class="stat-ligne">
         <span class="stat-nom" tabindex="0">${STAT_NOM[stat]}<span class="stat-info">ⓘ</span><span class="stat-aide">${STAT_AIDE[stat]}${STAT_ELEMENTAIRE.has(stat) ? AIDE_ELEMENT : ""}</span></span>
-        <span class="stat-val">${finals[stat]}${inv ? ` <span class="muet">(+${inv})</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
+        <span class="stat-val">${total}${inv ? ` <span class="muet">(+${inv})</span>` : ""}${equip ? ` <span class="stat-equip">+${equip} équip</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
         <span class="stat-actions">
           <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="1" ${peut ? "" : "disabled"}>+1</button>
           <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="5" ${peut ? "" : "disabled"}>+5</button>
@@ -1822,7 +1824,7 @@ export function showCarte(
       const asideEquipe = persos
         .map((p) => {
           const classe = CLASSES[p.classeId];
-          const pvMax = pvMaxFor(classe, p.progression);
+          const pvMax = pvMaxPerso(p); // équipement (vita + PV plats) inclus
           const pct = Math.max(0, Math.round((p.pvActuels / pvMax) * 100));
           return `
             <div class="aside-perso">

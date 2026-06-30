@@ -1363,6 +1363,31 @@ kbd {
 .pv-gem.ko {
   filter: grayscale(0.7) brightness(0.7);
 }
+/* bouclier : halo violet (couleur de l'icône bouclier) + badge posé sur le cœur */
+.pv-gem.protege {
+  filter: drop-shadow(0 2px 3px #0009) drop-shadow(0 0 5px #a76affcc);
+}
+.pv-bouclier {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 23px;
+  padding: 2px 7px;
+  background: linear-gradient(180deg, #b98cff, #9a57f5);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1px solid #5a2ea6;
+  box-shadow: 0 1px 3px #0009;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 1px #0007;
+}
 /* étoile de PA : coin haut-gauche du portrait (loin du cœur et du badge archi) */
 .pa-gem {
   position: absolute;
@@ -1967,6 +1992,11 @@ kbd {
 }
 .stat-cout {
   font-size: 0.62rem;
+}
+.stat-equip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--pv);
 }
 .stat-actions {
   display: inline-flex;

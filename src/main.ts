@@ -178,8 +178,9 @@ async function jouerRun(): Promise<void> {
       await ui.showWipe(); // mort : Progression perdue, Meta (Dofus) conservé
       return;
     }
+    soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
     if (z < ZONES.length - 1) {
-      await ui.showTransition(`${zone.nom} — vaincu !`, `Tu pénètres dans ${ZONES[z + 1].nom}.`);
+      await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${ZONES[z + 1].nom}.`);
     }
   }
   await ui.showTransition("Krosmoz traversé !", "Tu as vaincu les trois zones. Retour à l'accueil.");
