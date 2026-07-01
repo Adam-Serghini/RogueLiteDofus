@@ -29,7 +29,7 @@ export const SORTS: Record<string, Spell> = {
     id: "fracas", nom: "Fracas", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 14, baseMax: 18, scaling: 0.5,
     retraitPA: 3,
-    desc: "Gros dégâts ; chance (scale Wakfu) de retirer 3 PA à la cible au prochain tour.",
+    desc: "Gros dégâts ; 30 % de chance de retirer 3 PA à la cible au prochain tour.",
   },
   colere: {
     id: "colere", nom: "Colère de Iop", type: "degats", coutPA: 6,
@@ -364,8 +364,6 @@ export const SORTS: Record<string, Spell> = {
       { stat: "intelligence", valeur: 5, duree: 2 },
       { stat: "agilite", valeur: 5, duree: 2 },
       { stat: "chance", valeur: 5, duree: 2 },
-      { stat: "wakfu", valeur: 5, duree: 2 },
-      { stat: "stasis", valeur: 5, duree: 2 },
     ],
     cooldownTours: 4,
     desc: "+5 à toutes les caractéristiques pendant 2 tours.",
@@ -524,9 +522,9 @@ export const MONSTRES: Record<string, Monstre> = {
     id: "kardorim", nom: "Kardorim", pv: 130,
     stats: { force: 30, intelligence: 38, agilite: 20, vitalite: 55 },
     pa: 6, initiative: 9,
-    resistances: { feu: 0.25, air: 0.1, stasis: 0.1, terre: -0.2, eau: -0.15 },
+    resistances: { feu: 0.25, air: 0.1, terre: -0.2, eau: -0.15 },
     sorts: ["charge", "morsure"], ia: "agressif",
-    boss: true, dofus: "dofus_turquoise",
+    boss: true, dofus: "dofawa",
     img: "/assets/monstres/kardorim.png",
   },
 
@@ -578,9 +576,9 @@ export const MONSTRES: Record<string, Monstre> = {
     id: "tournesol_affame", nom: "Tournesol Affamé", pv: 200,
     stats: { force: 20, intelligence: 55, agilite: 18, vitalite: 75 },
     pa: 6, initiative: 9,
-    resistances: { terre: 0.25, feu: 0.25, wakfu: 0.2, stasis: 0.2, eau: -0.1, air: -0.15 },
+    resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
     sorts: ["charge", "picotement"], ia: "agressif",
-    boss: true, dofus: "dofus_emeraude",
+    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/tournesol_affame.png",
   },
 
@@ -634,9 +632,9 @@ export const MONSTRES: Record<string, Monstre> = {
     id: "bouftou_royal", nom: "Bouftou Royal", pv: 240,
     stats: { force: 56, intelligence: 15, agilite: 20, vitalite: 80 },
     pa: 6, initiative: 8,
-    resistances: { eau: 0.25, terre: 0.2, feu: 0.2, wakfu: 0.25, stasis: 0.25, air: 0.05 },
+    resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
     sorts: ["charge", "morsure"], ia: "agressif",
-    boss: true, dofus: "dofus_pourpre",
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/bouftou_royal.png",
   },
 };
@@ -646,7 +644,10 @@ export interface DofusDef {
   id: string;
   nom: string;
   desc: string;
-  bonusDegatsParCopie: number;
+  bonusDegatsParCopie: number; // +% dégâts d'équipe par copie (Pourpre)
+  vitaParCopie?: number; // +vitalité d'équipe par copie (Dofawa)
+  resAllParCopie?: number; // +résistance toutes par copie (Argenté)
+  maxCopies?: number; // nombre de copies max prises en compte pour l'effet
   img?: string;
 }
 
@@ -672,25 +673,37 @@ const CATALOGUE_DOFUS: Array<[string, string]> = [
   ["dorigami", "Dorigami"], ["dotruche", "Dotruche"], ["jyfus", "Jyfus"],
 ];
 
+// Effets des Dofus dotés (les autres restent « à débloquer »).
+type DofusEffet = Partial<Omit<DofusDef, "id" | "nom" | "img">>;
+const DOFUS_EFFETS: Record<string, DofusEffet> = {
+  dofus_pourpre: { desc: "+15 % de dégâts pour toute l'équipe (cumulable).", bonusDegatsParCopie: 0.15 },
+  dofawa: { desc: "+1 Vitalité à toute l'équipe par copie (max 10).", vitaParCopie: 1, maxCopies: 10 },
+  dofus_argente: { desc: "+1 % de résistance à tous les éléments par copie, pour l'équipe (max 10).", resAllParCopie: 0.01, maxCopies: 10 },
+};
+
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(
-  CATALOGUE_DOFUS.map(([id, nom]) => [
-    id,
-    {
-      id, nom,
-      desc: id === "dofus_pourpre"
-        ? "+15 % de dégâts pour toute l'équipe (cumulable)."
-        : "Relique légendaire — effet à venir.",
-      bonusDegatsParCopie: id === "dofus_pourpre" ? 0.15 : 0,
-      img: `/assets/dofus/${id}.png`,
-    },
-  ]),
+  CATALOGUE_DOFUS.map(([id, nom]) => {
+    const eff = DOFUS_EFFETS[id];
+    return [
+      id,
+      {
+        id, nom,
+        desc: eff?.desc ?? "Relique légendaire — effet à venir.",
+        bonusDegatsParCopie: eff?.bonusDegatsParCopie ?? 0,
+        vitaParCopie: eff?.vitaParCopie,
+        resAllParCopie: eff?.resAllParCopie,
+        maxCopies: eff?.maxCopies,
+        img: `/assets/dofus/${id}.png`,
+      },
+    ];
+  }),
 );
 
-/** Dofus → nom du boss qui le lâche (dérivé des monstres `dofus`). */
-export const DOFUS_DROP: Record<string, string> = Object.fromEntries(
+/** Dofus → boss qui le lâche (nom + sprite), dérivé des monstres `dofus`. */
+export const DOFUS_DROP: Record<string, { nom: string; img?: string }> = Object.fromEntries(
   Object.values(MONSTRES)
     .filter((m) => m.dofus)
-    .map((m) => [m.dofus as string, m.nom]),
+    .map((m) => [m.dofus as string, { nom: m.nom, img: m.img }]),
 );
 
 // --- Composition des combats (séquence linéaire de la run) -------------------
@@ -810,7 +823,7 @@ export const ITEMS: Record<string, Item> = {
   paysan_ceinture: { id: "paysan_ceinture", nom: "Ceinturemuda du Paysan", slot: "ceinture", panoplie: "paysan", rolls: { vitalite: [16, 20], chance: [16, 20] } },
   paysan_bottes: { id: "paysan_bottes", nom: "Bottes Paysannes", slot: "bottes", panoplie: "paysan", rolls: { vitalite: [16, 20], chance: [7, 10] } },
   paysan_anneau: { id: "paysan_anneau", nom: "Mitaines Mitées du Paysan", slot: "anneau", panoplie: "paysan", rolls: {} },
-  paysan_arme: { id: "paysan_arme", nom: "Faux usée du Paysan", slot: "arme", panoplie: "paysan", rolls: { vitalite: [16, 20] } },
+  paysan_arme: { id: "paysan_arme", nom: "Faux usée du Paysan", slot: "arme", panoplie: "paysan", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 3, baseMin: 9, baseMax: 14, scaling: 0.35 } },
 
   // ===== Panoplie du Bouftou (Tainéla, set #1 : vita/force/int) =====
   bouftou_amulette: { id: "bouftou_amulette", nom: "Amulette du Bouftou", slot: "amulette", panoplie: "bouftou", rolls: { vitalite: [11, 15], force: [11, 15], intelligence: [11, 15] } },
@@ -819,7 +832,7 @@ export const ITEMS: Record<string, Item> = {
   bouftou_ceinture: { id: "bouftou_ceinture", nom: "Ceinture du Bouftou", slot: "ceinture", panoplie: "bouftou", rolls: { force: [11, 15], intelligence: [11, 15] } },
   bouftou_bottes: { id: "bouftou_bottes", nom: "Boufbottes", slot: "bottes", panoplie: "bouftou", rolls: { vitalite: [16, 20] } },
   bouftou_anneau: { id: "bouftou_anneau", nom: "Anneau de Bouze le Clerc", slot: "anneau", panoplie: "bouftou", rolls: { vitalite: [21, 30] } },
-  bouftou_arme: { id: "bouftou_arme", nom: "Marteau du Bouftou", slot: "arme", panoplie: "bouftou", rolls: { vitalite: [16, 20] } },
+  bouftou_arme: { id: "bouftou_arme", nom: "Marteau du Bouftou", slot: "arme", panoplie: "bouftou", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 16, baseMax: 22, scaling: 0.45 } },
 };
 
 export const PANOPLIES: Record<string, Panoplie> = {
@@ -828,7 +841,7 @@ export const PANOPLIES: Record<string, Panoplie> = {
     pieces: ["aventurier_amulette", "aventurier_coiffe", "aventurier_cape", "aventurier_ceinture", "aventurier_bottes", "aventurier_anneau"],
     bonus: [
       { seuil: 3, stats: { vitalite: 10 } },
-      { seuil: 6, stats: { vitalite: 15 }, resistances: { terre: 0.05, feu: 0.05, eau: 0.05, air: 0.05, wakfu: 0.05, stasis: 0.05 } },
+      { seuil: 6, stats: { vitalite: 15 }, resistances: { terre: 0.05, feu: 0.05, eau: 0.05, air: 0.05 } },
     ],
   },
   paysan: {
@@ -862,6 +875,9 @@ export const DROP = {
   coefProspection: 0.001, // dropChance ×= 1 + min(cap, prospectionÉquipe × coef)
   capProspection: 0.75,
 };
+
+/** Chance qu'un boss de zone lâche son Dofus (tunable). */
+export const DOFUS_DROP_RATE = 0.01;
 
 // --- Archimonstres & Dofus Ocre ----------------------------------------------
 /** Paramètres des Archimonstres (variante rare et boostée, capturable). */

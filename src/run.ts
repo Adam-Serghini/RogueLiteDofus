@@ -6,7 +6,7 @@
 import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA } from "./progression";
 import { chargerConfig } from "./config";
-import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Stats } from "./types";
+import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -121,7 +121,7 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
 // --- Équipement --------------------------------------------------------------
 const statsVides = (): Stats => ({
   force: 0, intelligence: 0, agilite: 0, vitalite: 0,
-  chance: 0, wakfu: 0, stasis: 0, soin: 0, prospection: 0,
+  chance: 0, soin: 0, prospection: 0,
 });
 function ajouterStats(acc: Stats, ajout?: Partial<Stats>): void {
   if (!ajout) return;
@@ -170,7 +170,16 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
   const stats = statsFinales(classe, state.progression);
   ajouterStats(stats, bonus.stats);
   const pvMax = pvMaxPerso(state);
+  // attaque d'arme (case 1 « corps à corps ») dérivée de l'arme équipée
+  const armeItem = state.equipement.arme ? ITEMS[state.equipement.arme.id] : undefined;
+  const armeSort: Spell | undefined = armeItem?.attaque && {
+    id: "arme_attaque", nom: armeItem.nom, type: "degats", cible: "ennemi_ligne",
+    coutPA: armeItem.attaque.coutPA, baseMin: armeItem.attaque.baseMin,
+    baseMax: armeItem.attaque.baseMax, scaling: armeItem.attaque.scaling,
+    img: `/assets/items/${armeItem.id}.png`, desc: "Attaque d'arme.",
+  };
   return {
+    armeSort,
     ref: `j_${state.classeId}`,
     nom: classe.nom,
     pvBase: pvMax, // base de référence pour les buffs de vitalité en %
@@ -344,8 +353,6 @@ export function appliquerArchimonstres(enemies: Combatant[], rng: () => number, 
       agilite: Math.round(s.agilite * ARCHI.statMult),
       vitalite: Math.round(s.vitalite * ARCHI.statMult),
       chance: Math.round((s.chance ?? 0) * ARCHI.statMult),
-      wakfu: Math.round((s.wakfu ?? 0) * ARCHI.statMult),
-      stasis: Math.round((s.stasis ?? 0) * ARCHI.statMult),
     };
   }
 }
@@ -413,7 +420,18 @@ export function paliersOcre(meta: Meta): { tier: number; paBonus: number; degats
 }
 
 /** Bonus d'équipe combinés (Dofus + paliers Ocre) appliqués en combat. */
-export function bonusEquipe(meta: Meta): { damageMult: number; paBonus: number } {
+export function bonusEquipe(meta: Meta): { damageMult: number; paBonus: number; vitaBonus: number; resAllBonus: number } {
   const ocre = paliersOcre(meta);
-  return { damageMult: bonusDegatsDofus(meta) + ocre.degats, paBonus: ocre.paBonus };
+  // effets « par copie, plafonnés à maxCopies » (Dofawa vita, Argenté résistance)
+  const copies: Record<string, number> = {};
+  for (const id of meta.dofus) copies[id] = (copies[id] ?? 0) + 1;
+  let vitaBonus = 0, resAllBonus = 0;
+  for (const [id, n] of Object.entries(copies)) {
+    const d = DOFUS[id];
+    if (!d) continue;
+    const eff = Math.min(n, d.maxCopies ?? Infinity);
+    if (d.vitaParCopie) vitaBonus += d.vitaParCopie * eff;
+    if (d.resAllParCopie) resAllBonus += d.resAllParCopie * eff;
+  }
+  return { damageMult: bonusDegatsDofus(meta) + ocre.degats, paBonus: ocre.paBonus, vitaBonus, resAllBonus };
 }

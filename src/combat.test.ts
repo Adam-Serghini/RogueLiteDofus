@@ -7,7 +7,7 @@ import {
   type CombatCtx,
 } from "./combat";
 import { SORTS } from "./data";
-import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus } from "./run";
+import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus, bonusEquipe } from "./run";
 
 // rng=0.99 → jamais d'esquive, jet au max, jamais de crit (déterministe).
 const rngMax: () => number = () => 0.99;
@@ -27,14 +27,10 @@ describe("élément de frappe", () => {
     expect(elementDeFrappe(cra)).toBe("air");
   });
 
-  it("bascule sur les nouveaux éléments (eau / wakfu / stasis)", () => {
+  it("bascule sur l'Eau quand la Chance domine", () => {
     const [iop] = fabriquerEquipe();
     iop.stats = { ...iop.stats, chance: 999 };
     expect(elementDeFrappe(iop)).toBe("eau"); // Chance domine
-    iop.stats = { ...iop.stats, chance: 0, wakfu: 999 };
-    expect(elementDeFrappe(iop)).toBe("wakfu");
-    iop.stats = { ...iop.stats, wakfu: 0, stasis: 999 };
-    expect(elementDeFrappe(iop)).toBe("stasis");
   });
 
   it("le joueur peut choisir son élément de frappe parmi les 2 plus forts", () => {
@@ -49,9 +45,9 @@ describe("élément de frappe", () => {
 
   it("applique la résistance de l'élément de frappe basculé", () => {
     const [iop] = fabriquerEquipe();
-    iop.stats = { ...iop.stats, stasis: 999 }; // frappe désormais en Stasis
+    iop.stats = { ...iop.stats, chance: 999 }; // frappe désormais en Eau
     const cible = fabriquerEnnemis("combat_1")[0];
-    cible.resistances = { stasis: 0.5 }; // -50 % subis en Stasis
+    cible.resistances = { eau: 0.5 }; // -50 % subis en Eau
     const sansRes = degatsCible(iop, SORTS.fleche_magique, { ...cible, resistances: {} }, { useMax: true, mult: 1, ctx: ctx() });
     const avecRes = degatsCible(iop, SORTS.fleche_magique, cible, { useMax: true, mult: 1, ctx: ctx() });
     expect(avecRes.dmg).toBeLessThan(sansRes.dmg);
@@ -154,6 +150,18 @@ describe("bonusDegatsDofus", () => {
   });
 });
 
+describe("effets de Dofus (Dofawa / Argenté)", () => {
+  const dofus = (id: string, n: number) => ({ dofus: Array(n).fill(id), archis: [] });
+  it("Dofawa : +1 vitalité par copie, plafonné à 10", () => {
+    expect(bonusEquipe(dofus("dofawa", 3)).vitaBonus).toBe(3);
+    expect(bonusEquipe(dofus("dofawa", 12)).vitaBonus).toBe(10); // cap maxCopies
+  });
+  it("Dofus Argenté : +1 % résistance par copie, plafonné à 10", () => {
+    expect(bonusEquipe(dofus("dofus_argente", 5)).resAllBonus).toBeCloseTo(0.05);
+    expect(bonusEquipe(dofus("dofus_argente", 20)).resAllBonus).toBeCloseTo(0.1); // cap
+  });
+});
+
 describe("boucle de combat (IA vs IA)", () => {
   it("un combat se termine et désigne un vainqueur", async () => {
     const equipe = fabriquerEquipe();
@@ -218,8 +226,8 @@ describe("Iop — nouvelles mécaniques", () => {
     expect(bouftou.pvActuels).toBeLessThan(pvBouftouAvant); // l'attaquant a encaissé la riposte
   });
 
-  it("Fracas : le retrait de PA est conditionné par une chance (Wakfu)", () => {
-    const [iop] = fabriquerEquipe(); // force 0, wakfu 0 → chance de base 15 %
+  it("Fracas : le retrait de PA a 30 % de chance", () => {
+    const [iop] = fabriquerEquipe();
     const mkEnnemi = (ref: string) => {
       const [e] = fabriquerEnnemis("combat_1");
       e.ref = ref; e.position = 0; e.pvActuels = 500; e.pvMax = 500;
@@ -227,10 +235,10 @@ describe("Iop — nouvelles mécaniques", () => {
       return e;
     };
     const rate = mkEnnemi("rate");
-    lancerSort(iop, SORTS.fracas, "rate", [iop, rate], ctx({ rng: rngK(0.99) })); // 0.99 ≥ 0.15
+    lancerSort(iop, SORTS.fracas, "rate", [iop, rate], ctx({ rng: rngK(0.99) })); // 0.99 ≥ 0.3
     expect(rate.retraitPANextTurn).toBe(0);
     const proc = mkEnnemi("proc");
-    lancerSort(iop, SORTS.fracas, "proc", [iop, proc], ctx({ rng: rngK(0.1) })); // 0.1 < 0.15
+    lancerSort(iop, SORTS.fracas, "proc", [iop, proc], ctx({ rng: rngK(0.1) })); // 0.1 < 0.3
     expect(proc.retraitPANextTurn).toBe(3);
   });
 });

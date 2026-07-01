@@ -11,7 +11,7 @@ const SEUIL_COUT_3 = 300; // au-delà, un point coûte 3
 
 // Stats investables au level-up (soin & prospection exclues : valeurs de classe).
 export const STAT_KEYS: (keyof Stats)[] = [
-  "force", "intelligence", "agilite", "chance", "wakfu", "stasis", "vitalite",
+  "force", "intelligence", "agilite", "chance", "vitalite",
 ];
 
 export function progressionInitiale(): Progression {
@@ -21,7 +21,7 @@ export function progressionInitiale(): Progression {
     pointsDispo: 0,
     pointsInvestis: {
       force: 0, intelligence: 0, agilite: 0, vitalite: 0,
-      chance: 0, wakfu: 0, stasis: 0,
+      chance: 0,
     },
   };
 }
@@ -86,8 +86,6 @@ export function statsFinales(classe: Classe, p: Progression): Stats {
     agilite: f("agilite"),
     vitalite: f("vitalite"),
     chance: f("chance"),
-    wakfu: f("wakfu"),
-    stasis: f("stasis"),
     soin: base.soin ?? 0, // non investable : valeur de classe
     prospection: base.prospection ?? 0, // non investable : valeur de classe
   };
@@ -106,11 +104,6 @@ export function multOffensif(stats: Stats): number {
 /** Multiplicateur de puissance de soin (stat Soin, plafonné à +50 %). */
 export function multSoin(stats: Stats): number {
   return 1 + Math.min(0.5, (stats.soin ?? 0) * 0.005);
-}
-
-/** Chance de retrait de PA (Fracas) : 15 % de base + Wakfu, plafonnée à 50 %. */
-export function pctRetraitPA(stats: Stats): number {
-  return Math.min(0.5, 0.15 + (stats.wakfu ?? 0) * 0.005);
 }
 
 /** Chance de remboursement des PA (Flèche magique) : 5 % de base + Chance, plafonnée à 50 %. */

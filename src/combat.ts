@@ -4,7 +4,7 @@
 //  Pilotable sans UI : voir test.ts (deux IA qui s'affrontent en console).
 // =============================================================================
 import { SORTS } from "./data";
-import { multOffensif, multSoin, pctRetraitPA, pctRembPA } from "./progression";
+import { multOffensif, multSoin, pctRembPA } from "./progression";
 import type {
   Camp, Combatant, EffetSpec, EffetStat, Element, Spell, Stats, Action,
 } from "./types";
@@ -49,25 +49,22 @@ export const statElement = (stats: Stats, el: Element): number => {
     case "feu": return stats.intelligence;
     case "eau": return stats.chance ?? 0;
     case "air": return stats.agilite;
-    case "wakfu": return stats.wakfu ?? 0;
-    case "stasis": return stats.stasis ?? 0;
   }
 };
 
 /** Stat (buffable) portant chaque élément — pour buffer la carac d'un élément. */
 const ELEMENT_STAT: Record<Element, EffetStat> = {
-  terre: "force", feu: "intelligence", eau: "chance",
-  air: "agilite", wakfu: "wakfu", stasis: "stasis",
+  terre: "force", feu: "intelligence", eau: "chance", air: "agilite",
 };
 
-/** Liste des 6 éléments (ordre stable d'affichage). */
-export const ELEMENTS: Element[] = ["terre", "feu", "eau", "air", "wakfu", "stasis"];
+/** Liste des 4 éléments (ordre stable d'affichage). */
+export const ELEMENTS: Element[] = ["terre", "feu", "eau", "air"];
 
 const sommeEffet = (c: Combatant, stat: EffetStat): number =>
   c.effets.filter((e) => e.stat === stat).reduce((s, e) => s + e.valeur, 0);
 
 /** Stats effectives = stats de base + buffs/debuffs temporaires de caractéristique. */
-const STATS_BUFFABLES = ["force", "intelligence", "agilite", "chance", "wakfu", "stasis"] as const;
+const STATS_BUFFABLES = ["force", "intelligence", "agilite", "chance"] as const;
 export function statsEffectives(c: Combatant): Stats {
   const s: Stats = { ...c.stats };
   for (const k of STATS_BUFFABLES) {
@@ -296,7 +293,7 @@ function appliquerPoison(
 /** Retire les boucliers et les effets bénéfiques d'une cible (désenvoûtement). */
 function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
   cible.bouclier = 0;
-  const benefiques: EffetStat[] = ["hot", "esquive", "reductionDegats", "armure", "resAll", "vitalite", "force", "intelligence", "agilite", "chance", "wakfu", "stasis"];
+  const benefiques: EffetStat[] = ["hot", "esquive", "reductionDegats", "armure", "resAll", "vitalite", "force", "intelligence", "agilite", "chance"];
   const avant = cible.effets.length;
   cible.effets = cible.effets.filter(
     (e) => !(benefiques.includes(e.stat) || (e.stat === "degatsInfliges" && e.valeur > 0)),
@@ -893,8 +890,8 @@ export function lancerSort(
     soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
   }
 
-  // Fracas : retrait de PA au prochain tour — chance scalée par le Wakfu du lanceur
-  if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < pctRetraitPA(statsEffectives(lanceur))) {
+  // Fracas : retrait de PA au prochain tour — 30 % de chance
+  if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < 0.3) {
     cible.retraitPANextTurn += sort.retraitPA;
   }
 

@@ -2,13 +2,13 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, ZONES, BUTIN_ZONE, type ZonePools, type ZoneDef } from "./data";
-import { runCombat, controllerIA, type Controller } from "./combat";
-import { gagnerXP, restat } from "./progression";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, ZONES, BUTIN_ZONE, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
+import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
+import { gagnerXP, restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
-  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe,
+  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin,
   appliquerArchimonstres, capturerArchi, type RunState,
 } from "./run";
@@ -39,9 +39,17 @@ async function resoudreCombat(run: RunState, combatId: string): Promise<Resultat
   const equipe = equipeCombattante(run);
   const ennemis = fabriquerEnnemis(combatId);
   appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
-  // bonus d'équipe (Dofus + paliers Ocre)
-  const { damageMult, paBonus } = bonusEquipe(meta);
-  if (paBonus) for (const c of equipe) { c.paMax += paBonus; c.paActuels = c.paMax; }
+  // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
+  const { damageMult, paBonus, vitaBonus, resAllBonus } = bonusEquipe(meta);
+  for (const c of equipe) {
+    if (paBonus) { c.paMax += paBonus; c.paActuels = c.paMax; }
+    if (vitaBonus) {
+      c.stats.vitalite += vitaBonus;
+      const add = vitaBonus * PV_PAR_VITA;
+      c.pvBase += add; c.pvMax += add; c.pvActuels += add;
+    }
+    if (resAllBonus) for (const el of ELEMENTS) c.resistances[el] = (c.resistances[el] ?? 0) + resAllBonus;
+  }
   const combatants = [...equipe, ...ennemis];
   ui.beginCombat(combatants, titre, meta);
   const gagne = await runCombat(combatants, {
@@ -61,7 +69,7 @@ async function resoudreCombat(run: RunState, combatId: string): Promise<Resultat
 async function recompenserXP(run: RunState, gain: number): Promise<void> {
   let levelUp = false;
   for (const p of run.persos) if (gagnerXP(p.progression, gain) > 0) levelUp = true;
-  if (levelUp) await ui.showStatPanel(run.persos, "Niveau gagné !", "Tu as des points à dépenser.");
+  if (levelUp) await ui.showStatPanel(run.persos, "Niveau gagné !", "Tu as des points à dépenser.", false, meta);
 }
 
 /** Capture les âmes des Archimonstres vaincus (uniques) et annonce les nouvelles. */
@@ -117,7 +125,7 @@ async function resoudreType(
       const cible = await ui.showOtomai(run.persos);
       if (cible) {
         restat(cible.progression);
-        await ui.showStatPanel([cible], "🔄 Otomai", `Points de ${CLASSES[cible.classeId].nom} remboursés — réattribue-les librement.`);
+        await ui.showStatPanel([cible], "🔄 Otomai", `Points de ${CLASSES[cible.classeId].nom} remboursés — réattribue-les librement.`, false, meta);
       }
       return "continue";
     }
@@ -127,9 +135,15 @@ async function resoudreType(
       await recompenserButin(run, butinPano, type);
       const boss = combatants.find((c) => c.camp === "ennemi" && c.dofusLache);
       if (boss?.dofusLache) {
-        ajouterDofus(meta, boss.dofusLache);
-        const copies = meta.dofus.filter((d) => d === boss.dofusLache).length;
-        await ui.showDofus(boss.dofusLache, copies);
+        // 1 % de base, boosté par la prospection d'équipe (même formule que les items)
+        const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
+        if (Math.random() < DOFUS_DROP_RATE * mult) {
+          ajouterDofus(meta, boss.dofusLache);
+          const copies = meta.dofus.filter((d) => d === boss.dofusLache).length;
+          await ui.showDofus(boss.dofusLache, copies);
+        } else {
+          await ui.showTransition("Donjon vaincu !", "Le boss n'a pas lâché son Dofus cette fois… (1 % de chance)");
+        }
       }
       return "victoire";
     }

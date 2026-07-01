@@ -2,7 +2,7 @@
 //  types.ts — Modèle de données (issu du spec V0)
 // =============================================================================
 
-export type Element = "terre" | "feu" | "eau" | "air" | "wakfu" | "stasis";
+export type Element = "terre" | "feu" | "eau" | "air";
 
 export interface Stats {
   force: number; // dégâts Terre + taux de crit
@@ -11,8 +11,6 @@ export interface Stats {
   vitalite: number; // PV (réserve, non utilisée pour le calcul de PV max en V0)
   // --- stats étendues (optionnelles, défaut 0) ---
   chance?: number; // dégâts Eau
-  wakfu?: number; // dégâts Wakfu
-  stasis?: number; // dégâts Stasis
   soin?: number; // puissance de soin (× les soins prodigués)
   prospection?: number; // booste le taux de drop d'équipement (cumulé sur l'équipe)
 }
@@ -31,6 +29,8 @@ export interface Item {
   rolls?: StatRolls; // fourchettes de stats (tirées au drop)
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
+  // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
+  attaque?: { coutPA: number; baseMin: number; baseMax: number; scaling: number };
   img?: string;
 }
 
@@ -84,9 +84,7 @@ export type EffetStat =
   | "force"
   | "intelligence"
   | "agilite"
-  | "chance"
-  | "wakfu"
-  | "stasis";
+  | "chance";
 
 export interface EffetSpec {
   stat: EffetStat;
@@ -105,6 +103,7 @@ export interface Spell {
   baseMax: number;
   scaling: number; // multiplie la stat de l'élément de frappe
   desc?: string;
+  img?: string; // icône explicite (attaque d'arme) ; sinon dérivée de l'id via sortIcon
   // effets spéciaux (optionnels, un sort peut en cumuler) :
   rebond?: { sauts: number; bonusParSaut: number }; // touche les ennemis suivants
   siCibleMeurt?: { rebondDegatsX: number }; // Épée hostile : x2 sur un autre ennemi
@@ -254,6 +253,7 @@ export interface Combatant {
   cooldowns: Record<string, number>; // `${sortId}:${cibleRef}` -> tours restants
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
+  armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente
   poisonAmpliTours: number; // Arsenic : poisons appliqués ×2 tant que > 0
   bonusDe: number; // Bonne pioche : +X aux tirages dé/carte
   bonusDeTours: number; // durée restante du bonus de dé

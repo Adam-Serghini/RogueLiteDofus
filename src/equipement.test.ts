@@ -111,3 +111,17 @@ describe("équiper / déséquiper", () => {
     expect(run.inventaire.some((i) => i.id === "aventurier_coiffe")).toBe(true);
   });
 });
+
+describe("attaque d'arme (case 1)", () => {
+  it("l'arme équipée fournit une attaque au combattant ; aucune sinon", () => {
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    expect(combattantDepuisPerso(p).armeSort).toBeUndefined(); // sans arme : case 1 vide
+    run.inventaire.push(rollItem("bouftou_arme", MIN));
+    equiper(run.inventaire, p, 0);
+    const c = combattantDepuisPerso(p);
+    expect(c.armeSort?.coutPA).toBe(4); // coût propre à l'arme
+    expect(c.armeSort?.baseMax).toBe(22); // dégâts propres à l'arme
+    expect(c.armeSort?.cible).toBe("ennemi_ligne");
+  });
+});

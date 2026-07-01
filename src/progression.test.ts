@@ -120,10 +120,8 @@ describe("multSoin", () => {
 });
 
 describe("stats étendues", () => {
-  it("Chance/Wakfu/Stasis sont investables ; Soin et Prospection non", () => {
+  it("Chance est investable ; Soin et Prospection non", () => {
     expect(STAT_KEYS).toContain("chance");
-    expect(STAT_KEYS).toContain("wakfu");
-    expect(STAT_KEYS).toContain("stasis");
     expect(STAT_KEYS).not.toContain("soin");
     expect(STAT_KEYS).not.toContain("prospection");
   });

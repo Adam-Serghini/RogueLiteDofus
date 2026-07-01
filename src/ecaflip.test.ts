@@ -54,7 +54,7 @@ describe("hasard (dé & cartes)", () => {
     const [eca] = equipe();
     eca.effets = [];
     lancerSort(eca, SORTS.perception, eca.ref, [eca], ctx());
-    for (const stat of ["force", "intelligence", "agilite", "chance", "wakfu", "stasis"] as const) {
+    for (const stat of ["force", "intelligence", "agilite", "chance"] as const) {
       expect(eca.effets.some((e) => e.stat === stat && e.valeur === 5)).toBe(true);
     }
   });

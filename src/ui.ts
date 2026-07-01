@@ -44,6 +44,7 @@ import {
 import {
   classesDisponibles,
   bonusEquipement,
+  bonusEquipe,
   pvMaxPerso,
   equiper,
   desequiper,
@@ -103,9 +104,8 @@ export function init(el: HTMLElement): void {
     const touche = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
     if (touche) {
       const slot = Number(touche[1]);
-      if (slot === 1) return; // corps à corps : à venir
-      const sortId = activeActeur.sorts[slot - 2];
-      const s = sortId ? SORTS[sortId] : undefined;
+      // case 1 = attaque d'arme (si équipée) ; 2+ = sorts dans l'ordre
+      const s = slot === 1 ? activeActeur.armeSort : SORTS[activeActeur.sorts[slot - 2]];
       if (s) {
         e.preventDefault();
         choisirSort(s);
@@ -125,12 +125,19 @@ function initDofusTooltip(): void {
     const nom = slot.dataset.nom ?? "";
     const effet = slot.dataset.effet ?? "";
     const boss = slot.dataset.boss ?? "";
+    const bossImg = slot.dataset.bossImg ?? "";
+    let bas: string;
+    if (boss) {
+      bas = `<div class="tip-boss">${bossImg ? `<img src="${bossImg}" alt="" onerror="this.remove()" />` : ""}Lâché par ${escapeHtml(boss)}</div>`;
+    } else if (slot.dataset.ocre) {
+      bas = `<div class="tip-boss"><img src="${A("/assets/divers/Archmonster.webp")}" alt="" onerror="this.remove()" />Débloqué via les Archimonstres</div>`;
+    } else {
+      bas = `<div class="tip-muet">Pas encore obtenable</div>`;
+    }
     tip.innerHTML =
       `<div class="tip-nom">${escapeHtml(nom)}</div>` +
       `<div class="tip-effet">${escapeHtml(effet)}</div>` +
-      (boss
-        ? `<div class="tip-boss">🐲 Lâché par ${escapeHtml(boss)}</div>`
-        : `<div class="tip-muet">Pas encore obtenable</div>`);
+      bas;
     tip.style.display = "block";
     const r = slot.getBoundingClientRect();
     const t = tip.getBoundingClientRect();
@@ -149,8 +156,9 @@ function initDofusTooltip(): void {
     if (slot) placer(slot);
   });
   document.addEventListener("mouseout", (e) => {
-    if ((e.target as HTMLElement).closest?.(".dofus-slot"))
-      tip.style.display = "none";
+    const slot = (e.target as HTMLElement).closest?.(".dofus-slot");
+    // ne cacher que si l'on quitte réellement le slot (pas un déplacement interne)
+    if (slot && !slot.contains(e.relatedTarget as Node | null)) tip.style.display = "none";
   });
 }
 
@@ -168,8 +176,7 @@ const CIBLE_LBL: Record<string, string> = {
 const ELEMENT_AIDE =
   "Élément de frappe\n\n" +
   "Tous tes dégâts utilisent ta caractéristique élémentaire la plus élevée :\n" +
-  "Force → Terre · Intelligence → Feu · Agilité → Air\n" +
-  "Chance → Eau · Wakfu → Wakfu · Stasis → Stasis\n\n" +
+  "Force → Terre · Intelligence → Feu · Agilité → Air · Chance → Eau\n\n" +
   "Les résistances de la cible s'appliquent selon cet élément.\n" +
   "Clique sur un rond pour basculer entre tes 2 éléments les plus forts.";
 
@@ -223,7 +230,7 @@ function initSortTooltip(): void {
   document.body.appendChild(tip);
 
   const placer = (btn: HTMLElement) => {
-    const s = btn.dataset.sort ? SORTS[btn.dataset.sort] : null;
+    const s = btn.dataset.arme ? activeActeur?.armeSort : btn.dataset.sort ? SORTS[btn.dataset.sort] : null;
     if (!s) return;
     tip.innerHTML = sortTooltipHtml(s, activeActeur);
     tip.style.display = "block";
@@ -239,13 +246,13 @@ function initSortTooltip(): void {
 
   document.addEventListener("mouseover", (e) => {
     const btn = (e.target as HTMLElement).closest?.(
-      "button.sort[data-sort]",
+      "button.sort[data-sort], button.sort[data-arme]",
     ) as HTMLElement | null;
     if (btn) placer(btn);
   });
   document.addEventListener("mouseout", (e) => {
-    if ((e.target as HTMLElement).closest?.("button.sort[data-sort]"))
-      tip.style.display = "none";
+    const btn = (e.target as HTMLElement).closest?.("button.sort[data-sort], button.sort[data-arme]");
+    if (btn && !btn.contains(e.relatedTarget as Node | null)) tip.style.display = "none";
   });
 }
 
@@ -282,8 +289,8 @@ function initAideTooltip(): void {
     if (host) placer(host);
   });
   document.addEventListener("mouseout", (e) => {
-    if ((e.target as HTMLElement).closest?.("[data-tip]"))
-      tip.style.display = "none";
+    const host = (e.target as HTMLElement).closest?.("[data-tip]");
+    if (host && !host.contains(e.relatedTarget as Node | null)) tip.style.display = "none";
   });
 }
 
@@ -302,8 +309,6 @@ const elNom: Record<Element, string> = {
   feu: "Feu",
   eau: "Eau",
   air: "Air",
-  wakfu: "Wakfu",
-  stasis: "Stasis",
 };
 
 // --- Log ---------------------------------------------------------------------
@@ -369,15 +374,12 @@ const ICON_DMGCRIT = A("/assets/elements/dmgCritique.png");
 const ICON_SOIN = A("/assets/elements/soin.png");
 const ICON_PUISS = A("/assets/elements/puissance.png");
 const ICON_PP = A("/assets/elements/pp.png");
-const ICON_RETRAIT_PA = A("/assets/elements/retraitPA.png");
 const ICON_REMB_PA = A("/assets/elements/rembPA.png");
 const resAsset: Record<Element, string> = {
   terre: A("/assets/elements/resTerre.png"),
   feu: A("/assets/elements/resFeu.png"),
   eau: A("/assets/elements/resEau.png"),
   air: A("/assets/elements/resAir.png"),
-  wakfu: A("/assets/elements/resWakfu.png"),
-  stasis: A("/assets/elements/resStasis.png"),
 };
 
 // --- Combat ------------------------------------------------------------------
@@ -540,8 +542,6 @@ const pctSoin = (s: Stats): number =>
   Math.round(Math.min(0.5, (s.soin ?? 0) * 0.005) * 100);
 const pctDgtsFinaux = (s: Stats): number =>
   Math.round(Math.min(0.5, s.intelligence * 0.005) * 100);
-const pctRetraitPA = (s: Stats): number =>
-  Math.round(Math.min(0.5, 0.15 + (s.wakfu ?? 0) * 0.005) * 100);
 const pctRembPA = (s: Stats): number =>
   Math.round(Math.min(0.5, 0.05 + (s.chance ?? 0) * 0.005) * 100);
 
@@ -654,7 +654,6 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(c.stats)}%</span>
         <span class="ms" title="Soin (puissance de soin)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(c.stats)}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(c.stats)}%</span>
-        ${(c.stats.wakfu ?? 0) > 0 ? `<span class="ms" title="Chance de retrait PA (Wakfu)"><img src="${ICON_RETRAIT_PA}" alt="" onerror="this.remove()" />${pctRetraitPA(c.stats)}%</span>` : ""}
         ${(c.stats.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(c.stats)}%</span>` : ""}
       </div>
       ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
@@ -735,15 +734,24 @@ function render(): void {
   // ré-affiche le log
   rafraichirJournal();
 
-  // clics sur les cibles
+  // clics sur les cibles — carte OU pastille de timeline du même combattant
   if (activeActeur && selectedSpell) {
-    root.querySelectorAll<HTMLElement>(".carte.ciblable").forEach((card) => {
-      card.addEventListener("click", () => {
-        const ref = card.dataset.ref!;
-        finir({ sort: selectedSpell!, cibleRef: ref });
+    root
+      .querySelectorAll<HTMLElement>(".carte.ciblable, .tl-pastille.ciblable")
+      .forEach((el) => {
+        el.addEventListener("click", () => {
+          finir({ sort: selectedSpell!, cibleRef: el.dataset.ref! });
+        });
       });
-    });
   }
+
+  // survol croisé : passer la souris sur une carte OU sa pastille highlight les deux
+  root.querySelectorAll<HTMLElement>("[data-ref]").forEach((el) => {
+    const ref = el.dataset.ref!;
+    const lies = () => root.querySelectorAll<HTMLElement>(`[data-ref="${ref}"]`);
+    el.addEventListener("mouseenter", () => lies().forEach((x) => x.classList.add("lie-survol")));
+    el.addEventListener("mouseleave", () => lies().forEach((x) => x.classList.remove("lie-survol")));
+  });
 
   // choix de l'élément de frappe de l'acteur courant : clic sur un rond du sélecteur (barre de sorts)
   root
@@ -775,14 +783,18 @@ function renderTimeline(): string {
     .filter((c) => c.pvActuels > 0 && !c.estInvocation)
     .sort((a, b) => initEffective(b) - initEffective(a));
   if (ordre.length < 2) return "";
+  // pastille ciblable = combattant valide pour le sort en cours de ciblage
+  const cibles =
+    activeActeur && selectedSpell ? ciblesValides(activeActeur, selectedSpell, combatants) : [];
   const items = ordre
     .map((c) => {
       const camp = c.camp === "joueur" ? "joueur" : "ennemi";
       const actif = c === activeActeur ? "actif" : "";
+      const ciblable = cibles.some((t) => t.ref === c.ref) ? "ciblable" : "";
       const inner = c.img
         ? `<img src="${A(c.img)}" alt="" onerror="this.remove()" />`
         : `<span class="tl-ini">${initEffective(c)}</span>`;
-      return `<div class="tl-pastille ${camp} ${actif}" title="${escapeHtml(c.nom)} · init ${initEffective(c)}">${inner}</div>`;
+      return `<div class="tl-pastille ${camp} ${actif} ${ciblable}" data-ref="${c.ref}" title="${escapeHtml(c.nom)} · init ${initEffective(c)}">${inner}</div>`;
     })
     .join("");
   return `<div class="timeline"><div class="tl-liste">${items}</div></div>`;
@@ -793,11 +805,20 @@ function renderBarreSorts(): string {
     return `<div class="attente">En attente…</div>`;
   }
   const acteur = activeActeur;
-  // slot 1 réservé au corps à corps (vide pour l'instant)
-  const cac = `<div class="sort sort-cac" title="Corps à corps — à venir">
-      <span class="sort-touche">1</span>
-      <span class="sort-icon-vide">🗡️</span>
-    </div>`;
+  // case 1 : attaque d'arme si une arme est équipée, sinon placeholder « corps à corps »
+  const arme = acteur.armeSort;
+  const cac = arme
+    ? `<button class="sort ${selectedSpell?.id === arme.id ? "choisi" : ""}" data-arme="1" ${
+        acteur.paActuels >= arme.coutPA ? "" : "disabled"
+      } title="${escapeHtml(arme.nom)} — attaque d'arme">
+        <span class="sort-touche">1</span>
+        <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${arme.coutPA}</b></span>
+        <span class="sort-icon-wrap"><img class="sort-icon" src="${arme.img ? A(arme.img) : ""}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
+      </button>`
+    : `<div class="sort sort-cac" title="Corps à corps — aucune arme équipée">
+        <span class="sort-touche">1</span>
+        <span class="sort-icon-vide">🗡️</span>
+      </div>`;
   const boutons =
     cac +
     acteur.sorts
@@ -825,6 +846,12 @@ function renderBarreSorts(): string {
         btn.addEventListener("click", () =>
           choisirSort(SORTS[btn.dataset.sort!]),
         );
+      });
+    // case 1 : attaque d'arme
+    root
+      .querySelector<HTMLButtonElement>("button.sort[data-arme]")
+      ?.addEventListener("click", () => {
+        if (activeActeur?.armeSort) choisirSort(activeActeur.armeSort);
       });
     const fin = document.getElementById("fin-tour");
     fin?.addEventListener("click", () => finir(null));
@@ -868,9 +895,12 @@ export function renderDofusRack(meta: Meta, compact = false): string {
     .map((d) => {
       const n = meta.dofus.filter((id) => id === d.id).length;
       const possede = n > 0;
-      const boss = DOFUS_DROP[d.id] ?? "";
+      const boss = DOFUS_DROP[d.id];
+      const bossAttr = boss
+        ? `data-boss="${escapeHtml(boss.nom)}" data-boss-img="${boss.img ? A(boss.img) : ""}"`
+        : d.id === "dofus_ocre" ? `data-ocre="1"` : "";
       return `
-        <div class="dofus-slot ${possede ? "" : "locked"}" data-nom="${escapeHtml(d.nom)}" data-effet="${escapeHtml(d.desc)}" data-boss="${escapeHtml(boss)}">
+        <div class="dofus-slot ${possede ? "" : "locked"}" data-nom="${escapeHtml(d.nom)}" data-effet="${escapeHtml(d.desc)}" ${bossAttr}>
           <img src="${d.img ? A(d.img) : ""}" alt="${escapeHtml(d.nom)}" onerror="this.remove()" />
           ${n > 1 ? `<span class="dofus-count">×${n}</span>` : ""}
         </div>`;
@@ -1176,8 +1206,6 @@ const STAT_ABBR: Partial<Record<keyof Stats, string>> = {
   intelligence: "Int",
   agilite: "Agi",
   chance: "Cha",
-  wakfu: "Wak",
-  stasis: "Sta",
   soin: "Soin",
   prospection: "PP",
 };
@@ -1480,8 +1508,6 @@ const STAT_NOM: Record<keyof Stats, string> = {
   intelligence: "Intelligence",
   agilite: "Agilité",
   chance: "Chance",
-  wakfu: "Wakfu",
-  stasis: "Stasis",
   vitalite: "Vitalité",
   soin: "Soin",
   prospection: "Prospection",
@@ -1495,14 +1521,12 @@ const STAT_AIDE: Record<keyof Stats, string> = {
   agilite:
     "Dégâts dans l'élément <b>Air</b>.<br>Esquive : <b>+0,2 %</b> par point (max 50 %).<br>Dégâts critiques : <b>+0,4 %</b> par point (max +60 %).",
   chance: "Dégâts dans l'élément <b>Eau</b>.",
-  wakfu: "Dégâts dans l'élément <b>Wakfu</b>.",
-  stasis: "Dégâts dans l'élément <b>Stasis</b>.",
   vitalite: "Points de vie maximum : <b>+1 PV</b> par point.",
   soin: "Puissance des soins prodigués : <b>+0,5 %</b> par point (max 50 %).",
   prospection:
     "Augmente les chances de butin d'équipement (cumulé sur toute l'équipe).",
 };
-// Ta plus haute stat élémentaire (Force/Int/Agi/Chance/Wakfu/Stasis) définit ton élément de frappe.
+// Ta plus haute stat élémentaire (Force/Int/Agi/Chance) définit ton élément de frappe.
 const AIDE_ELEMENT =
   '<br><i class="aide-note">L\'élément de frappe est ta plus haute stat élémentaire.</i>';
 const STAT_ELEMENTAIRE = new Set<keyof Stats>([
@@ -1510,8 +1534,6 @@ const STAT_ELEMENTAIRE = new Set<keyof Stats>([
   "intelligence",
   "agilite",
   "chance",
-  "wakfu",
-  "stasis",
 ]);
 
 function carteProgression(p: PersoState): string {
@@ -1561,17 +1583,36 @@ function carteProgression(p: PersoState): string {
  * Panneau de progression : dépenser les points dans les stats.
  * `titre`/`sousTitre` permettent de réutiliser l'écran pour l'Otomai.
  */
+/** Section « bonus de Dofus » commune à toute l'équipe (affichée une fois). */
+function sectionBonusDofus(meta: Meta | null): string {
+  if (!meta) return "";
+  const b = bonusEquipe(meta);
+  const parts: string[] = [];
+  const dmg = Math.round((b.damageMult - 1) * 100);
+  if (dmg) parts.push(`+${dmg} % dégâts`);
+  if (b.paBonus) parts.push(`+${b.paBonus} PA`);
+  if (b.vitaBonus) parts.push(`+${b.vitaBonus} Vitalité`);
+  if (b.resAllBonus) parts.push(`+${Math.round(b.resAllBonus * 100)} % résistances`);
+  if (!parts.length) return "";
+  return `<div class="bonus-dofus">
+    <span class="bonus-dofus-titre">🐉 Bonus de Dofus — toute l'équipe</span>
+    <div class="bonus-dofus-liste">${parts.map((p) => `<span class="bonus-dofus-chip">${p}</span>`).join("")}</div>
+  </div>`;
+}
+
 export function showStatPanel(
   persos: PersoState[],
   titre = "Caractéristiques",
   sousTitre = "Dépense tes points de caractéristique.",
   retour = false,
+  meta: Meta | null = null,
 ): Promise<void> {
   return new Promise((res) => {
     const draw = () => {
       ecran(`
         <h1>${escapeHtml(titre)}</h1>
         <p class="sous-titre">${escapeHtml(sousTitre)}</p>
+        ${sectionBonusDofus(meta)}
         <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
         <div class="boutons-ecran">${retour
           ? `<button id="prog-fermer" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button>`
@@ -1895,7 +1936,7 @@ export function showCarte(
       document
         .getElementById("carte-persos")
         ?.addEventListener("click", async () => {
-          await showStatPanel(persos, undefined, undefined, true);
+          await showStatPanel(persos, undefined, undefined, true, meta);
           draw();
         });
       document

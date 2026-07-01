@@ -262,12 +262,20 @@ button:focus-visible {
 }
 .dofus-tip .tip-effet {
   font-size: 0.8rem;
-  color: var(--txt);
+  color: var(--panel-solide); /* clair : lisible sur le fond brun foncé du tooltip */
 }
 .dofus-tip .tip-boss {
   font-size: 0.74rem;
   color: var(--pv);
   margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dofus-tip .tip-boss img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 .dofus-tip .tip-muet {
   font-size: 0.74rem;
@@ -1152,6 +1160,24 @@ kbd {
     0 0 0 2px var(--cyan),
     0 0 14px var(--cyan);
 }
+/* pastille ciblable pendant la sélection d'un sort */
+.tl-pastille.ciblable {
+  opacity: 1;
+  cursor: pointer;
+  border-color: var(--danger);
+  box-shadow:
+    0 0 0 2px var(--danger),
+    0 0 10px #b23b2e88;
+}
+/* survol croisé timeline ↔ carte : highlight le pendant de l'élément survolé */
+.lie-survol {
+  outline: 2px solid var(--or-clair);
+  outline-offset: 2px;
+}
+.tl-pastille.lie-survol {
+  opacity: 1;
+  box-shadow: 0 0 12px var(--or);
+}
 .tl-fleche {
   color: var(--muet);
   font-size: 0.8rem;
@@ -1503,16 +1529,6 @@ kbd {
     0 0 0 1px #4fb6ef66,
     0 0 8px #4fb6ef33;
 }
-.elem-rond.elem-wakfu {
-  box-shadow:
-    0 0 0 1px #7bd24f66,
-    0 0 8px #7bd24f33;
-}
-.elem-rond.elem-stasis {
-  box-shadow:
-    0 0 0 1px #9b6ad666,
-    0 0 8px #9b6ad633;
-}
 
 /* stats secondaires : grille 2×2 (crit / dégât crit / soin / dégâts finaux) */
 .mini-stats {
@@ -1836,6 +1852,7 @@ kbd {
   font-size: 0.66rem;
   font-weight: 900;
   box-shadow: 0 1px 2px #0008;
+  pointer-events: none; /* décorative : ne capte pas le survol */
 }
 .sort-cac {
   opacity: 0.55;
@@ -1866,6 +1883,7 @@ kbd {
   display: grid;
   place-items: center;
   filter: drop-shadow(0 1px 3px #0008);
+  pointer-events: none; /* décorative : ne capte pas le survol du sort voisin */
 }
 .sort-pa-badge img {
   position: absolute;
@@ -1921,6 +1939,38 @@ kbd {
   justify-content: center;
   flex-wrap: wrap;
   margin: 8px 0;
+}
+/* section commune des bonus de Dofus (toute l'équipe) */
+.bonus-dofus {
+  max-width: 640px;
+  margin: 10px auto;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #4a382655, #2e221355);
+  border: 1px solid var(--or);
+  box-shadow: inset 0 0 12px #0006;
+}
+.bonus-dofus-titre {
+  display: block;
+  font-weight: 900;
+  font-size: 0.8rem;
+  color: var(--or-clair);
+  margin-bottom: 6px;
+}
+.bonus-dofus-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.bonus-dofus-chip {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #2a1c02;
+  background: linear-gradient(180deg, var(--or-clair), var(--or));
+  border: 1px solid #c8881e;
+  border-radius: 999px;
+  padding: 2px 10px;
 }
 .carte-prog {
   width: 330px;
