@@ -369,6 +369,8 @@ const ICON_DMGCRIT = A("/assets/elements/dmgCritique.png");
 const ICON_SOIN = A("/assets/elements/soin.png");
 const ICON_PUISS = A("/assets/elements/puissance.png");
 const ICON_PP = A("/assets/elements/pp.png");
+const ICON_RETRAIT_PA = A("/assets/elements/retraitPA.png");
+const ICON_REMB_PA = A("/assets/elements/rembPA.png");
 const resAsset: Record<Element, string> = {
   terre: A("/assets/elements/resTerre.png"),
   feu: A("/assets/elements/resFeu.png"),
@@ -538,6 +540,10 @@ const pctSoin = (s: Stats): number =>
   Math.round(Math.min(0.5, (s.soin ?? 0) * 0.005) * 100);
 const pctDgtsFinaux = (s: Stats): number =>
   Math.round(Math.min(0.5, s.intelligence * 0.005) * 100);
+const pctRetraitPA = (s: Stats): number =>
+  Math.round(Math.min(0.5, 0.15 + (s.wakfu ?? 0) * 0.005) * 100);
+const pctRembPA = (s: Stats): number =>
+  Math.round(Math.min(0.5, 0.05 + (s.chance ?? 0) * 0.005) * 100);
 
 /**
  * Rond d'élément. `rang` = 1 (plus fort) / 2 (second). `actif` = élément de frappe courant.
@@ -602,6 +608,8 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     else if (e.stat === "hot") badges.push(`♥ soin/t (${e.toursRestants})`);
     else if (e.stat === "initiative")
       badges.push(`⏳ init ${e.valeur} (${e.toursRestants})`);
+    else if (e.stat === "contre")
+      badges.push(`⚔️ Contre ${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
   }
   if (c.provoque) badges.push(`🛡 Provoque`);
   if (c.bonusOffensifProchain > 0)
@@ -646,6 +654,8 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(c.stats)}%</span>
         <span class="ms" title="Soin (puissance de soin)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(c.stats)}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(c.stats)}%</span>
+        ${(c.stats.wakfu ?? 0) > 0 ? `<span class="ms" title="Chance de retrait PA (Wakfu)"><img src="${ICON_RETRAIT_PA}" alt="" onerror="this.remove()" />${pctRetraitPA(c.stats)}%</span>` : ""}
+        ${(c.stats.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(c.stats)}%</span>` : ""}
       </div>
       ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
       ${resChips ? `<div class="res-row">${resChips}</div>` : ""}
@@ -793,14 +803,16 @@ function renderBarreSorts(): string {
     acteur.sorts
       .map((id) => SORTS[id])
       .map((s, i) => {
-        const abordable = acteur.paActuels >= s.coutPA;
+        const cd = acteur.cooldowns[s.id] ?? 0; // cooldown par sort (côté lanceur)
+        const abordable = acteur.paActuels >= s.coutPA && cd <= 0;
         const choisi = selectedSpell?.id === s.id;
-        return `<button class="sort ${choisi ? "choisi" : ""}" data-sort="${s.id}" ${
+        return `<button class="sort ${choisi ? "choisi" : ""} ${cd > 0 ? "cooldown" : ""}" data-sort="${s.id}" ${
           abordable ? "" : "disabled"
         }>
         <span class="sort-touche">${i + 2}</span>
         <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${s.coutPA}</b></span>
         <span class="sort-icon-wrap"><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
+        ${cd > 0 ? `<span class="sort-cd" title="Rechargement : ${cd} tour(s)">${cd}</span>` : ""}
       </button>`;
       })
       .join("");

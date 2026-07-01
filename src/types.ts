@@ -78,6 +78,7 @@ export type EffetStat =
   | "reductionDegats" // −% de dégâts subis
   | "armure" // −X plat de dégâts subis
   | "resAll" // ± résistance à tous les éléments
+  | "contre" // posture de contre (Duel) : valeur = probabilité de riposte quand frappé
   | "friction" // bloque soins ET boucliers du porteur (flag : valeur ignorée)
   // buffs/debuffs temporaires de caractéristique (sommés dans statsEffectives) :
   | "force"
@@ -108,9 +109,17 @@ export interface Spell {
   rebond?: { sauts: number; bonusParSaut: number }; // touche les ennemis suivants
   siCibleMeurt?: { rebondDegatsX: number }; // Épée hostile : x2 sur un autre ennemi
   ignoreResistances?: boolean; // Flèche intrusive
+  ignoreBouclier?: boolean; // Flèche intrusive : les dégâts sautent le bouclier
   retraitPA?: number; // Fracas : −PA à la cible au prochain tour
+  rembPA?: boolean; // Flèche magique : chance (Chance) de rembourser le coût en PA
+  maitriseArc?: { principal: number; secondaire: number; duree: number }; // +X/+Y aux 2 éléments de frappe
+  doubleEffetProchain?: boolean; // Tir Puissant : double la DURÉE de l'effet de la prochaine flèche
   passeTourSiSurvie?: boolean; // Colère
   effet?: EffetSpec; // buff/debuff appliqué à la cible
+  effetLanceur?: EffetSpec; // buff appliqué au lanceur après le sort (Épée du Jugement)
+  zoneLigne?: boolean; // dégâts sur TOUTE la rangée de la cible cliquée (Tempête de lames)
+  cooldownTours?: number; // cooldown par sort côté lanceur (indispo Nt, toutes cibles)
+  contre?: { chance: number; duree: number }; // Duel : posture de riposte (chance/durée)
   // --- mécaniques de soutien (Eniripsa) ---
   poison?: { degats: number; duree: number; transmet?: boolean }; // applique un DoT
   soinComplet?: boolean; // soigne entièrement la cible
@@ -172,6 +181,7 @@ export interface Projectiles {
 export interface SurAllie {
   bouclierPct?: number;
   effet?: EffetSpec;
+  soin?: { min: number; max: number }; // soigne l'allié (Mot Alternatif)
   nonCumulable?: boolean; // remplace l'effet existant au lieu de l'empiler
 }
 
@@ -243,6 +253,7 @@ export interface Combatant {
   paBonusNextTurn: number; // PA bonus appliqués à la prochaine recharge (Mot Ivation)
   cooldowns: Record<string, number>; // `${sortId}:${cibleRef}` -> tours restants
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
+  doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   poisonAmpliTours: number; // Arsenic : poisons appliqués ×2 tant que > 0
   bonusDe: number; // Bonne pioche : +X aux tirages dé/carte
   bonusDeTours: number; // durée restante du bonus de dé

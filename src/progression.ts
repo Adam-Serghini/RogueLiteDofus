@@ -107,3 +107,13 @@ export function multOffensif(stats: Stats): number {
 export function multSoin(stats: Stats): number {
   return 1 + Math.min(0.5, (stats.soin ?? 0) * 0.005);
 }
+
+/** Chance de retrait de PA (Fracas) : 15 % de base + Wakfu, plafonnée à 50 %. */
+export function pctRetraitPA(stats: Stats): number {
+  return Math.min(0.5, 0.15 + (stats.wakfu ?? 0) * 0.005);
+}
+
+/** Chance de remboursement des PA (Flèche magique) : 5 % de base + Chance, plafonnée à 50 %. */
+export function pctRembPA(stats: Stats): number {
+  return Math.min(0.5, 0.05 + (stats.chance ?? 0) * 0.005);
+}

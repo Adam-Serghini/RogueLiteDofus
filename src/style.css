@@ -1787,6 +1787,25 @@ kbd {
 .sort:disabled {
   opacity: 0.4;
 }
+/* sort en rechargement : grisé + compteur de tours au centre */
+.sort.cooldown .sort-icon-wrap {
+  filter: grayscale(0.85) brightness(0.6);
+}
+.sort-cd {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #fff;
+  background: #0000005e;
+  border-radius: 10px;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 5px #000;
+}
 .sort-icon-wrap {
   position: absolute;
   inset: 0;

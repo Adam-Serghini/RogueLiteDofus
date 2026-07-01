@@ -24,7 +24,7 @@ describe("boucliers", () => {
     const [f] = equipe();
     const e = mannequin();
     expect(f.bouclier).toBe(0);
-    lancerSort(f, SORTS.attaque_celeste, e.ref, [f, e], ctx());
+    lancerSort(f, SORTS.attaque_naturelle, e.ref, [f, e], ctx());
     expect(e.pvActuels).toBeLessThan(500);
     expect(f.bouclier).toBeGreaterThan(0);
   });
@@ -33,9 +33,9 @@ describe("boucliers", () => {
     const team = equipe();
     const [f, iop] = team;
     const e = mannequin();
-    lancerSort(f, SORTS.onde, e.ref, [...team, e], ctx());
+    lancerSort(f, SORTS.bulle, e.ref, [...team, e], ctx());
     expect(e.pvActuels).toBeLessThan(500);
-    lancerSort(f, SORTS.onde, iop.ref, [...team, e], ctx());
+    lancerSort(f, SORTS.bulle, iop.ref, [...team, e], ctx());
     expect(iop.bouclier).toBeGreaterThan(0);
   });
 });
@@ -44,7 +44,7 @@ describe("échec critique (déstabilisation)", () => {
   it("Ouragan applique l'échec critique et peut faire rater le sort de la cible", () => {
     const [f] = equipe();
     const e = mannequin();
-    lancerSort(f, SORTS.ouragan, e.ref, [f, e], ctx());
+    lancerSort(f, SORTS.attaque_nuageuse, e.ref, [f, e], ctx());
     expect(e.effets.some((x) => x.stat === "echecCritique")).toBe(true);
     const pvAvant = f.pvActuels;
     lancerSort(e, SORTS.morsure, f.ref, [f, e], ctx({ rng: () => 0 })); // rng bas → échec
@@ -88,7 +88,7 @@ describe("glyphes & provocation", () => {
     const ennemis = fabriquerEnnemis("combat_2"); // 3 ennemis
     ennemis.forEach((x) => { x.pvMax = 500; x.pvActuels = 500; });
     const front = [...ennemis].sort((a, b) => a.position - b.position)[0];
-    lancerSort(f, SORTS.glyphe_naturel, front.ref, [f, ...ennemis], ctx());
+    lancerSort(f, SORTS.glyphe_agressif, front.ref, [f, ...ennemis], ctx());
     expect(ennemis.filter((x) => x.effets.some((e) => e.stat === "degatsInfliges" && e.valeur < 0)).length).toBeGreaterThanOrEqual(2);
   });
 
@@ -96,6 +96,6 @@ describe("glyphes & provocation", () => {
     const [f] = equipe();
     lancerSort(f, SORTS.provocation, f.ref, [f], ctx());
     expect(f.provoque).toBe(true);
-    expect(f.provoqueTours).toBe(2);
+    expect(f.provoqueTours).toBe(1);
   });
 });

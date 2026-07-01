@@ -4,7 +4,7 @@
 //  Pilotable sans UI : voir test.ts (deux IA qui s'affrontent en console).
 // =============================================================================
 import { SORTS } from "./data";
-import { multOffensif, multSoin } from "./progression";
+import { multOffensif, multSoin, pctRetraitPA, pctRembPA } from "./progression";
 import type {
   Camp, Combatant, EffetSpec, EffetStat, Element, Spell, Stats, Action,
 } from "./types";
@@ -52,6 +52,12 @@ export const statElement = (stats: Stats, el: Element): number => {
     case "wakfu": return stats.wakfu ?? 0;
     case "stasis": return stats.stasis ?? 0;
   }
+};
+
+/** Stat (buffable) portant chaque élément — pour buffer la carac d'un élément. */
+const ELEMENT_STAT: Record<Element, EffetStat> = {
+  terre: "force", feu: "intelligence", eau: "chance",
+  air: "agilite", wakfu: "wakfu", stasis: "stasis",
 };
 
 /** Liste des 6 éléments (ordre stable d'affichage). */
@@ -104,6 +110,11 @@ function ligneFront(cibles: Combatant[]): Combatant[] {
 const enCooldown = (acteur: Combatant, sort: Spell, cibleRef: string): boolean =>
   (acteur.cooldowns[`${sort.id}:${cibleRef}`] ?? 0) > 0;
 
+/** Cooldown par sort côté lanceur (clé = id du sort, sans cible) : le sort est
+ *  indisponible pour toutes les cibles pendant `cooldownTours` tours. */
+const enCooldownSort = (acteur: Combatant, sort: Spell): boolean =>
+  !!sort.cooldownTours && (acteur.cooldowns[sort.id] ?? 0) > 0;
+
 /** Cibles valides pour un sort lancé par `acteur` (règle de ligne symétrique). */
 export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): Combatant[] {
   let base: Combatant[];
@@ -136,6 +147,8 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
     if (prov.length) base = prov;
   }
 
+  // cooldown par sort (côté lanceur) : sort entièrement indisponible pendant Nt
+  if (enCooldownSort(acteur, sort)) return [];
   // un sort à cooldown n'est plus ciblable sur une cible en attente de recharge
   if (sort.cooldown) base = base.filter((c) => !enCooldown(acteur, sort, c.ref));
   return base;
@@ -143,6 +156,11 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
 
 /** Cibles effectivement touchées par un sort de dégâts (primaire + rebonds). */
 function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: Combatant[]): Combatant[] {
+  // zone : toute la rangée (avant/arrière) de la cible cliquée (Tempête de lames)
+  if (sort.zoneLigne) {
+    const memeRangee = estAvant(primaire);
+    return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
+  }
   const touchees = [primaire];
   if (sort.rebond) {
     const ennemis = adverses(acteur, cs).sort((a, b) => a.position - b.position);
@@ -261,6 +279,10 @@ function appliquerEffet(cible: Combatant, effet: EffetSpec): void {
 /** Friction : tant qu'elle est active, la cible ne peut être ni soignée ni protégée. */
 const aFriction = (c: Combatant): boolean => sommeEffet(c, "friction") > 0;
 
+/** Double la durée d'un effet/poison si `x` (Tir Puissant), sinon le renvoie tel quel. */
+const etirer = <T extends { duree: number }>(e: T, x: boolean): T =>
+  x ? { ...e, duree: e.duree * 2 } : e;
+
 /** Applique un poison, doublé si le lanceur est sous Arsenic. */
 function appliquerPoison(
   cible: Combatant,
@@ -283,15 +305,29 @@ function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
   if (cible.effets.length < avant) ctx.log(`${cible.nom} est désenvoûté.`);
 }
 
-/** Inflige des dégâts en consommant d'abord le bouclier, puis les PV. */
-function infligerDegats(cible: Combatant, dmg: number): void {
+/** Inflige des dégâts en consommant d'abord le bouclier, puis les PV.
+ *  Si `attaquant`/`ctx` sont fournis et que la cible a une posture de contre
+ *  (Duel), elle peut riposter d'une frappe modeste (sans re-déclenchement). */
+function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ctx?: CombatCtx, ignoreBouclier?: boolean): void {
   let reste = dmg;
-  if (cible.bouclier > 0) {
+  if (cible.bouclier > 0 && !ignoreBouclier) {
     const absorbe = Math.min(cible.bouclier, reste);
     cible.bouclier -= absorbe;
     reste -= absorbe;
   }
   cible.pvActuels = Math.max(0, cible.pvActuels - reste);
+  // riposte (Duel) : la cible survivante contre-attaque l'attaquant adverse
+  if (
+    attaquant && ctx && dmg > 0 &&
+    cible.pvActuels > 0 && attaquant.pvActuels > 0 &&
+    attaquant.camp !== cible.camp &&
+    sommeEffet(cible, "contre") > 0 && // ne consomme le RNG que si une posture est active
+    ctx.rng() < sommeEffet(cible, "contre")
+  ) {
+    const r = degatsAvec(cible, { baseMin: 8, baseMax: 12, scaling: 0.3 }, attaquant, { useMax: false, mult: 1, ctx });
+    infligerDegats(attaquant, r.dmg); // pas d'attaquant → pas de contre-riposte
+    ctx.log(`${cible.nom} riposte : ${r.dmg} dégâts à ${attaquant.nom}.`);
+  }
 }
 
 /** Combattant vivant juste derrière `c` dans sa ligne (position supérieure). */
@@ -439,6 +475,22 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.provoqueTours = sort.provoqueTours;
     ctx.log(`${cible.nom} provoque les ennemis !`);
   }
+  if (sort.contre) {
+    appliquerEffet(cible, { stat: "contre", valeur: sort.contre.chance, duree: sort.contre.duree });
+    ctx.log(`${cible.nom} prend une posture de contre (${Math.round(sort.contre.chance * 100)} %).`);
+  }
+  if (sort.maitriseArc) {
+    const [princ, sec] = elementsForts(cible); // buffe les 2 éléments de frappe du lanceur
+    appliquerEffet(cible, { stat: ELEMENT_STAT[princ], valeur: sort.maitriseArc.principal, duree: sort.maitriseArc.duree });
+    if (ELEMENT_STAT[sec] !== ELEMENT_STAT[princ]) {
+      appliquerEffet(cible, { stat: ELEMENT_STAT[sec], valeur: sort.maitriseArc.secondaire, duree: sort.maitriseArc.duree });
+    }
+    ctx.log(`${cible.nom} affûte sa maîtrise de l'arc (+${sort.maitriseArc.principal}/+${sort.maitriseArc.secondaire}).`);
+  }
+  if (sort.doubleEffetProchain) {
+    cible.doubleEffetProchain = true;
+    ctx.log(`${cible.nom} prépare un Tir Puissant (effet de la prochaine flèche doublé).`);
+  }
   if (sort.dissipePositifs) dissiperPositifs(cible, ctx);
 }
 
@@ -535,7 +587,7 @@ function frappe(
     opts.ctx.log(`${t.nom} esquive ${nomSort} !`);
     return 0;
   }
-  infligerDegats(t, r.dmg);
+  infligerDegats(t, r.dmg, lanceur, opts.ctx);
   opts.ctx.log(
     `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
       (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
@@ -618,6 +670,7 @@ export function lancerSort(
   const cible = parRef(cs, cibleRef);
   const poseCooldown = (t: Combatant) => {
     if (sort.cooldown) lanceur.cooldowns[`${sort.id}:${t.ref}`] = sort.cooldown;
+    if (sort.cooldownTours) lanceur.cooldowns[sort.id] = sort.cooldownTours;
   };
 
   // --- ÉCHEC CRITIQUE : le sort peut rater (PA déjà consommés) ---
@@ -652,6 +705,7 @@ export function lancerSort(
         if (sa.nonCumulable) cible.effets = cible.effets.filter((e) => e.stat !== sa.effet!.stat);
         appliquerEffet(cible, sa.effet);
       }
+      if (sa.soin) soigner(cible, Math.round(jet(sa.soin.min, sa.soin.max, ctx.rng) * multSoin(lanceur.stats)), ctx);
       poseCooldown(cible);
       return;
     }
@@ -718,6 +772,9 @@ export function lancerSort(
   // Vigueur des bois : bonus % consommé sur ce sort offensif (tous les coups)
   const bonusVigueur = lanceur.bonusOffensifProchain;
   lanceur.bonusOffensifProchain = 0;
+  // Tir Puissant : la prochaine flèche applique ses effets à durée doublée (one-shot)
+  const doubleDuree = !!lanceur.doubleEffetProchain;
+  lanceur.doubleEffetProchain = false;
   let totalDmg = 0;
 
   // Mise à mort : échoue si la cible survivrait au coup (projection au max roll)
@@ -778,19 +835,19 @@ export function lancerSort(
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${sort.nom} !`);
     } else {
-      infligerDegats(t, r.dmg);
+      infligerDegats(t, r.dmg, lanceur, ctx, sort.ignoreBouclier);
       totalDmg += r.dmg;
       ctx.log(
         `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
           (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
       );
       if (t.pvActuels > 0) {
-        if (sort.poison) appliquerPoison(t, lanceur, sort.poison);
-        if (sort.effet) appliquerEffet(t, sort.effet);
+        if (sort.poison) appliquerPoison(t, lanceur, etirer(sort.poison, doubleDuree));
+        if (sort.effet) appliquerEffet(t, etirer(sort.effet, doubleDuree));
         if (sort.procAleatoire && sort.procAleatoire.length) {
           const proc = sort.procAleatoire[Math.floor(ctx.rng() * sort.procAleatoire.length)];
           if (proc.dissipePositifs) dissiperPositifs(t, ctx);
-          if (proc.effet) appliquerEffet(t, proc.effet);
+          if (proc.effet) appliquerEffet(t, etirer(proc.effet, doubleDuree));
         }
       }
     }
@@ -807,7 +864,7 @@ export function lancerSort(
       if (r.esquive) {
         ctx.log(`${t.nom} esquive le rebond de ${sort.nom} !`);
       } else {
-        infligerDegats(t, r.dmg);
+        infligerDegats(t, r.dmg, lanceur, ctx);
         totalDmg += r.dmg;
         ctx.log(
           `${sort.nom} rebondit sur ${t.nom} : ${r.dmg} dégâts !` +
@@ -836,11 +893,22 @@ export function lancerSort(
     soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
   }
 
-  // Fracas : retrait de PA au prochain tour
-  if (sort.retraitPA && cible.pvActuels > 0) cible.retraitPANextTurn += sort.retraitPA;
+  // Fracas : retrait de PA au prochain tour — chance scalée par le Wakfu du lanceur
+  if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < pctRetraitPA(statsEffectives(lanceur))) {
+    cible.retraitPANextTurn += sort.retraitPA;
+  }
 
   // Colère : passe le tour si la cible survit
   if (sort.passeTourSiSurvie && cible.pvActuels > 0) lanceur.passeProchainTour = true;
+
+  // Épée du Jugement : buff appliqué au lanceur (ex. +résistances)
+  if (sort.effetLanceur) appliquerEffet(lanceur, sort.effetLanceur);
+
+  // Flèche magique : chance (scale Chance) de rembourser le coût en PA du sort
+  if (sort.rembPA && ctx.rng() < pctRembPA(statsEffectives(lanceur))) {
+    lanceur.paActuels += sort.coutPA;
+    ctx.log(`${lanceur.nom} récupère ${sort.coutPA} PA (Flèche magique).`);
+  }
 
   poseCooldown(cible);
 }

@@ -24,7 +24,7 @@ describe("poisons", () => {
   it("Coupe Jarret inflige des dégâts et un poison", () => {
     const s = sram();
     const e = mannequin();
-    lancerSort(s, SORTS.coupe_jarret, e.ref, [s, e], ctx());
+    lancerSort(s, SORTS.attaque_ombre, e.ref, [s, e], ctx());
     expect(e.pvActuels).toBeLessThan(500);
     expect(e.effets.some((x) => x.stat === "poison")).toBe(true);
   });
@@ -34,16 +34,16 @@ describe("poisons", () => {
     const ennemis = fabriquerEnnemis("combat_2"); // 3 ennemis (cases 0,1,4)
     ennemis.forEach((x) => { x.pvMax = 500; x.pvActuels = 500; });
     const front = [...ennemis].sort((a, b) => a.position - b.position)[0];
-    lancerSort(s, SORTS.flasque_venimeuse, front.ref, [s, ...ennemis], ctx());
+    lancerSort(s, SORTS.flasque_empoisonnee, front.ref, [s, ...ennemis], ctx());
     expect(ennemis.filter((x) => x.effets.some((e) => e.stat === "poison")).length).toBeGreaterThanOrEqual(2);
   });
 
   it("Arsenic double les dégâts des poisons appliqués ensuite", () => {
     const s = sram();
     const e = mannequin();
-    lancerSort(s, SORTS.arsenic, s.ref, [s, e], ctx());
+    lancerSort(s, SORTS.expert_poisons, s.ref, [s, e], ctx());
     expect(s.poisonAmpliTours).toBe(2);
-    lancerSort(s, SORTS.dagues_insidieuses, e.ref, [s, e], ctx());
+    lancerSort(s, SORTS.coup_insidieux, e.ref, [s, e], ctx());
     const poison = e.effets.find((x) => x.stat === "poison");
     expect(poison?.valeur).toBe(10); // 5 × 2
   });
@@ -75,7 +75,7 @@ describe("multi-coups & projectiles", () => {
     const seq = [0.9, 0.5, 0.9, 0.0, 0.9, 0.5, 0.9, 0.0];
     let i = 0;
     const rng = () => seq[Math.min(i++, seq.length - 1)];
-    lancerSort(s, SORTS.coup_double, e.ref, [s, e], ctx({ rng }));
+    lancerSort(s, SORTS.coup_sournois, e.ref, [s, e], ctx({ rng }));
     expect(e.pvActuels).toBeLessThan(500);
     expect(e.effets.some((x) => x.stat === "poison")).toBe(true);
     expect(e.effets.some((x) => x.stat === "friction")).toBe(true);
@@ -84,7 +84,7 @@ describe("multi-coups & projectiles", () => {
   it("Déluge de lames inflige plusieurs frappes", () => {
     const s = sram();
     const e = mannequin();
-    lancerSort(s, SORTS.deluge_de_lames, e.ref, [s, e], ctx());
+    lancerSort(s, SORTS.deluge_lames, e.ref, [s, e], ctx());
     expect(e.pvActuels).toBeLessThan(500);
   });
 });
@@ -92,7 +92,7 @@ describe("multi-coups & projectiles", () => {
 describe("Maître des ombres", () => {
   it("octroie de l'esquive et un boost d'Agilité scalé au niveau", () => {
     const s = sram();
-    lancerSort(s, SORTS.maitre_des_ombres, s.ref, [s], ctx());
+    lancerSort(s, SORTS.invisibilite, s.ref, [s], ctx());
     expect(s.effets.some((x) => x.stat === "esquive" && x.valeur === 0.25)).toBe(true);
     const agi = s.effets.find((x) => x.stat === "agilite");
     expect(agi?.valeur).toBe(15 + 0.5 * s.niveau);

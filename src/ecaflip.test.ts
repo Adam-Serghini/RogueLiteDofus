@@ -24,7 +24,7 @@ describe("mixte & vol de vie", () => {
     const [eca] = equipe();
     eca.pvActuels = 10;
     const e = mannequin();
-    lancerSort(eca, SORTS.pattounes, e.ref, [eca, e], ctx());
+    lancerSort(eca, SORTS.griffe_joueuse, e.ref, [eca, e], ctx());
     expect(e.pvActuels).toBeLessThan(500);
     expect(eca.pvActuels).toBeGreaterThan(10);
   });
@@ -35,9 +35,9 @@ describe("mixte & vol de vie", () => {
     const ennemis = fabriquerEnnemis("combat_2");
     ennemis.forEach((x) => { x.pvMax = 500; x.pvActuels = 500; });
     const front = [...ennemis].sort((a, b) => a.position - b.position)[0];
-    lancerSort(eca, SORTS.pelote_chaude, front.ref, [eca, ...ennemis], ctx());
+    lancerSort(eca, SORTS.des_double, front.ref, [eca, ...ennemis], ctx());
     expect(ennemis.filter((x) => x.pvActuels < 500).length).toBeGreaterThanOrEqual(2);
-    lancerSort(eca, SORTS.pelote_chaude, iop.ref, team, ctx());
+    lancerSort(eca, SORTS.des_double, iop.ref, team, ctx());
     expect(iop.effets.some((x) => x.stat === "degatsInfliges" && x.valeur > 0)).toBe(true);
   });
 });
@@ -50,11 +50,13 @@ describe("hasard (dé & cartes)", () => {
     expect(e.pvActuels).toBeLessThan(500);
   });
 
-  it("Bonne pioche octroie un bonus de dé temporisé", () => {
+  it("Perception buffe toutes les caractéristiques", () => {
     const [eca] = equipe();
-    lancerSort(eca, SORTS.bonne_pioche, eca.ref, [eca], ctx());
-    expect(eca.bonusDe).toBeGreaterThanOrEqual(1);
-    expect(eca.bonusDeTours).toBe(2);
+    eca.effets = [];
+    lancerSort(eca, SORTS.perception, eca.ref, [eca], ctx());
+    for (const stat of ["force", "intelligence", "agilite", "chance", "wakfu", "stasis"] as const) {
+      expect(eca.effets.some((e) => e.stat === stat && e.valeur === 5)).toBe(true);
+    }
   });
 
   it("Tarot (Cœur, rng max) inflige des dégâts et soigne le lanceur", () => {
@@ -90,7 +92,7 @@ describe("effets aléatoires & adjacence", () => {
   it("Tactique féline donne +1 PA aux alliés des cases adjacentes", () => {
     const team = equipe(["ecaflip", "iop"]);
     const [eca, iop] = team;
-    lancerSort(eca, SORTS.tactique_feline, eca.ref, team, ctx());
+    lancerSort(eca, SORTS.odorat, eca.ref, team, ctx());
     expect(iop.paBonusNextTurn).toBe(1);
   });
 

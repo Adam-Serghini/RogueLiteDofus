@@ -17,11 +17,11 @@ const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
 const equipe = () => fabriquerEquipe();
 
 describe("soins", () => {
-  it("Mot réconfortant soigne un allié (× puissance de soin de l'Eniripsa)", () => {
+  it("Mot Alternatif soigne un allié (× puissance de soin de l'Eniripsa)", () => {
     const [iop, , eni] = equipe();
     iop.pvActuels = 10;
-    lancerSort(eni, SORTS.mot_reconfortant, iop.ref, [iop, eni], ctx());
-    // 10 + jet max (20) × multSoin(Eniripsa) ; soin 60 → ×1.3 → 26
+    lancerSort(eni, SORTS.mot_alternatif, iop.ref, [iop, eni], ctx());
+    // 10 + jet max du soin (20) × multSoin(Eniripsa)
     expect(iop.pvActuels).toBe(10 + Math.round(20 * multSoin(eni.stats)));
   });
 
@@ -29,8 +29,8 @@ describe("soins", () => {
     const [iop, , eni] = equipe();
     expect(multSoin(eni.stats)).toBeGreaterThan(1); // l'Eniripsa a une stat Soin
     iop.pvActuels = 1;
-    const sansBonus = SORTS.mot_reconfortant.baseMax; // jet max sans bonus
-    lancerSort(eni, SORTS.mot_reconfortant, iop.ref, [iop, eni], ctx());
+    const sansBonus = SORTS.mot_alternatif.mixte?.surAllie.soin?.max ?? 0; // jet max sans bonus
+    lancerSort(eni, SORTS.mot_alternatif, iop.ref, [iop, eni], ctx());
     expect(iop.pvActuels - 1).toBeGreaterThan(sansBonus);
   });
 
@@ -44,7 +44,7 @@ describe("soins", () => {
   it("Mot d'entraide soigne toute l'équipe", () => {
     const team = equipe();
     team.forEach((c) => (c.pvActuels = 10));
-    lancerSort(team[2], SORTS.mot_entraide, team[2].ref, team, ctx());
+    lancerSort(team[2], SORTS.mot_revitalisant, team[2].ref, team, ctx());
     expect(team.every((c) => c.pvActuels > 10)).toBe(true);
   });
 
@@ -55,12 +55,20 @@ describe("soins", () => {
     lancerSort(team[2], SORTS.mot_vampirique, boss.ref, [...team, boss], ctx());
     expect(team.some((c) => c.pvActuels > 20)).toBe(true);
   });
+
+  it("Mot Alternatif inflige des dégâts sur un ennemi (pas de soin)", () => {
+    const [, , eni] = equipe();
+    const boss = fabriquerEnnemis("boss")[0];
+    const pvAvant = boss.pvActuels;
+    lancerSort(eni, SORTS.mot_alternatif, boss.ref, [eni, boss], ctx());
+    expect(boss.pvActuels).toBeLessThan(pvAvant); // ennemi blessé, non soigné
+  });
 });
 
 describe("bouclier", () => {
   it("Mot préventif applique un bouclier + un HoT", () => {
     const [iop, , eni] = equipe();
-    lancerSort(eni, SORTS.mot_preventif, iop.ref, [iop, eni], ctx());
+    lancerSort(eni, SORTS.mot_prevention, iop.ref, [iop, eni], ctx());
     expect(iop.bouclier).toBe(Math.round(iop.pvMax * 0.15));
     expect(iop.effets.some((e) => e.stat === "hot")).toBe(true);
   });
@@ -80,7 +88,7 @@ describe("poison", () => {
   it("Fiole de douleur applique un poison transmissible", () => {
     const [, , eni] = equipe();
     const boss = fabriquerEnnemis("boss")[0]; // Tournesol Affamé, gros PV : survit au coup
-    lancerSort(eni, SORTS.fiole_douleur, boss.ref, [eni, boss], ctx());
+    lancerSort(eni, SORTS.mot_interdit, boss.ref, [eni, boss], ctx());
     expect(boss.pvActuels).toBeGreaterThan(0);
     expect(boss.effets.some((e) => e.stat === "poison" && e.transmet)).toBe(true);
   });
@@ -118,7 +126,7 @@ describe("HoT, dissipe, PA", () => {
   it("Antivenin dissipe le poison et applique un HoT", () => {
     const [iop, , eni] = equipe();
     iop.effets.push({ stat: "poison", valeur: 5, toursRestants: 2 });
-    lancerSort(eni, SORTS.antivenin, iop.ref, [iop, eni], ctx());
+    lancerSort(eni, SORTS.mot_jouvence, iop.ref, [iop, eni], ctx());
     expect(iop.effets.some((e) => e.stat === "poison")).toBe(false);
     expect(iop.effets.some((e) => e.stat === "hot")).toBe(true);
   });
@@ -126,11 +134,11 @@ describe("HoT, dissipe, PA", () => {
   it("Mot d'ivation octroie des PA puis se met en cooldown sur la cible", () => {
     const [iop, , eni] = equipe();
     const cs = [iop, eni];
-    expect(ciblesValides(eni, SORTS.mot_ivation, cs).some((c) => c.ref === iop.ref)).toBe(true);
-    lancerSort(eni, SORTS.mot_ivation, iop.ref, cs, ctx());
+    expect(ciblesValides(eni, SORTS.mot_stimulant, cs).some((c) => c.ref === iop.ref)).toBe(true);
+    lancerSort(eni, SORTS.mot_stimulant, iop.ref, cs, ctx());
     expect(iop.paBonusNextTurn).toBe(2);
     // la cible n'est plus ciblable par ce sort tant que le cooldown court
-    expect(ciblesValides(eni, SORTS.mot_ivation, cs).some((c) => c.ref === iop.ref)).toBe(false);
+    expect(ciblesValides(eni, SORTS.mot_stimulant, cs).some((c) => c.ref === iop.ref)).toBe(false);
   });
 
   it("le don de PA s'applique à la recharge du tour suivant", () => {

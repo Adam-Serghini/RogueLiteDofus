@@ -7,71 +7,111 @@ import type { Classe, Item, Monstre, Panoplie, Spell } from "./types";
 // --- Sorts -------------------------------------------------------------------
 export const SORTS: Record<string, Spell> = {
   // ---- Iop : bruiser de mêlée ----
-  pression: {
-    id: "pression", nom: "Épée céleste", type: "degats", coutPA: 3,
-    cible: "ennemi_ligne", baseMin: 8, baseMax: 12, scaling: 0.3,
-    desc: "Dégâts simples sur un ennemi de la ligne.",
-  },
-  epee_hostile: {
-    id: "epee_hostile", nom: "Épée du jugement", type: "degats", coutPA: 5,
+  epee_celeste: {
+    id: "epee_celeste", nom: "Épée Céleste", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 10, baseMax: 14, scaling: 0.4,
-    siCibleMeurt: { rebondDegatsX: 2 },
-    desc: "Si la cible meurt, rebondit sur un autre ennemi en infligeant le double.",
+    siCibleMeurt: { rebondDegatsX: 2 }, cooldownTours: 1,
+    desc: "Si la cible meurt, rebondit sur un ennemi proche en infligeant le double.",
+  },
+  epee_divine: {
+    id: "epee_divine", nom: "Épée divine", type: "degats", coutPA: 4,
+    cible: "ennemi_ligne", baseMin: 9, baseMax: 13, scaling: 0.35,
+    vampirismeRatio: 0.3,
+    desc: "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
+  },
+  tempete_lames: {
+    id: "tempete_lames", nom: "Tempête de lames", type: "degats", coutPA: 3,
+    cible: "ennemi_ligne", baseMin: 6, baseMax: 10, scaling: 0.25,
+    zoneLigne: true,
+    desc: "Dégâts de zone sur toute la ligne ciblée (avant ou arrière).",
   },
   fracas: {
     id: "fracas", nom: "Fracas", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 14, baseMax: 18, scaling: 0.5,
     retraitPA: 3,
-    desc: "Gros dégâts + retire 3 PA à la cible au prochain tour.",
+    desc: "Gros dégâts ; chance (scale Wakfu) de retirer 3 PA à la cible au prochain tour.",
   },
   colere: {
     id: "colere", nom: "Colère de Iop", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 18, baseMax: 24, scaling: 0.6,
-    passeTourSiSurvie: true,
+    passeTourSiSurvie: true, cooldownTours: 2,
     desc: "Très gros dégâts ; le Iop passe son prochain tour si la cible survit.",
+  },
+  epee_jugement: {
+    id: "epee_jugement", nom: "Épée du Jugement", type: "degats", coutPA: 4,
+    cible: "ennemi_ligne", baseMin: 12, baseMax: 16, scaling: 0.4,
+    effetLanceur: { stat: "resAll", valeur: 0.05, duree: 2 }, cooldownTours: 2,
+    desc: "Dégâts modérés à élevés ; +5 % de résistances au lanceur (2t).",
+  },
+  duel: {
+    id: "duel", nom: "Duel", type: "buff", coutPA: 4,
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    provoqueTours: 2, contre: { chance: 0.2, duree: 2 }, cooldownTours: 3,
+    desc: "Provoque les ennemis (2t) et prend une posture de contre : 20 % de riposte quand frappé.",
   },
   vitalite: {
     id: "vitalite", nom: "Vitalité", type: "buff", coutPA: 2,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    effet: { stat: "vitalite", valeur: 0.2, duree: 3 },
-    desc: "+20 % PV max au lanceur pendant 3 tours.",
+    effet: { stat: "vitalite", valeur: 0.2, duree: 5 }, cooldownTours: 5,
+    desc: "+20 % PV max au lanceur pendant 5 tours.",
   },
 
   // ---- Cra : tireuse à distance ----
+  fleche_corrosive: {
+    id: "fleche_corrosive", nom: "Flèche corrosive", type: "degats", coutPA: 4,
+    cible: "ennemi_ligne", baseMin: 6, baseMax: 9, scaling: 0.25,
+    rebond: { sauts: 1, bonusParSaut: 0 }, // touche les 2 premiers
+    effet: { stat: "reductionDegats", valeur: -0.1, duree: 2 }, // vulnérabilité : +10 % dégâts subis
+    desc: "Touche 2 ennemis (faibles dégâts) + vulnérabilité : +10 % de dégâts subis (2t).",
+  },
   fleche_magique: {
     id: "fleche_magique", nom: "Flèche magique", type: "degats", coutPA: 3,
-    cible: "ennemi_ligne", baseMin: 8, baseMax: 12, scaling: 0.3,
-    desc: "Dégâts simples sur un ennemi de la ligne.",
-  },
-  fleche_corrosive: {
-    id: "fleche_corrosive", nom: "Flèche explosive", type: "degats", coutPA: 4,
-    cible: "ennemi_ligne", baseMin: 6, baseMax: 9, scaling: 0.25,
-    rebond: { sauts: 1, bonusParSaut: 0 },
-    effet: { stat: "degatsInfliges", valeur: -0.1, duree: 2 },
-    desc: "Touche 2 ennemis + malus −10 % de dégâts infligés pendant 2 tours.",
+    cible: "ennemi_ligne", baseMin: 9, baseMax: 13, scaling: 0.35,
+    rembPA: true,
+    desc: "Dégâts modérés ; faible chance (scale Chance) de rembourser le coût en PA.",
   },
   fleche_percante: {
     id: "fleche_percante", nom: "Flèche perçante", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 9, baseMax: 13, scaling: 0.4,
-    rebond: { sauts: 2, bonusParSaut: 0.2 },
+    rebond: { sauts: 2, bonusParSaut: 0.2 }, cooldownTours: 2,
     desc: "Touche le 1er ennemi puis rebondit 2 fois, +20 % de dégâts par saut.",
   },
   fleche_intrusive: {
     id: "fleche_intrusive", nom: "Flèche intrusive", type: "degats", coutPA: 3,
     cible: "ennemi_tous", baseMin: 5, baseMax: 7, scaling: 0.2,
-    ignoreResistances: true,
-    desc: "Frappe n'importe quel ennemi (même l'arrière) et ignore les résistances.",
+    ignoreResistances: true, ignoreBouclier: true,
+    desc: "Frappe n'importe quel ennemi (même l'arrière) ; ignore résistances et bouclier.",
+  },
+  fleche_explosive: {
+    id: "fleche_explosive", nom: "Flèche Explosive", type: "degats", coutPA: 5,
+    cible: "ennemi_ligne", baseMin: 12, baseMax: 16, scaling: 0.4,
+    rebond: { sauts: 2, bonusParSaut: 0 }, // zone de 3 max
+    poison: { degats: 6, duree: 2 }, // brûlure (DoT feu)
+    cooldownTours: 2,
+    desc: "Gros dégâts de zone (3 max) + brûlure sur chaque cible (6/t, 2t).",
+  },
+  tir_puissant: {
+    id: "tir_puissant", nom: "Tir Puissant", type: "buff", coutPA: 2,
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    doubleEffetProchain: true, cooldownTours: 2,
+    desc: "Double la durée de l'effet de la prochaine flèche.",
+  },
+  maitrise_arc: {
+    id: "maitrise_arc", nom: "Maîtrise de l'arc", type: "buff", coutPA: 2,
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    maitriseArc: { principal: 10, secondaire: 5, duree: 3 }, cooldownTours: 4,
+    desc: "+10 à l'élément de frappe et +5 au 2ᵉ pendant 3 tours.",
   },
   oeil_affute: {
     id: "oeil_affute", nom: "Œil affûté", type: "buff", coutPA: 2,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    effet: { stat: "maxRoll", valeur: 2, duree: 99 },
+    effet: { stat: "maxRoll", valeur: 2, duree: 99 }, cooldownTours: 3,
     desc: "Les 2 prochains sorts offensifs tapent au maximum de leur fourchette.",
   },
 
   // ---- Eniripsa : soutien défensif ----
-  fiole_douleur: {
-    id: "fiole_douleur", nom: "Mot interdit", type: "degats", coutPA: 5,
+  mot_interdit: {
+    id: "mot_interdit", nom: "Mot interdit", type: "degats", coutPA: 5,
     cible: "ennemi_ligne", baseMin: 14, baseMax: 18, scaling: 0.5,
     poison: { degats: 6, duree: 2, transmet: true },
     desc: "Gros dégâts + poison (2t). Si la cible meurt du poison, il passe au monstre derrière.",
@@ -82,36 +122,37 @@ export const SORTS: Record<string, Spell> = {
     soinEquipeRatio: 0.25,
     desc: "Dégâts modérés ; soigne l'équipe de 25 % des dégâts infligés.",
   },
-  mot_reconfortant: {
-    id: "mot_reconfortant", nom: "Mot soignant", type: "soin", coutPA: 3,
-    cible: "allie", baseMin: 14, baseMax: 20, scaling: 0,
-    desc: "Soigne modérément un allié.",
+  mot_alternatif: {
+    id: "mot_alternatif", nom: "Mot Alternatif", type: "degats", coutPA: 3,
+    cible: "mixte", baseMin: 6, baseMax: 9, scaling: 0.25,
+    mixte: { surAllie: { soin: { min: 14, max: 20 } } },
+    desc: "Allié : soin modéré. Ennemi : dégâts faibles.",
   },
   mot_reconstitution: {
     id: "mot_reconstitution", nom: "Mot de reconstitution", type: "soin", coutPA: 6,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
-    soinComplet: true,
+    soinComplet: true, cooldownTours: 4,
     desc: "Soigne entièrement un allié.",
   },
-  mot_entraide: {
-    id: "mot_entraide", nom: "Mot de jouvence", type: "soin", coutPA: 3,
+  mot_revitalisant: {
+    id: "mot_revitalisant", nom: "Mot revitalisant", type: "soin", coutPA: 2,
     cible: "allie_tous", baseMin: 8, baseMax: 12, scaling: 0,
     desc: "Soin faible sur toute l'équipe.",
   },
-  mot_preventif: {
-    id: "mot_preventif", nom: "Mot de prévention", type: "buff", coutPA: 4,
+  mot_prevention: {
+    id: "mot_prevention", nom: "Mot de prévention", type: "buff", coutPA: 3,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
-    bouclierPct: 0.15, hotPct: 0.05, hotDuree: 3,
+    bouclierPct: 0.15, hotPct: 0.05, hotDuree: 3, cooldownTours: 2,
     desc: "Bouclier (15 % PV) + soin sur la durée (5 % vita / 3t).",
   },
-  antivenin: {
-    id: "antivenin", nom: "Mot revitalisant", type: "buff", coutPA: 2,
+  mot_jouvence: {
+    id: "mot_jouvence", nom: "Mot de jouvence", type: "buff", coutPA: 2,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
     dissipe: true, hotPct: 0.05, hotDuree: 2,
     desc: "Dissipe les effets négatifs + soin sur la durée (5 % vita / 2t).",
   },
-  mot_ivation: {
-    id: "mot_ivation", nom: "Mot stimulant", type: "buff", coutPA: 2,
+  mot_stimulant: {
+    id: "mot_stimulant", nom: "Mot stimulant", type: "buff", coutPA: 2,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
     paGain: 2, cooldown: 3,
     desc: "Octroie 2 PA à un allié (prochain tour). Non relançable sur la même cible (3t).",
@@ -163,90 +204,92 @@ export const SORTS: Record<string, Spell> = {
   },
 
   // ---- Sram (DPT monocible & poisons) ----
-  coupe_jarret: {
-    id: "coupe_jarret", nom: "Coupe Jarret", type: "degats", coutPA: 4,
+  attaque_ombre: {
+    id: "attaque_ombre", nom: "Attaque d'ombre", type: "degats", coutPA: 4,
     cible: "ennemi_ligne", baseMin: 14, baseMax: 20, scaling: 0.5,
     poison: { degats: 6, duree: 2 },
-    desc: "Gros dégâts + poison (2t).",
+    desc: "Dégâts élevés + poison (2t).",
   },
   mise_a_mort: {
     id: "mise_a_mort", nom: "Mise à mort", type: "degats", coutPA: 6,
     cible: "ennemi_tous", baseMin: 32, baseMax: 46, scaling: 0.7,
-    executeSeulement: true,
+    executeSeulement: true, cooldownTours: 3,
     desc: "Très lourds dégâts — échoue si la cible n'en meurt pas.",
   },
-  dagues_insidieuses: {
-    id: "dagues_insidieuses", nom: "Dagues insidieuses", type: "degats", coutPA: 3,
+  coup_insidieux: {
+    id: "coup_insidieux", nom: "Coup Insidieux", type: "degats", coutPA: 3,
     cible: "ennemi_ligne", baseMin: 8, baseMax: 12, scaling: 0.3,
     poison: { degats: 5, duree: 2 },
     desc: "Dégâts modérés + poison (2t).",
   },
-  flasque_venimeuse: {
-    id: "flasque_venimeuse", nom: "Flasque vénimeuse", type: "degats", coutPA: 4,
+  flasque_empoisonnee: {
+    id: "flasque_empoisonnee", nom: "Flasque empoisonnée", type: "degats", coutPA: 3,
     cible: "ennemi_ligne", baseMin: 3, baseMax: 6, scaling: 0.15,
     rebond: { sauts: 2, bonusParSaut: 0 },
-    poison: { degats: 5, duree: 3 },
+    poison: { degats: 5, duree: 3 }, cooldownTours: 2,
     desc: "Poison (3t) sur 3 cibles.",
   },
-  deluge_de_lames: {
-    id: "deluge_de_lames", nom: "Déluge de lames", type: "degats", coutPA: 5,
+  deluge_lames: {
+    id: "deluge_lames", nom: "Déluge de lames", type: "degats", coutPA: 5,
     cible: "ennemi_tous", baseMin: 0, baseMax: 0, scaling: 0,
     projectiles: { nb: 10, baseMin: 1, baseMax: 3, scaling: 0.05, pProc: 0.2, poison: { degats: 3, duree: 1 } },
+    cooldownTours: 1,
     desc: "10 lames sur des ennemis au hasard ; 20 % de poison (1t) par lame.",
   },
-  coup_double: {
-    id: "coup_double", nom: "Coup sournois", type: "degats", coutPA: 4,
+  coup_sournois: {
+    id: "coup_sournois", nom: "Coup sournois", type: "degats", coutPA: 4,
     cible: "ennemi_ligne", baseMin: 0, baseMax: 0, scaling: 0,
     coups: [
       { baseMin: 8, baseMax: 12, scaling: 0.3, proc: { p: 0.3, poison: { degats: 5, duree: 2 } } },
       { baseMin: 4, baseMax: 7, scaling: 0.15, proc: { p: 0.3, friction: 2 } },
     ],
+    cooldownTours: 1,
     desc: "2 coups ; 30 % poison au 1er, 30 % friction (anti-soin/bouclier) au 2nd.",
   },
-  maitre_des_ombres: {
-    id: "maitre_des_ombres", nom: "Maître des ombres", type: "buff", coutPA: 3,
+  invisibilite: {
+    id: "invisibilite", nom: "Invisibilité", type: "buff", coutPA: 3,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
     effets: [{ stat: "esquive", valeur: 0.25, duree: 3 }],
-    effetParNiveau: { stat: "agilite", base: 15, parNiveau: 0.5, duree: 2 },
+    effetParNiveau: { stat: "agilite", base: 15, parNiveau: 0.5, duree: 2 }, cooldownTours: 3,
     desc: "+25 % d'esquive (3t) et boost d'Agilité (15 + 0,5/niv, 2t).",
   },
-  arsenic: {
-    id: "arsenic", nom: "Expert des poisons", type: "buff", coutPA: 2,
+  expert_poisons: {
+    id: "expert_poisons", nom: "Expert des poisons", type: "buff", coutPA: 2,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    poisonAmpli: 2,
+    poisonAmpli: 2, cooldownTours: 2,
     desc: "Double les dégâts des poisons appliqués pendant 2 tours.",
   },
 
   // ---- Feca (support défensif) ----
-  attaque_celeste: {
-    id: "attaque_celeste", nom: "Attaque céleste", type: "degats", coutPA: 3,
+  attaque_naturelle: {
+    id: "attaque_naturelle", nom: "Attaque Naturelle", type: "degats", coutPA: 3,
     cible: "ennemi_ligne", baseMin: 8, baseMax: 12, scaling: 0.3,
     bouclierRatioDegats: 0.2,
     desc: "Dégâts modérés ; bouclier = 20 % des dégâts infligés.",
   },
-  glyphe_naturel: {
-    id: "glyphe_naturel", nom: "Glyphe naturel", type: "degats", coutPA: 3,
+  glyphe_agressif: {
+    id: "glyphe_agressif", nom: "Glyphe Agressif", type: "degats", coutPA: 3,
     cible: "ennemi_ligne", baseMin: 4, baseMax: 7, scaling: 0.2,
     rebond: { sauts: 2, bonusParSaut: 0 },
-    effet: { stat: "degatsInfliges", valeur: -0.1, duree: 2 },
+    effet: { stat: "degatsInfliges", valeur: -0.1, duree: 2 }, cooldownTours: 3,
     desc: "3 ennemis : dégâts faibles + −10 % de dégâts infligés (2t).",
   },
   glyphe_stimulant: {
-    id: "glyphe_stimulant", nom: "Glyphe stimulant", type: "buff", coutPA: 3,
+    id: "glyphe_stimulant", nom: "Glyphe Stimulant", type: "buff", coutPA: 3,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
     nbCibles: 2,
-    effetParNiveau: { stat: "degatsInfliges", base: 0.1, parNiveau: 0.01, duree: 2 },
+    effetParNiveau: { stat: "degatsInfliges", base: 0.1, parNiveau: 0.01, duree: 2 }, cooldownTours: 2,
     desc: "+10 % de dégâts finaux (+0,01/niv) à 2 alliés (2t).",
   },
-  ouragan: {
-    id: "ouragan", nom: "Ouragan", type: "degats", coutPA: 4,
+  attaque_nuageuse: {
+    id: "attaque_nuageuse", nom: "Attaque nuageuse", type: "degats", coutPA: 4,
     cible: "ennemi_ligne", baseMin: 10, baseMax: 15, scaling: 0.4,
     rebond: { sauts: 2, bonusParSaut: 0 },
-    effet: { stat: "echecCritique", valeur: 0.05, duree: 2 },
+    effet: { stat: "echecCritique", valeur: 0.05, duree: 2 }, cooldownTours: 1,
     desc: "3 ennemis : dégâts modérés + déstabilise (+5 % d'échec critique, 2t).",
   },
-  onde: {
-    id: "onde", nom: "Onde", type: "degats", coutPA: 2,
+  bulle: {
+    id: "bulle", nom: "Bulle", type: "degats", coutPA: 2,
     cible: "mixte", baseMin: 4, baseMax: 7, scaling: 0.2,
     mixte: { surAllie: { bouclierPct: 0.03 } },
     desc: "Ennemi : dégâts faibles. Allié : bouclier (3 % PV max).",
@@ -254,41 +297,47 @@ export const SORTS: Record<string, Spell> = {
   baton_du_berger: {
     id: "baton_du_berger", nom: "Bâton du berger", type: "buff", coutPA: 4,
     cible: "allie", baseMin: 0, baseMax: 0, scaling: 0,
-    effet: { stat: "reductionDegats", valeur: 0.5, duree: 1 },
+    effet: { stat: "reductionDegats", valeur: 0.5, duree: 1 }, cooldownTours: 3,
     desc: "Un allié reçoit −50 % de dégâts pendant 1 tour.",
   },
   provocation: {
     id: "provocation", nom: "Provocation", type: "buff", coutPA: 4,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    provoqueTours: 2,
-    desc: "Le Feca provoque les ennemis pendant 2 tours.",
+    provoqueTours: 1, cooldownTours: 3,
+    desc: "Le Feca provoque les ennemis pendant 1 tour.",
   },
   armures: {
     id: "armures", nom: "Armures", type: "buff", coutPA: 2,
     cible: "allie_tous", baseMin: 0, baseMax: 0, scaling: 0,
-    effetParNiveau: { stat: "armure", base: 2, parNiveau: 0.5, duree: 2 },
-    desc: "Réduit les dégâts subis de l'équipe (2 + 0,5/niv plats, 2t).",
+    effetParNiveau: { stat: "armure", base: 2, parNiveau: 0.5, duree: 3 }, cooldownTours: 4,
+    desc: "Réduit les dégâts subis de l'équipe (2 + 0,5/niv plats, 3t).",
   },
 
   // ---- Ecaflip (mixte / hasard) ----
-  pelote_chaude: {
-    id: "pelote_chaude", nom: "Pelote chaude", type: "degats", coutPA: 3,
+  des_double: {
+    id: "des_double", nom: "Dès double", type: "degats", coutPA: 3,
     cible: "mixte", baseMin: 5, baseMax: 9, scaling: 0.25,
     rebond: { sauts: 2, bonusParSaut: 0 },
     mixte: { surAllie: { effet: { stat: "degatsInfliges", valeur: 0.05, duree: 2 }, nonCumulable: true } },
     desc: "Ennemi : rebondit sur 3 cibles. Allié : +5 % de dégâts finaux (non cumulable).",
   },
-  pattounes: {
-    id: "pattounes", nom: "Pattounes", type: "degats", coutPA: 3,
-    cible: "ennemi_ligne", baseMin: 9, baseMax: 13, scaling: 0.35,
-    vampirismeRatio: 0.3,
-    desc: "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
+  tarot: {
+    id: "tarot", nom: "Tarot", type: "degats", coutPA: 6,
+    cible: "mixte", baseMin: 12, baseMax: 20, scaling: 0.5,
+    tarot: true, cooldownTours: 2,
+    desc: "Tire une carte : effet variable selon la couleur (ennemi ou allié).",
   },
   all_in: {
     id: "all_in", nom: "All in", type: "degats", coutPA: 2,
     cible: "ennemi_ligne", baseMin: 6, baseMax: 10, scaling: 0.3,
     de: { faces: 6, multMin: 0.3, multMax: 2.5 },
     desc: "Mise au dé : dégâts de très faibles à très élevés selon le tirage.",
+  },
+  griffe_joueuse: {
+    id: "griffe_joueuse", nom: "Griffe joueuse", type: "degats", coutPA: 3,
+    cible: "ennemi_ligne", baseMin: 9, baseMax: 13, scaling: 0.35,
+    vampirismeRatio: 0.3, cooldownTours: 2,
+    desc: "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
   },
   langue_rapeuse: {
     id: "langue_rapeuse", nom: "Langue râpeuse", type: "degats", coutPA: 4,
@@ -298,30 +347,33 @@ export const SORTS: Record<string, Spell> = {
       { effet: { stat: "friction", valeur: 1, duree: 2 } },
       { effet: { stat: "echecCritique", valeur: 0.1, duree: 2 } },
     ],
+    cooldownTours: 1,
     desc: "Dégâts modérés + 1 effet aléatoire : désenvoûte / friction / +10 % d'échec critique.",
   },
-  tarot: {
-    id: "tarot", nom: "Tarot", type: "degats", coutPA: 6,
-    cible: "mixte", baseMin: 12, baseMax: 20, scaling: 0.5,
-    tarot: true,
-    desc: "Tire une carte : effet variable selon la couleur (ennemi ou allié).",
-  },
-  tactique_feline: {
-    id: "tactique_feline", nom: "Tactique féline", type: "buff", coutPA: 4,
+  odorat: {
+    id: "odorat", nom: "Odorat", type: "buff", coutPA: 4,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    paGainAdjacents: 1, cooldown: 3,
+    paGainAdjacents: 1, cooldownTours: 3,
     desc: "+1 PA aux alliés des cases adjacentes (prochain tour).",
   },
-  bonne_pioche: {
-    id: "bonne_pioche", nom: "Bonne pioche", type: "buff", coutPA: 2,
+  perception: {
+    id: "perception", nom: "Perception", type: "buff", coutPA: 2,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    donneBonusDe: { min: 1, max: 2, duree: 2 },
-    desc: "+1 à 2 aux tirages de dé/carte pendant 2 tours.",
+    effets: [
+      { stat: "force", valeur: 5, duree: 2 },
+      { stat: "intelligence", valeur: 5, duree: 2 },
+      { stat: "agilite", valeur: 5, duree: 2 },
+      { stat: "chance", valeur: 5, duree: 2 },
+      { stat: "wakfu", valeur: 5, duree: 2 },
+      { stat: "stasis", valeur: 5, duree: 2 },
+    ],
+    cooldownTours: 4,
+    desc: "+5 à toutes les caractéristiques pendant 2 tours.",
   },
   esprit_felin: {
-    id: "esprit_felin", nom: "Esprit félin", type: "buff", coutPA: 6,
+    id: "esprit_felin", nom: "Esprit félin", type: "buff", coutPA: 4,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    espritFelin: true,
+    espritFelin: true, cooldownTours: 2,
     desc: "Applique un effet aléatoire à chaque unité du combat (alliés bénéfiques, ennemis néfastes).",
   },
 
@@ -359,14 +411,14 @@ export const CLASSES: Record<string, Classe> = {
     id: "iop", nom: "Iop", pvBase: 60,
     stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 8,
-    sorts: ["pression", "epee_hostile", "fracas", "colere", "vitalite"],
+    sorts: ["epee_celeste", "epee_divine", "tempete_lames", "fracas", "colere", "epee_jugement", "duel", "vitalite"],
     img: "/assets/classes/iop.png",
   }, // stats de build à 0 : le joueur choisit son élément/build au level-up
   cra: {
     id: "cra", nom: "Cra", pvBase: 45,
     stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 12,
-    sorts: ["fleche_magique", "fleche_corrosive", "fleche_percante", "fleche_intrusive", "oeil_affute"],
+    sorts: ["fleche_corrosive", "fleche_magique", "fleche_percante", "fleche_intrusive", "fleche_explosive", "tir_puissant", "maitrise_arc", "oeil_affute"],
     img: "/assets/classes/cra.png", // PNG transparent (meilleur rendu sur la carte)
   },
   eniripsa: {
@@ -374,8 +426,8 @@ export const CLASSES: Record<string, Classe> = {
     stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, soin: 20, prospection: 100 },
     pa: 6, initiative: 11,
     sorts: [
-      "fiole_douleur", "mot_vampirique", "mot_reconfortant", "mot_reconstitution",
-      "mot_entraide", "mot_preventif", "antivenin", "mot_ivation",
+      "mot_interdit", "mot_vampirique", "mot_alternatif", "mot_reconstitution",
+      "mot_revitalisant", "mot_prevention", "mot_jouvence", "mot_stimulant",
     ],
     img: "/assets/classes/eniripsa.png",
   }, // élément de frappe = Feu (Intelligence) ; soutien défensif
@@ -394,8 +446,8 @@ export const CLASSES: Record<string, Classe> = {
     stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 13,
     sorts: [
-      "coupe_jarret", "dagues_insidieuses", "coup_double", "flasque_venimeuse",
-      "deluge_de_lames", "mise_a_mort", "arsenic", "maitre_des_ombres",
+      "attaque_ombre", "coup_insidieux", "coup_sournois", "flasque_empoisonnee",
+      "deluge_lames", "mise_a_mort", "expert_poisons", "invisibilite",
     ],
     img: "/assets/classes/sram.png",
   }, // élément de frappe = Air (Agilité) ; DPT monocible & poisons
@@ -404,8 +456,8 @@ export const CLASSES: Record<string, Classe> = {
     stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 7,
     sorts: [
-      "attaque_celeste", "glyphe_naturel", "ouragan", "onde",
-      "glyphe_stimulant", "baton_du_berger", "armures", "provocation",
+      "attaque_naturelle", "glyphe_agressif", "glyphe_stimulant", "attaque_nuageuse",
+      "bulle", "baton_du_berger", "provocation", "armures",
     ],
     img: "/assets/classes/feca.png",
   }, // élément de frappe = Feu (Intelligence) ; tank / support défensif
@@ -414,8 +466,8 @@ export const CLASSES: Record<string, Classe> = {
     stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
     pa: 6, initiative: 10,
     sorts: [
-      "pelote_chaude", "pattounes", "all_in", "langue_rapeuse",
-      "tarot", "tactique_feline", "bonne_pioche", "esprit_felin",
+      "des_double", "tarot", "all_in", "griffe_joueuse",
+      "langue_rapeuse", "odorat", "perception", "esprit_felin",
     ],
     img: "/assets/classes/ecaflip.png",
   }, // élément de frappe = Terre (Force) ; mixte / hasard
