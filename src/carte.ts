@@ -42,66 +42,63 @@ function enrichir(rng: Rng, node: MapNode, pools: ZonePools): void {
 }
 
 /**
- * Génère une carte par rangées :
- *  - ligne 0 : combats uniquement (départ sûr)
- *  - dernière ligne : un unique donjon
- *  - lignes intermédiaires : types pondérés
- *  - arêtes garantissant connectivité (≥1 entrante hors départ, ≥1 sortante hors donjon)
+ * Génère une carte en grille de losanges (façon Pokelike) :
+ *  - profil de largeur : monte 2→largeurMax, plateau, puis redescend →1 (donjon)
+ *  - `colonne` = offset CENTRÉ autour de 0 (rangées décalées « en brique »)
+ *  - arêtes : chaque nœud relie ses 2 diagonales (bas-gauche + bas-droite) → 2
+ *    enfants, SAUF les nœuds de bord qui n'en ont qu'une (1 enfant)
+ *  - ligne 0 : combats ; dernière ligne : un unique donjon centré
  */
+function profilLargeur(rng: Rng): number[] {
+  const { largeurMax: W, lignesMin, lignesMax } = GEN_CARTE;
+  const nbLignes = randInt(rng, lignesMin, lignesMax);
+  const montee: number[] = []; // 2, 3, …, W
+  for (let k = 2; k <= W; k++) montee.push(k);
+  const descente: number[] = []; // W-1, …, 1 (donjon)
+  for (let k = W - 1; k >= 1; k--) descente.push(k);
+  const plateau = Math.max(0, nbLignes - montee.length - descente.length);
+  return [...montee, ...Array(plateau).fill(W), ...descente];
+}
+
 export function genererCarte(rng: Rng, pools: ZonePools): GameMap {
   const cfg = GEN_CARTE;
-  const nbLignes = randInt(rng, cfg.lignesMin, cfg.lignesMax);
+  const profil = profilLargeur(rng);
+  const nbLignes = profil.length;
   const lignes: MapNode[][] = [];
 
   for (let l = 0; l < nbLignes; l++) {
-    let nb: number;
-    if (l === 0) nb = randInt(rng, cfg.departNoeudsMin, cfg.departNoeudsMax);
-    else if (l === nbLignes - 1) nb = 1; // donjon
-    else nb = randInt(rng, cfg.noeudsMin, cfg.noeudsMax);
-
+    const nb = profil[l];
     const ligne: MapNode[] = [];
     for (let c = 0; c < nb; c++) {
       const type: NodeType =
         l === 0 ? "combat" : l === nbLignes - 1 ? "donjon" : pickType(rng, cfg.poids);
-      const node: MapNode = { id: `n${l}_${c}`, type, ligne: l, colonne: c, suivants: [] };
+      const colonne = c - (nb - 1) / 2; // offset centré
+      const node: MapNode = { id: `n${l}_${c}`, type, ligne: l, colonne, suivants: [] };
       enrichir(rng, node, pools);
       ligne.push(node);
     }
     lignes.push(ligne);
   }
 
-  // --- Arêtes ---
-  const clamp = (x: number, len: number) => Math.max(0, Math.min(len - 1, x));
+  // --- Arêtes : les 2 diagonales (voisin strictement à gauche + à droite, ≤ 1 colonne) ---
+  const ADJ = 1.0001;
   for (let l = 0; l < nbLignes - 1; l++) {
     const cur = lignes[l];
     const next = lignes[l + 1];
-
-    if (next.length === 1) {
-      // avant-dernière rangée → donjon : tout le monde pointe dessus
-      for (const node of cur) node.suivants.push(next[0].id);
-      continue;
-    }
-
     for (const node of cur) {
-      const approx =
-        cur.length === 1
-          ? Math.floor(rng() * next.length)
-          : Math.round((node.colonne / (cur.length - 1)) * (next.length - 1));
-      const cibles = new Set<number>([clamp(approx, next.length)]);
-      if (rng() < 0.5) cibles.add(clamp(approx + (rng() < 0.5 ? -1 : 1), next.length));
-      for (const t of cibles) node.suivants.push(next[t].id);
-    }
-
-    // garantir une arête entrante à chaque nœud de la rangée suivante
-    next.forEach((nn, t) => {
-      const aEntrante = cur.some((node) => node.suivants.includes(nn.id));
-      if (!aEntrante) {
-        const back = cur.length === 1 ? 0 : Math.round((t / (next.length - 1)) * (cur.length - 1));
-        cur[clamp(back, cur.length)].suivants.push(nn.id);
+      const gauche = next
+        .filter((n) => n.colonne < node.colonne && node.colonne - n.colonne <= ADJ)
+        .sort((a, b) => b.colonne - a.colonne)[0];
+      const droite = next
+        .filter((n) => n.colonne > node.colonne && n.colonne - node.colonne <= ADJ)
+        .sort((a, b) => a.colonne - b.colonne)[0];
+      const ids = [gauche?.id, droite?.id].filter((x): x is string => !!x);
+      // filet de sécurité (ne devrait pas arriver avec un profil en ±1) : le plus proche
+      if (!ids.length) {
+        ids.push([...next].sort((a, b) => Math.abs(a.colonne - node.colonne) - Math.abs(b.colonne - node.colonne))[0].id);
       }
-    });
-
-    for (const node of cur) node.suivants = [...new Set(node.suivants)];
+      node.suivants = ids;
+    }
   }
 
   const noeuds = lignes.flat();

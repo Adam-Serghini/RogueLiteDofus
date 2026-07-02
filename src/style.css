@@ -2277,6 +2277,7 @@ kbd {
   transform: translate(-50%, -50%);
   background: transparent;
   border: none;
+  box-shadow: none; /* neutralise le halo hérité de `button` (sinon cadre fantôme) */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2284,33 +2285,36 @@ kbd {
   padding: 6px;
   color: var(--txt);
 }
+/* Conteneur transparent : les tuiles /assets/cases sont DÉJÀ encadrées,
+   on ne rajoute pas de 2ᵉ carte — juste le halo d'état (box-shadow suit le radius). */
 .case-art {
   position: relative;
-  width: 64px;
+  /* ratio calé sur la tuile (138×159) : `contain` remplit sans rogner ni letterbox */
+  width: 56px;
   height: 64px;
-  border-radius: 13px;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 28%, #cdb88c, #8a6d42);
-  border: 1px solid var(--bord-clair);
-  box-shadow:
-    0 4px 10px #0009,
-    inset 0 0 12px #0007;
 }
 .case-art .mn-icon {
   font-size: 1.8rem;
 }
 .case-img {
   position: absolute;
-  inset: 4px;
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
-  object-fit: contain;
-  filter: drop-shadow(0 1px 2px #000a);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* tuile entière, jamais rognée */
+  /* halo d'état en drop-shadow : il épouse la SILHOUETTE de la carte, pas une boîte */
+  filter: drop-shadow(0 1px 2px #0009);
 }
+/* libellé masqué par défaut, révélé au survol du nœud (flotte sous la tuile) */
 .mn-lbl {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
   font-size: 0.72rem;
   font-weight: 700;
   color: #f0e2c4;
@@ -2318,6 +2322,19 @@ kbd {
   border-radius: 999px;
   background: #3a2c1ad9;
   border: 1px solid #ffffff22;
+  display: none;
+  pointer-events: none;
+  z-index: 5;
+}
+.map-node:hover .mn-lbl,
+.map-node:focus-visible .mn-lbl {
+  display: block;
+}
+/* le repère Départ garde son libellé visible */
+.map-depart .mn-lbl {
+  display: block;
+  position: static;
+  transform: none;
 }
 
 .map-node.visite {
@@ -2335,34 +2352,29 @@ kbd {
   font-weight: 900;
   text-shadow: 0 1px 3px #000;
 }
-.map-node.courant .case-art {
-  box-shadow:
-    0 0 0 3px var(--cyan),
-    0 0 16px var(--cyan);
+/* Halos d'état en drop-shadow sur la TUILE (épouse sa silhouette, aucun cadre). */
+.map-node.courant .case-img {
+  filter: drop-shadow(0 0 3px var(--cyan)) drop-shadow(0 0 6px var(--cyan));
 }
-.map-node.t-donjon .case-art {
-  border-color: var(--or);
+.map-node.t-donjon .case-img {
+  filter: drop-shadow(0 0 3px #e8b54e) drop-shadow(0 0 6px #e8b54eaa);
 }
 .map-node.atteignable {
   cursor: pointer;
 }
-.map-node.atteignable .case-art {
-  box-shadow:
-    0 0 0 2px var(--cyan),
-    0 0 16px #ef7d1a88;
-  animation: pulse-case 1.4s ease-in-out infinite;
+.map-node.atteignable .case-img {
+  animation: pulse-glow 1.4s ease-in-out infinite;
 }
-.map-node.t-donjon.atteignable .case-art {
-  box-shadow:
-    0 0 0 2px var(--or),
-    0 0 18px #e8b54e99;
+.map-node.t-donjon.atteignable .case-img {
+  animation: pulse-glow-or 1.4s ease-in-out infinite;
 }
-.map-node.atteignable:hover {
+/* le survol/`button:hover` ne doit PAS écraser le translate de centrage → sinon la case saute */
+.map-node:hover:not(:disabled) {
   transform: translate(-50%, -50%);
   box-shadow: none;
 }
 .map-node.atteignable:hover .case-art {
-  filter: brightness(1.07);
+  transform: scale(1.06);
 }
 .map-node:focus-visible {
   outline: 2px solid var(--cyan);
@@ -2370,6 +2382,12 @@ kbd {
 }
 .map-node:disabled {
   cursor: default;
+}
+/* Case pas encore atteignable = pleine opacité (sinon les pointillés
+   transparaissent au travers via `button:disabled { opacity: .42 }`).
+   Les cases VISITÉES gardent leur atténuation via `.map-node.visite`. */
+.map-node:disabled:not(.visite) {
+  opacity: 1;
 }
 
 .map-depart {
@@ -2392,18 +2410,29 @@ kbd {
     0 0 16px #ef7d1a88 !important;
 }
 
-@keyframes pulse-case {
+@keyframes pulse-glow {
   0%,
   100% {
-    filter: brightness(1);
+    filter: drop-shadow(0 0 2px #ef7d1a) drop-shadow(0 0 4px #ef7d1acc);
   }
   50% {
-    filter: brightness(1.22);
+    filter: drop-shadow(0 0 4px #ef7d1a) drop-shadow(0 0 9px #ef7d1a);
+  }
+}
+@keyframes pulse-glow-or {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px #e8b54e) drop-shadow(0 0 5px #e8b54ecc);
+  }
+  50% {
+    filter: drop-shadow(0 0 5px #e8b54e) drop-shadow(0 0 10px #e8b54e);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .map-node.atteignable .case-art {
+  .map-node.atteignable .case-img,
+  .map-node.t-donjon.atteignable .case-img {
     animation: none;
+    filter: drop-shadow(0 0 4px #ef7d1a);
   }
 }
 

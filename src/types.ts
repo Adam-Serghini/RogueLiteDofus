@@ -16,7 +16,7 @@ export interface Stats {
 }
 
 // --- Équipement --------------------------------------------------------------
-export type EquipSlot = "arme" | "amulette" | "coiffe" | "cape" | "ceinture" | "bottes" | "anneau";
+export type EquipSlot = "arme" | "coiffe" | "cape" | "anneau";
 
 /** Fourchette de jet [min, max] d'une stat sur un item. */
 export type StatRolls = Partial<Record<keyof Stats, [number, number]>>;

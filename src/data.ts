@@ -1029,12 +1029,9 @@ export const TAVERNE_PCT = 0.5;
 
 /** Paramètres de génération de la carte (tunable). */
 export const GEN_CARTE = {
-  lignesMin: 7, // bornes du nombre de rangées (départ inclus, donjon inclus)
+  lignesMin: 7, // bornes du nombre de rangées (donjon inclus)
   lignesMax: 9,
-  departNoeudsMin: 2,
-  departNoeudsMax: 3,
-  noeudsMin: 2, // par rangée intermédiaire
-  noeudsMax: 4,
+  largeurMax: 4, // largeur du losange au plateau (nb de colonnes) — style Pokelike
   // poids des types pour les rangées intermédiaires
   poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8 } as Record<string, number>,
 };
@@ -1042,108 +1039,93 @@ export const GEN_CARTE = {
 // --- Équipement & panoplies --------------------------------------------------
 // Stats en FOURCHETTES (rolls) tirées au drop — valeurs réelles DofusDB,
 // filtrées aux stats gérées par le moteur (vita/force/int/agi/chance/prospection).
+// 4 slots par perso : coiffe, cape, anneau, arme (amulette/ceinture/bottes retirés).
 export const ITEMS: Record<string, Item> = {
   // ===== Panoplie de l'Aventurier (Incarnam, set #5 : +toutes carac) =====
-  aventurier_amulette: { id: "aventurier_amulette", nom: "Amulette de l'Aventurier", slot: "amulette", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
   aventurier_coiffe: { id: "aventurier_coiffe", nom: "Chapeau de l'Aventurier", slot: "coiffe", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
   aventurier_cape: { id: "aventurier_cape", nom: "Cape de l'Aventurier", slot: "cape", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
-  aventurier_ceinture: { id: "aventurier_ceinture", nom: "Ceinture de l'Aventurier", slot: "ceinture", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
-  aventurier_bottes: { id: "aventurier_bottes", nom: "Bottes de l'Aventurier", slot: "bottes", panoplie: "aventurier", rolls: { force: [0, 5], intelligence: [0, 5], chance: [0, 5], agilite: [0, 5] } },
   aventurier_anneau: { id: "aventurier_anneau", nom: "Anneau de l'Aventurier", slot: "anneau", panoplie: "aventurier", rolls: { force: [0, 2], intelligence: [0, 2], chance: [0, 2], agilite: [0, 2] } },
+  aventurier_arme: { id: "aventurier_arme", nom: "Épée de l'Aventurier", slot: "arme", panoplie: "aventurier", rolls: { force: [0, 4], intelligence: [0, 4], chance: [0, 4], agilite: [0, 4] }, attaque: { coutPA: 3, baseMin: 7, baseMax: 11, scaling: 0.3 } },
 
   // ===== Panoplie du Paysan (Champs d'Astrub, set #47 : vita / chance) =====
-  paysan_amulette: { id: "paysan_amulette", nom: "Amulette Paysanne", slot: "amulette", panoplie: "paysan", rolls: { chance: [11, 15] } },
   paysan_coiffe: { id: "paysan_coiffe", nom: "Bob du Paysan", slot: "coiffe", panoplie: "paysan", rolls: { vitalite: [26, 30] } },
   paysan_cape: { id: "paysan_cape", nom: "Sac du Paysan", slot: "cape", panoplie: "paysan", rolls: { chance: [16, 20] } },
-  paysan_ceinture: { id: "paysan_ceinture", nom: "Ceinturemuda du Paysan", slot: "ceinture", panoplie: "paysan", rolls: { vitalite: [16, 20], chance: [16, 20] } },
-  paysan_bottes: { id: "paysan_bottes", nom: "Bottes Paysannes", slot: "bottes", panoplie: "paysan", rolls: { vitalite: [16, 20], chance: [7, 10] } },
-  paysan_anneau: { id: "paysan_anneau", nom: "Mitaines Mitées du Paysan", slot: "anneau", panoplie: "paysan", rolls: {} },
+  paysan_anneau: { id: "paysan_anneau", nom: "Mitaines Mitées du Paysan", slot: "anneau", panoplie: "paysan", rolls: { chance: [11, 15] } },
   paysan_arme: { id: "paysan_arme", nom: "Faux usée du Paysan", slot: "arme", panoplie: "paysan", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 3, baseMin: 9, baseMax: 14, scaling: 0.35 } },
 
   // ===== Panoplie du Bouftou (Tainéla, set #1 : vita/force/int) =====
-  bouftou_amulette: { id: "bouftou_amulette", nom: "Amulette du Bouftou", slot: "amulette", panoplie: "bouftou", rolls: { vitalite: [11, 15], force: [11, 15], intelligence: [11, 15] } },
   bouftou_coiffe: { id: "bouftou_coiffe", nom: "Coiffe du Bouftou", slot: "coiffe", panoplie: "bouftou", rolls: { force: [16, 20], intelligence: [16, 20] } },
   bouftou_cape: { id: "bouftou_cape", nom: "Cape Bouffante", slot: "cape", panoplie: "bouftou", rolls: { vitalite: [26, 30] } },
-  bouftou_ceinture: { id: "bouftou_ceinture", nom: "Ceinture du Bouftou", slot: "ceinture", panoplie: "bouftou", rolls: { force: [11, 15], intelligence: [11, 15] } },
-  bouftou_bottes: { id: "bouftou_bottes", nom: "Boufbottes", slot: "bottes", panoplie: "bouftou", rolls: { vitalite: [16, 20] } },
   bouftou_anneau: { id: "bouftou_anneau", nom: "Anneau de Bouze le Clerc", slot: "anneau", panoplie: "bouftou", rolls: { vitalite: [21, 30] } },
   bouftou_arme: { id: "bouftou_arme", nom: "Marteau du Bouftou", slot: "arme", panoplie: "bouftou", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 16, baseMax: 22, scaling: 0.45 } },
 
   // ===== Panoplie du Tofu (Donjon des Tofus : vita / agilité, thème Air) =====
-  tofu_amulette: { id: "tofu_amulette", nom: "Amulette du Tofu", slot: "amulette", panoplie: "tofu", rolls: { agilite: [16, 20] } },
   tofu_coiffe: { id: "tofu_coiffe", nom: "Coiffe du Tofu", slot: "coiffe", panoplie: "tofu", rolls: { vitalite: [16, 20], agilite: [16, 20] } },
   tofu_cape: { id: "tofu_cape", nom: "Cape Tofue", slot: "cape", panoplie: "tofu", rolls: { vitalite: [26, 30] } },
-  tofu_ceinture: { id: "tofu_ceinture", nom: "Ceinture Tofue", slot: "ceinture", panoplie: "tofu", rolls: { vitalite: [11, 15], agilite: [11, 15] } },
-  tofu_bottes: { id: "tofu_bottes", nom: "Bottes Tofues", slot: "bottes", panoplie: "tofu", rolls: { agilite: [16, 20] } },
   tofu_anneau: { id: "tofu_anneau", nom: "Anneau du Tofu", slot: "anneau", panoplie: "tofu", rolls: { agilite: [11, 15] } },
   tofu_arme: { id: "tofu_arme", nom: "Aile du Batofu", slot: "arme", panoplie: "tofu", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 14, baseMax: 20, scaling: 0.4 } },
 
   // ===== Panoplie du Scarafeuille (Donjon des Scarafeuilles : défensif, résist. toutes) =====
-  scarafeuille_amulette: { id: "scarafeuille_amulette", nom: "Amulette du Scarafeuille", slot: "amulette", panoplie: "scarafeuille", rolls: { vitalite: [16, 20] } },
   scarafeuille_coiffe: { id: "scarafeuille_coiffe", nom: "Coiffe du Scarafeuille", slot: "coiffe", panoplie: "scarafeuille", rolls: { vitalite: [20, 24] } },
   scarafeuille_cape: { id: "scarafeuille_cape", nom: "Élytre du Scarafeuille", slot: "cape", panoplie: "scarafeuille", rolls: { vitalite: [21, 25] } },
-  scarafeuille_ceinture: { id: "scarafeuille_ceinture", nom: "Ceinture du Scarafeuille", slot: "ceinture", panoplie: "scarafeuille", rolls: { force: [6, 10], intelligence: [6, 10] } },
-  scarafeuille_bottes: { id: "scarafeuille_bottes", nom: "Bottes du Scarafeuille", slot: "bottes", panoplie: "scarafeuille", rolls: { agilite: [11, 15], chance: [11, 15] } },
   scarafeuille_anneau: { id: "scarafeuille_anneau", nom: "Anneau du Scarafeuille", slot: "anneau", panoplie: "scarafeuille", rolls: { vitalite: [11, 15] } },
   scarafeuille_arme: { id: "scarafeuille_arme", nom: "Rostre du Scarabosse", slot: "arme", panoplie: "scarafeuille", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 15, baseMax: 21, scaling: 0.4 } },
 
   // ===== Panoplie du Forgeron (Donjon des Forgerons : force/vita + prospection au set) =====
-  forgeron_amulette: { id: "forgeron_amulette", nom: "Amulette du Forgeron", slot: "amulette", panoplie: "forgeron", rolls: { force: [16, 20] } },
   forgeron_coiffe: { id: "forgeron_coiffe", nom: "Heaume du Forgeron", slot: "coiffe", panoplie: "forgeron", rolls: { force: [16, 20], vitalite: [16, 20] } },
   forgeron_cape: { id: "forgeron_cape", nom: "Tablier du Forgeron", slot: "cape", panoplie: "forgeron", rolls: { vitalite: [26, 30] } },
-  forgeron_ceinture: { id: "forgeron_ceinture", nom: "Ceinture du Forgeron", slot: "ceinture", panoplie: "forgeron", rolls: { force: [11, 15], vitalite: [11, 15] } },
-  forgeron_bottes: { id: "forgeron_bottes", nom: "Bottes du Forgeron", slot: "bottes", panoplie: "forgeron", rolls: { force: [16, 20] } },
   forgeron_anneau: { id: "forgeron_anneau", nom: "Anneau du Forgeron", slot: "anneau", panoplie: "forgeron", rolls: { vitalite: [21, 25] } },
   forgeron_arme: { id: "forgeron_arme", nom: "Marteau du Forgeron Sombre", slot: "arme", panoplie: "forgeron", rolls: { force: [11, 15] }, attaque: { coutPA: 5, baseMin: 20, baseMax: 28, scaling: 0.5 } },
 };
 
+// Sets de 4 pièces : bonus à 2/4 (moitié / complet).
 export const PANOPLIES: Record<string, Panoplie> = {
   aventurier: {
     id: "aventurier", nom: "Panoplie de l'Aventurier",
-    pieces: ["aventurier_amulette", "aventurier_coiffe", "aventurier_cape", "aventurier_ceinture", "aventurier_bottes", "aventurier_anneau"],
+    pieces: ["aventurier_coiffe", "aventurier_cape", "aventurier_anneau", "aventurier_arme"],
     bonus: [
-      { seuil: 3, stats: { vitalite: 10 } },
-      { seuil: 6, stats: { vitalite: 15 }, resistances: { terre: 0.05, feu: 0.05, eau: 0.05, air: 0.05 } },
+      { seuil: 2, stats: { vitalite: 10 } },
+      { seuil: 4, stats: { vitalite: 15 }, resistances: { terre: 0.05, feu: 0.05, eau: 0.05, air: 0.05 } },
     ],
   },
   paysan: {
     id: "paysan", nom: "Panoplie du Paysan",
-    pieces: ["paysan_amulette", "paysan_coiffe", "paysan_cape", "paysan_ceinture", "paysan_bottes", "paysan_anneau", "paysan_arme"],
+    pieces: ["paysan_coiffe", "paysan_cape", "paysan_anneau", "paysan_arme"],
     bonus: [
-      { seuil: 3, stats: { vitalite: 12, chance: 8 } },
-      { seuil: 6, stats: { vitalite: 18, prospection: 30 } },
+      { seuil: 2, stats: { vitalite: 12, chance: 8 } },
+      { seuil: 4, stats: { vitalite: 18, prospection: 30 } },
     ],
   },
   bouftou: {
     id: "bouftou", nom: "Panoplie du Bouftou",
-    pieces: ["bouftou_amulette", "bouftou_coiffe", "bouftou_cape", "bouftou_ceinture", "bouftou_bottes", "bouftou_anneau", "bouftou_arme"],
+    pieces: ["bouftou_coiffe", "bouftou_cape", "bouftou_anneau", "bouftou_arme"],
     bonus: [
-      { seuil: 3, stats: { force: 12 }, pvBonus: 15 },
-      { seuil: 6, stats: { force: 22 }, resistances: { terre: 0.12 } },
+      { seuil: 2, stats: { force: 12 }, pvBonus: 15 },
+      { seuil: 4, stats: { force: 22 }, resistances: { terre: 0.12 } },
     ],
   },
   tofu: {
     id: "tofu", nom: "Panoplie du Tofu",
-    pieces: ["tofu_amulette", "tofu_coiffe", "tofu_cape", "tofu_ceinture", "tofu_bottes", "tofu_anneau", "tofu_arme"],
+    pieces: ["tofu_coiffe", "tofu_cape", "tofu_anneau", "tofu_arme"],
     bonus: [
-      { seuil: 3, stats: { agilite: 12 }, pvBonus: 12 },
-      { seuil: 6, stats: { agilite: 22 }, resistances: { air: 0.12 } },
+      { seuil: 2, stats: { agilite: 12 }, pvBonus: 12 },
+      { seuil: 4, stats: { agilite: 22 }, resistances: { air: 0.12 } },
     ],
   },
   scarafeuille: {
     id: "scarafeuille", nom: "Panoplie du Scarafeuille",
-    pieces: ["scarafeuille_amulette", "scarafeuille_coiffe", "scarafeuille_cape", "scarafeuille_ceinture", "scarafeuille_bottes", "scarafeuille_anneau", "scarafeuille_arme"],
+    pieces: ["scarafeuille_coiffe", "scarafeuille_cape", "scarafeuille_anneau", "scarafeuille_arme"],
     bonus: [
-      { seuil: 3, stats: { vitalite: 12 }, resistances: { terre: 0.04, feu: 0.04, eau: 0.04, air: 0.04 } },
-      { seuil: 6, pvBonus: 20, resistances: { terre: 0.06, feu: 0.06, eau: 0.06, air: 0.06 } },
+      { seuil: 2, stats: { vitalite: 12 }, resistances: { terre: 0.04, feu: 0.04, eau: 0.04, air: 0.04 } },
+      { seuil: 4, pvBonus: 20, resistances: { terre: 0.06, feu: 0.06, eau: 0.06, air: 0.06 } },
     ],
   },
   forgeron: {
     id: "forgeron", nom: "Panoplie du Forgeron",
-    pieces: ["forgeron_amulette", "forgeron_coiffe", "forgeron_cape", "forgeron_ceinture", "forgeron_bottes", "forgeron_anneau", "forgeron_arme"],
+    pieces: ["forgeron_coiffe", "forgeron_cape", "forgeron_anneau", "forgeron_arme"],
     bonus: [
-      { seuil: 3, stats: { force: 12 }, pvBonus: 15 },
-      { seuil: 6, stats: { force: 18, prospection: 40 } },
+      { seuil: 2, stats: { force: 12 }, pvBonus: 15 },
+      { seuil: 4, stats: { force: 18, prospection: 40 } },
     ],
   },
 };
@@ -1160,7 +1142,7 @@ export const BUTIN_ZONE: Record<string, string> = {
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */
 export const DROP = {
-  taux: { combat: 0.25, combat_dur: 0.4, donjon: 0.8 } as Record<string, number>,
+  taux: { combat: 0.2, combat_dur: 0.32, donjon: 0.5 } as Record<string, number>,
   coefProspection: 0.001, // dropChance ×= 1 + min(cap, prospectionÉquipe × coef)
   capProspection: 0.75,
 };
@@ -1171,7 +1153,7 @@ export const DOFUS_DROP_RATE = 0.01;
 // --- Archimonstres & Dofus Ocre ----------------------------------------------
 /** Paramètres des Archimonstres (variante rare et boostée, capturable). */
 export const ARCHI = {
-  chance: 0.08, // probabilité par ennemi d'apparaître en Archimonstre
+  chance: 0.01, // probabilité par ennemi d'apparaître en Archimonstre
 
   pvMult: 2, // multiplicateur de PV
   statMult: 1.5, // multiplicateur des caractéristiques

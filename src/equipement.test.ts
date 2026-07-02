@@ -15,7 +15,7 @@ describe("jets d'items (rollItem)", () => {
   it("tire chaque stat dans sa fourchette", () => {
     expect(rollItem("bouftou_coiffe", MIN).stats).toEqual({ force: 16, intelligence: 16 }); // [16,20] → min
     expect(rollItem("bouftou_coiffe", MAX).stats).toEqual({ force: 20, intelligence: 20 }); // → max
-    expect(rollItem("paysan_anneau", MIN).stats).toEqual({}); // aucune stat gérée
+    expect(rollItem("paysan_anneau", MIN).stats).toEqual({ chance: 11 }); // [11,15] → min
   });
 });
 
@@ -23,24 +23,25 @@ describe("bonus d'équipement & panoplie", () => {
   it("somme les stats rollées des objets équipés", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
+    // 2 pièces de panoplies DIFFÉRENTES → pas de bonus de set, on teste la somme brute
     run.inventaire.push(rollItem("bouftou_coiffe", MIN)); // force16 int16
     equiper(run.inventaire, p, 0);
-    run.inventaire.push(rollItem("bouftou_amulette", MIN)); // vita11 force11 int11
+    run.inventaire.push(rollItem("forgeron_anneau", MIN)); // vita21
     equiper(run.inventaire, p, 0);
     const b = bonusEquipement(p);
-    expect(b.stats.force).toBe(27);
-    expect(b.stats.intelligence).toBe(27);
-    expect(b.stats.vitalite).toBe(11);
+    expect(b.stats.force).toBe(16);
+    expect(b.stats.intelligence).toBe(16);
+    expect(b.stats.vitalite).toBe(21);
   });
 
-  it("déclenche les bonus de panoplie aux seuils (3 et 6 pièces)", () => {
+  it("déclenche les bonus de panoplie aux seuils (2 et 4 pièces)", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    for (const id of PANOPLIES.aventurier.pieces.slice(0, 3)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
-    expect(bonusEquipement(p).stats.vitalite).toBe(10);       // bonus seuil 3
-    expect(bonusEquipement(p).resistances.terre ?? 0).toBe(0); // pas encore le bonus 6
-    for (const id of PANOPLIES.aventurier.pieces.slice(3)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
-    expect(bonusEquipement(p).resistances.terre).toBe(0.05);   // bonus seuil 6
+    for (const id of PANOPLIES.aventurier.pieces.slice(0, 2)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
+    expect(bonusEquipement(p).stats.vitalite).toBe(10);       // bonus seuil 2
+    expect(bonusEquipement(p).resistances.terre ?? 0).toBe(0); // pas encore le bonus 4
+    for (const id of PANOPLIES.aventurier.pieces.slice(2)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
+    expect(bonusEquipement(p).resistances.terre).toBe(0.05);   // bonus seuil 4
   });
 
   it("combattantDepuisPerso applique stats, PV et résistances de l'équipement", () => {
@@ -67,11 +68,11 @@ describe("drops", () => {
   it("tenterButin renvoie des exemplaires et autorise les doublons", () => {
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "aventurier", "combat", MIN); // rng 0 → tout tombe
-    expect(drops.length).toBe(6);
+    expect(drops.length).toBe(4);
     expect(drops[0]).toHaveProperty("stats"); // exemplaire rollé
     const drops2 = tenterButin(run, "aventurier", "combat", MIN); // re-drop possible
-    expect(drops2.length).toBe(6);
-    expect(run.inventaire.length).toBe(12); // doublons cumulés
+    expect(drops2.length).toBe(4);
+    expect(run.inventaire.length).toBe(8); // doublons cumulés
   });
 
   it("aucun drop si le tirage dépasse la probabilité", () => {
@@ -80,9 +81,9 @@ describe("drops", () => {
   });
 
   it("la prospection de l'équipe augmente le taux de drop", () => {
-    const faible = nouvelleRun(["iop"]);        // prospection 100 → p = 0,25×1,10 = 0,275
-    const forte = nouvelleRun(["cra", "sram"]); // prospection 200 → p = 0,25×1,20 = 0,300
-    const rng = () => 0.29; // entre les deux seuils
+    const faible = nouvelleRun(["iop"]);        // prospection 100 → p = 0,20×1,10 = 0,22
+    const forte = nouvelleRun(["cra", "sram"]); // prospection 200 → p = 0,20×1,20 = 0,24
+    const rng = () => 0.23; // entre les deux seuils
     expect(tenterButin(faible, "aventurier", "combat", rng).length).toBe(0);
     expect(tenterButin(forte, "aventurier", "combat", rng).length).toBeGreaterThan(0);
   });

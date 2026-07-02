@@ -1184,20 +1184,14 @@ export function showFormation(persos: PersoState[]): Promise<void> {
 // --- Équipement --------------------------------------------------------------
 const SLOTS: EquipSlot[] = [
   "arme",
-  "amulette",
   "coiffe",
   "cape",
-  "ceinture",
-  "bottes",
   "anneau",
 ];
 const SLOT_NOM: Record<EquipSlot, string> = {
   arme: "Arme",
-  amulette: "Amulette",
   coiffe: "Coiffe",
   cape: "Cape",
-  ceinture: "Ceinture",
-  bottes: "Bottes",
   anneau: "Anneau",
 };
 const STAT_ABBR: Partial<Record<keyof Stats, string>> = {
@@ -1814,15 +1808,16 @@ export function showCarte(
       const H = MARGE_HAUT * 2 + (maxL + 1) * ESPACE_LIGNE; // +1 rangée pour le Départ
       const departPos = { x: LARGEUR_CARTE / 2, y: MARGE_HAUT };
       const pos = new Map<string, { x: number; y: number }>();
-      for (let l = 0; l <= maxL; l++) {
-        const ln = carte.noeuds
-          .filter((n) => n.ligne === l)
-          .sort((a, b) => a.colonne - b.colonne);
-        ln.forEach((n, idx) => {
-          pos.set(n.id, {
-            x: ((idx + 1) / (ln.length + 1)) * LARGEUR_CARTE,
-            y: MARGE_HAUT + (l + 1) * ESPACE_LIGNE,
-          });
+      // Grille en colonnes alignées : `colonne` est un offset centré autour de 0.
+      // Le pas est calé sur la rangée la plus large pour tenir dans la largeur.
+      const parLigne = new Map<number, number>();
+      for (const n of carte.noeuds) parLigne.set(n.ligne, (parLigne.get(n.ligne) ?? 0) + 1);
+      const maxNb = Math.max(1, ...parLigne.values());
+      const pas = LARGEUR_CARTE / (maxNb + 1);
+      for (const n of carte.noeuds) {
+        pos.set(n.id, {
+          x: LARGEUR_CARTE / 2 + n.colonne * pas,
+          y: MARGE_HAUT + (n.ligne + 1) * ESPACE_LIGNE,
         });
       }
 
