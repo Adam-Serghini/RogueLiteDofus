@@ -47,11 +47,11 @@ describe("bonus d'équipement & panoplie", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
     const base = combattantDepuisPerso(p);
-    run.inventaire.push(rollItem("bouftou_cape", MIN)); // Cape Bouffante +36 vita (min)
+    run.inventaire.push(rollItem("bouftou_cape", MIN)); // Cape Bouffante +26 vita (min)
     equiper(run.inventaire, p, 0);
     const equipe = combattantDepuisPerso(p);
-    expect(equipe.pvMax).toBe(base.pvMax + 36);
-    expect(equipe.stats.vitalite).toBe((base.stats.vitalite ?? 0) + 36);
+    expect(equipe.pvMax).toBe(base.pvMax + 26);
+    expect(equipe.stats.vitalite).toBe((base.stats.vitalite ?? 0) + 26);
 
     // panoplie Bouftou complète → résistance Terre du bonus 6 pièces
     for (const id of PANOPLIES.bouftou.pieces) {
@@ -59,7 +59,7 @@ describe("bonus d'équipement & panoplie", () => {
       run.inventaire.push(rollItem(id, MIN));
       equiper(run.inventaire, p, 0);
     }
-    expect(combattantDepuisPerso(p).resistances.terre).toBe(0.15);
+    expect(combattantDepuisPerso(p).resistances.terre).toBe(0.12);
   });
 });
 

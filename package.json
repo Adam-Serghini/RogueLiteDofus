@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sim": "vitest run --config vitest.sim.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

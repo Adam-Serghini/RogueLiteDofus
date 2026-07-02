@@ -136,8 +136,8 @@ export const SORTS: Record<string, Spell> = {
   },
   mot_revitalisant: {
     id: "mot_revitalisant", nom: "Mot revitalisant", type: "soin", coutPA: 2,
-    cible: "allie_tous", baseMin: 8, baseMax: 12, scaling: 0,
-    desc: "Soin faible sur toute l'équipe.",
+    cible: "allie_tous", baseMin: 8, baseMax: 12, scaling: 0, cooldownTours: 2,
+    desc: "Soin faible sur toute l'équipe (un tour sur deux).",
   },
   mot_prevention: {
     id: "mot_prevention", nom: "Mot de prévention", type: "buff", coutPA: 3,
@@ -398,8 +398,14 @@ export const SORTS: Record<string, Spell> = {
   },
   charge: {
     id: "charge", nom: "Charge", type: "degats", coutPA: 6,
-    cible: "ennemi_ligne", baseMin: 20, baseMax: 28, scaling: 0.6,
+    cible: "ennemi_ligne", baseMin: 26, baseMax: 36, scaling: 0.72,
     desc: "Attaque dévastatrice du boss.",
+  },
+  ecrasement: {
+    id: "ecrasement", nom: "Écrasement", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 20, baseMax: 28, scaling: 0.55, zoneLigne: true,
+    cooldownTours: 2,
+    desc: "Piétine toute la ligne avant adverse (le soin de zone ne suit plus).",
   },
 };
 
@@ -519,11 +525,11 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/sergent_chafer.png",
   },
   kardorim: {
-    id: "kardorim", nom: "Kardorim", pv: 130,
-    stats: { force: 30, intelligence: 38, agilite: 20, vitalite: 55 },
+    id: "kardorim", nom: "Kardorim", pv: 175,
+    stats: { force: 30, intelligence: 50, agilite: 20, vitalite: 55 },
     pa: 6, initiative: 9,
     resistances: { feu: 0.25, air: 0.1, terre: -0.2, eau: -0.15 },
-    sorts: ["charge", "morsure"], ia: "agressif",
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofawa",
     img: "/assets/monstres/kardorim.png",
   },
@@ -573,11 +579,11 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gardienne_champetre.png",
   },
   tournesol_affame: {
-    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 200,
-    stats: { force: 20, intelligence: 55, agilite: 18, vitalite: 75 },
+    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 280,
+    stats: { force: 20, intelligence: 72, agilite: 18, vitalite: 75 },
     pa: 6, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
-    sorts: ["charge", "picotement"], ia: "agressif",
+    sorts: ["ecrasement", "charge", "picotement"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/tournesol_affame.png",
   },
@@ -629,13 +635,182 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/chef_de_guerre_bouftou.png",
   },
   bouftou_royal: {
-    id: "bouftou_royal", nom: "Bouftou Royal", pv: 240,
-    stats: { force: 56, intelligence: 15, agilite: 20, vitalite: 80 },
+    id: "bouftou_royal", nom: "Bouftou Royal", pv: 400,
+    stats: { force: 78, intelligence: 15, agilite: 20, vitalite: 80 },
     pa: 6, initiative: 8,
     resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
-    sorts: ["charge", "morsure"], ia: "agressif",
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/bouftou_royal.png",
+  },
+
+  // ===== Donjon des Tofus (tier 4, après Tainéla) =====
+  // Iconique : essaim volant, attaquants Air (agilité dominante) ;
+  // le gros du groupe est faible au Feu (sauf le Tofu de base, weak Terre/Air).
+  tofu: {
+    id: "tofu", nom: "Tofu", pv: 50,
+    stats: { force: 6, intelligence: 6, agilite: 32, vitalite: 42 },
+    pa: 4, initiative: 12,
+    resistances: { feu: 0.15, eau: 0.1, terre: -0.1, air: -0.1 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Tofuldebeu l'Explosif",
+    img: "/assets/monstres/tofu.png",
+  },
+  tofu_noir: {
+    id: "tofu_noir", nom: "Tofu Noir", pv: 55,
+    stats: { force: 8, intelligence: 6, agilite: 34, vitalite: 46 },
+    pa: 4, initiative: 13,
+    resistances: { eau: 0.15, air: 0.15, terre: 0.1, feu: -0.15 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/tofu_noir.png",
+  },
+  tofukaz: {
+    id: "tofukaz", nom: "Tofukaz", pv: 48,
+    stats: { force: 6, intelligence: 6, agilite: 40, vitalite: 38 },
+    pa: 5, initiative: 16, // rapide et fragile
+    resistances: { terre: 0.25, air: 0.1, eau: -0.1, feu: -0.15 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/tofukaz.png",
+  },
+  tofu_malefique: {
+    id: "tofu_malefique", nom: "Tofu Maléfique", pv: 95,
+    stats: { force: 12, intelligence: 8, agilite: 38, vitalite: 66 },
+    pa: 5, initiative: 12,
+    resistances: { eau: 0.2, terre: 0.15, air: -0.15, feu: -0.2 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Tofumanchou l'Empereur",
+    img: "/assets/monstres/tofu_malefique.png",
+  },
+  tofu_ventripotent: {
+    id: "tofu_ventripotent", nom: "Tofu Ventripotent", pv: 175,
+    stats: { force: 14, intelligence: 10, agilite: 30, vitalite: 96 },
+    pa: 5, initiative: 6, // miniboss encaisseur
+    resistances: { air: 0.2, feu: 0.15, eau: 0.1, terre: -0.2 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/tofu_ventripotent.png",
+  },
+  batofu: {
+    id: "batofu", nom: "Batofu", pv: 480,
+    stats: { force: 8, intelligence: 10, agilite: 82, vitalite: 110 },
+    pa: 6, initiative: 11,
+    resistances: { air: 0.25, terre: 0.1, eau: -0.05, feu: -0.15 },
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    img: "/assets/monstres/batofu.png",
+  },
+
+  // ===== Donjon des Scarafeuilles (tier 5, après les Tofus) =====
+  // Puzzle élémentaire : chaque couleur RÉSISTE fort à un élément et est FAIBLE
+  // à un autre, et frappe dans son propre élément. Une équipe mono-élément bute
+  // → récompense le multi-élément. (résist. fortes mais non totales : pas d'immunité)
+  scarafeuille_rouge: {
+    id: "scarafeuille_rouge", nom: "Scarafeuille Rouge", pv: 60,
+    stats: { force: 6, intelligence: 34, agilite: 8, vitalite: 48 }, // frappe Feu
+    pa: 5, initiative: 10,
+    resistances: { feu: 0.5, eau: -0.4 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Scarouarze l'Epopée",
+    img: "/assets/monstres/scarafeuille_rouge.png",
+  },
+  scarafeuille_bleu: {
+    id: "scarafeuille_bleu", nom: "Scarafeuille Bleu", pv: 60,
+    stats: { force: 6, intelligence: 6, agilite: 8, chance: 34, vitalite: 48 }, // frappe Eau
+    pa: 5, initiative: 10,
+    resistances: { eau: 0.5, feu: -0.4 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Scarfayss le Balafré",
+    img: "/assets/monstres/scarafeuille_bleu.png",
+  },
+  scarafeuille_vert: {
+    id: "scarafeuille_vert", nom: "Scarafeuille Vert", pv: 60,
+    stats: { force: 34, intelligence: 6, agilite: 8, vitalite: 48 }, // frappe Terre
+    pa: 5, initiative: 10,
+    resistances: { terre: 0.5, air: -0.4 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Scaramel le Fondant",
+    img: "/assets/monstres/scarafeuille_vert.png",
+  },
+  scarafeuille_blanc: {
+    id: "scarafeuille_blanc", nom: "Scarafeuille Blanc", pv: 60,
+    stats: { force: 6, intelligence: 6, agilite: 34, vitalite: 48 }, // frappe Air
+    pa: 5, initiative: 11,
+    resistances: { air: 0.5, terre: -0.4 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Scapé l'Epée",
+    img: "/assets/monstres/scarafeuille_blanc.png",
+  },
+  scarafeuille_immature: {
+    id: "scarafeuille_immature", nom: "Scarafeuille Immature", pv: 42,
+    stats: { force: 22, intelligence: 4, agilite: 4, vitalite: 34 }, // faible partout sauf Terre
+    pa: 4, initiative: 8,
+    resistances: { terre: 0.5, feu: -0.15, eau: -0.15, air: -0.15 },
+    sorts: ["picotement"], ia: "agressif",
+    img: "/assets/monstres/scarafeuille_immature.png",
+  },
+  scarafeuille_noir: {
+    id: "scarafeuille_noir", nom: "Scarafeuille Noir", pv: 90,
+    stats: { force: 30, intelligence: 12, agilite: 12, vitalite: 60 }, // encaisseur équilibré (élite/miniboss)
+    pa: 5, initiative: 9,
+    resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/scarafeuille_noir.png",
+  },
+  scarabosse_dore: {
+    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 560,
+    stats: { force: 60, intelligence: 16, agilite: 18, chance: 16, vitalite: 120 },
+    pa: 6, initiative: 10,
+    resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // résiste tout : il faut le user
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    img: "/assets/monstres/scarabosse_dore.png",
+  },
+
+  // ===== Donjon des Forgerons (tier 6, après les Scarafeuilles) =====
+  // Le clan des Sombres (artisans maléfiques) + un bandit, gardant un coffre piégé.
+  mineur_sombre: {
+    id: "mineur_sombre", nom: "Mineur Sombre", pv: 60,
+    stats: { force: 10, intelligence: 6, agilite: 34, vitalite: 52 }, // frappe Air (vif)
+    pa: 5, initiative: 10,
+    resistances: { terre: 0.15, air: 0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Minsinistre l'Elu",
+    img: "/assets/monstres/mineur_sombre.png",
+  },
+  boulanger_sombre: {
+    id: "boulanger_sombre", nom: "Boulanger Sombre", pv: 55,
+    stats: { force: 8, intelligence: 34, agilite: 8, vitalite: 48 }, // frappe Feu (four)
+    pa: 5, initiative: 9,
+    resistances: { feu: 0.2 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Boudur le Raide",
+    img: "/assets/monstres/boulanger_sombre.png",
+  },
+  bandit_roublard: {
+    id: "bandit_roublard", nom: "Bandit du clan des Roublards", pv: 72,
+    stats: { force: 36, intelligence: 8, agilite: 16, vitalite: 56 }, // frappe Terre (brutal)
+    pa: 5, initiative: 11,
+    resistances: { terre: 0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    archiNom: "Bandson le Tonitruant",
+    img: "/assets/monstres/bandit_roublard.png",
+  },
+  forgeron_sombre: {
+    id: "forgeron_sombre", nom: "Forgeron Sombre", pv: 105,
+    stats: { force: 36, intelligence: 10, agilite: 14, vitalite: 66 }, // frappe Terre (marteau) — élite/miniboss
+    pa: 5, initiative: 8,
+    resistances: { terre: 0.1, feu: 0.1, eau: -0.1, air: -0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    archiNom: "Forboyar l'Enigmatique",
+    img: "/assets/monstres/forgeron_sombre.png",
+  },
+  coffre_forgerons: {
+    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 620,
+    stats: { force: 56, intelligence: 28, agilite: 20, chance: 18, vitalite: 150 },
+    pa: 6, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
+    resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    img: "/assets/monstres/coffre_forgerons.png",
   },
 };
 
@@ -771,6 +946,60 @@ export const COMBATS: Record<string, CombatDef> = {
   tai_boss: { nom: "Donjon — Bouftou Royal", ennemis: [
     { monstre: "bouftou_royal", position: 0 }, { monstre: "chef_de_guerre_bouftou", position: 1 }, // boss + miniboss devant
   ] },
+
+  // ===== Donjon des Tofus =====
+  tof_1: { nom: "Volée de Tofus", ennemis: [
+    { monstre: "tofu", position: 0 }, { monstre: "tofu_noir", position: 1 },
+  ] },
+  tof_2: { nom: "Nuée noire", ennemis: [
+    { monstre: "tofu_noir", position: 0 }, { monstre: "tofukaz", position: 1 }, { monstre: "tofu", position: 4 },
+  ] },
+  tof_3: { nom: "Tourbillon de plumes", ennemis: [
+    { monstre: "tofukaz", position: 0 }, { monstre: "tofu", position: 1 }, { monstre: "tofu_noir", position: 2 },
+  ] },
+  tof_elite: { nom: "Essaim maudit (dur)", ennemis: [
+    { monstre: "tofu_malefique", position: 0 }, { monstre: "tofukaz", position: 1 },
+    { monstre: "tofu_noir", position: 2 }, { monstre: "tofu", position: 3 },
+  ] },
+  tof_boss: { nom: "Donjon — Batofu", ennemis: [
+    { monstre: "batofu", position: 0 }, { monstre: "tofu_ventripotent", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Donjon des Scarafeuilles =====
+  scr_1: { nom: "Duo prismatique", ennemis: [
+    { monstre: "scarafeuille_rouge", position: 0 }, { monstre: "scarafeuille_bleu", position: 1 }, // feu-immune + eau-immune
+  ] },
+  scr_2: { nom: "Carapaces terreuses", ennemis: [
+    { monstre: "scarafeuille_vert", position: 0 }, { monstre: "scarafeuille_blanc", position: 1 }, { monstre: "scarafeuille_immature", position: 4 },
+  ] },
+  scr_3: { nom: "Arc-en-ciel hostile", ennemis: [
+    { monstre: "scarafeuille_rouge", position: 0 }, { monstre: "scarafeuille_vert", position: 1 }, { monstre: "scarafeuille_bleu", position: 2 },
+  ] },
+  scr_elite: { nom: "Essaim chromatique (dur)", ennemis: [
+    { monstre: "scarafeuille_noir", position: 0 }, { monstre: "scarafeuille_rouge", position: 1 },
+    { monstre: "scarafeuille_blanc", position: 2 }, { monstre: "scarafeuille_bleu", position: 3 },
+  ] },
+  scr_boss: { nom: "Donjon — Scarabosse Doré", ennemis: [
+    { monstre: "scarabosse_dore", position: 0 }, { monstre: "scarafeuille_noir", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Donjon des Forgerons =====
+  frg_1: { nom: "Atelier maudit", ennemis: [
+    { monstre: "forgeron_sombre", position: 0 }, { monstre: "mineur_sombre", position: 1 },
+  ] },
+  frg_2: { nom: "Fournée sombre", ennemis: [
+    { monstre: "boulanger_sombre", position: 0 }, { monstre: "mineur_sombre", position: 1 }, { monstre: "bandit_roublard", position: 4 },
+  ] },
+  frg_3: { nom: "Embuscade de roublards", ennemis: [
+    { monstre: "bandit_roublard", position: 0 }, { monstre: "forgeron_sombre", position: 1 }, { monstre: "boulanger_sombre", position: 2 },
+  ] },
+  frg_elite: { nom: "Forge en fusion (dur)", ennemis: [
+    { monstre: "forgeron_sombre", position: 0 }, { monstre: "bandit_roublard", position: 1 },
+    { monstre: "boulanger_sombre", position: 2 }, { monstre: "mineur_sombre", position: 3 },
+  ] },
+  frg_boss: { nom: "Donjon — Coffre des Forgerons", ennemis: [
+    { monstre: "coffre_forgerons", position: 0 }, { monstre: "forgeron_sombre", position: 1 }, // boss + miniboss devant
+  ] },
 };
 
 // --- Zones (mondes traversés successivement durant une run) ------------------
@@ -784,6 +1013,12 @@ export const ZONES: ZoneDef[] = [
     pools: { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: "boss" } },
   { id: "tainela", nom: "Tainéla",
     pools: { normales: ["tai_1", "tai_2", "tai_3"], elite: ["tai_elite"], boss: "tai_boss" } },
+  { id: "tofus", nom: "Donjon des Tofus",
+    pools: { normales: ["tof_1", "tof_2", "tof_3"], elite: ["tof_elite"], boss: "tof_boss" } },
+  { id: "scarafeuilles", nom: "Donjon des Scarafeuilles",
+    pools: { normales: ["scr_1", "scr_2", "scr_3"], elite: ["scr_elite"], boss: "scr_boss" } },
+  { id: "forgerons", nom: "Donjon des Forgerons",
+    pools: { normales: ["frg_1", "frg_2", "frg_3"], elite: ["frg_elite"], boss: "frg_boss" } },
 ];
 
 /** Récompense d'XP par type de nœud de combat (tunable). */
@@ -828,11 +1063,38 @@ export const ITEMS: Record<string, Item> = {
   // ===== Panoplie du Bouftou (Tainéla, set #1 : vita/force/int) =====
   bouftou_amulette: { id: "bouftou_amulette", nom: "Amulette du Bouftou", slot: "amulette", panoplie: "bouftou", rolls: { vitalite: [11, 15], force: [11, 15], intelligence: [11, 15] } },
   bouftou_coiffe: { id: "bouftou_coiffe", nom: "Coiffe du Bouftou", slot: "coiffe", panoplie: "bouftou", rolls: { force: [16, 20], intelligence: [16, 20] } },
-  bouftou_cape: { id: "bouftou_cape", nom: "Cape Bouffante", slot: "cape", panoplie: "bouftou", rolls: { vitalite: [36, 40] } },
+  bouftou_cape: { id: "bouftou_cape", nom: "Cape Bouffante", slot: "cape", panoplie: "bouftou", rolls: { vitalite: [26, 30] } },
   bouftou_ceinture: { id: "bouftou_ceinture", nom: "Ceinture du Bouftou", slot: "ceinture", panoplie: "bouftou", rolls: { force: [11, 15], intelligence: [11, 15] } },
   bouftou_bottes: { id: "bouftou_bottes", nom: "Boufbottes", slot: "bottes", panoplie: "bouftou", rolls: { vitalite: [16, 20] } },
   bouftou_anneau: { id: "bouftou_anneau", nom: "Anneau de Bouze le Clerc", slot: "anneau", panoplie: "bouftou", rolls: { vitalite: [21, 30] } },
   bouftou_arme: { id: "bouftou_arme", nom: "Marteau du Bouftou", slot: "arme", panoplie: "bouftou", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 16, baseMax: 22, scaling: 0.45 } },
+
+  // ===== Panoplie du Tofu (Donjon des Tofus : vita / agilité, thème Air) =====
+  tofu_amulette: { id: "tofu_amulette", nom: "Amulette du Tofu", slot: "amulette", panoplie: "tofu", rolls: { agilite: [16, 20] } },
+  tofu_coiffe: { id: "tofu_coiffe", nom: "Coiffe du Tofu", slot: "coiffe", panoplie: "tofu", rolls: { vitalite: [16, 20], agilite: [16, 20] } },
+  tofu_cape: { id: "tofu_cape", nom: "Cape Tofue", slot: "cape", panoplie: "tofu", rolls: { vitalite: [26, 30] } },
+  tofu_ceinture: { id: "tofu_ceinture", nom: "Ceinture Tofue", slot: "ceinture", panoplie: "tofu", rolls: { vitalite: [11, 15], agilite: [11, 15] } },
+  tofu_bottes: { id: "tofu_bottes", nom: "Bottes Tofues", slot: "bottes", panoplie: "tofu", rolls: { agilite: [16, 20] } },
+  tofu_anneau: { id: "tofu_anneau", nom: "Anneau du Tofu", slot: "anneau", panoplie: "tofu", rolls: { agilite: [11, 15] } },
+  tofu_arme: { id: "tofu_arme", nom: "Aile du Batofu", slot: "arme", panoplie: "tofu", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 14, baseMax: 20, scaling: 0.4 } },
+
+  // ===== Panoplie du Scarafeuille (Donjon des Scarafeuilles : défensif, résist. toutes) =====
+  scarafeuille_amulette: { id: "scarafeuille_amulette", nom: "Amulette du Scarafeuille", slot: "amulette", panoplie: "scarafeuille", rolls: { vitalite: [16, 20] } },
+  scarafeuille_coiffe: { id: "scarafeuille_coiffe", nom: "Coiffe du Scarafeuille", slot: "coiffe", panoplie: "scarafeuille", rolls: { vitalite: [20, 24] } },
+  scarafeuille_cape: { id: "scarafeuille_cape", nom: "Élytre du Scarafeuille", slot: "cape", panoplie: "scarafeuille", rolls: { vitalite: [21, 25] } },
+  scarafeuille_ceinture: { id: "scarafeuille_ceinture", nom: "Ceinture du Scarafeuille", slot: "ceinture", panoplie: "scarafeuille", rolls: { force: [6, 10], intelligence: [6, 10] } },
+  scarafeuille_bottes: { id: "scarafeuille_bottes", nom: "Bottes du Scarafeuille", slot: "bottes", panoplie: "scarafeuille", rolls: { agilite: [11, 15], chance: [11, 15] } },
+  scarafeuille_anneau: { id: "scarafeuille_anneau", nom: "Anneau du Scarafeuille", slot: "anneau", panoplie: "scarafeuille", rolls: { vitalite: [11, 15] } },
+  scarafeuille_arme: { id: "scarafeuille_arme", nom: "Rostre du Scarabosse", slot: "arme", panoplie: "scarafeuille", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 4, baseMin: 15, baseMax: 21, scaling: 0.4 } },
+
+  // ===== Panoplie du Forgeron (Donjon des Forgerons : force/vita + prospection au set) =====
+  forgeron_amulette: { id: "forgeron_amulette", nom: "Amulette du Forgeron", slot: "amulette", panoplie: "forgeron", rolls: { force: [16, 20] } },
+  forgeron_coiffe: { id: "forgeron_coiffe", nom: "Heaume du Forgeron", slot: "coiffe", panoplie: "forgeron", rolls: { force: [16, 20], vitalite: [16, 20] } },
+  forgeron_cape: { id: "forgeron_cape", nom: "Tablier du Forgeron", slot: "cape", panoplie: "forgeron", rolls: { vitalite: [26, 30] } },
+  forgeron_ceinture: { id: "forgeron_ceinture", nom: "Ceinture du Forgeron", slot: "ceinture", panoplie: "forgeron", rolls: { force: [11, 15], vitalite: [11, 15] } },
+  forgeron_bottes: { id: "forgeron_bottes", nom: "Bottes du Forgeron", slot: "bottes", panoplie: "forgeron", rolls: { force: [16, 20] } },
+  forgeron_anneau: { id: "forgeron_anneau", nom: "Anneau du Forgeron", slot: "anneau", panoplie: "forgeron", rolls: { vitalite: [21, 25] } },
+  forgeron_arme: { id: "forgeron_arme", nom: "Marteau du Forgeron Sombre", slot: "arme", panoplie: "forgeron", rolls: { force: [11, 15] }, attaque: { coutPA: 5, baseMin: 20, baseMax: 28, scaling: 0.5 } },
 };
 
 export const PANOPLIES: Record<string, Panoplie> = {
@@ -856,8 +1118,32 @@ export const PANOPLIES: Record<string, Panoplie> = {
     id: "bouftou", nom: "Panoplie du Bouftou",
     pieces: ["bouftou_amulette", "bouftou_coiffe", "bouftou_cape", "bouftou_ceinture", "bouftou_bottes", "bouftou_anneau", "bouftou_arme"],
     bonus: [
-      { seuil: 3, stats: { force: 15 }, pvBonus: 20 },
-      { seuil: 6, stats: { force: 30 }, resistances: { terre: 0.15 } },
+      { seuil: 3, stats: { force: 12 }, pvBonus: 15 },
+      { seuil: 6, stats: { force: 22 }, resistances: { terre: 0.12 } },
+    ],
+  },
+  tofu: {
+    id: "tofu", nom: "Panoplie du Tofu",
+    pieces: ["tofu_amulette", "tofu_coiffe", "tofu_cape", "tofu_ceinture", "tofu_bottes", "tofu_anneau", "tofu_arme"],
+    bonus: [
+      { seuil: 3, stats: { agilite: 12 }, pvBonus: 12 },
+      { seuil: 6, stats: { agilite: 22 }, resistances: { air: 0.12 } },
+    ],
+  },
+  scarafeuille: {
+    id: "scarafeuille", nom: "Panoplie du Scarafeuille",
+    pieces: ["scarafeuille_amulette", "scarafeuille_coiffe", "scarafeuille_cape", "scarafeuille_ceinture", "scarafeuille_bottes", "scarafeuille_anneau", "scarafeuille_arme"],
+    bonus: [
+      { seuil: 3, stats: { vitalite: 12 }, resistances: { terre: 0.04, feu: 0.04, eau: 0.04, air: 0.04 } },
+      { seuil: 6, pvBonus: 20, resistances: { terre: 0.06, feu: 0.06, eau: 0.06, air: 0.06 } },
+    ],
+  },
+  forgeron: {
+    id: "forgeron", nom: "Panoplie du Forgeron",
+    pieces: ["forgeron_amulette", "forgeron_coiffe", "forgeron_cape", "forgeron_ceinture", "forgeron_bottes", "forgeron_anneau", "forgeron_arme"],
+    bonus: [
+      { seuil: 3, stats: { force: 12 }, pvBonus: 15 },
+      { seuil: 6, stats: { force: 18, prospection: 40 } },
     ],
   },
 };
@@ -867,6 +1153,9 @@ export const BUTIN_ZONE: Record<string, string> = {
   incarnam: "aventurier",
   astrub: "paysan",
   tainela: "bouftou",
+  tofus: "tofu",
+  scarafeuilles: "scarafeuille",
+  forgerons: "forgeron",
 };
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */
