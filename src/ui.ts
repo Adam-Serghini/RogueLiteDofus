@@ -49,6 +49,8 @@ import {
   equiper,
   desequiper,
   paliersOcre,
+  appliquerElement,
+  STAT_PAR_ELEMENT,
   type PersoState,
 } from "./run";
 import type {
@@ -1130,8 +1132,30 @@ export function showFormation(persos: PersoState[]): Promise<void> {
           <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
         </div>
+        <div class="form-elements">
+          <h2>Élément &amp; montée en niveau</h2>
+          <p class="sous-titre">Choisis un élément : c'est ton élément de frappe et les points de niveau y vont automatiquement. <b>Libre</b> = tu répartis toi-même (l'élément de frappe est alors ta plus haute carac).</p>
+          ${persos.map((p) => `
+            <div class="form-el-perso">
+              <img class="form-el-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
+              <span class="form-el-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
+              <div class="form-el-choix">
+                ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${p.elementChoisi === el ? "sel" : ""}" data-perso="${p.classeId}" data-el="${el}" title="${elNom[el]} · points → ${STAT_NOM[STAT_PAR_ELEMENT[el]]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
+                <button class="form-el-btn libre ${p.elementChoisi ? "" : "sel"}" data-perso="${p.classeId}" data-el="libre" title="Allocation manuelle">Libre</button>
+              </div>
+            </div>`).join("")}
+        </div>
         <div class="boutons-ecran"><button id="form-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
+      root.querySelectorAll<HTMLButtonElement>(".form-el-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const p = persos.find((x) => x.classeId === btn.dataset.perso);
+          if (!p) return;
+          const el = btn.dataset.el;
+          appliquerElement(p, el === "libre" ? null : (el as Element));
+          draw();
+        });
+      });
       root.querySelectorAll<HTMLButtonElement>(".form-cell").forEach((btn) => {
         const cell = Number(btn.dataset.cell);
         // — clic : sélection puis déplacement (fallback)
@@ -1551,10 +1575,8 @@ function carteProgression(p: PersoState): string {
         <span class="stat-nom" tabindex="0">${STAT_NOM[stat]}<span class="stat-info">ⓘ</span><span class="stat-aide">${STAT_AIDE[stat]}${STAT_ELEMENTAIRE.has(stat) ? AIDE_ELEMENT : ""}</span></span>
         <span class="stat-val">${total}${inv ? ` <span class="muet">(+${inv})</span>` : ""}${equip ? ` <span class="stat-equip">+${equip} équip</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
         <span class="stat-actions">
-          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="1" ${peut ? "" : "disabled"}>+1</button>
-          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="5" ${peut ? "" : "disabled"}>+5</button>
-          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="max" ${peut ? "" : "disabled"}>Max</button>
           <button class="stat-champ" data-perso="${p.classeId}" data-stat="${stat}" ${peut ? "" : "disabled"} title="Montant libre">+…</button>
+          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="max" ${peut ? "" : "disabled"}>Max</button>
         </span>
       </div>`;
   }).join("");
@@ -1876,7 +1898,8 @@ export function showCarte(
           const pvMax = pvMaxPerso(p); // équipement (vita + PV plats) inclus
           const pct = Math.max(0, Math.round((p.pvActuels / pvMax) * 100));
           return `
-            <div class="aside-perso">
+            <div class="aside-perso ${p.flashNiveau ? "flash-niv" : ""}">
+              ${p.flashNiveau ? `<span class="niv-flash">⬆ Niveau ${p.progression.niveau} !</span>` : ""}
               <img class="aside-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
               <div class="aside-info">
                 <div class="aside-nom">${escapeHtml(classe.nom)}<span class="aside-niv">Niv.${p.progression.niveau}</span></div>
@@ -1888,6 +1911,7 @@ export function showCarte(
             </div>`;
         })
         .join("");
+      persos.forEach((p) => { p.flashNiveau = false; }); // le flash ne joue qu'une fois
 
       root.innerHTML = `
         <div class="carte-ecran map-layout">

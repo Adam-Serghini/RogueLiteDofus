@@ -901,6 +901,67 @@ kbd {
   flex-direction: column;
   gap: 12px;
 }
+/* Sélecteur d'élément par héros (fiche de formation) */
+.form-elements {
+  max-width: 560px;
+  margin: 18px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form-elements h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.form-el-perso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+.form-el-sym {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.form-el-nom {
+  min-width: 88px;
+  font-weight: 700;
+}
+.form-el-choix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+.form-el-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--bord);
+  background: var(--panel);
+  color: var(--txt);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.form-el-btn img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.form-el-btn:hover {
+  border-color: var(--bord-clair);
+}
+.form-el-btn.sel {
+  border-color: var(--or);
+  box-shadow: 0 0 0 1px var(--or), 0 0 8px #e8b54e66;
+  font-weight: 700;
+}
 .form-rangee {
   background: var(--panel-2);
   border: 1px solid var(--bord);
@@ -2193,9 +2254,45 @@ kbd {
   margin-bottom: 14px;
 }
 .aside-perso {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
+}
+/* Animation de montée de niveau (auto-invest : sinon invisible) */
+.aside-perso.flash-niv {
+  animation: niv-halo 1.8s ease-out 1;
+}
+.niv-flash {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  z-index: 3;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px #3b82f699;
+  pointer-events: none;
+  animation: niv-pop 1.8s ease-out 1 forwards;
+}
+@keyframes niv-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  15% { opacity: 1; transform: translateY(0) scale(1.08); }
+  30% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
+@keyframes niv-halo {
+  0%, 100% { box-shadow: none; }
+  20% { box-shadow: 0 0 0 2px #3b82f6, 0 0 14px #3b82f699; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aside-perso.flash-niv { animation: none; }
+  .niv-flash { animation: none; opacity: 1; }
 }
 .aside-sym {
   width: 54px;

@@ -4,8 +4,28 @@
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
+  appliquerElement, gagnerXPPerso,
 } from "./run";
 import type { Meta } from "./types";
+
+describe("allocation par élément", () => {
+  it("gagnerXPPerso investit auto les points de niveau dans la stat de l'élément choisi", () => {
+    const p = nouvelleRun(["iop"]).persos[0];
+    appliquerElement(p, "feu"); // feu → intelligence
+    gagnerXPPerso(p, 50); // assez pour passer niveau 2 (+5 pts)
+    expect(p.progression.niveau).toBe(2);
+    expect(p.progression.pointsInvestis.intelligence).toBe(5); // auto-investis
+    expect(p.progression.pointsDispo).toBe(0); // rien à dépenser à la main
+  });
+
+  it("mode Libre (élément null) laisse les points à dépenser manuellement", () => {
+    const p = nouvelleRun(["iop"]).persos[0];
+    appliquerElement(p, null);
+    gagnerXPPerso(p, 50);
+    expect(p.elementChoisi).toBeUndefined();
+    expect(p.progression.pointsDispo).toBe(5); // manuel : à dépenser soi-même
+  });
+});
 
 describe("compteur de runs", () => {
   it("enregistrerRun compte les runs et n'ajoute une victoire que si réussie", () => {

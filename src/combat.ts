@@ -82,11 +82,10 @@ export function elementsForts(c: Combatant): [Element, Element] {
   return [tri[0][0], tri[1][0]];
 }
 
-/** Élément de frappe : le choix du joueur s'il est l'un des 2 plus forts, sinon le plus fort. */
+/** Élément de frappe : le choix explicite du joueur (fiche) prime ; sinon sa plus haute stat. */
 export function elementDeFrappe(c: Combatant): Element {
-  const [premier, second] = elementsForts(c);
-  if (c.elementChoisi === premier || c.elementChoisi === second) return c.elementChoisi;
-  return premier;
+  if (c.elementChoisi) return c.elementChoisi;
+  return elementsForts(c)[0];
 }
 
 /** Initiative effective = base + effets (négatifs = ralentissement). */

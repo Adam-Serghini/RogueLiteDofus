@@ -4,12 +4,12 @@
 import "./style.css";
 import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, ZONES, BUTIN_ZONE, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
-import { gagnerXP, restat, PV_PAR_VITA } from "./progression";
+import { restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
-  propositionsRecrutement, recruter, tenterButin, enregistrerRun,
+  propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso,
   appliquerArchimonstres, capturerArchi, type RunState,
 } from "./run";
 import * as ui from "./ui";
@@ -67,9 +67,16 @@ async function resoudreCombat(run: RunState, combatId: string): Promise<Resultat
 }
 
 async function recompenserXP(run: RunState, gain: number): Promise<void> {
-  let levelUp = false;
-  for (const p of run.persos) if (gagnerXP(p.progression, gain) > 0) levelUp = true;
-  if (levelUp) await ui.showStatPanel(run.persos, "Niveau gagné !", "Tu as des points à dépenser.", false, meta);
+  // Chaque perso monte ; en mode « élément » les points sont investis auto.
+  // On n'ouvre le panneau que si un héros en mode MANUEL a des points à dépenser.
+  let manuelAvecPoints = false;
+  for (const p of run.persos) {
+    if (gagnerXPPerso(p, gain) > 0) p.flashNiveau = true; // pour l'animation dans le panneau d'équipe
+    if (!p.elementChoisi && p.progression.pointsDispo > 0) manuelAvecPoints = true;
+  }
+  if (manuelAvecPoints) {
+    await ui.showStatPanel(run.persos, "Niveau gagné !", "Dépense les points des héros en mode manuel.", false, meta);
+  }
 }
 
 /** Capture les âmes des Archimonstres vaincus (uniques) et annonce les nouvelles. */

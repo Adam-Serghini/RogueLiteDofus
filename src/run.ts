@@ -4,7 +4,7 @@
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
 import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS } from "./data";
-import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA } from "./progression";
+import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, investirN } from "./progression";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Spell, Stats } from "./types";
 
@@ -16,6 +16,7 @@ export interface PersoState {
   position: number; // case de grille 0..7 (0-3 ligne avant, 4-7 arrière)
   elementChoisi?: Element; // élément de frappe choisi, conservé d'un combat à l'autre
   equipement: Partial<Record<EquipSlot, ItemInstance>>; // exemplaire équipé par slot
+  flashNiveau?: boolean; // transitoire (UI) : a monté de niveau au dernier combat → anime dans le panneau d'équipe
 }
 
 export interface RunState {
@@ -26,6 +27,31 @@ export interface RunState {
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "sadida"]; // roster par défaut (tests)
 export const TAILLE_MAX_EQUIPE = 4;
+
+/** Stat de caractéristique portant chaque élément (pour l'allocation par élément). */
+export const STAT_PAR_ELEMENT: Record<Element, keyof Stats> = {
+  terre: "force", feu: "intelligence", air: "agilite", eau: "chance",
+};
+
+/**
+ * Fixe (ou retire, si null) l'élément de frappe choisi d'un perso.
+ * En mode « élément » : investit immédiatement les points dispo dans sa stat
+ * (les futurs points de niveau suivront via `gagnerXPPerso`).
+ */
+export function appliquerElement(perso: PersoState, element: Element | null): void {
+  perso.elementChoisi = element ?? undefined;
+  if (element) investirN(perso.progression, STAT_PAR_ELEMENT[element], Infinity);
+}
+
+/**
+ * XP d'un perso : monte de niveau ; si un élément est choisi, alloue
+ * automatiquement les points gagnés dans sa stat. Renvoie les niveaux gagnés.
+ */
+export function gagnerXPPerso(perso: PersoState, gain: number): number {
+  const niveaux = gagnerXP(perso.progression, gain);
+  if (perso.elementChoisi) investirN(perso.progression, STAT_PAR_ELEMENT[perso.elementChoisi], Infinity);
+  return niveaux;
+}
 
 /** Toutes les classes jouables (ordre d'insertion de CLASSES). */
 export const classesDisponibles = (): string[] => Object.keys(CLASSES);

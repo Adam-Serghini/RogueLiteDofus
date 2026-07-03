@@ -33,14 +33,14 @@ describe("élément de frappe", () => {
     expect(elementDeFrappe(iop)).toBe("eau"); // Chance domine
   });
 
-  it("le joueur peut choisir son élément de frappe parmi les 2 plus forts", () => {
+  it("le choix explicite d'élément prime ; sinon la plus haute carac", () => {
     const [iop] = fabriquerEquipe();
-    iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // Terre (1er) puis Air (2e)
-    expect(elementDeFrappe(iop)).toBe("terre");
-    iop.elementChoisi = "air"; // 2e plus fort → autorisé
-    expect(elementDeFrappe(iop)).toBe("air");
-    iop.elementChoisi = "feu"; // ni 1er ni 2e → ignoré, retombe sur le plus fort
-    expect(elementDeFrappe(iop)).toBe("terre");
+    iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // Terre (plus haute)
+    expect(elementDeFrappe(iop)).toBe("terre"); // pas de choix → plus haute carac
+    iop.elementChoisi = "air";
+    expect(elementDeFrappe(iop)).toBe("air"); // choix explicite prioritaire
+    iop.elementChoisi = "feu"; // choix explicite, même si Feu n'est pas dominant
+    expect(elementDeFrappe(iop)).toBe("feu");
   });
 
   it("applique la résistance de l'élément de frappe basculé", () => {
