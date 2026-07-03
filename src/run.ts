@@ -82,6 +82,7 @@ function cellulesPour(ids: string[]): Record<string, number> {
 
 export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
   const cells = cellulesPour(choix);
+  const elemsPref = chargerConfig().elements; // élément préféré par classe (préréglages)
   const persos: PersoState[] = choix.map((classeId) => {
     const progression = progressionInitiale();
     return {
@@ -89,6 +90,7 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
       progression,
       pvActuels: pvMaxFor(CLASSES[classeId], progression),
       position: cells[classeId],
+      elementChoisi: elemsPref[classeId], // préréglage (absent = Libre)
       equipement: {},
     };
   });

@@ -1449,8 +1449,45 @@ export function showSettings(): Promise<void> {
             <button id="set-auto" class="secondaire ${config.autoFinTour ? "on" : ""}">${config.autoFinTour ? "Activé" : "Désactivé"}</button>
           </div>
         </div>
+        <h2 class="settings-titre">Préréglages des héros</h2>
+        <p class="muet settings-sous">Élément de frappe &amp; position par défaut, appliqués au début de chaque run. « Libre » = allocation manuelle.</p>
+        <div class="presets">
+          ${classesDisponibles().map((cid) => {
+            const elSel = config.elements[cid];
+            const pos = config.formation[cid] ?? 0;
+            return `<div class="preset-classe">
+              <img class="preset-sym" src="${classSymbol(cid)}" alt="" onerror="this.remove()" />
+              <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
+              <div class="preset-el">
+                ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${elSel === el ? "sel" : ""}" data-classe="${cid}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
+                <button class="form-el-btn libre ${elSel ? "" : "sel"}" data-classe="${cid}" data-el="libre" title="Allocation manuelle">Libre</button>
+              </div>
+              <label class="preset-pos">Case
+                <select data-classe="${cid}">
+                  ${[0, 1, 2, 3, 4, 5, 6, 7].map((cell) => `<option value="${cell}" ${cell === pos ? "selected" : ""}>${cell < 4 ? `Avant ${cell + 1}` : `Arrière ${cell - 3}`}</option>`).join("")}
+                </select>
+              </label>
+            </div>`;
+          }).join("")}
+        </div>
         <div class="boutons-ecran"><button id="set-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
+      root.querySelectorAll<HTMLButtonElement>(".preset-el .form-el-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const cid = btn.dataset.classe!;
+          const el = btn.dataset.el!;
+          if (el === "libre") delete config.elements[cid];
+          else config.elements[cid] = el as Element;
+          sauverConfig(config);
+          draw();
+        });
+      });
+      root.querySelectorAll<HTMLSelectElement>(".preset-pos select").forEach((sel) => {
+        sel.addEventListener("change", () => {
+          config.formation[sel.dataset.classe!] = Number(sel.value);
+          sauverConfig(config);
+        });
+      });
       document.getElementById("set-touche")?.addEventListener("click", () => {
         capture = true;
         draw();

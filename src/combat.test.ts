@@ -29,12 +29,14 @@ describe("élément de frappe", () => {
 
   it("bascule sur l'Eau quand la Chance domine", () => {
     const [iop] = fabriquerEquipe();
+    iop.elementChoisi = undefined; // teste le fallback (pas de choix explicite)
     iop.stats = { ...iop.stats, chance: 999 };
     expect(elementDeFrappe(iop)).toBe("eau"); // Chance domine
   });
 
   it("le choix explicite d'élément prime ; sinon la plus haute carac", () => {
     const [iop] = fabriquerEquipe();
+    iop.elementChoisi = undefined;
     iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // Terre (plus haute)
     expect(elementDeFrappe(iop)).toBe("terre"); // pas de choix → plus haute carac
     iop.elementChoisi = "air";
@@ -45,6 +47,7 @@ describe("élément de frappe", () => {
 
   it("applique la résistance de l'élément de frappe basculé", () => {
     const [iop] = fabriquerEquipe();
+    iop.elementChoisi = undefined;
     iop.stats = { ...iop.stats, chance: 999 }; // frappe désormais en Eau
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.resistances = { eau: 0.5 }; // -50 % subis en Eau

@@ -892,6 +892,63 @@ kbd {
   border-color: #3fae5e;
   color: #eafff0;
 }
+/* Préréglages des héros (élément + position par défaut) */
+.settings-titre {
+  margin: 22px 0 2px;
+  font-size: 1.05rem;
+}
+.settings-sous {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+}
+.presets {
+  max-width: 620px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preset-classe {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+.preset-sym {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.preset-nom {
+  min-width: 92px;
+  font-weight: 700;
+  text-align: left;
+}
+.preset-el {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.preset-pos {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muet);
+}
+.preset-pos select {
+  background: var(--panel);
+  color: var(--txt);
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+  padding: 3px 6px;
+  font: inherit;
+}
 
 /* écran Formation — grille 4×2 */
 .formation-grille {

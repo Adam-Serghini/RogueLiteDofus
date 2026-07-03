@@ -92,6 +92,7 @@ describe("effets aléatoires & adjacence", () => {
   it("Tactique féline donne +1 PA aux alliés des cases adjacentes", () => {
     const team = equipe(["ecaflip", "iop"]);
     const [eca, iop] = team;
+    eca.position = 0; iop.position = 1; // adjacents (indépendant des préréglages de position)
     lancerSort(eca, SORTS.odorat, eca.ref, team, ctx());
     expect(iop.paBonusNextTurn).toBe(1);
   });
