@@ -11,6 +11,8 @@ import type { Meta } from "./types";
 const metaAvec = (nbArchis: number, dofus: string[] = []): Meta => ({
   dofus,
   archis: Array.from({ length: nbArchis }, (_, i) => `m${i}`),
+  runs: 0,
+  victoires: 0,
 });
 
 describe("appliquerArchimonstres", () => {

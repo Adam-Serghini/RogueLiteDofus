@@ -3,8 +3,20 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine,
+  nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
 } from "./run";
+import type { Meta } from "./types";
+
+describe("compteur de runs", () => {
+  it("enregistrerRun compte les runs et n'ajoute une victoire que si réussie", () => {
+    const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0 };
+    enregistrerRun(meta, false); // mort
+    enregistrerRun(meta, true); // réussie
+    enregistrerRun(meta, false); // mort
+    expect(meta.runs).toBe(3);
+    expect(meta.victoires).toBe(1);
+  });
+});
 
 describe("démarrage à 2", () => {
   it("nouvelleRun(choix) crée exactement les classes choisies", () => {

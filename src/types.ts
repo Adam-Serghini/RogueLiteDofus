@@ -278,6 +278,8 @@ export interface Progression {
 export interface Meta {
   dofus: string[]; // ids des Dofus possédés (peut contenir des doublons)
   archis: string[]; // ids d'espèces de monstres capturées en Archimonstre (uniques)
+  runs: number; // nombre total de runs terminées (victoire ou mort)
+  victoires: number; // sous-ensemble : runs achevées (les 6 zones vaincues)
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

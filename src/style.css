@@ -511,6 +511,14 @@ button:focus-visible {
 .accueil-dofus-compte b {
   color: var(--or);
 }
+.accueil-runs-compte {
+  color: var(--muet);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+.accueil-runs-compte b {
+  color: var(--or);
+}
 .coin-param {
   position: absolute;
   top: 12px;

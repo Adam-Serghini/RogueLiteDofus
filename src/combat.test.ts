@@ -144,14 +144,14 @@ describe("règle de ligne (grille avant/arrière)", () => {
 
 describe("bonusDegatsDofus", () => {
   it("cumule les copies du Dofus Pourpre", () => {
-    expect(bonusDegatsDofus({ dofus: [], archis: [] })).toBeCloseTo(1);
-    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre"], archis: [] })).toBeCloseTo(1.15);
-    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre", "dofus_pourpre"], archis: [] })).toBeCloseTo(1.3);
+    expect(bonusDegatsDofus({ dofus: [], archis: [], runs: 0, victoires: 0 })).toBeCloseTo(1);
+    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre"], archis: [], runs: 0, victoires: 0 })).toBeCloseTo(1.15);
+    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre", "dofus_pourpre"], archis: [], runs: 0, victoires: 0 })).toBeCloseTo(1.3);
   });
 });
 
 describe("effets de Dofus (Dofawa / Argenté)", () => {
-  const dofus = (id: string, n: number) => ({ dofus: Array(n).fill(id), archis: [] });
+  const dofus = (id: string, n: number) => ({ dofus: Array(n).fill(id), archis: [], runs: 0, victoires: 0 });
   it("Dofawa : +1 vitalité par copie, plafonné à 10", () => {
     expect(bonusEquipe(dofus("dofawa", 3)).vitaBonus).toBe(3);
     expect(bonusEquipe(dofus("dofawa", 12)).vitaBonus).toBe(10); // cap maxCopies

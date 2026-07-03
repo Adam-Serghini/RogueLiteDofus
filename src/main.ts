@@ -9,7 +9,7 @@ import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
-  propositionsRecrutement, recruter, tenterButin,
+  propositionsRecrutement, recruter, tenterButin, enregistrerRun,
   appliquerArchimonstres, capturerArchi, type RunState,
 } from "./run";
 import * as ui from "./ui";
@@ -189,6 +189,7 @@ async function jouerRun(): Promise<void> {
     const zone = ZONES[z];
     const issue = await jouerZone(run, zone);
     if (issue === "wipe") {
+      enregistrerRun(meta, false); // run terminée : échec
       await ui.showWipe(); // mort : Progression perdue, Meta (Dofus) conservé
       return;
     }
@@ -197,7 +198,8 @@ async function jouerRun(): Promise<void> {
       await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${ZONES[z + 1].nom}.`);
     }
   }
-  await ui.showTransition("Krosmoz traversé !", "Tu as vaincu les trois zones. Retour à l'accueil.");
+  enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
+  await ui.showTransition("Krosmoz traversé !", "Tu as vaincu toutes les zones. Retour à l'accueil.");
 }
 
 async function boucle(): Promise<void> {

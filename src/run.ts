@@ -365,12 +365,13 @@ export function chargerMeta(): Meta {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const m = JSON.parse(raw) as Partial<Meta>;
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [] }; // rétro-compat
+      // rétro-compat : les vieux saves n'ont ni compteurs ni archis
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0 };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
   }
-  return { dofus: [], archis: [] };
+  return { dofus: [], archis: [], runs: 0, victoires: 0 };
 }
 
 export function sauverMeta(meta: Meta): void {
@@ -388,6 +389,13 @@ export function ajouterDofus(meta: Meta, id: string): void {
 
 export function reinitialiserMeta(meta: Meta): void {
   meta.dofus = [];
+  sauverMeta(meta);
+}
+
+/** Enregistre une run terminée : +1 run, +1 victoire si les 6 zones sont vaincues. */
+export function enregistrerRun(meta: Meta, reussie: boolean): void {
+  meta.runs += 1;
+  if (reussie) meta.victoires += 1;
   sauverMeta(meta);
 }
 
