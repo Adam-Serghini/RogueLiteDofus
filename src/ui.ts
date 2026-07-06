@@ -1266,6 +1266,10 @@ export function showInventaire(
   return new Promise((res) => {
     let sel = 0; // index du perso sélectionné
     const draw = () => {
+      // le re-render reconstruit tout l'écran : on préserve les positions de
+      // scroll (page + liste d'inventaire) pour ne pas remonter en haut au clic
+      const scrollInv = root.querySelector<HTMLElement>(".equip-inv")?.scrollTop ?? 0;
+      const scrollPage = document.scrollingElement?.scrollTop ?? 0;
       const perso = persos[sel];
       const onglets = persos
         .map(
@@ -1414,6 +1418,11 @@ export function showInventaire(
       document
         .getElementById("equip-retour")
         ?.addEventListener("click", () => res());
+
+      // restaure les positions de scroll capturées en tête de draw()
+      const nouvelleInv = root.querySelector<HTMLElement>(".equip-inv");
+      if (nouvelleInv) nouvelleInv.scrollTop = scrollInv;
+      if (document.scrollingElement) document.scrollingElement.scrollTop = scrollPage;
     };
     draw();
   });
