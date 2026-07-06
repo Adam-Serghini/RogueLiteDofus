@@ -26,6 +26,7 @@ export interface CombatCtx {
   log: (msg: string) => void;
   playerDamageBonus: number; // multiplicateur Dofus appliqué au camp joueur
   fx?: (ev: FxEvent) => void; // effets visuels (optionnel)
+  onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (optionnel)
 }
 
 export type Controller = (
@@ -40,6 +41,7 @@ export interface CombatHooks {
   rng?: Rng;
   playerDamageBonus?: number;
   fx?: (ev: FxEvent) => void; // effets visuels (crit, esquive…)
+  onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (récap de fin)
 }
 
 // --- Helpers de base ---------------------------------------------------------
@@ -313,6 +315,7 @@ function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
  *  Si `attaquant`/`ctx` sont fournis et que la cible a une posture de contre
  *  (Duel), elle peut riposter d'une frappe modeste (sans re-déclenchement). */
 function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ctx?: CombatCtx, ignoreBouclier?: boolean): void {
+  if (attaquant && dmg > 0) ctx?.onDegats?.(attaquant.ref, dmg); // stats de run
   let reste = dmg;
   if (cible.bouclier > 0 && !ignoreBouclier) {
     const absorbe = Math.min(cible.bouclier, reste);
@@ -1023,6 +1026,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
     log: hooks.log ?? (() => {}),
     playerDamageBonus: hooks.playerDamageBonus ?? 1,
     fx: hooks.fx,
+    onDegats: hooks.onDegats,
   };
 
   let garde = 0;

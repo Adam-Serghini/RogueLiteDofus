@@ -19,10 +19,21 @@ export interface PersoState {
   flashNiveau?: boolean; // transitoire (UI) : a monté de niveau au dernier combat → anime dans le panneau d'équipe
 }
 
+/** Statistiques de la run (récap de fin) — sérialisées avec la sauvegarde. */
+export interface RunStats {
+  degats: Record<string, number>; // classeId → dégâts infligés
+  combats: number; // combats gagnés
+  archis: number; // âmes capturées pendant cette run
+  objets: number; // pièces d'équipement trouvées
+  zones: number; // zones terminées
+}
+export const statsRunVides = (): RunStats => ({ degats: {}, combats: 0, archis: 0, objets: 0, zones: 0 });
+
 export interface RunState {
   persos: PersoState[];
   carte: GameMap | null;
   inventaire: ItemInstance[]; // exemplaires non équipés trouvés cette run (perdus à la mort)
+  stats: RunStats; // récap de fin de run
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -97,7 +108,7 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
       equipement: {},
     };
   });
-  return { persos, carte: null, inventaire: [] };
+  return { persos, carte: null, inventaire: [], stats: statsRunVides() };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------
@@ -446,6 +457,7 @@ export function chargerRunEnCours(): RunSauvee | null {
     // validation légère : version connue, persos existants dans CLASSES, zoneIdx sain
     if (s.version !== 1 || typeof s.zoneIdx !== "number" || !s.run?.persos?.length) return null;
     if (!s.run.persos.every((p) => CLASSES[p.classeId])) return null;
+    s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     return s as RunSauvee;
   } catch {
     return null;

@@ -178,6 +178,73 @@ button:focus-visible {
 }
 
 /* collection de reliques (toujours affichée ; non possédées = transparentes) */
+/* Récap de fin de run */
+.recap-compteurs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 6px 0 12px;
+}
+.recap-chip {
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  padding: 4px 12px;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+.recap-degats {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.recap-ligne {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.recap-sym {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.recap-nom {
+  width: 130px;
+  text-align: left;
+  font-weight: 800;
+}
+.recap-nom small {
+  display: block;
+  color: var(--muet);
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+.recap-barre {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.recap-barre-rempli {
+  height: 100%;
+  background: linear-gradient(90deg, #d98a2b, var(--or-clair));
+}
+.recap-barre span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-shadow: 0 1px 2px #fff8;
+}
+
 /* Run en cours (accueil) */
 .accueil-reprise {
   color: var(--txt);

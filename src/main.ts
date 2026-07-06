@@ -63,6 +63,13 @@ async function resoudreCombat(run: RunState, combatId: string, elite = false): P
     controllers: { joueur: ui.playerController, ennemi: enemyController },
     log: ui.log,
     fx: ui.fxEvent, // crit / esquive → nombres flottants
+    onDegats: (ref, dmg) => {
+      // récap de fin de run : dégâts infligés par héros (refs joueur = "j_<classe>")
+      if (ref.startsWith("j_")) {
+        const cid = ref.slice(2);
+        run.stats.degats[cid] = (run.stats.degats[cid] ?? 0) + dmg;
+      }
+    },
     onUpdate: async () => {
       ui.onUpdate();
       await sleep(60);
@@ -70,7 +77,10 @@ async function resoudreCombat(run: RunState, combatId: string, elite = false): P
     playerDamageBonus: damageMult,
   });
   synchroniserPV(run, combatants); // PV conservés d'un nœud à l'autre
-  if (gagne) await capturerArchis(combatants); // captures d'Archimonstres
+  if (gagne) {
+    run.stats.combats += 1;
+    run.stats.archis += await capturerArchis(combatants); // captures d'Archimonstres
+  }
   return { gagne, combatants };
 }
 
@@ -87,8 +97,8 @@ async function recompenserXP(run: RunState, gain: number): Promise<void> {
   }
 }
 
-/** Capture les âmes des Archimonstres vaincus (uniques) et annonce les nouvelles. */
-async function capturerArchis(combatants: Combatant[]): Promise<void> {
+/** Capture les âmes des Archimonstres vaincus (uniques), annonce et compte les nouvelles. */
+async function capturerArchis(combatants: Combatant[]): Promise<number> {
   const nouvelles: string[] = [];
   for (const c of combatants) {
     if (c.camp === "ennemi" && c.archi && c.monstreId && capturerArchi(meta, c.monstreId)) {
@@ -96,12 +106,14 @@ async function capturerArchis(combatants: Combatant[]): Promise<void> {
     }
   }
   if (nouvelles.length) await ui.showCapture(nouvelles);
+  return nouvelles.length;
 }
 
 /** Tire le butin d'équipement de la zone après une victoire et l'annonce. */
 async function recompenserButin(run: RunState, butinPano: string | undefined, type: NodeType): Promise<void> {
   if (!butinPano) return;
   const drops = tenterButin(run, butinPano, type, Math.random);
+  run.stats.objets += drops.length;
   if (drops.length) await ui.showDrop(drops);
 }
 
@@ -222,10 +234,11 @@ async function jouerRun(reprise: RunSauvee | null): Promise<void> {
     if (issue === "wipe") {
       effacerRunEnCours();
       enregistrerRun(meta, false); // run terminée : échec
-      await ui.showWipe(); // mort : Progression perdue, Meta (Dofus) conservé
+      await ui.showRecap(run, false); // mort : Progression perdue, Meta (Dofus) conservé
       return;
     }
     soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
+    run.stats.zones += 1;
     run.carte = null; // la zone est finie : la prochaine génère son plateau
     if (z < zones.length - 1) {
       sauverRunEnCours(z + 1, run); // reprise en début de zone suivante
@@ -234,7 +247,7 @@ async function jouerRun(reprise: RunSauvee | null): Promise<void> {
   }
   effacerRunEnCours();
   enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
-  await ui.showTransition("Krosmoz traversé !", "Tu as vaincu toutes les zones. Retour à l'accueil.");
+  await ui.showRecap(run, true);
 }
 
 async function boucle(): Promise<void> {
