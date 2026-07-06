@@ -1231,6 +1231,28 @@ kbd {
 .archi-mon.capt {
   border-color: var(--or);
 }
+/* Espèce sans Archimonstre : entrée d'encyclopédie neutre (sprite en couleurs) */
+.archi-mon.simple {
+  opacity: 0.92;
+}
+.archi-mon.simple small {
+  font-style: normal;
+}
+.bestiaire-badge {
+  position: absolute;
+  top: -7px;
+  left: -6px;
+  font-size: 0.52rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--danger);
+  border: 1px solid var(--bord);
+  border-radius: 7px;
+  padding: 1px 5px;
+  box-shadow: 0 1px 3px #0006;
+}
 .archi-mark {
   position: absolute;
   top: -6px;

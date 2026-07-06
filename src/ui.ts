@@ -1763,7 +1763,8 @@ function ocreEffetTxt(paBonus: number, degats: number): string {
   return parts.join(" · ");
 }
 
-/** Bestiaire par zone : suit les Archimonstres capturés et la progression du Dofus Ocre. */
+/** Bestiaire par zone : toutes les espèces (boss & miniboss inclus) ;
+ *  les espèces à Archimonstre (archiNom) suivent la capture (Dofus Ocre). */
 export function showBestiaire(meta: Meta): Promise<void> {
   return new Promise((res) => {
     // seules les espèces ayant un Archimonstre réel (archiNom) sont capturables
@@ -1774,22 +1775,37 @@ export function showBestiaire(meta: Meta): Promise<void> {
     const ocre = paliersOcre(meta);
     const prochain = OCRE_PALIERS.find((p) => captures < p.seuil);
     const zonesHtml = ZONES.map((z) => {
-      const ids = capturables(z);
-      const cards = ids
+      const ids = monstresDeZone(z); // toutes les espèces de la zone (boss/miniboss inclus)
+      const capturablesIds = ids.filter((id) => MONSTRES[id]?.archiNom);
+      // ordre d'affichage : le boss en dernier (les autres gardent l'ordre des rencontres)
+      const tri = [...ids].sort((a, b) => Number(MONSTRES[a]?.boss ?? false) - Number(MONSTRES[b]?.boss ?? false));
+      const cards = tri
         .map((id) => {
           const m = MONSTRES[id]!;
+          const badge = m.boss ? `<span class="bestiaire-badge">Boss</span>` : "";
+          if (!m.archiNom) {
+            // espèce sans Archimonstre : simple entrée d'encyclopédie
+            return `<div class="archi-mon simple" title="${escapeHtml(m.nom)}${m.boss ? " — Boss de donjon" : ""} (pas d'Archimonstre connu)">
+            <img src="${A(m.img ?? "")}" alt="" onerror="this.remove()" />
+            ${badge}
+            <span>${escapeHtml(m.nom)}</span>
+            <small>${m.boss ? "Boss" : "—"}</small>
+          </div>`;
+          }
           const capt = meta.archis.includes(id);
-          return `<div class="archi-mon ${capt ? "capt" : "manquant"}" title="${escapeHtml(m.archiNom!)} — Archimonstre de ${escapeHtml(m.nom)}${capt ? " (capturé)" : " (non capturé)"}">
+          return `<div class="archi-mon ${capt ? "capt" : "manquant"}" title="${escapeHtml(m.archiNom)} — Archimonstre de ${escapeHtml(m.nom)}${capt ? " (capturé)" : " (non capturé)"}">
           <img src="${A(m.img ?? "")}" alt="" onerror="this.remove()" />
           ${capt ? `<img class="archi-mark" src="${A("/assets/divers/Archmonster.webp")}" alt="" onerror="this.remove()" />` : ""}
-          <span>${escapeHtml(m.archiNom!)}</span>
+          ${badge}
+          <span>${escapeHtml(m.archiNom)}</span>
           <small>${escapeHtml(m.nom)}</small>
         </div>`;
         })
         .join("");
-      const corps =
-        cards || `<p class="muet">Aucun Archimonstre dans cette zone.</p>`;
-      return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} <span class="archi-zone-compte">${ids.filter((id) => meta.archis.includes(id)).length}/${ids.length}</span></h3><div class="archi-grid">${corps}</div></div>`;
+      const compte = capturablesIds.length
+        ? `<span class="archi-zone-compte">${capturablesIds.filter((id) => meta.archis.includes(id)).length}/${capturablesIds.length} archis</span>`
+        : `<span class="archi-zone-compte">aucun archi</span>`;
+      return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} ${compte}</h3><div class="archi-grid">${cards}</div></div>`;
     }).join("");
     ecran(`
       <h1>📖 Bestiaire — Archimonstres</h1>

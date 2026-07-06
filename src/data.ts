@@ -822,6 +822,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 4, initiative: 11,
     resistances: { terre: 0.15, feu: -0.1 },
     sorts: ["picotement"], ia: "agressif",
+    archiNom: "Gobstiniais le Têtu",
     img: "/assets/monstres/gobet.png",
   },
   gobelin: {
@@ -838,6 +839,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 15,
     resistances: { air: 0.15, terre: -0.1 },
     sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Chevaustine le Reconstruit",
     img: "/assets/monstres/gob_trotteur.png",
   },
   gobelin_gladiateur: {
@@ -915,19 +917,21 @@ export const MONSTRES: Record<string, Monstre> = {
   // Esprits insaisissables : Air dominant (esquive), un hanteur Feu.
   // (Signature future de Boostache : réinvoque un monstre vaincu.)
   fantome_farceur: {
-    id: "fantome_farceur", nom: "Fantôme Farceur", pv: 58,
+    id: "fantome_farceur", nom: "Fantôme Apero", pv: 58,
     stats: { force: 8, intelligence: 10, agilite: 35, vitalite: 46 }, // frappe Air (esquive haute)
     pa: 5, initiative: 14,
     resistances: { air: 0.25, terre: -0.15 },
     sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Fanlabiz le Véloce",
     img: "/assets/monstres/fantome_farceur.png",
   },
   fantome_hanteur: {
-    id: "fantome_hanteur", nom: "Fantôme Hanteur", pv: 64,
+    id: "fantome_hanteur", nom: "Fantôme Hicide", pv: 64,
     stats: { force: 8, intelligence: 34, agilite: 14, vitalite: 50 }, // frappe Feu (flammes spectrales)
     pa: 5, initiative: 11,
     resistances: { feu: 0.2, air: 0.15, terre: -0.1 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Fantoch le Pantin",
     img: "/assets/monstres/fantome_hanteur.png",
   },
   ashi_magari: {
@@ -939,11 +943,12 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/ashi_magari.png",
   },
   esprit_frappeur: {
-    id: "esprit_frappeur", nom: "Esprit Frappeur", pv: 112,
+    id: "esprit_frappeur", nom: "Fantôme Égérie", pv: 112,
     stats: { force: 12, intelligence: 16, agilite: 33, vitalite: 68 }, // élite/miniboss véloce
     pa: 5, initiative: 13,
     resistances: { air: 0.2, feu: 0.1, terre: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
+    archiNom: "Fantrask la Rêveuse",
     img: "/assets/monstres/esprit_frappeur.png",
   },
   boostache: {
@@ -964,6 +969,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 9,
     resistances: { eau: 0.4, feu: -0.3 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Larvonika l'Instrument",
     img: "/assets/monstres/larve_bleue.png",
   },
   larve_verte: {
@@ -972,6 +978,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 9,
     resistances: { terre: 0.4, air: -0.3 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Larchimaide la Poussée",
     img: "/assets/monstres/larve_verte.png",
   },
   larve_orange: {
@@ -980,6 +987,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 9,
     resistances: { feu: 0.4, eau: -0.3 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Larvapstrè le Subjectif",
     img: "/assets/monstres/larve_orange.png",
   },
   larve_doree: {
@@ -1009,14 +1017,16 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 9,
     resistances: { eau: 0.3, terre: 0.1, feu: -0.15 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Corboyard l'Enigmatique",
     img: "/assets/monstres/corailleur.png",
   },
   craboral: {
-    id: "craboral", nom: "Craboral", pv: 95,
+    id: "craboral", nom: "Crabe", pv: 95,
     stats: { force: 50, intelligence: 10, agilite: 12, vitalite: 72 }, // frappe Terre (pinces)
     pa: 5, initiative: 8,
     resistances: { terre: 0.25, eau: 0.15, air: -0.15 },
     sorts: ["morsure", "charge"], ia: "agressif",
+    archiNom: "Craraboss le Féérique",
     img: "/assets/monstres/craboral.png",
   },
   kaskargo: {
@@ -1025,6 +1035,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 4, initiative: 5,
     resistances: { terre: 0.2, feu: 0.15, eau: 0.15, air: 0.1 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Kaskapointhe la Couverte",
     img: "/assets/monstres/kaskargo.png",
   },
   corailleur_ancien: {
@@ -1055,22 +1066,25 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 10,
     resistances: { terre: 0.5, air: -0.3 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Kwakamole l'Appétissant",
     img: "/assets/monstres/kwak_de_terre.png",
   },
   kwak_de_feu: {
-    id: "kwak_de_feu", nom: "Kwak de Feu", pv: 100,
+    id: "kwak_de_feu", nom: "Kwak de Flamme", pv: 100,
     stats: { force: 10, intelligence: 54, agilite: 12, vitalite: 76 },
     pa: 5, initiative: 10,
     resistances: { feu: 0.5, eau: -0.3 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Kwakolak le Chocolaté",
     img: "/assets/monstres/kwak_de_feu.png",
   },
   kwak_d_eau: {
-    id: "kwak_d_eau", nom: "Kwak d'Eau", pv: 100,
+    id: "kwak_d_eau", nom: "Kwak de Glace", pv: 100,
     stats: { force: 10, intelligence: 10, agilite: 12, chance: 54, vitalite: 76 },
     pa: 5, initiative: 10,
     resistances: { eau: 0.5, feu: -0.3 },
     sorts: ["morsure"], ia: "agressif",
+    archiNom: "Kwakwatique le Trempé",
     img: "/assets/monstres/kwak_d_eau.png",
   },
   kwak_de_vent: {
@@ -1079,6 +1093,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 5, initiative: 12,
     resistances: { air: 0.5, terre: -0.3 },
     sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Kwaké le Piraté",
     img: "/assets/monstres/kwak_de_vent.png",
   },
   kwak_veteran: {
