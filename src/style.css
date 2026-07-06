@@ -978,12 +978,17 @@ kbd {
   gap: 6px;
 }
 .preset-pos {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
-  color: var(--muet);
+}
+/* petit trait vertical entre les éléments et le placement par défaut */
+.preset-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 4px;
+  background: var(--bord-clair);
+  opacity: 0.7;
 }
 
 /* écran Formation — grille 4×2 */
@@ -2264,8 +2269,8 @@ kbd {
   margin: 0;
 }
 .form-cell .el-pastille {
-  width: 9px;
-  height: 9px;
+  width: 12px;
+  height: 12px;
 }
 
 .stat-val {
