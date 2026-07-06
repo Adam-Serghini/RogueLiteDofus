@@ -825,13 +825,21 @@ export const MONSTRES: Record<string, Monstre> = {
     archiNom: "Gobstiniais le Têtu",
     img: "/assets/monstres/gobet.png",
   },
-  gobelin: {
-    id: "gobelin", nom: "Gobelin", pv: 62,
+  gobichon: {
+    id: "gobichon", nom: "Gobichon", pv: 62,
     stats: { force: 34, intelligence: 6, agilite: 12, vitalite: 50 }, // frappe Terre
     pa: 5, initiative: 10,
     resistances: { terre: 0.15, air: -0.1 },
     sorts: ["morsure"], ia: "agressif",
-    img: "/assets/monstres/gobelin.png",
+    img: "/assets/monstres/gobichon.png",
+  },
+  gobaliste: {
+    id: "gobaliste", nom: "Gobaliste", pv: 56,
+    stats: { force: 10, intelligence: 32, agilite: 12, vitalite: 46 }, // frappe Feu (projectiles)
+    pa: 5, initiative: 12,
+    resistances: { feu: 0.15, eau: -0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/gobaliste.png",
   },
   gob_trotteur: {
     id: "gob_trotteur", nom: "Gob-Trotteur", pv: 54,
@@ -842,13 +850,13 @@ export const MONSTRES: Record<string, Monstre> = {
     archiNom: "Chevaustine le Reconstruit",
     img: "/assets/monstres/gob_trotteur.png",
   },
-  gobelin_gladiateur: {
-    id: "gobelin_gladiateur", nom: "Gobelin Gladiateur", pv: 115,
-    stats: { force: 38, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss d'arène
+  gobaladee: {
+    id: "gobaladee", nom: "Gobaladée", pv: 115,
+    stats: { force: 38, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss de l'Akadémie
     pa: 5, initiative: 9,
     resistances: { terre: 0.15, feu: 0.1, eau: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
-    img: "/assets/monstres/gobelin_gladiateur.png",
+    img: "/assets/monstres/gobaladee.png",
   },
   directeur_grunob: {
     id: "directeur_grunob", nom: "Directeur Grunob", pv: 500,
@@ -964,32 +972,29 @@ export const MONSTRES: Record<string, Monstre> = {
 
   // ===== Donjon des Larves (joué après les Forgerons) =====
   // Puzzle élémentaire allégé (3 couleurs), chiffres au-dessus des Forgerons.
-  larve_bleue: {
-    id: "larve_bleue", nom: "Larve Bleue", pv: 78,
+  larve_saphir: {
+    id: "larve_saphir", nom: "Larve Saphir", pv: 78,
     stats: { force: 8, intelligence: 8, agilite: 10, chance: 44, vitalite: 60 }, // frappe Eau
     pa: 5, initiative: 9,
     resistances: { eau: 0.4, feu: -0.3 },
     sorts: ["morsure"], ia: "agressif",
-    archiNom: "Larvonika l'Instrument",
-    img: "/assets/monstres/larve_bleue.png",
+    img: "/assets/monstres/larve_saphir.png",
   },
-  larve_verte: {
-    id: "larve_verte", nom: "Larve Verte", pv: 78,
+  larve_emeraude: {
+    id: "larve_emeraude", nom: "Larve Émeraude", pv: 78,
     stats: { force: 44, intelligence: 8, agilite: 10, vitalite: 60 }, // frappe Terre
     pa: 5, initiative: 9,
     resistances: { terre: 0.4, air: -0.3 },
     sorts: ["morsure"], ia: "agressif",
-    archiNom: "Larchimaide la Poussée",
-    img: "/assets/monstres/larve_verte.png",
+    img: "/assets/monstres/larve_emeraude.png",
   },
-  larve_orange: {
-    id: "larve_orange", nom: "Larve Orange", pv: 78,
+  larve_rubis: {
+    id: "larve_rubis", nom: "Larve Rubis", pv: 78,
     stats: { force: 8, intelligence: 44, agilite: 10, vitalite: 60 }, // frappe Feu
     pa: 5, initiative: 9,
     resistances: { feu: 0.4, eau: -0.3 },
     sorts: ["morsure"], ia: "agressif",
-    archiNom: "Larvapstrè le Subjectif",
-    img: "/assets/monstres/larve_orange.png",
+    img: "/assets/monstres/larve_rubis.png",
   },
   larve_doree: {
     id: "larve_doree", nom: "Larve Dorée", pv: 150,
@@ -1117,13 +1122,13 @@ export const MONSTRES: Record<string, Monstre> = {
     archiNom: "Kwaké le Piraté",
     img: "/assets/monstres/kwak_de_vent.png",
   },
-  kwak_veteran: {
-    id: "kwak_veteran", nom: "Kwak Vétéran", pv: 190,
+  kwakere_de_terre: {
+    id: "kwakere_de_terre", nom: "Kwakere de Terre", pv: 190,
     stats: { force: 30, intelligence: 30, agilite: 22, chance: 30, vitalite: 104 }, // élite/miniboss multi-élément
     pa: 5, initiative: 11,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
     sorts: ["morsure", "charge"], ia: "agressif",
-    img: "/assets/monstres/kwak_veteran.png",
+    img: "/assets/monstres/kwakere_de_terre.png",
   },
   kwakwa: {
     id: "kwakwa", nom: "Kwakwa", pv: 860,
@@ -1325,20 +1330,20 @@ export const COMBATS: Record<string, CombatDef> = {
 
   // ===== Akadémie des Gobs =====
   gob_1: { nom: "Cour de récré", ennemis: [
-    { monstre: "gobelin", position: 0 }, { monstre: "gobet", position: 1 },
+    { monstre: "gobichon", position: 0 }, { monstre: "gobet", position: 1 },
   ] },
   gob_2: { nom: "Leçon de bagarre", ennemis: [
-    { monstre: "gobelin", position: 0 }, { monstre: "gobet", position: 1 }, { monstre: "gob_trotteur", position: 4 },
+    { monstre: "gobichon", position: 0 }, { monstre: "gobet", position: 1 }, { monstre: "gobaliste", position: 4 },
   ] },
   gob_3: { nom: "Sprint des trotteurs", ennemis: [
-    { monstre: "gob_trotteur", position: 0 }, { monstre: "gobelin", position: 1 }, { monstre: "gobet", position: 2 },
+    { monstre: "gob_trotteur", position: 0 }, { monstre: "gobichon", position: 1 }, { monstre: "gobet", position: 2 },
   ] },
   gob_elite: { nom: "Examen d'arène (dur)", ennemis: [
-    { monstre: "gobelin_gladiateur", position: 0 }, { monstre: "gobelin", position: 1 },
-    { monstre: "gobet", position: 2 }, { monstre: "gob_trotteur", position: 4 },
+    { monstre: "gobaladee", position: 0 }, { monstre: "gobichon", position: 1 },
+    { monstre: "gob_trotteur", position: 2 }, { monstre: "gobaliste", position: 4 },
   ] },
   gob_boss: { nom: "Donjon — Directeur Grunob", ennemis: [
-    { monstre: "directeur_grunob", position: 0 }, { monstre: "gobelin_gladiateur", position: 1 }, // boss + miniboss devant
+    { monstre: "directeur_grunob", position: 0 }, { monstre: "gobaladee", position: 1 }, // boss + miniboss devant
   ] },
 
   // ===== Cache de Kankreblath =====
@@ -1379,17 +1384,17 @@ export const COMBATS: Record<string, CombatDef> = {
 
   // ===== Donjon des Larves =====
   lrv_1: { nom: "Reptation gluante", ennemis: [
-    { monstre: "larve_bleue", position: 0 }, { monstre: "larve_orange", position: 1 }, // eau + feu
+    { monstre: "larve_saphir", position: 0 }, { monstre: "larve_rubis", position: 1 }, // eau + feu
   ] },
   lrv_2: { nom: "Trio multicolore", ennemis: [
-    { monstre: "larve_verte", position: 0 }, { monstre: "larve_bleue", position: 1 }, { monstre: "larve_orange", position: 2 },
+    { monstre: "larve_emeraude", position: 0 }, { monstre: "larve_saphir", position: 1 }, { monstre: "larve_rubis", position: 2 },
   ] },
   lrv_3: { nom: "Marée rampante", ennemis: [
-    { monstre: "larve_orange", position: 0 }, { monstre: "larve_verte", position: 1 }, { monstre: "larve_bleue", position: 2 },
+    { monstre: "larve_rubis", position: 0 }, { monstre: "larve_emeraude", position: 1 }, { monstre: "larve_saphir", position: 2 },
   ] },
   lrv_elite: { nom: "Couvain doré (dur)", ennemis: [
-    { monstre: "larve_doree", position: 0 }, { monstre: "larve_verte", position: 1 },
-    { monstre: "larve_bleue", position: 2 }, { monstre: "larve_orange", position: 3 },
+    { monstre: "larve_doree", position: 0 }, { monstre: "larve_emeraude", position: 1 },
+    { monstre: "larve_saphir", position: 2 }, { monstre: "larve_rubis", position: 3 },
   ] },
   lrv_boss: { nom: "Donjon — Shin Larve", ennemis: [
     { monstre: "shin_larve", position: 0 }, { monstre: "larve_doree", position: 1 }, // boss + miniboss devant
@@ -1424,11 +1429,11 @@ export const COMBATS: Record<string, CombatDef> = {
     { monstre: "kwak_de_vent", position: 0 }, { monstre: "kwak_de_terre", position: 1 }, { monstre: "kwak_d_eau", position: 2 },
   ] },
   kwa_elite: { nom: "Les quatre vents (dur)", ennemis: [
-    { monstre: "kwak_veteran", position: 0 }, { monstre: "kwak_de_terre", position: 1 },
+    { monstre: "kwakere_de_terre", position: 0 }, { monstre: "kwak_de_terre", position: 1 },
     { monstre: "kwak_de_feu", position: 2 }, { monstre: "kwak_d_eau", position: 4 },
   ] },
   kwa_boss: { nom: "Donjon — Kwakwa", ennemis: [
-    { monstre: "kwakwa", position: 0 }, { monstre: "kwak_veteran", position: 1 }, // boss + miniboss devant
+    { monstre: "kwakwa", position: 0 }, { monstre: "kwakere_de_terre", position: 1 }, // boss + miniboss devant
   ] },
 };
 

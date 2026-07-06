@@ -15,9 +15,10 @@ const DEST = path.resolve(import.meta.dirname, "../public/assets/monstres");
 const MONSTRES = {
   // Akadémie des Gobs
   gobet: "Gobet",
-  gobelin: 1473, // sprite du Gobelin Bagarreur
+  gobichon: "Gobichon",
   gob_trotteur: "Gob-trotteur",
-  gobelin_gladiateur: 1612, // sprite du Gobelin courageux
+  gobaliste: "Gobaliste",
+  gobaladee: "Gobaladée",
   directeur_grunob: "Directeur Grunob",
   // Cache de Kankreblath
   pyrasite: "Pyrasite",
@@ -33,9 +34,9 @@ const MONSTRES = {
   boostache_prepubere: 353, // Boostache Prépubère
   boostache: "Boostache",
   // Donjon des Larves
-  larve_bleue: "Larve Bleue",
-  larve_verte: "Larve Verte",
-  larve_orange: "Larve Orange",
+  larve_saphir: "Larve Saphir",
+  larve_rubis: "Larve Rubis",
+  larve_emeraude: "Larve Émeraude",
   larve_doree: "Larve Dorée",
   shin_larve: "Shin Larve",
   // Grotte Hesque (roster réel DofusDB, donjon 25)
@@ -51,7 +52,7 @@ const MONSTRES = {
   kwak_de_feu: "Kwak de Flamme",
   kwak_d_eau: "Kwak de Glace",
   kwak_de_vent: "Kwak de Vent",
-  kwak_veteran: "Kwakwa", // vétéran inventé : réutilise le sprite du Kwakwa
+  kwakere_de_terre: "Kwakere de Terre",
   kwakwa: "Kwakwa",
 };
 
