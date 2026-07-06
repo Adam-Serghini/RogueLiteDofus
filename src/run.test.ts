@@ -140,3 +140,25 @@ describe("propositions de recrutement", () => {
     expect(new Set(propos).size).toBe(propos.length); // sans doublon
   });
 });
+
+describe("modificateurs d'élite", () => {
+  it("booste toute la meute selon le modificateur tiré", async () => {
+    const { fabriquerEnnemis, appliquerModificateurElite } = await import("./run");
+    const avant = fabriquerEnnemis("tai_elite");
+    const apres = fabriquerEnnemis("tai_elite");
+    const m = appliquerModificateurElite(apres, () => 0); // index 0 → Enragés (+35 % stats off.)
+    expect(m.id).toBe("enrage");
+    apres.forEach((e, i) => {
+      expect(e.stats.force).toBe(Math.round(avant[i].stats.force * 1.35));
+      expect(e.stats.vitalite).toBe(avant[i].stats.vitalite); // la vitalité ne bouge pas
+      expect(e.pvMax).toBe(avant[i].pvMax);
+    });
+    const cuirasses = fabriquerEnnemis("tai_elite");
+    const m2 = appliquerModificateurElite(cuirasses, () => 0.4); // index 1 → Cuirassés
+    expect(m2.id).toBe("cuirasse");
+    cuirasses.forEach((e, i) => {
+      expect(e.pvMax).toBe(Math.round(avant[i].pvMax * 1.3));
+      expect(e.resistances.terre ?? 0).toBeCloseTo((avant[i].resistances.terre ?? 0) + 0.1);
+    });
+  });
+});

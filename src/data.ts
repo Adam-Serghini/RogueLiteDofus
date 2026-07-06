@@ -1844,6 +1844,25 @@ export const DROP = {
 /** Chance qu'un boss de zone lâche son Dofus (tunable). */
 export const DOFUS_DROP_RATE = 0.01;
 
+// --- Modificateurs d'élites (cases « combat dur ») ------------------------------
+/** Chaque combat dur tire un modificateur : toute la meute est boostée, et la
+ *  récompense grimpe (butin au taux donjon). Appliqué par appliquerModificateurElite. */
+export interface ModificateurElite {
+  id: string;
+  nom: string; // suffixe du titre de la rencontre
+  desc: string;
+  statMult?: number; // multiplie les stats OFFENSIVES (pas la vitalité)
+  pvMult?: number;
+  resAll?: number;
+  initBonus?: number;
+  paBonus?: number;
+}
+export const MODIFICATEURS_ELITE: ModificateurElite[] = [
+  { id: "enrage", nom: "Enragés", desc: "+35 % aux caractéristiques offensives", statMult: 1.35 },
+  { id: "cuirasse", nom: "Cuirassés", desc: "+30 % de PV et +10 % de résistances", pvMult: 1.3, resAll: 0.1 },
+  { id: "veloce", nom: "Véloces", desc: "+6 d'initiative et +1 PA", initBonus: 6, paBonus: 1 },
+];
+
 // --- Archimonstres & Dofus Ocre ----------------------------------------------
 /** Paramètres des Archimonstres (variante rare et boostée, capturable). */
 export const ARCHI = {

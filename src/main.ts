@@ -8,6 +8,7 @@ import { restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
+  appliquerModificateurElite,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso,
   appliquerArchimonstres, capturerArchi, type RunState,
@@ -35,10 +36,15 @@ interface ResultatCombat {
   combatants: Combatant[];
 }
 
-async function resoudreCombat(run: RunState, combatId: string): Promise<ResultatCombat> {
-  const titre = COMBATS[combatId]?.nom ?? "Combat";
+async function resoudreCombat(run: RunState, combatId: string, elite = false): Promise<ResultatCombat> {
+  let titre = COMBATS[combatId]?.nom ?? "Combat";
   const equipe = equipeCombattante(run);
   const ennemis = fabriquerEnnemis(combatId);
+  if (elite) {
+    // combat dur : toute la meute reçoit un modificateur tiré au sort
+    const modif = appliquerModificateurElite(ennemis, Math.random);
+    titre = `${titre} · ${modif.nom} (${modif.desc})`;
+  }
   appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
   // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
   const { damageMult, paBonus, vitaBonus, resAllBonus } = bonusEquipe(meta);
@@ -112,10 +118,11 @@ async function resoudreType(
   switch (type) {
     case "combat":
     case "combat_dur": {
-      const { gagne } = await resoudreCombat(run, combatId!);
+      const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur");
       if (!gagne) return "wipe";
       await recompenserXP(run, xp);
-      await recompenserButin(run, butinPano, type);
+      // combat dur modifié → butin au taux donjon (la prise de risque paie)
+      await recompenserButin(run, butinPano, type === "combat_dur" ? "donjon" : type);
       return "continue";
     }
     case "taverne": {

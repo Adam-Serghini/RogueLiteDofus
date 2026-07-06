@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, investirN } from "./progression";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Spell, Stats } from "./types";
@@ -365,6 +365,36 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
 export function fabriquerEnnemis(combatKey: string): Combatant[] {
   const def = COMBATS[combatKey];
   return def.ennemis.map((e, i) => depuisMonstre(MONSTRES[e.monstre], `e${i}_${e.monstre}`, e.position));
+}
+
+/** Applique un modificateur d'élite tiré au sort à TOUTE la meute (combat dur). */
+export function appliquerModificateurElite(enemies: Combatant[], rng: () => number): ModificateurElite {
+  const m = MODIFICATEURS_ELITE[Math.floor(rng() * MODIFICATEURS_ELITE.length)];
+  for (const e of enemies) {
+    if (m.statMult) {
+      const st = e.stats;
+      e.stats = {
+        ...st,
+        force: Math.round(st.force * m.statMult),
+        intelligence: Math.round(st.intelligence * m.statMult),
+        agilite: Math.round(st.agilite * m.statMult),
+        chance: Math.round((st.chance ?? 0) * m.statMult),
+      };
+    }
+    if (m.pvMult) {
+      e.pvMax = Math.round(e.pvMax * m.pvMult);
+      e.pvBase = e.pvMax;
+      e.pvActuels = e.pvMax;
+    }
+    if (m.resAll) {
+      for (const el of ["terre", "feu", "eau", "air"] as Element[]) {
+        e.resistances[el] = (e.resistances[el] ?? 0) + m.resAll;
+      }
+    }
+    if (m.initBonus) e.initiative += m.initBonus;
+    if (m.paBonus) { e.paMax += m.paBonus; e.paActuels = e.paMax; }
+  }
+  return m;
 }
 
 /** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */
