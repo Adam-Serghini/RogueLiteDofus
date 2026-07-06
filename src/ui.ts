@@ -369,6 +369,10 @@ const MENU_INVENTAIRE = A("/assets/menu/Inventaire.png");
 const MENU_BESTIAIRE = A("/assets/menu/bestiaires.png");
 const MENU_PARAM = A("/assets/menu/parametres.png");
 const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
+
+/** Pastille d'élément d'un perso (vide si allocation Libre). */
+const pastilleElement = (el?: Element): string =>
+  el ? `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="Élément : ${elNom[el]}" onerror="this.remove()" />` : "";
 const classSymbol = (classeId: string): string =>
   A(`/assets/class_symbol/${classeId}.png`);
 // Icônes de stats secondaires (cf. maquette de carte)
@@ -1116,7 +1120,7 @@ export function showFormation(persos: PersoState[]): Promise<void> {
       const p = occupant(cell);
       const sel = selCell === cell ? "sel" : "";
       const inner = p
-        ? `<img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" /><span>${escapeHtml(CLASSES[p.classeId].nom)}</span>`
+        ? `<img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" /><span>${escapeHtml(CLASSES[p.classeId].nom)}</span>${pastilleElement(p.elementChoisi)}`
         : `<span class="form-vide">+</span>`;
       return `<button class="form-cell ${p ? "" : "vide"} ${sel}" data-cell="${cell}" ${p ? `draggable="true"` : ""}>${inner}</button>`;
     };
@@ -1976,7 +1980,7 @@ export function showCarte(
               ${p.flashNiveau ? `<span class="niv-flash">⬆ Niveau ${p.progression.niveau} !</span>` : ""}
               <img class="aside-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
               <div class="aside-info">
-                <div class="aside-nom">${escapeHtml(classe.nom)}<span class="aside-niv">Niv.${p.progression.niveau}</span></div>
+                <div class="aside-nom">${escapeHtml(classe.nom)}${pastilleElement(p.elementChoisi)}<span class="aside-niv">Niv.${p.progression.niveau}</span></div>
                 <div class="barre-pv mini">
                   <div class="barre-pv-rempli" style="width:${pct}%"></div>
                   <span class="pv-txt">${Math.max(0, Math.round(p.pvActuels))} / ${pvMax}</span>
