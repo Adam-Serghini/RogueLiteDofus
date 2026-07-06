@@ -61,26 +61,24 @@ const CLASSES_DESACTIVEES = new Set(["sadida"]); // déséquilibré, en attente 
 export const classesDisponibles = (): string[] =>
   Object.keys(CLASSES).filter((id) => !CLASSES_DESACTIVEES.has(id));
 
-/** Case de grille (0..7) de chaque membre, depuis la formation sauvegardée.
- *  Garantit l'unicité et le domaine ; complète les manquants par la 1re case libre. */
+/** Case de grille (0..7) de chaque membre, depuis la RANGÉE préférée sauvegardée
+ *  (avant = cases 0-3, arrière = 4-7). Les héros s'EMPILENT dans leur rangée
+ *  (1re case libre) → la préférence marche à tous les coups ; si la rangée est
+ *  pleine, on déborde dans l'autre. */
 function cellulesPour(ids: string[]): Record<string, number> {
   const f = chargerConfig().formation;
   const cells: Record<string, number> = {};
   const pris = new Set<number>();
+  const caseLibreDans = (rangee: "avant" | "arriere"): number | undefined => {
+    const [debut, fin] = rangee === "avant" ? [0, 4] : [4, 8];
+    for (let c = debut; c < fin; c++) if (!pris.has(c)) return c;
+    return undefined;
+  };
   for (const id of ids) {
-    const c = f[id];
-    if (typeof c === "number" && c >= 0 && c < 8 && !pris.has(c)) {
-      cells[id] = c;
-      pris.add(c);
-    }
-  }
-  let libre = 0;
-  for (const id of ids) {
-    if (cells[id] === undefined) {
-      while (pris.has(libre)) libre++;
-      cells[id] = libre;
-      pris.add(libre);
-    }
+    const pref = f[id] === "arriere" ? "arriere" : "avant"; // défaut : avant
+    const cell = caseLibreDans(pref) ?? caseLibreDans(pref === "avant" ? "arriere" : "avant")!;
+    cells[id] = cell;
+    pris.add(cell);
   }
   return cells;
 }

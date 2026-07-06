@@ -1105,8 +1105,9 @@ export function showFormation(persos: PersoState[]): Promise<void> {
     let selCell = -1; // case sélectionnée
     const occupant = (cell: number) => persos.find((p) => p.position === cell);
     const enregistrer = () => {
+      // la config ne retient que la RANGÉE préférée (le placement exact vit dans PersoState.position)
       config.formation = Object.fromEntries(
-        persos.map((p) => [p.classeId, p.position]),
+        persos.map((p) => [p.classeId, p.position < 4 ? "avant" : "arriere"] as const),
       );
       sauverConfig(config);
     };
@@ -1472,7 +1473,7 @@ export function showSettings(): Promise<void> {
         <div class="presets">
           ${classesDisponibles().map((cid) => {
             const elSel = config.elements[cid];
-            const pos = config.formation[cid] ?? 0;
+            const rangee = config.formation[cid] === "arriere" ? "arriere" : "avant";
             return `<div class="preset-classe">
               <img class="preset-sym" src="${classSymbol(cid)}" alt="" onerror="this.remove()" />
               <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
@@ -1480,11 +1481,10 @@ export function showSettings(): Promise<void> {
                 ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${elSel === el ? "sel" : ""}" data-classe="${cid}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
                 <button class="form-el-btn libre ${elSel ? "" : "sel"}" data-classe="${cid}" data-el="libre" title="Allocation manuelle">Libre</button>
               </div>
-              <label class="preset-pos">Case
-                <select data-classe="${cid}">
-                  ${[0, 1, 2, 3, 4, 5, 6, 7].map((cell) => `<option value="${cell}" ${cell === pos ? "selected" : ""}>${cell < 4 ? `Avant ${cell + 1}` : `Arrière ${cell - 3}`}</option>`).join("")}
-                </select>
-              </label>
+              <div class="preset-pos">
+                <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
+                <button class="form-el-btn ${rangee === "arriere" ? "sel" : ""}" data-classe="${cid}" data-rangee="arriere" title="Ligne arrière (les héros s'y empilent)">Arrière</button>
+              </div>
             </div>`;
           }).join("")}
         </div>
@@ -1500,10 +1500,11 @@ export function showSettings(): Promise<void> {
           draw();
         });
       });
-      root.querySelectorAll<HTMLSelectElement>(".preset-pos select").forEach((sel) => {
-        sel.addEventListener("change", () => {
-          config.formation[sel.dataset.classe!] = Number(sel.value);
+      root.querySelectorAll<HTMLButtonElement>(".preset-pos [data-rangee]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          config.formation[btn.dataset.classe!] = btn.dataset.rangee as "avant" | "arriere";
           sauverConfig(config);
+          draw();
         });
       });
       document.getElementById("set-touche")?.addEventListener("click", () => {

@@ -985,14 +985,6 @@ kbd {
   font-size: 0.8rem;
   color: var(--muet);
 }
-.preset-pos select {
-  background: var(--panel);
-  color: var(--txt);
-  border: 1px solid var(--bord);
-  border-radius: 8px;
-  padding: 3px 6px;
-  font: inherit;
-}
 
 /* écran Formation — grille 4×2 */
 .formation-grille {

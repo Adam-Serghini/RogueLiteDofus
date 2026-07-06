@@ -3,10 +3,13 @@
 // =============================================================================
 import type { Element } from "./types";
 
+/** Rangée préférée d'un héros (le placement exact s'empile dans la rangée). */
+export type Rangee = "avant" | "arriere";
+
 export interface Settings {
   toucheFinTour: string; // valeur de KeyboardEvent.key (ex. " ", "Enter", "a")
   autoFinTour: boolean; // passer le tour automatiquement si aucune action possible
-  formation: Record<string, number>; // classe -> case de grille 0..7 (0-3 avant, 4-7 arrière) — position préférée
+  formation: Record<string, Rangee>; // classe -> rangée préférée (les héros s'y empilent : marche à tous les coups)
   elements: Record<string, Element>; // classe -> élément préféré (appliqué au début de run ; absent = Libre)
 }
 
@@ -17,13 +20,20 @@ const ELEMENTS_VALIDES = new Set<Element>(["terre", "feu", "eau", "air"]);
 const DEFAUT: Settings = {
   toucheFinTour: " ",
   autoFinTour: true,
-  formation: { iop: 0, feca: 1, sram: 2, cra: 4, eniripsa: 5, sadida: 6, ecaflip: 7 },
+  formation: { iop: "avant", feca: "avant", sram: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere" },
   elements: { iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau" },
 };
 
-const formationValide = (f: unknown): f is Record<string, number> =>
+/** Valide la formation en MIGRANT l'ancien format (case 0..7) vers avant/arrière. */
+const formationValide = (f: unknown): f is Record<string, Rangee | number> =>
   typeof f === "object" && f !== null && !Array.isArray(f) &&
-  Object.values(f).every((v) => typeof v === "number");
+  Object.values(f).every((v) => v === "avant" || v === "arriere" || typeof v === "number");
+
+const migrerFormation = (f: Record<string, Rangee | number>): Record<string, Rangee> => {
+  const out: Record<string, Rangee> = {};
+  for (const [cid, v] of Object.entries(f)) out[cid] = typeof v === "number" ? (v < 4 ? "avant" : "arriere") : v;
+  return out;
+};
 
 const elementsValides = (e: unknown): e is Record<string, Element> =>
   typeof e === "object" && e !== null && !Array.isArray(e) &&
@@ -34,7 +44,7 @@ export function chargerConfig(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const merged = { ...DEFAUT, ...(JSON.parse(raw) as Partial<Settings>) };
-      if (!formationValide(merged.formation)) merged.formation = { ...DEFAUT.formation };
+      merged.formation = formationValide(merged.formation) ? migrerFormation(merged.formation) : { ...DEFAUT.formation };
       if (!elementsValides(merged.elements)) merged.elements = { ...DEFAUT.elements };
       return merged;
     }
