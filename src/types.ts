@@ -109,7 +109,7 @@ export interface Spell {
   siCibleMeurt?: { rebondDegatsX: number }; // Épée hostile : x2 sur un autre ennemi
   ignoreResistances?: boolean; // Flèche intrusive
   ignoreBouclier?: boolean; // Flèche intrusive : les dégâts sautent le bouclier
-  retraitPA?: number; // Fracas : −PA à la cible au prochain tour
+  retraitPA?: number; // Fracas : −PA immédiat à la cible (visible avant son tour)
   rembPA?: boolean; // Flèche magique : chance (Chance) de rembourser le coût en PA
   maitriseArc?: { principal: number; secondaire: number; duree: number }; // +X/+Y aux 2 éléments de frappe
   doubleEffetProchain?: boolean; // Tir Puissant : double la DURÉE de l'effet de la prochaine flèche
@@ -259,7 +259,6 @@ export interface Combatant {
   // état transitoire :
   maxRollCharges: number; // Œil affûté
   passeProchainTour: boolean; // Colère
-  retraitPANextTurn: number; // Fracas
   bouclier: number; // points d'absorption (encaissés avant les PV)
   paBonusNextTurn: number; // PA bonus appliqués à la prochaine recharge (Mot Ivation)
   cooldowns: Record<string, number>; // `${sortId}:${cibleRef}` -> tours restants

@@ -656,7 +656,6 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
   if (c.bonusOffensifProchain > 0)
     badges.push(`+${Math.round(c.bonusOffensifProchain * 100)} % prochain`);
   if (c.maxRollCharges > 0) badges.push(`Œil affûté ×${c.maxRollCharges}`);
-  if (c.retraitPANextTurn > 0) badges.push(`−${c.retraitPANextTurn} PA`);
   if (c.paBonusNextTurn > 0) badges.push(`+${c.paBonusNextTurn} PA`);
 
   const ligne = estAvant(c) ? "avant" : "arriere";

@@ -341,17 +341,18 @@ function derriere(c: Combatant, cs: Combatant[]): Combatant | undefined {
     .sort((a, b) => a.position - b.position)[0];
 }
 
+/** Retire immédiatement des PA à la cible (visible sur sa carte avant son tour). */
+function retirerPA(cible: Combatant, n: number, ctx: CombatCtx): void {
+  const avant = cible.paActuels;
+  cible.paActuels = Math.max(0, cible.paActuels - n);
+  if (cible.paActuels < avant) ctx.log(`${cible.nom} perd ${avant - cible.paActuels} PA.`);
+}
+
 /**
  * Effets de début de tour. Renvoie true si le combattant n'agit pas
  * (passe son tour, ou est mort d'un poison).
  */
 export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatCtx): boolean {
-  // retrait de PA (Fracas)
-  if (acteur.retraitPANextTurn > 0) {
-    acteur.paActuels = Math.max(0, acteur.paActuels - acteur.retraitPANextTurn);
-    ctx.log(`${acteur.nom} subit un retrait de ${acteur.retraitPANextTurn} PA.`);
-    acteur.retraitPANextTurn = 0;
-  }
   // gain de PA (Mot d'ivation)
   if (acteur.paBonusNextTurn > 0) {
     acteur.paActuels += acteur.paBonusNextTurn;
@@ -439,7 +440,6 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
   if (sort.dissipe) {
     const avant = cible.effets.length;
     cible.effets = cible.effets.filter((e) => e.stat !== "poison" && e.stat !== "degatsInfliges");
-    cible.retraitPANextTurn = 0;
     if (cible.effets.length < avant) ctx.log(`${cible.nom} est purgé de ses effets négatifs.`);
   }
   if (sort.bouclierPct && !aFriction(cible)) {
@@ -533,7 +533,6 @@ function invoquerPoupee(
     img: "/assets/divers/poupee.png",
     maxRollCharges: 0,
     passeProchainTour: false,
-    retraitPANextTurn: 0,
     bouclier: 0,
     paBonusNextTurn: 0,
     cooldowns: {},
@@ -564,7 +563,7 @@ function combattantInvoque(m: Monstre, ref: string, position: number, camp: Camp
     stats: { ...m.stats }, paMax: m.pa, paActuels: m.pa, initiative: m.initiative,
     resistances: { ...m.resistances }, sorts: [...m.sorts], camp, position,
     niveau: 1, monstreId: m.id, ia: m.ia, effets: [], img: m.img,
-    maxRollCharges: 0, passeProchainTour: false, retraitPANextTurn: 0,
+    maxRollCharges: 0, passeProchainTour: false,
     bouclier: 0, paBonusNextTurn: 0, cooldowns: {}, bonusOffensifProchain: 0,
     poisonAmpliTours: 0, bonusDe: 0, bonusDeTours: 0, invoquePar,
   };
@@ -727,7 +726,7 @@ function lancerEspritFelin(lanceur: Combatant, cs: Combatant[], ctx: CombatCtx):
       else appliquerEffet(u, { stat: "resAll", valeur: 0.1, duree: 2 });
     } else {
       if (r === 0) {
-        u.retraitPANextTurn += 2;
+        retirerPA(u, 2, ctx);
         lanceur.paBonusNextTurn += 2;
         ctx.log(`${lanceur.nom} vole 2 PA à ${u.nom}.`);
       } else if (r === 1) appliquerEffet(u, { stat: "resAll", valeur: -0.1, duree: 2 });
@@ -980,9 +979,9 @@ export function lancerSort(
     soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
   }
 
-  // Fracas : retrait de PA au prochain tour — 30 % de chance
+  // Fracas : retrait de PA immédiat — 30 % de chance
   if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < 0.3) {
-    cible.retraitPANextTurn += sort.retraitPA;
+    retirerPA(cible, sort.retraitPA, ctx);
   }
 
   // Colère : passe le tour si la cible survit
@@ -1043,7 +1042,6 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       const acteur = candidats[0];
       aJoue.add(acteur.ref);
 
-      acteur.paActuels = acteur.paMax; // recharge des PA
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       if (effetsDebutTour(acteur, combatants, ctx)) {
         await hooks.onUpdate?.();
@@ -1065,6 +1063,9 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       }
 
       decrementerEffets(acteur);
+      // recharge des PA en FIN de tour : entre deux tours, la gemme PA montre
+      // le pool réel — un retrait de PA adverse se voit immédiatement.
+      acteur.paActuels = acteur.paMax;
     }
   }
 

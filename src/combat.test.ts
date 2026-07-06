@@ -229,20 +229,21 @@ describe("Iop — nouvelles mécaniques", () => {
     expect(bouftou.pvActuels).toBeLessThan(pvBouftouAvant); // l'attaquant a encaissé la riposte
   });
 
-  it("Fracas : le retrait de PA a 30 % de chance", () => {
+  it("Fracas : le retrait de PA (30 % de chance) est IMMÉDIAT et visible", () => {
     const [iop] = fabriquerEquipe();
     const mkEnnemi = (ref: string) => {
       const [e] = fabriquerEnnemis("combat_1");
       e.ref = ref; e.position = 0; e.pvActuels = 500; e.pvMax = 500;
-      e.stats = { ...e.stats, agilite: 0 }; e.retraitPANextTurn = 0;
+      e.stats = { ...e.stats, agilite: 0 };
       return e;
     };
     const rate = mkEnnemi("rate");
+    const paAvant = rate.paActuels;
     lancerSort(iop, SORTS.fracas, "rate", [iop, rate], ctx({ rng: rngK(0.99) })); // 0.99 ≥ 0.3
-    expect(rate.retraitPANextTurn).toBe(0);
+    expect(rate.paActuels).toBe(paAvant); // pas de proc
     const proc = mkEnnemi("proc");
     lancerSort(iop, SORTS.fracas, "proc", [iop, proc], ctx({ rng: rngK(0.1) })); // 0.1 < 0.3
-    expect(proc.retraitPANextTurn).toBe(3);
+    expect(proc.paActuels).toBe(Math.max(0, paAvant - 3)); // PA retirés sur-le-champ
   });
 });
 
