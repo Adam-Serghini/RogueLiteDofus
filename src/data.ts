@@ -812,6 +812,292 @@ export const MONSTRES: Record<string, Monstre> = {
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/coffre_forgerons.png",
   },
+
+  // ===== Akadémie des Gobs (joué entre Tofus et Kankreblath) =====
+  // Gobelins bagarreurs : mêlée Terre + un coureur Air. Boss : le Directeur.
+  // (Signature future : « Travail d'équipe » — +dégâts par gob dans la ligne.)
+  gobet: {
+    id: "gobet", nom: "Gobet", pv: 52,
+    stats: { force: 30, intelligence: 6, agilite: 10, vitalite: 44 }, // frappe Terre (petit teigneux)
+    pa: 4, initiative: 11,
+    resistances: { terre: 0.15, feu: -0.1 },
+    sorts: ["picotement"], ia: "agressif",
+    img: "/assets/monstres/gobet.png",
+  },
+  gobelin: {
+    id: "gobelin", nom: "Gobelin", pv: 62,
+    stats: { force: 34, intelligence: 6, agilite: 12, vitalite: 50 }, // frappe Terre
+    pa: 5, initiative: 10,
+    resistances: { terre: 0.15, air: -0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/gobelin.png",
+  },
+  gob_trotteur: {
+    id: "gob_trotteur", nom: "Gob-Trotteur", pv: 54,
+    stats: { force: 8, intelligence: 6, agilite: 36, vitalite: 44 }, // frappe Air (coureur)
+    pa: 5, initiative: 15,
+    resistances: { air: 0.15, terre: -0.1 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/gob_trotteur.png",
+  },
+  gobelin_gladiateur: {
+    id: "gobelin_gladiateur", nom: "Gobelin Gladiateur", pv: 115,
+    stats: { force: 38, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss d'arène
+    pa: 5, initiative: 9,
+    resistances: { terre: 0.15, feu: 0.1, eau: -0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/gobelin_gladiateur.png",
+  },
+  directeur_grunob: {
+    id: "directeur_grunob", nom: "Directeur Grunob", pv: 500,
+    stats: { force: 52, intelligence: 14, agilite: 20, vitalite: 118 },
+    pa: 6, initiative: 10,
+    resistances: { terre: 0.2, feu: 0.15, air: 0.1, eau: -0.05 },
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus (réservé)
+    img: "/assets/monstres/directeur_grunob.png",
+  },
+
+  // ===== Cache de Kankreblath (grenier de Kérubim, insectes de feu) =====
+  // Vermine pyromane : frappes Feu dominantes + un archer Air en retrait.
+  // (Signature future : sort aléatoire — invoque un monstre de la zone.)
+  pyrasite: {
+    id: "pyrasite", nom: "Pyrasite", pv: 56,
+    stats: { force: 8, intelligence: 38, agilite: 10, vitalite: 46 }, // frappe Feu (le plus dangereux)
+    pa: 5, initiative: 12,
+    resistances: { feu: 0.25, eau: -0.2 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/pyrasite.png",
+  },
+  ceglumen: {
+    id: "ceglumen", nom: "Céglumen", pv: 62,
+    stats: { force: 8, intelligence: 34, agilite: 12, vitalite: 52 }, // frappe Feu (luciole)
+    pa: 5, initiative: 10,
+    resistances: { feu: 0.2, air: 0.1, terre: -0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/ceglumen.png",
+  },
+  cafarcher: {
+    id: "cafarcher", nom: "Cafarcher", pv: 58,
+    stats: { force: 8, intelligence: 10, agilite: 36, vitalite: 46 }, // frappe Air (tireur)
+    pa: 5, initiative: 13,
+    resistances: { air: 0.15, feu: -0.1 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/cafarcher.png",
+  },
+  mirgrillon: {
+    id: "mirgrillon", nom: "Mirgrillon", pv: 48,
+    stats: { force: 6, intelligence: 30, agilite: 14, vitalite: 40 }, // frappe Feu (fragile)
+    pa: 4, initiative: 14,
+    resistances: { feu: 0.15, terre: -0.15 },
+    sorts: ["picotement"], ia: "agressif",
+    img: "/assets/monstres/mirgrillon.png",
+  },
+  sakarien: {
+    id: "sakarien", nom: "Sakarien", pv: 120,
+    stats: { force: 36, intelligence: 14, agilite: 14, vitalite: 72 }, // élite/miniboss cuirassé
+    pa: 5, initiative: 8,
+    resistances: { terre: 0.2, feu: 0.15, eau: -0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/sakarien.png",
+  },
+  kankreblath: {
+    id: "kankreblath", nom: "Kankreblath", pv: 530,
+    stats: { force: 16, intelligence: 54, agilite: 18, vitalite: 122 },
+    pa: 6, initiative: 11,
+    resistances: { terre: 0.25, eau: 0.2, feu: 0.15, air: -0.05 }, // résist. réelles DofusDB (terre/eau)
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus (réservé)
+    img: "/assets/monstres/kankreblath.png",
+  },
+
+  // ===== Maison Fantôme (Foire du Trool, spectres) =====
+  // Esprits insaisissables : Air dominant (esquive), un hanteur Feu.
+  // (Signature future de Boostache : réinvoque un monstre vaincu.)
+  fantome_farceur: {
+    id: "fantome_farceur", nom: "Fantôme Farceur", pv: 58,
+    stats: { force: 8, intelligence: 10, agilite: 38, vitalite: 46 }, // frappe Air (esquive haute)
+    pa: 5, initiative: 14,
+    resistances: { air: 0.25, terre: -0.15 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/fantome_farceur.png",
+  },
+  fantome_hanteur: {
+    id: "fantome_hanteur", nom: "Fantôme Hanteur", pv: 64,
+    stats: { force: 8, intelligence: 38, agilite: 14, vitalite: 52 }, // frappe Feu (flammes spectrales)
+    pa: 5, initiative: 11,
+    resistances: { feu: 0.2, air: 0.15, terre: -0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/fantome_hanteur.png",
+  },
+  ashi_magari: {
+    id: "ashi_magari", nom: "Ashi-Magari", pv: 52,
+    stats: { force: 32, intelligence: 8, agilite: 16, vitalite: 44 }, // frappe Terre (accroche les chevilles)
+    pa: 4, initiative: 12,
+    resistances: { terre: 0.15, feu: -0.15 },
+    sorts: ["picotement"], ia: "agressif",
+    img: "/assets/monstres/ashi_magari.png",
+  },
+  esprit_frappeur: {
+    id: "esprit_frappeur", nom: "Esprit Frappeur", pv: 125,
+    stats: { force: 12, intelligence: 16, agilite: 40, vitalite: 74 }, // élite/miniboss véloce
+    pa: 5, initiative: 13,
+    resistances: { air: 0.2, feu: 0.1, terre: -0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/esprit_frappeur.png",
+  },
+  boostache: {
+    id: "boostache", nom: "Boostache", pv: 545,
+    stats: { force: 14, intelligence: 20, agilite: 56, vitalite: 126 },
+    pa: 6, initiative: 12,
+    resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus (réservé)
+    img: "/assets/monstres/boostache.png",
+  },
+
+  // ===== Donjon des Larves (joué après les Forgerons) =====
+  // Puzzle élémentaire allégé (3 couleurs), chiffres au-dessus des Forgerons.
+  larve_bleue: {
+    id: "larve_bleue", nom: "Larve Bleue", pv: 78,
+    stats: { force: 8, intelligence: 8, agilite: 10, chance: 44, vitalite: 60 }, // frappe Eau
+    pa: 5, initiative: 9,
+    resistances: { eau: 0.4, feu: -0.3 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/larve_bleue.png",
+  },
+  larve_verte: {
+    id: "larve_verte", nom: "Larve Verte", pv: 78,
+    stats: { force: 44, intelligence: 8, agilite: 10, vitalite: 60 }, // frappe Terre
+    pa: 5, initiative: 9,
+    resistances: { terre: 0.4, air: -0.3 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/larve_verte.png",
+  },
+  larve_orange: {
+    id: "larve_orange", nom: "Larve Orange", pv: 78,
+    stats: { force: 8, intelligence: 44, agilite: 10, vitalite: 60 }, // frappe Feu
+    pa: 5, initiative: 9,
+    resistances: { feu: 0.4, eau: -0.3 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/larve_orange.png",
+  },
+  larve_doree: {
+    id: "larve_doree", nom: "Larve Dorée", pv: 150,
+    stats: { force: 46, intelligence: 18, agilite: 14, vitalite: 88 }, // élite/miniboss luisant
+    pa: 5, initiative: 8,
+    resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/larve_doree.png",
+  },
+  shin_larve: {
+    id: "shin_larve", nom: "Shin Larve", pv: 700,
+    stats: { force: 24, intelligence: 24, agilite: 18, chance: 62, vitalite: 160 },
+    pa: 6, initiative: 9,
+    resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus (réservé)
+    img: "/assets/monstres/shin_larve.png",
+  },
+
+  // ===== Grotte Hesque (plage corail, crustacés) =====
+  // Carapaces Eau/Terre qui cognent dur. (Signature future du Magistral :
+  // ne frappe qu'au corps à corps → ne menace que la ligne avant.)
+  corailleur: {
+    id: "corailleur", nom: "Corailleur", pv: 85,
+    stats: { force: 12, intelligence: 10, agilite: 12, chance: 48, vitalite: 66 }, // frappe Eau
+    pa: 5, initiative: 9,
+    resistances: { eau: 0.3, terre: 0.1, feu: -0.15 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/corailleur.png",
+  },
+  craboral: {
+    id: "craboral", nom: "Craboral", pv: 95,
+    stats: { force: 50, intelligence: 10, agilite: 12, vitalite: 72 }, // frappe Terre (pinces)
+    pa: 5, initiative: 8,
+    resistances: { terre: 0.25, eau: 0.15, air: -0.15 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/craboral.png",
+  },
+  kaskargo: {
+    id: "kaskargo", nom: "Kaskargo", pv: 108,
+    stats: { force: 44, intelligence: 10, agilite: 8, vitalite: 80 }, // coquille lourde et lente
+    pa: 4, initiative: 5,
+    resistances: { terre: 0.2, feu: 0.15, eau: 0.15, air: 0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/kaskargo.png",
+  },
+  corailleur_ancien: {
+    id: "corailleur_ancien", nom: "Corailleur Ancien", pv: 170,
+    stats: { force: 16, intelligence: 12, agilite: 14, chance: 52, vitalite: 96 }, // élite/miniboss
+    pa: 5, initiative: 9,
+    resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/corailleur_ancien.png",
+  },
+  corailleur_magistral: {
+    id: "corailleur_magistral", nom: "Corailleur Magistral", pv: 800,
+    stats: { force: 22, intelligence: 16, agilite: 18, chance: 70, vitalite: 175 },
+    pa: 6, initiative: 8,
+    resistances: { eau: 0.3, terre: 0.2, feu: -0.05 },
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus (réservé)
+    img: "/assets/monstres/corailleur_magistral.png",
+  },
+
+  // ===== Nid du Kwakwa (final de la Tranche 1) =====
+  // Quatre kwaks élémentaires : chacun frappe ET résiste dans son élément —
+  // l'aboutissement du puzzle multi-élément de la tranche.
+  // (Signature future du Kwakwa : 75 % de résist partout sauf 1 élément aléatoire.)
+  kwak_de_terre: {
+    id: "kwak_de_terre", nom: "Kwak de Terre", pv: 100,
+    stats: { force: 54, intelligence: 10, agilite: 12, vitalite: 76 },
+    pa: 5, initiative: 10,
+    resistances: { terre: 0.5, air: -0.3 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/kwak_de_terre.png",
+  },
+  kwak_de_feu: {
+    id: "kwak_de_feu", nom: "Kwak de Feu", pv: 100,
+    stats: { force: 10, intelligence: 54, agilite: 12, vitalite: 76 },
+    pa: 5, initiative: 10,
+    resistances: { feu: 0.5, eau: -0.3 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/kwak_de_feu.png",
+  },
+  kwak_d_eau: {
+    id: "kwak_d_eau", nom: "Kwak d'Eau", pv: 100,
+    stats: { force: 10, intelligence: 10, agilite: 12, chance: 54, vitalite: 76 },
+    pa: 5, initiative: 10,
+    resistances: { eau: 0.5, feu: -0.3 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/kwak_d_eau.png",
+  },
+  kwak_de_vent: {
+    id: "kwak_de_vent", nom: "Kwak de Vent", pv: 100,
+    stats: { force: 10, intelligence: 10, agilite: 54, vitalite: 76 },
+    pa: 5, initiative: 12,
+    resistances: { air: 0.5, terre: -0.3 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/kwak_de_vent.png",
+  },
+  kwak_veteran: {
+    id: "kwak_veteran", nom: "Kwak Vétéran", pv: 190,
+    stats: { force: 30, intelligence: 30, agilite: 22, chance: 30, vitalite: 104 }, // élite/miniboss multi-élément
+    pa: 5, initiative: 11,
+    resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    img: "/assets/monstres/kwak_veteran.png",
+  },
+  kwakwa: {
+    id: "kwakwa", nom: "Kwakwa", pv: 950,
+    stats: { force: 42, intelligence: 42, agilite: 30, chance: 42, vitalite: 190 },
+    pa: 6, initiative: 12,
+    resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // placeholder de sa future signature
+    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    boss: true, // pas de Dofus (réservé)
+    img: "/assets/monstres/kwakwa.png",
+  },
 };
 
 // --- Dofus (reliques permanentes) --------------------------------------------
@@ -1000,6 +1286,114 @@ export const COMBATS: Record<string, CombatDef> = {
   frg_boss: { nom: "Donjon — Coffre des Forgerons", ennemis: [
     { monstre: "coffre_forgerons", position: 0 }, { monstre: "forgeron_sombre", position: 1 }, // boss + miniboss devant
   ] },
+
+  // ===== Akadémie des Gobs =====
+  gob_1: { nom: "Cour de récré", ennemis: [
+    { monstre: "gobelin", position: 0 }, { monstre: "gobet", position: 1 },
+  ] },
+  gob_2: { nom: "Leçon de bagarre", ennemis: [
+    { monstre: "gobelin", position: 0 }, { monstre: "gobet", position: 1 }, { monstre: "gob_trotteur", position: 4 },
+  ] },
+  gob_3: { nom: "Sprint des trotteurs", ennemis: [
+    { monstre: "gob_trotteur", position: 0 }, { monstre: "gobelin", position: 1 }, { monstre: "gobet", position: 2 },
+  ] },
+  gob_elite: { nom: "Examen d'arène (dur)", ennemis: [
+    { monstre: "gobelin_gladiateur", position: 0 }, { monstre: "gobelin", position: 1 },
+    { monstre: "gobet", position: 2 }, { monstre: "gob_trotteur", position: 4 },
+  ] },
+  gob_boss: { nom: "Donjon — Directeur Grunob", ennemis: [
+    { monstre: "directeur_grunob", position: 0 }, { monstre: "gobelin_gladiateur", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Cache de Kankreblath =====
+  kan_1: { nom: "Grenier infesté", ennemis: [
+    { monstre: "pyrasite", position: 0 }, { monstre: "mirgrillon", position: 1 },
+  ] },
+  kan_2: { nom: "Lueurs malsaines", ennemis: [
+    { monstre: "ceglumen", position: 0 }, { monstre: "mirgrillon", position: 1 }, { monstre: "cafarcher", position: 4 },
+  ] },
+  kan_3: { nom: "Vermine en embuscade", ennemis: [
+    { monstre: "pyrasite", position: 0 }, { monstre: "ceglumen", position: 1 }, { monstre: "cafarcher", position: 4 },
+  ] },
+  kan_elite: { nom: "Nid de la vermine (dur)", ennemis: [
+    { monstre: "sakarien", position: 0 }, { monstre: "pyrasite", position: 1 },
+    { monstre: "ceglumen", position: 2 }, { monstre: "cafarcher", position: 4 },
+  ] },
+  kan_boss: { nom: "Donjon — Kankreblath", ennemis: [
+    { monstre: "kankreblath", position: 0 }, { monstre: "sakarien", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Maison Fantôme =====
+  fan_1: { nom: "Couloir qui grince", ennemis: [
+    { monstre: "fantome_farceur", position: 0 }, { monstre: "ashi_magari", position: 1 },
+  ] },
+  fan_2: { nom: "Chandelles bleues", ennemis: [
+    { monstre: "fantome_hanteur", position: 0 }, { monstre: "ashi_magari", position: 1 }, { monstre: "fantome_farceur", position: 4 },
+  ] },
+  fan_3: { nom: "Sarabande spectrale", ennemis: [
+    { monstre: "fantome_farceur", position: 0 }, { monstre: "fantome_hanteur", position: 1 }, { monstre: "ashi_magari", position: 2 },
+  ] },
+  fan_elite: { nom: "Nuit de poltergeists (dur)", ennemis: [
+    { monstre: "esprit_frappeur", position: 0 }, { monstre: "fantome_hanteur", position: 1 },
+    { monstre: "fantome_farceur", position: 2 }, { monstre: "ashi_magari", position: 3 },
+  ] },
+  fan_boss: { nom: "Donjon — Boostache", ennemis: [
+    { monstre: "boostache", position: 0 }, { monstre: "esprit_frappeur", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Donjon des Larves =====
+  lrv_1: { nom: "Reptation gluante", ennemis: [
+    { monstre: "larve_bleue", position: 0 }, { monstre: "larve_orange", position: 1 }, // eau + feu
+  ] },
+  lrv_2: { nom: "Trio multicolore", ennemis: [
+    { monstre: "larve_verte", position: 0 }, { monstre: "larve_bleue", position: 1 }, { monstre: "larve_orange", position: 2 },
+  ] },
+  lrv_3: { nom: "Marée rampante", ennemis: [
+    { monstre: "larve_orange", position: 0 }, { monstre: "larve_verte", position: 1 }, { monstre: "larve_bleue", position: 2 },
+  ] },
+  lrv_elite: { nom: "Couvain doré (dur)", ennemis: [
+    { monstre: "larve_doree", position: 0 }, { monstre: "larve_verte", position: 1 },
+    { monstre: "larve_bleue", position: 2 }, { monstre: "larve_orange", position: 3 },
+  ] },
+  lrv_boss: { nom: "Donjon — Shin Larve", ennemis: [
+    { monstre: "shin_larve", position: 0 }, { monstre: "larve_doree", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Grotte Hesque =====
+  hsk_1: { nom: "Marée montante", ennemis: [
+    { monstre: "corailleur", position: 0 }, { monstre: "kaskargo", position: 1 },
+  ] },
+  hsk_2: { nom: "Pinces au récif", ennemis: [
+    { monstre: "craboral", position: 0 }, { monstre: "corailleur", position: 1 }, { monstre: "kaskargo", position: 2 },
+  ] },
+  hsk_3: { nom: "Banc de coraux", ennemis: [
+    { monstre: "corailleur", position: 0 }, { monstre: "craboral", position: 1 }, { monstre: "corailleur", position: 4 },
+  ] },
+  hsk_elite: { nom: "Fond de la grotte (dur)", ennemis: [
+    { monstre: "corailleur_ancien", position: 0 }, { monstre: "craboral", position: 1 },
+    { monstre: "kaskargo", position: 2 }, { monstre: "corailleur", position: 4 },
+  ] },
+  hsk_boss: { nom: "Donjon — Corailleur Magistral", ennemis: [
+    { monstre: "corailleur_magistral", position: 0 }, { monstre: "corailleur_ancien", position: 1 }, // boss + miniboss devant
+  ] },
+
+  // ===== Nid du Kwakwa =====
+  kwa_1: { nom: "Plumes élémentaires", ennemis: [
+    { monstre: "kwak_de_terre", position: 0 }, { monstre: "kwak_de_feu", position: 1 },
+  ] },
+  kwa_2: { nom: "Duo des extrêmes", ennemis: [
+    { monstre: "kwak_d_eau", position: 0 }, { monstre: "kwak_de_vent", position: 1 }, { monstre: "kwak_de_feu", position: 4 },
+  ] },
+  kwa_3: { nom: "Tempête au nid", ennemis: [
+    { monstre: "kwak_de_vent", position: 0 }, { monstre: "kwak_de_terre", position: 1 }, { monstre: "kwak_d_eau", position: 2 },
+  ] },
+  kwa_elite: { nom: "Les quatre vents (dur)", ennemis: [
+    { monstre: "kwak_veteran", position: 0 }, { monstre: "kwak_de_terre", position: 1 },
+    { monstre: "kwak_de_feu", position: 2 }, { monstre: "kwak_d_eau", position: 4 },
+  ] },
+  kwa_boss: { nom: "Donjon — Kwakwa", ennemis: [
+    { monstre: "kwakwa", position: 0 }, { monstre: "kwak_veteran", position: 1 }, // boss + miniboss devant
+  ] },
 };
 
 // --- Zones (mondes traversés successivement durant une run) ------------------
@@ -1019,6 +1413,18 @@ export const ZONES: ZoneDef[] = [
     pools: { normales: ["scr_1", "scr_2", "scr_3"], elite: ["scr_elite"], boss: "scr_boss" } },
   { id: "forgerons", nom: "Donjon des Forgerons",
     pools: { normales: ["frg_1", "frg_2", "frg_3"], elite: ["frg_elite"], boss: "frg_boss" } },
+  { id: "akademie", nom: "Akadémie des Gobs",
+    pools: { normales: ["gob_1", "gob_2", "gob_3"], elite: ["gob_elite"], boss: "gob_boss" } },
+  { id: "kankreblath", nom: "Cache de Kankreblath",
+    pools: { normales: ["kan_1", "kan_2", "kan_3"], elite: ["kan_elite"], boss: "kan_boss" } },
+  { id: "maison_fantome", nom: "Maison Fantôme",
+    pools: { normales: ["fan_1", "fan_2", "fan_3"], elite: ["fan_elite"], boss: "fan_boss" } },
+  { id: "larves", nom: "Donjon des Larves",
+    pools: { normales: ["lrv_1", "lrv_2", "lrv_3"], elite: ["lrv_elite"], boss: "lrv_boss" } },
+  { id: "grotte_hesque", nom: "Grotte Hesque",
+    pools: { normales: ["hsk_1", "hsk_2", "hsk_3"], elite: ["hsk_elite"], boss: "hsk_boss" } },
+  { id: "kwakwa", nom: "Nid du Kwakwa",
+    pools: { normales: ["kwa_1", "kwa_2", "kwa_3"], elite: ["kwa_elite"], boss: "kwa_boss" } },
 ];
 
 // --- Tranches (paliers de niveau — une run = une tranche) ---------------------
@@ -1034,7 +1440,9 @@ export interface TrancheDef {
 
 export const TRANCHES: TrancheDef[] = [
   { id: "t1", nom: "Tranche 1", niveaux: [1, 50], active: true,
-    zones: ["incarnam", "astrub", "tainela", "tofus", "scarafeuilles", "forgerons"] },
+    // ordre de jeu = niveau officiel des donjons (cf. PLAN-CONTENU.md §4)
+    zones: ["incarnam", "astrub", "tainela", "tofus", "akademie", "kankreblath",
+      "maison_fantome", "scarafeuilles", "forgerons", "larves", "grotte_hesque", "kwakwa"] },
   { id: "t2", nom: "Tranche 2", niveaux: [51, 100], active: false, zones: [] },
   { id: "t3", nom: "Tranche 3", niveaux: [101, 150], active: false, zones: [] },
   { id: "t4", nom: "Tranche 4", niveaux: [151, 199], active: false, zones: [] },
@@ -1101,6 +1509,42 @@ export const ITEMS: Record<string, Item> = {
   forgeron_cape: { id: "forgeron_cape", nom: "Tablier du Forgeron", slot: "cape", panoplie: "forgeron", rolls: { vitalite: [26, 30] } },
   forgeron_anneau: { id: "forgeron_anneau", nom: "Anneau du Forgeron", slot: "anneau", panoplie: "forgeron", rolls: { vitalite: [21, 25] } },
   forgeron_arme: { id: "forgeron_arme", nom: "Marteau du Forgeron Sombre", slot: "arme", panoplie: "forgeron", rolls: { force: [11, 15] }, attaque: { coutPA: 5, baseMin: 20, baseMax: 28, scaling: 0.5 } },
+
+  // ===== Panoplie du Gladiateur (Akadémie des Gobs : force/agi de bagarreur) =====
+  gladiateur_coiffe: { id: "gladiateur_coiffe", nom: "Casque du Gladiateur", slot: "coiffe", panoplie: "gladiateur", rolls: { force: [11, 15], vitalite: [11, 15] } },
+  gladiateur_cape: { id: "gladiateur_cape", nom: "Cape du Gladiateur", slot: "cape", panoplie: "gladiateur", rolls: { agilite: [11, 15], vitalite: [11, 15] } },
+  gladiateur_anneau: { id: "gladiateur_anneau", nom: "Anneau du Gladiateur", slot: "anneau", panoplie: "gladiateur", rolls: { force: [8, 12], agilite: [8, 12] } },
+  gladiateur_arme: { id: "gladiateur_arme", nom: "Lance du Gob-Lancier", slot: "arme", panoplie: "gladiateur", rolls: { force: [8, 12] }, attaque: { coutPA: 4, baseMin: 16, baseMax: 22, scaling: 0.42 } },
+
+  // ===== Panoplie de Kankreblath (Cache de Kankreblath : intelligence/vita) =====
+  kankreblath_coiffe: { id: "kankreblath_coiffe", nom: "Chitine de Kankreblath", slot: "coiffe", panoplie: "kankreblath", rolls: { intelligence: [12, 16], vitalite: [11, 15] } },
+  kankreblath_cape: { id: "kankreblath_cape", nom: "Élytres de Kankreblath", slot: "cape", panoplie: "kankreblath", rolls: { intelligence: [11, 15], vitalite: [12, 16] } },
+  kankreblath_anneau: { id: "kankreblath_anneau", nom: "Anneau grouillant", slot: "anneau", panoplie: "kankreblath", rolls: { intelligence: [11, 15] } },
+  kankreblath_arme: { id: "kankreblath_arme", nom: "Dard de Kankreblath", slot: "arme", panoplie: "kankreblath", rolls: { intelligence: [8, 12] }, attaque: { coutPA: 4, baseMin: 16, baseMax: 23, scaling: 0.45 } },
+
+  // ===== Panoplie Fantomatique (Maison Fantôme : agilité/esquive) =====
+  fantome_coiffe: { id: "fantome_coiffe", nom: "Capuche Fantomatique", slot: "coiffe", panoplie: "fantome", rolls: { agilite: [12, 16], vitalite: [11, 15] } },
+  fantome_cape: { id: "fantome_cape", nom: "Suaire Fantomatique", slot: "cape", panoplie: "fantome", rolls: { agilite: [12, 16], vitalite: [11, 15] } },
+  fantome_anneau: { id: "fantome_anneau", nom: "Anneau Spectral", slot: "anneau", panoplie: "fantome", rolls: { agilite: [11, 15] } },
+  fantome_arme: { id: "fantome_arme", nom: "Canne de Boostache", slot: "arme", panoplie: "fantome", rolls: { agilite: [8, 12] }, attaque: { coutPA: 4, baseMin: 17, baseMax: 23, scaling: 0.45 } },
+
+  // ===== Panoplie de la Larve (Donjon des Larves : vita + résistances) =====
+  larve_coiffe: { id: "larve_coiffe", nom: "Coiffe de la Larve", slot: "coiffe", panoplie: "larve", rolls: { vitalite: [24, 28] } },
+  larve_cape: { id: "larve_cape", nom: "Mue de la Shin Larve", slot: "cape", panoplie: "larve", rolls: { vitalite: [26, 30] } },
+  larve_anneau: { id: "larve_anneau", nom: "Anneau Larvesque", slot: "anneau", panoplie: "larve", rolls: { vitalite: [16, 20], chance: [8, 12] } },
+  larve_arme: { id: "larve_arme", nom: "Dard de la Shin Larve", slot: "arme", panoplie: "larve", rolls: { chance: [11, 15] }, attaque: { coutPA: 5, baseMin: 21, baseMax: 29, scaling: 0.5 } },
+
+  // ===== Panoplie du Corailleur (Grotte Hesque : chance/eau, 2e set Eau après le Paysan) =====
+  corailleur_coiffe: { id: "corailleur_coiffe", nom: "Coiffe de Corail", slot: "coiffe", panoplie: "corailleur", rolls: { chance: [14, 18], vitalite: [12, 16] } },
+  corailleur_cape: { id: "corailleur_cape", nom: "Cape Récifale", slot: "cape", panoplie: "corailleur", rolls: { chance: [12, 16], vitalite: [14, 18] } },
+  corailleur_anneau: { id: "corailleur_anneau", nom: "Anneau de Nacre", slot: "anneau", panoplie: "corailleur", rolls: { chance: [12, 16] } },
+  corailleur_arme: { id: "corailleur_arme", nom: "Rostre du Magistral", slot: "arme", panoplie: "corailleur", rolls: { chance: [8, 12] }, attaque: { coutPA: 5, baseMin: 22, baseMax: 31, scaling: 0.52 } },
+
+  // ===== Panoplie du Kwak (Nid du Kwakwa : toutes carac — meilleur set de la T1) =====
+  kwak_coiffe: { id: "kwak_coiffe", nom: "Coiffe du Kwak", slot: "coiffe", panoplie: "kwak", rolls: { force: [8, 13], intelligence: [8, 13], agilite: [8, 13], chance: [8, 13] } },
+  kwak_cape: { id: "kwak_cape", nom: "Cape du Kwak", slot: "cape", panoplie: "kwak", rolls: { force: [8, 13], intelligence: [8, 13], agilite: [8, 13], chance: [8, 13], vitalite: [11, 15] } },
+  kwak_anneau: { id: "kwak_anneau", nom: "Anneau du Kwak", slot: "anneau", panoplie: "kwak", rolls: { force: [6, 10], intelligence: [6, 10], agilite: [6, 10], chance: [6, 10] } },
+  kwak_arme: { id: "kwak_arme", nom: "Bec du Kwakwa", slot: "arme", panoplie: "kwak", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 5, baseMin: 24, baseMax: 33, scaling: 0.55 } },
 };
 
 // Sets de 4 pièces : bonus à 2/4 (moitié / complet).
@@ -1153,6 +1597,54 @@ export const PANOPLIES: Record<string, Panoplie> = {
       { seuil: 4, stats: { force: 18, prospection: 40 } },
     ],
   },
+  gladiateur: {
+    id: "gladiateur", nom: "Panoplie du Gladiateur",
+    pieces: ["gladiateur_coiffe", "gladiateur_cape", "gladiateur_anneau", "gladiateur_arme"],
+    bonus: [
+      { seuil: 2, stats: { force: 8, agilite: 8 } },
+      { seuil: 4, stats: { force: 14, agilite: 14 }, pvBonus: 15 },
+    ],
+  },
+  kankreblath: {
+    id: "kankreblath", nom: "Panoplie de Kankreblath",
+    pieces: ["kankreblath_coiffe", "kankreblath_cape", "kankreblath_anneau", "kankreblath_arme"],
+    bonus: [
+      { seuil: 2, stats: { intelligence: 10 }, pvBonus: 10 },
+      { seuil: 4, stats: { intelligence: 20 }, resistances: { feu: 0.1 } },
+    ],
+  },
+  fantome: {
+    id: "fantome", nom: "Panoplie Fantomatique",
+    pieces: ["fantome_coiffe", "fantome_cape", "fantome_anneau", "fantome_arme"],
+    bonus: [
+      { seuil: 2, stats: { agilite: 10 }, pvBonus: 10 },
+      { seuil: 4, stats: { agilite: 20 }, resistances: { air: 0.1 } },
+    ],
+  },
+  larve: {
+    id: "larve", nom: "Panoplie de la Larve",
+    pieces: ["larve_coiffe", "larve_cape", "larve_anneau", "larve_arme"],
+    bonus: [
+      { seuil: 2, stats: { vitalite: 14 }, resistances: { terre: 0.04, feu: 0.04, eau: 0.04, air: 0.04 } },
+      { seuil: 4, pvBonus: 25, resistances: { terre: 0.07, feu: 0.07, eau: 0.07, air: 0.07 } },
+    ],
+  },
+  corailleur: {
+    id: "corailleur", nom: "Panoplie du Corailleur",
+    pieces: ["corailleur_coiffe", "corailleur_cape", "corailleur_anneau", "corailleur_arme"],
+    bonus: [
+      { seuil: 2, stats: { chance: 12 }, pvBonus: 12 },
+      { seuil: 4, stats: { chance: 20 }, resistances: { eau: 0.12 } },
+    ],
+  },
+  kwak: {
+    id: "kwak", nom: "Panoplie du Kwak",
+    pieces: ["kwak_coiffe", "kwak_cape", "kwak_anneau", "kwak_arme"],
+    bonus: [
+      { seuil: 2, stats: { force: 8, intelligence: 8, agilite: 8, chance: 8 } },
+      { seuil: 4, stats: { force: 14, intelligence: 14, agilite: 14, chance: 14 }, resistances: { terre: 0.06, feu: 0.06, eau: 0.06, air: 0.06 } },
+    ],
+  },
 };
 
 /** Panoplie qui droppe dans chaque zone (id de zone → id de panoplie). */
@@ -1163,6 +1655,12 @@ export const BUTIN_ZONE: Record<string, string> = {
   tofus: "tofu",
   scarafeuilles: "scarafeuille",
   forgerons: "forgeron",
+  akademie: "gladiateur",
+  kankreblath: "kankreblath",
+  maison_fantome: "fantome",
+  larves: "larve",
+  grotte_hesque: "corailleur",
+  kwakwa: "kwak",
 };
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */
