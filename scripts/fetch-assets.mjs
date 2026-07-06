@@ -37,6 +37,9 @@ const MONSTRES = {
   boostache_prepubere: 353, // Boostache Prépubère
   boostache: "Boostache",
   // Donjon des Larves
+  larve_bleue: "Larve Bleue",
+  larve_verte: "Larve Verte",
+  larve_orange: "Larve Orange",
   larve_saphir: "Larve Saphir",
   larve_rubis: "Larve Rubis",
   larve_emeraude: "Larve Émeraude",

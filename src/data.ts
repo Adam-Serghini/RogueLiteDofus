@@ -988,6 +988,33 @@ export const MONSTRES: Record<string, Monstre> = {
 
   // ===== Donjon des Larves (joué après les Forgerons) =====
   // Puzzle élémentaire allégé (3 couleurs), chiffres au-dessus des Forgerons.
+  larve_bleue: {
+    id: "larve_bleue", nom: "Larve Bleue", pv: 70,
+    stats: { force: 8, intelligence: 8, agilite: 10, chance: 40, vitalite: 54 }, // frappe Eau
+    pa: 5, initiative: 8,
+    resistances: { eau: 0.3, feu: -0.25 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Larvonika l'Instrument",
+    img: "/assets/monstres/larve_bleue.png",
+  },
+  larve_verte: {
+    id: "larve_verte", nom: "Larve Verte", pv: 70,
+    stats: { force: 40, intelligence: 8, agilite: 10, vitalite: 54 }, // frappe Terre
+    pa: 5, initiative: 8,
+    resistances: { terre: 0.3, air: -0.25 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Larchimaide la Poussée",
+    img: "/assets/monstres/larve_verte.png",
+  },
+  larve_orange: {
+    id: "larve_orange", nom: "Larve Orange", pv: 70,
+    stats: { force: 8, intelligence: 40, agilite: 10, vitalite: 54 }, // frappe Feu
+    pa: 5, initiative: 8,
+    resistances: { feu: 0.3, eau: -0.25 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Larvapstrè le Subjectif",
+    img: "/assets/monstres/larve_orange.png",
+  },
   larve_saphir: {
     id: "larve_saphir", nom: "Larve Saphir", pv: 78,
     stats: { force: 8, intelligence: 8, agilite: 10, chance: 44, vitalite: 60 }, // frappe Eau
@@ -1400,10 +1427,10 @@ export const COMBATS: Record<string, CombatDef> = {
 
   // ===== Donjon des Larves =====
   lrv_1: { nom: "Reptation gluante", ennemis: [
-    { monstre: "larve_saphir", position: 0 }, { monstre: "larve_rubis", position: 1 }, // eau + feu
+    { monstre: "larve_bleue", position: 0 }, { monstre: "larve_orange", position: 1 },
   ] },
-  lrv_2: { nom: "Trio multicolore", ennemis: [
-    { monstre: "larve_emeraude", position: 0 }, { monstre: "larve_saphir", position: 1 }, { monstre: "larve_rubis", position: 2 },
+  lrv_2: { nom: "Couvée multicolore", ennemis: [
+    { monstre: "larve_verte", position: 0 }, { monstre: "larve_saphir", position: 1 }, { monstre: "larve_rubis", position: 2 },
   ] },
   lrv_3: { nom: "Marée rampante", ennemis: [
     { monstre: "larve_rubis", position: 0 }, { monstre: "larve_emeraude", position: 1 }, { monstre: "larve_saphir", position: 2 },
