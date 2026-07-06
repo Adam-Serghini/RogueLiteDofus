@@ -216,11 +216,17 @@ function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el el-${el}">${elNom[el]}</span>`;
     }
   }
+  // cooldowns : global au sort (cooldownTours) ou par cible (cooldown) + état en cours
+  const cd: string[] = [];
+  if (s.cooldownTours) cd.push(`⏳ recharge ${s.cooldownTours} tour${s.cooldownTours > 1 ? "s" : ""}`);
+  if (s.cooldown) cd.push(`⏳ recharge ${s.cooldown} tour${s.cooldown > 1 ? "s" : ""} par cible`);
+  const restant = acteur?.cooldowns[s.id] ?? 0;
+  if (restant > 0) cd.push(`<b class="tip-cd-actif">en recharge (${restant}t)</b>`);
   return [
     `<div class="tip-nom">${escapeHtml(s.nom)}<span class="tip-pa">${s.coutPA} PA</span></div>`,
     principal ? `<div class="tip-stat">${principal}</div>` : "",
     s.desc ? `<div class="tip-effet">${escapeHtml(s.desc)}</div>` : "",
-    `<div class="tip-cible">🎯 ${CIBLE_LBL[s.cible] ?? s.cible}${s.cooldown ? ` · ⏳ recharge ${s.cooldown} tours` : ""}</div>`,
+    `<div class="tip-cible">🎯 ${CIBLE_LBL[s.cible] ?? s.cible}${cd.length ? ` · ${cd.join(" · ")}` : ""}</div>`,
   ]
     .filter(Boolean)
     .join("");

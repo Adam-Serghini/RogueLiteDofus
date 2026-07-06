@@ -352,6 +352,10 @@ button:focus-visible {
 .fx-num.dmg {
   color: #ff7a5c;
 }
+.tip-cd-actif {
+  color: #f0a08e; /* recharge en cours : bien visible dans le tooltip */
+}
+
 .fx-num.crit {
   color: var(--or-clair); /* coup critique : doré, un peu plus gros */
   font-size: 1.75rem;
