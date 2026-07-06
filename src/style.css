@@ -2254,9 +2254,9 @@ kbd {
 }
 .stat-c-force { color: var(--terre); }
 .stat-c-intelligence { color: var(--feu); }
-.stat-c-agilite { color: var(--air); }
+.stat-c-agilite { color: #7fc98f; } /* vert clair pastel */
 .stat-c-chance { color: #3aa0e6; } /* eau */
-.stat-c-vitalite { color: var(--pv); }
+.stat-c-vitalite { color: #2b2318; } /* noir (chaud, assorti au parchemin) */
 .stat-part-inv {
   margin-left: 3px;
   font-weight: 800;
