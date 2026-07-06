@@ -55,6 +55,7 @@ async function resoudreCombat(run: RunState, combatId: string): Promise<Resultat
   const gagne = await runCombat(combatants, {
     controllers: { joueur: ui.playerController, ennemi: enemyController },
     log: ui.log,
+    fx: ui.fxEvent, // crit / esquive → nombres flottants
     onUpdate: async () => {
       ui.onUpdate();
       await sleep(60);

@@ -352,6 +352,18 @@ button:focus-visible {
 .fx-num.dmg {
   color: #ff7a5c;
 }
+.fx-num.crit {
+  color: var(--or-clair); /* coup critique : doré, un peu plus gros */
+  font-size: 1.75rem;
+  text-shadow:
+    0 2px 3px #000,
+    0 0 9px #e8b54e88;
+}
+.fx-num.esquive {
+  color: #8fd9ff; /* bleu ciel */
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+}
 .fx-num.soin {
   color: #8ee06a;
 }

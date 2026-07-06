@@ -15,10 +15,17 @@ const jet = (min: number, max: number, rng: Rng): number =>
   min + Math.floor(rng() * (max - min + 1));
 
 // --- Contexte d'un combat ----------------------------------------------------
+/** Événement purement visuel (crit, esquive…) — consommé par l'UI, ignoré en headless. */
+export interface FxEvent {
+  type: "crit" | "esquive";
+  ref: string; // combattant concerné (cible du coup / esquiveur)
+}
+
 export interface CombatCtx {
   rng: Rng;
   log: (msg: string) => void;
   playerDamageBonus: number; // multiplicateur Dofus appliqué au camp joueur
+  fx?: (ev: FxEvent) => void; // effets visuels (optionnel)
 }
 
 export type Controller = (
@@ -32,6 +39,7 @@ export interface CombatHooks {
   onUpdate?: () => Promise<void> | void; // re-render entre deux actions
   rng?: Rng;
   playerDamageBonus?: number;
+  fx?: (ev: FxEvent) => void; // effets visuels (crit, esquive…)
 }
 
 // --- Helpers de base ---------------------------------------------------------
@@ -652,8 +660,10 @@ function frappe(
   const r = degatsAvec(lanceur, base, t, opts);
   if (r.esquive) {
     opts.ctx.log(`${t.nom} esquive ${nomSort} !`);
+    opts.ctx.fx?.({ type: "esquive", ref: t.ref });
     return 0;
   }
+  if (r.crit) opts.ctx.fx?.({ type: "crit", ref: t.ref });
   infligerDegats(t, r.dmg, lanceur, opts.ctx);
   opts.ctx.log(
     `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
@@ -907,7 +917,9 @@ export function lancerSort(
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx });
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${sort.nom} !`);
+      ctx.fx?.({ type: "esquive", ref: t.ref });
     } else {
+      if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
       infligerDegats(t, r.dmg, lanceur, ctx, sort.ignoreBouclier);
       totalDmg += r.dmg;
       ctx.log(
@@ -936,7 +948,9 @@ export function lancerSort(
       const r = degatsCible(lanceur, sort, t, { useMax: false, mult: sort.siCibleMeurt.rebondDegatsX, ctx });
       if (r.esquive) {
         ctx.log(`${t.nom} esquive le rebond de ${sort.nom} !`);
+        ctx.fx?.({ type: "esquive", ref: t.ref });
       } else {
+        if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
         infligerDegats(t, r.dmg, lanceur, ctx);
         totalDmg += r.dmg;
         ctx.log(
@@ -1009,6 +1023,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
     rng: hooks.rng ?? Math.random,
     log: hooks.log ?? (() => {}),
     playerDamageBonus: hooks.playerDamageBonus ?? 1,
+    fx: hooks.fx,
   };
 
   let garde = 0;

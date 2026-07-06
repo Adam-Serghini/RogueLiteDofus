@@ -25,6 +25,7 @@ import {
   elementDeFrappe,
   statElement,
   statsEffectives,
+  type FxEvent,
 } from "./combat";
 import {
   STAT_KEYS,
@@ -442,6 +443,17 @@ const fxSnap = new Map<string, FxSnap>();
 let fxLayer: HTMLElement | null = null;
 let fxJitter = 0; // décale légèrement les nombres successifs pour éviter le chevauchement
 
+// événements visuels signalés par le moteur (crit/esquive), consommés au prochain flushFx
+const fxPending = new Map<string, { crit?: boolean; esquive?: boolean }>();
+
+/** Hook `fx` passé à runCombat : mémorise crit/esquive pour le prochain flush. */
+export function fxEvent(ev: FxEvent): void {
+  const p = fxPending.get(ev.ref) ?? {};
+  if (ev.type === "crit") p.crit = true;
+  if (ev.type === "esquive") p.esquive = true;
+  fxPending.set(ev.ref, p);
+}
+
 function ensureFxLayer(): HTMLElement {
   if (!fxLayer || !fxLayer.isConnected) {
     fxLayer = document.createElement("div");
@@ -503,14 +515,19 @@ function flushFx(): void {
     const soin = Math.max(0, c.pvActuels - prev.pv);
     const bouclierGagne = Math.max(0, c.bouclier - prev.bouclier);
 
+    const pend = fxPending.get(c.ref);
     if (degats > 0) {
-      spawnFloat(c.ref, `-${degats}`, "dmg");
+      // coup critique : nombre doré avec « ! » ; sinon nombre de dégâts classique
+      if (pend?.crit) spawnFloat(c.ref, `-${degats} !`, "crit");
+      else spawnFloat(c.ref, `-${degats}`, "dmg");
       spawnFlash(c.ref);
     }
+    if (pend?.esquive) spawnFloat(c.ref, "Esquive !", "esquive");
     if (soin > 0) spawnFloat(c.ref, `+${soin}`, "soin");
     if (bouclierGagne > 0) spawnFloat(c.ref, `+${bouclierGagne}`, "bouclier");
     if (!prev.mort && c.pvActuels <= 0) spawnFloat(c.ref, "K.O.", "mort");
   }
+  fxPending.clear();
   snapshotFx(combatants);
 }
 
