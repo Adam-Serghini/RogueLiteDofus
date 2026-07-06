@@ -12,6 +12,7 @@ import {
   PANOPLIES,
   MONSTRES,
   ZONES,
+  TRANCHES,
   monstresDeZone,
   OCRE_PALIERS,
   SORT_DOSSIER,
@@ -922,6 +923,14 @@ export function showStart(meta: Meta, onReset: () => void): Promise<void> {
       <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
       <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
       <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
+      <div class="tranches-rack">
+        ${TRANCHES.map((t) => `
+          <div class="tranche-carte ${t.active ? "active" : "locked"}" title="${t.active ? `${t.zones.length} zones` : "Bientôt disponible"}">
+            <span class="tranche-nom">${escapeHtml(t.nom)}</span>
+            <span class="tranche-niveaux">Niv. ${t.niveaux[0]}${t.niveaux[1] !== t.niveaux[0] ? `–${t.niveaux[1]}` : ""}</span>
+            <span class="tranche-detail">${t.active ? `${t.zones.length} zones` : "🔒 Verrouillé"}</span>
+          </div>`).join("")}
+      </div>
       <div class="boutons-ecran">
         <button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>
         ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}

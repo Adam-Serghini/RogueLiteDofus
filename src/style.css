@@ -178,6 +178,50 @@ button:focus-visible {
 }
 
 /* collection de reliques (toujours affichée ; non possédées = transparentes) */
+/* Rack des tranches (paliers de niveau) à l'accueil */
+.tranches-rack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px auto 6px;
+}
+.tranche-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  min-width: 104px;
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 #fff6;
+}
+.tranche-carte .tranche-nom {
+  font-weight: 800;
+}
+.tranche-carte .tranche-niveaux {
+  color: var(--muet);
+  font-size: 0.85em;
+}
+.tranche-carte .tranche-detail {
+  font-size: 0.8em;
+  color: var(--muet);
+}
+.tranche-carte.active {
+  border-color: var(--or);
+  box-shadow:
+    0 0 12px #e8b54e55,
+    inset 0 1px 0 #fff6;
+}
+.tranche-carte.active .tranche-detail {
+  color: var(--txt);
+}
+.tranche-carte.locked {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
 .dofus-rack {
   display: flex;
   flex-wrap: wrap;
