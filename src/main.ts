@@ -11,7 +11,7 @@ import {
   appliquerModificateurElite,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso,
-  appliquerArchimonstres, capturerArchi, type RunState,
+  appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
 } from "./run";
 import * as ui from "./ui";
@@ -234,7 +234,7 @@ async function jouerRun(reprise: RunSauvee | null): Promise<void> {
     if (issue === "wipe") {
       effacerRunEnCours();
       enregistrerRun(meta, false); // run terminée : échec
-      await ui.showRecap(run, false); // mort : Progression perdue, Meta (Dofus) conservé
+      await ui.showRecap(run, false, verifierSucces(meta, run, false)); // mort : Meta conservée
       return;
     }
     soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
@@ -247,7 +247,7 @@ async function jouerRun(reprise: RunSauvee | null): Promise<void> {
   }
   effacerRunEnCours();
   enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
-  await ui.showRecap(run, true);
+  await ui.showRecap(run, true, verifierSucces(meta, run, true));
 }
 
 async function boucle(): Promise<void> {

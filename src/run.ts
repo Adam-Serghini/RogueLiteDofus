@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, investirN } from "./progression";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Spell, Stats } from "./types";
@@ -472,6 +472,55 @@ export function effacerRunEnCours(): void {
   }
 }
 
+// --- Succès --------------------------------------------------------------------
+/** Contexte d'évaluation : méta persistante + run qui vient de se terminer. */
+export interface SuccesCtx {
+  meta: Meta;
+  run?: RunState;
+  victoire?: boolean;
+}
+export interface Succes {
+  id: string;
+  nom: string;
+  desc: string;
+  cond: (c: SuccesCtx) => boolean;
+}
+
+/** Catalogue (récompenses : à brancher sur le futur système d'items). */
+export const SUCCES: Succes[] = [
+  { id: "bapteme_du_feu", nom: "Baptême du feu", desc: "Terminer sa première run (même dans la douleur).",
+    cond: (c) => c.meta.runs >= 1 },
+  { id: "tour_du_monde", nom: "Tour du Monde", desc: "Traverser toute la Tranche 1.",
+    cond: (c) => c.victoire === true },
+  { id: "veteran", nom: "Vétéran", desc: "Jouer 10 runs.",
+    cond: (c) => c.meta.runs >= 10 },
+  { id: "chasseur_de_reliques", nom: "Chasseur de reliques", desc: "Posséder un Dofus.",
+    cond: (c) => c.meta.dofus.length >= 1 },
+  { id: "collectionneur", nom: "Collectionneur", desc: "Capturer 10 âmes d'Archimonstres.",
+    cond: (c) => c.meta.archis.length >= 10 },
+  { id: "chasseur_dames", nom: "Chasseur d'âmes", desc: "Capturer 25 âmes d'Archimonstres.",
+    cond: (c) => c.meta.archis.length >= 25 },
+  { id: "zoologiste", nom: "Zoologiste", desc: "Capturer tous les Archimonstres d'une zone.",
+    cond: (c) => ZONES.some((z) => {
+      const capturables = monstresDeZone(z).filter((id) => MONSTRES[id]?.archiNom);
+      return capturables.length > 0 && capturables.every((id) => c.meta.archis.includes(id));
+    }) },
+  { id: "quatre_par_quatre", nom: "Quatre par quatre", desc: "Finir une run avec 4 héros en panoplie complète.",
+    cond: (c) => !!c.run && c.run.persos.length === 4 &&
+      c.run.persos.every((p) => (["arme", "coiffe", "cape", "anneau"] as const).every((s) => p.equipement[s])) },
+];
+
+/** Évalue les succès non débloqués ; persiste et renvoie les nouveaux. */
+export function verifierSucces(meta: Meta, run?: RunState, victoire?: boolean): Succes[] {
+  const deja = new Set(meta.succes ?? []);
+  const nouveaux = SUCCES.filter((s) => !deja.has(s.id) && s.cond({ meta, run, victoire }));
+  if (nouveaux.length) {
+    meta.succes = [...(meta.succes ?? []), ...nouveaux.map((s) => s.id)];
+    sauverMeta(meta);
+  }
+  return nouveaux;
+}
+
 // --- Meta (persistance) ------------------------------------------------------
 const STORAGE_KEY = "rld_meta_v0";
 
@@ -481,12 +530,12 @@ export function chargerMeta(): Meta {
     if (raw) {
       const m = JSON.parse(raw) as Partial<Meta>;
       // rétro-compat : les vieux saves n'ont ni compteurs ni archis
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0 };
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [] };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
   }
-  return { dofus: [], archis: [], runs: 0, victoires: 0 };
+  return { dofus: [], archis: [], runs: 0, victoires: 0, succes: [] };
 }
 
 export function sauverMeta(meta: Meta): void {

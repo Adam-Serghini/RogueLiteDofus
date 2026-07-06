@@ -291,6 +291,7 @@ export interface Meta {
   archis: string[]; // ids d'espèces de monstres capturées en Archimonstre (uniques)
   runs: number; // nombre total de runs terminées (victoire ou mort)
   victoires: number; // sous-ensemble : runs achevées (les 6 zones vaincues)
+  succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

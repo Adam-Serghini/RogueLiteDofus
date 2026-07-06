@@ -162,3 +162,23 @@ describe("modificateurs d'élite", () => {
     });
   });
 });
+
+describe("succès", () => {
+  it("verifierSucces débloque une seule fois et persiste dans meta.succes", async () => {
+    const { verifierSucces } = await import("./run");
+    const meta: Meta = { dofus: [], archis: [], runs: 1, victoires: 0, succes: [] };
+    const nouveaux = verifierSucces(meta);
+    expect(nouveaux.map((s) => s.id)).toContain("bapteme_du_feu"); // runs >= 1
+    expect(meta.succes).toContain("bapteme_du_feu");
+    expect(verifierSucces(meta).map((s) => s.id)).not.toContain("bapteme_du_feu"); // pas deux fois
+  });
+
+  it("Tour du Monde ne tombe qu'à la victoire ; Collectionneur à 10 archis", async () => {
+    const { verifierSucces } = await import("./run");
+    const meta: Meta = { dofus: [], archis: [], runs: 1, victoires: 0, succes: [] };
+    expect(verifierSucces(meta, undefined, false).map((s) => s.id)).not.toContain("tour_du_monde");
+    expect(verifierSucces(meta, undefined, true).map((s) => s.id)).toContain("tour_du_monde");
+    meta.archis = Array.from({ length: 10 }, (_, i) => `espece_${i}`);
+    expect(verifierSucces(meta).map((s) => s.id)).toContain("collectionneur");
+  });
+});

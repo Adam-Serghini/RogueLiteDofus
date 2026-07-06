@@ -55,6 +55,8 @@ import {
   STAT_PAR_ELEMENT,
   type PersoState,
   type RunState,
+  type Succes,
+  SUCCES,
 } from "./run";
 import type {
   Action,
@@ -982,6 +984,7 @@ export function showStart(
 
     ecran(`
       <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
+      <button id="btn-succes" class="coin-param coin-succes" title="Succès">🏆</button>
       <img class="logo-accueil" src="${LOGO}" alt="Roguefus Lite" onerror="this.remove()" />
       <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
       <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
@@ -1004,6 +1007,12 @@ export function showStart(
       .getElementById("btn-settings")
       ?.addEventListener("click", async () => {
         await showSettings();
+        showStart(meta, onReset, reprise).then(res);
+      });
+    document
+      .getElementById("btn-succes")
+      ?.addEventListener("click", async () => {
+        await showSucces(meta);
         showStart(meta, onReset, reprise).then(res);
       });
     document
@@ -1619,7 +1628,7 @@ export function showTransition(
 }
 
 /** Récap de fin de run (victoire ou wipe) : dégâts par héros, MVP, compteurs. */
-export function showRecap(run: RunState, victoire: boolean): Promise<void> {
+export function showRecap(run: RunState, victoire: boolean, nouveauxSucces: Succes[] = []): Promise<void> {
   return new Promise((res) => {
     const st = run.stats;
     const maxDegats = Math.max(1, ...Object.values(st.degats));
@@ -1645,6 +1654,7 @@ export function showRecap(run: RunState, victoire: boolean): Promise<void> {
         <span class="recap-chip">✨ ${st.archis} âme${st.archis > 1 ? "s" : ""} capturée${st.archis > 1 ? "s" : ""}</span>
       </div>
       <div class="recap-degats">${barres}</div>
+      ${nouveauxSucces.length ? `<div class="recap-succes">${nouveauxSucces.map((su) => `<span class="succes-chip nouveau" title="${escapeHtml(su.desc)}">🏆 ${escapeHtml(su.nom)}</span>`).join("")}</div>` : ""}
       <div class="boutons-ecran"><button id="recap-retour" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
     `);
     document.getElementById("recap-retour")?.addEventListener("click", () => res());
@@ -1946,6 +1956,25 @@ export function showCapture(especes: string[]): Promise<void> {
       <div class="boutons-ecran"><button id="capt-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
     `);
     document.getElementById("capt-ok")?.addEventListener("click", () => res());
+  });
+}
+
+/** Liste des succès (débloqués / verrouillés), depuis l'accueil. */
+export function showSucces(meta: Meta): Promise<void> {
+  return new Promise((res) => {
+    const deja = new Set(meta.succes ?? []);
+    const cartes = SUCCES.map((su) => `
+      <div class="succes-carte ${deja.has(su.id) ? "ok" : "verrouille"}">
+        <span class="succes-icone">${deja.has(su.id) ? "🏆" : "🔒"}</span>
+        <span class="succes-nom">${escapeHtml(su.nom)}<small>${escapeHtml(su.desc)}</small></span>
+      </div>`).join("");
+    ecran(`
+      <h1>🏆 Succès</h1>
+      <p class="sous-titre">${deja.size} / ${SUCCES.length} débloqués. Les récompenses arriveront avec le système d'objets.</p>
+      <div class="succes-grille">${cartes}</div>
+      <div class="boutons-ecran"><button id="succes-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+    `);
+    document.getElementById("succes-retour")?.addEventListener("click", () => res());
   });
 }
 
