@@ -26,11 +26,11 @@ const MONSTRES = {
   mirgrillon: "Mirgrillon",
   sakarien: "Sakarien",
   kankreblath: "Kankreblath",
-  // Maison Fantôme
-  fantome_farceur: 514, // sprite du Fantôme Apero
-  fantome_hanteur: 203, // sprite du Fantôme Hicide
-  ashi_magari: "Ashi-magari",
-  esprit_frappeur: 202, // sprite du Fantôme Égérie
+  // Maison Fantôme (roster réel DofusDB, donjon 34)
+  vampire: "Vampire",
+  kwoan: "Kwoan",
+  gargrouille: "Gargrouille",
+  boostache_prepubere: 353, // Boostache Prépubère
   boostache: "Boostache",
   // Donjon des Larves
   larve_bleue: "Larve Bleue",
@@ -38,11 +38,13 @@ const MONSTRES = {
   larve_orange: "Larve Orange",
   larve_doree: "Larve Dorée",
   shin_larve: "Shin Larve",
-  // Grotte Hesque
+  // Grotte Hesque (roster réel DofusDB, donjon 25)
   corailleur: "Corailleur",
-  craboral: 24, // sprite du Crabe
-  kaskargo: "Kaskargo",
-  corailleur_ancien: "Corailleur Magistral", // pas d'« ancien » officiel : réutilise le sprite du Magistral
+  crustorail_kouracao: 584,
+  crustorail_morito: 587,
+  palmifleur_passaoh: 590,
+  palmifleur_malibout: 589,
+  palmifleur_morito: 591,
   corailleur_magistral: "Corailleur Magistral",
   // Nid du Kwakwa
   kwak_de_terre: "Kwak de Terre",

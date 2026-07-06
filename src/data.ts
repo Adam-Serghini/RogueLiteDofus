@@ -913,43 +913,44 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kankreblath.png",
   },
 
-  // ===== Maison Fantôme (Foire du Trool, spectres) =====
-  // Esprits insaisissables : Air dominant (esquive), un hanteur Feu.
+  // ===== Maison Fantôme (Foire du Trool) =====
+  // Roster réel DofusDB (donjon 34) : Vampire, Kwoan, Gargrouille,
+  // Tofu Maléfique (réutilisé de la zone Tofus), Boostache Prépubère (miniboss).
   // (Signature future de Boostache : réinvoque un monstre vaincu.)
-  fantome_farceur: {
-    id: "fantome_farceur", nom: "Fantôme Apero", pv: 58,
-    stats: { force: 8, intelligence: 10, agilite: 35, vitalite: 46 }, // frappe Air (esquive haute)
-    pa: 5, initiative: 14,
-    resistances: { air: 0.25, terre: -0.15 },
-    sorts: ["coup_de_bec"], ia: "agressif",
-    archiNom: "Fanlabiz le Véloce",
-    img: "/assets/monstres/fantome_farceur.png",
-  },
-  fantome_hanteur: {
-    id: "fantome_hanteur", nom: "Fantôme Hicide", pv: 64,
-    stats: { force: 8, intelligence: 34, agilite: 14, vitalite: 50 }, // frappe Feu (flammes spectrales)
-    pa: 5, initiative: 11,
-    resistances: { feu: 0.2, air: 0.15, terre: -0.1 },
+  vampire: {
+    id: "vampire", nom: "Vampire", pv: 60,
+    stats: { force: 8, intelligence: 36, agilite: 14, vitalite: 48 }, // frappe Feu (drain nocturne)
+    pa: 5, initiative: 12,
+    resistances: { feu: 0.2, air: 0.1, terre: -0.1 },
     sorts: ["morsure"], ia: "agressif",
-    archiNom: "Fantoch le Pantin",
-    img: "/assets/monstres/fantome_hanteur.png",
+    archiNom: "Vampunor le Glacial",
+    img: "/assets/monstres/vampire.png",
   },
-  ashi_magari: {
-    id: "ashi_magari", nom: "Ashi-Magari", pv: 52,
-    stats: { force: 32, intelligence: 8, agilite: 16, vitalite: 44 }, // frappe Terre (accroche les chevilles)
-    pa: 4, initiative: 12,
-    resistances: { terre: 0.15, feu: -0.15 },
-    sorts: ["picotement"], ia: "agressif",
-    img: "/assets/monstres/ashi_magari.png",
+  kwoan: {
+    id: "kwoan", nom: "Kwoan", pv: 56,
+    stats: { force: 8, intelligence: 10, agilite: 35, vitalite: 46 }, // frappe Air (vif)
+    pa: 5, initiative: 14,
+    resistances: { air: 0.2, terre: -0.15 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Kwoanneur le Frimeur",
+    img: "/assets/monstres/kwoan.png",
   },
-  esprit_frappeur: {
-    id: "esprit_frappeur", nom: "Fantôme Égérie", pv: 112,
-    stats: { force: 12, intelligence: 16, agilite: 33, vitalite: 68 }, // élite/miniboss véloce
+  gargrouille: {
+    id: "gargrouille", nom: "Gargrouille", pv: 66,
+    stats: { force: 34, intelligence: 10, agilite: 12, vitalite: 54 }, // frappe Terre (pierre animée)
+    pa: 4, initiative: 9,
+    resistances: { terre: 0.2, eau: 0.1, feu: -0.1 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Garsim le Mort",
+    img: "/assets/monstres/gargrouille.png",
+  },
+  boostache_prepubere: {
+    id: "boostache_prepubere", nom: "Boostache Prépubère", pv: 112,
+    stats: { force: 12, intelligence: 16, agilite: 33, vitalite: 68 }, // miniboss (rejeton du boss)
     pa: 5, initiative: 13,
     resistances: { air: 0.2, feu: 0.1, terre: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
-    archiNom: "Fantrask la Rêveuse",
-    img: "/assets/monstres/esprit_frappeur.png",
+    img: "/assets/monstres/boostache_prepubere.png",
   },
   boostache: {
     id: "boostache", nom: "Boostache", pv: 520,
@@ -1008,9 +1009,10 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/shin_larve.png",
   },
 
-  // ===== Grotte Hesque (plage corail, crustacés) =====
-  // Carapaces Eau/Terre qui cognent dur. (Signature future du Magistral :
-  // ne frappe qu'au corps à corps → ne menace que la ligne avant.)
+  // ===== Grotte Hesque (plage corail d'Otomaï) =====
+  // Roster réel DofusDB (donjon 25) : Corailleur + Crustorail/Palmifleur
+  // (déclinaisons élémentaires Kouraçao/Morito/Passaoh/Malibout).
+  // (Signature future du Magistral : ne frappe qu'au corps à corps.)
   corailleur: {
     id: "corailleur", nom: "Corailleur", pv: 85,
     stats: { force: 12, intelligence: 10, agilite: 12, chance: 48, vitalite: 66 }, // frappe Eau
@@ -1020,31 +1022,50 @@ export const MONSTRES: Record<string, Monstre> = {
     archiNom: "Corboyard l'Enigmatique",
     img: "/assets/monstres/corailleur.png",
   },
-  craboral: {
-    id: "craboral", nom: "Crabe", pv: 95,
-    stats: { force: 50, intelligence: 10, agilite: 12, vitalite: 72 }, // frappe Terre (pinces)
+  crustorail_kouracao: {
+    id: "crustorail_kouracao", nom: "Crustorail Kouraçao", pv: 90,
+    stats: { force: 12, intelligence: 10, agilite: 12, chance: 46, vitalite: 68 }, // frappe Eau
     pa: 5, initiative: 8,
-    resistances: { terre: 0.25, eau: 0.15, air: -0.15 },
-    sorts: ["morsure", "charge"], ia: "agressif",
-    archiNom: "Craraboss le Féérique",
-    img: "/assets/monstres/craboral.png",
-  },
-  kaskargo: {
-    id: "kaskargo", nom: "Kaskargo", pv: 108,
-    stats: { force: 44, intelligence: 10, agilite: 8, vitalite: 80 }, // coquille lourde et lente
-    pa: 4, initiative: 5,
-    resistances: { terre: 0.2, feu: 0.15, eau: 0.15, air: 0.1 },
+    resistances: { eau: 0.3, feu: -0.2 },
     sorts: ["morsure"], ia: "agressif",
-    archiNom: "Kaskapointhe la Couverte",
-    img: "/assets/monstres/kaskargo.png",
+    archiNom: "Crustterus l'Organique",
+    img: "/assets/monstres/crustorail_kouracao.png",
   },
-  corailleur_ancien: {
-    id: "corailleur_ancien", nom: "Corailleur Ancien", pv: 170,
-    stats: { force: 16, intelligence: 12, agilite: 14, chance: 52, vitalite: 96 }, // élite/miniboss
-    pa: 5, initiative: 9,
-    resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
+  crustorail_morito: {
+    id: "crustorail_morito", nom: "Crustorail Morito", pv: 95,
+    stats: { force: 48, intelligence: 10, agilite: 12, vitalite: 72 }, // frappe Terre (pinces)
+    pa: 5, initiative: 8,
+    resistances: { terre: 0.3, air: -0.2 },
     sorts: ["morsure", "charge"], ia: "agressif",
-    img: "/assets/monstres/corailleur_ancien.png",
+    archiNom: "Cruskof le Rustre",
+    img: "/assets/monstres/crustorail_morito.png",
+  },
+  palmifleur_passaoh: {
+    id: "palmifleur_passaoh", nom: "Palmifleur Passaoh", pv: 88,
+    stats: { force: 12, intelligence: 46, agilite: 12, vitalite: 66 }, // frappe Feu
+    pa: 5, initiative: 10,
+    resistances: { feu: 0.3, eau: -0.2 },
+    sorts: ["morsure"], ia: "agressif",
+    archiNom: "Palmiflette le Convivial",
+    img: "/assets/monstres/palmifleur_passaoh.png",
+  },
+  palmifleur_malibout: {
+    id: "palmifleur_malibout", nom: "Palmifleur Malibout", pv: 88,
+    stats: { force: 12, intelligence: 10, agilite: 46, vitalite: 66 }, // frappe Air
+    pa: 5, initiative: 11,
+    resistances: { air: 0.3, terre: -0.2 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    archiNom: "Palmito le Menteur",
+    img: "/assets/monstres/palmifleur_malibout.png",
+  },
+  palmifleur_morito: {
+    id: "palmifleur_morito", nom: "Palmifleur Morito", pv: 170,
+    stats: { force: 50, intelligence: 14, agilite: 14, vitalite: 96 }, // élite/miniboss du récif
+    pa: 5, initiative: 9,
+    resistances: { terre: 0.25, eau: 0.15, feu: -0.1 },
+    sorts: ["morsure", "charge"], ia: "agressif",
+    archiNom: "Palmiche le Serein",
+    img: "/assets/monstres/palmifleur_morito.png",
   },
   corailleur_magistral: {
     id: "corailleur_magistral", nom: "Corailleur Magistral", pv: 800,
@@ -1340,20 +1361,20 @@ export const COMBATS: Record<string, CombatDef> = {
 
   // ===== Maison Fantôme =====
   fan_1: { nom: "Couloir qui grince", ennemis: [
-    { monstre: "fantome_farceur", position: 0 }, { monstre: "ashi_magari", position: 1 },
+    { monstre: "gargrouille", position: 0 }, { monstre: "kwoan", position: 1 },
   ] },
   fan_2: { nom: "Chandelles bleues", ennemis: [
-    { monstre: "fantome_hanteur", position: 0 }, { monstre: "ashi_magari", position: 1 }, { monstre: "fantome_farceur", position: 4 },
+    { monstre: "vampire", position: 0 }, { monstre: "gargrouille", position: 1 }, { monstre: "kwoan", position: 4 },
   ] },
   fan_3: { nom: "Sarabande spectrale", ennemis: [
-    { monstre: "fantome_farceur", position: 0 }, { monstre: "fantome_hanteur", position: 1 }, { monstre: "ashi_magari", position: 2 },
+    { monstre: "tofu_malefique", position: 0 }, { monstre: "vampire", position: 1 }, { monstre: "kwoan", position: 2 },
   ] },
   fan_elite: { nom: "Nuit de poltergeists (dur)", ennemis: [
-    { monstre: "esprit_frappeur", position: 0 }, { monstre: "fantome_hanteur", position: 1 },
-    { monstre: "fantome_farceur", position: 2 }, { monstre: "ashi_magari", position: 3 },
+    { monstre: "boostache_prepubere", position: 0 }, { monstre: "vampire", position: 1 },
+    { monstre: "gargrouille", position: 2 }, { monstre: "kwoan", position: 4 },
   ] },
   fan_boss: { nom: "Donjon — Boostache", ennemis: [
-    { monstre: "boostache", position: 0 }, { monstre: "esprit_frappeur", position: 1 }, // boss + miniboss devant
+    { monstre: "boostache", position: 0 }, { monstre: "boostache_prepubere", position: 1 }, // boss + miniboss devant
   ] },
 
   // ===== Donjon des Larves =====
@@ -1376,20 +1397,20 @@ export const COMBATS: Record<string, CombatDef> = {
 
   // ===== Grotte Hesque =====
   hsk_1: { nom: "Marée montante", ennemis: [
-    { monstre: "corailleur", position: 0 }, { monstre: "kaskargo", position: 1 },
+    { monstre: "corailleur", position: 0 }, { monstre: "crustorail_kouracao", position: 1 },
   ] },
   hsk_2: { nom: "Pinces au récif", ennemis: [
-    { monstre: "craboral", position: 0 }, { monstre: "corailleur", position: 1 }, { monstre: "kaskargo", position: 2 },
+    { monstre: "crustorail_morito", position: 0 }, { monstre: "palmifleur_passaoh", position: 1 }, { monstre: "corailleur", position: 4 },
   ] },
   hsk_3: { nom: "Banc de coraux", ennemis: [
-    { monstre: "corailleur", position: 0 }, { monstre: "craboral", position: 1 }, { monstre: "corailleur", position: 4 },
+    { monstre: "palmifleur_malibout", position: 0 }, { monstre: "crustorail_kouracao", position: 1 }, { monstre: "palmifleur_passaoh", position: 4 },
   ] },
   hsk_elite: { nom: "Fond de la grotte (dur)", ennemis: [
-    { monstre: "corailleur_ancien", position: 0 }, { monstre: "craboral", position: 1 },
-    { monstre: "kaskargo", position: 2 }, { monstre: "corailleur", position: 4 },
+    { monstre: "palmifleur_morito", position: 0 }, { monstre: "crustorail_morito", position: 1 },
+    { monstre: "palmifleur_malibout", position: 2 }, { monstre: "corailleur", position: 4 },
   ] },
   hsk_boss: { nom: "Donjon — Corailleur Magistral", ennemis: [
-    { monstre: "corailleur_magistral", position: 0 }, { monstre: "corailleur_ancien", position: 1 }, // boss + miniboss devant
+    { monstre: "corailleur_magistral", position: 0 }, { monstre: "palmifleur_morito", position: 1 }, // boss + miniboss devant
   ] },
 
   // ===== Nid du Kwakwa =====
