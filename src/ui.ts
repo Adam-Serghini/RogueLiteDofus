@@ -966,7 +966,7 @@ function carteClasse(classeId: string, sel: boolean, dataAttr: string): string {
 const classe_img = (classeId: string): string =>
   A(CLASSES[classeId]?.img ?? `/assets/classes/${classeId}.png`);
 
-/** Écran de départ : choisir 2 classes parmi les 7 pour commencer la run. */
+/** Écran de départ : choisir 2 classes parmi les classes jouables pour commencer la run. */
 export function showChoixEquipe(): Promise<string[]> {
   return new Promise((res) => {
     const choix: string[] = [];

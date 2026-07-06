@@ -25,7 +25,7 @@ export interface RunState {
   inventaire: ItemInstance[]; // exemplaires non équipés trouvés cette run (perdus à la mort)
 }
 
-export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "sadida"]; // roster par défaut (tests)
+export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
 export const TAILLE_MAX_EQUIPE = 4;
 
 /** Stat de caractéristique portant chaque élément (pour l'allocation par élément). */
@@ -53,8 +53,13 @@ export function gagnerXPPerso(perso: PersoState, gain: number): number {
   return niveaux;
 }
 
+/** Classes retirées du jeu (données conservées pour les tests/saves) — pas
+ *  sélectionnables au départ ni recrutables en taverne. */
+const CLASSES_DESACTIVEES = new Set(["sadida"]); // déséquilibré, en attente de refonte
+
 /** Toutes les classes jouables (ordre d'insertion de CLASSES). */
-export const classesDisponibles = (): string[] => Object.keys(CLASSES);
+export const classesDisponibles = (): string[] =>
+  Object.keys(CLASSES).filter((id) => !CLASSES_DESACTIVEES.has(id));
 
 /** Case de grille (0..7) de chaque membre, depuis la formation sauvegardée.
  *  Garantit l'unicité et le domaine ; complète les manquants par la 1re case libre. */

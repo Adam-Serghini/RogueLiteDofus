@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
-  appliquerElement, gagnerXPPerso,
+  appliquerElement, gagnerXPPerso, classesDisponibles,
 } from "./run";
 import type { Meta } from "./types";
 
@@ -35,6 +35,17 @@ describe("compteur de runs", () => {
     enregistrerRun(meta, false); // mort
     expect(meta.runs).toBe(3);
     expect(meta.victoires).toBe(1);
+  });
+});
+
+describe("classes désactivées", () => {
+  it("le sadida n'est ni sélectionnable ni recrutable (mais sa data existe encore)", () => {
+    const dispo = classesDisponibles();
+    expect(dispo).not.toContain("sadida");
+    expect(dispo.length).toBe(6);
+    // le recrutement passe par classesDisponibles → jamais proposé
+    const run = nouvelleRun(["iop", "cra"]);
+    expect(classesHorsEquipe(run)).not.toContain("sadida");
   });
 });
 

@@ -33,7 +33,7 @@ const TEAM: Array<{ classe: string; stat: keyof Stats }> = [
   { classe: "iop", stat: "force" }, // terre
   { classe: "cra", stat: "agilite" }, // air
   { classe: "eniripsa", stat: "intelligence" }, // feu (+ soin de classe)
-  { classe: "sadida", stat: "chance" }, // eau
+  { classe: "ecaflip", stat: "chance" }, // eau (le sadida est désactivé)
 ];
 const IDS = TEAM.map((t) => t.classe);
 const ELEM_DE_STAT: Record<string, string> = { force: "terre", intelligence: "feu", agilite: "air", chance: "eau" };
@@ -78,8 +78,12 @@ function courbeNiveaux(): number[] {
   return niveaux;
 }
 
-/** Équipe de référence au niveau `niveau`, éventuellement stuffée du set `setId`. */
-function equipeReference(niveau: number, setId?: string): RunState {
+/**
+ * Équipe de référence au niveau `niveau`, éventuellement stuffée des
+ * `nbPieces` premières pièces du set `setId` (2 = mi-set réaliste, avec le
+ * bonus de panoplie 2 pièces ; défaut = set complet).
+ */
+function equipeReference(niveau: number, setId?: string, nbPieces = 4): RunState {
   const run = nouvelleRun(IDS);
   run.persos.forEach((perso, i) => {
     const p = progressionInitiale();
@@ -88,7 +92,7 @@ function equipeReference(niveau: number, setId?: string): RunState {
     investirN(p, TEAM[i].stat, Infinity);
     perso.progression = p;
     if (setId) {
-      for (const pieceId of PANOPLIES[setId].pieces) {
+      for (const pieceId of PANOPLIES[setId].pieces.slice(0, nbPieces)) {
         perso.equipement[ITEMS[pieceId].slot] = itemMoyen(pieceId);
       }
     }
@@ -135,12 +139,13 @@ function labelEnnemis(combatId: string): string {
     .map(([m, n]) => `${n}×${MONSTRES[m]?.nom ?? m}`)
     .join(", ");
 }
-function drapeaux(type: string, nu: Bilan, set: Bilan): string {
+function drapeaux(type: string, nu: Bilan, mi: Bilan, set: Bilan): string {
   const f: string[] = [];
   if (nu.win < 0.5 || set.win < 0.5) f.push("⚠ DUR");
   if (type === "boss" && set.win > 0.9) f.push("· facile");
   if ((type === "normale") && nu.win > 0.98 && nu.hpWin > 0.85) f.push("· trivial");
-  if (Math.max(nu.maxTurns, set.maxTurns) >= 90) f.push("· stalemate?");
+  if (set.win - mi.win > 0.5) f.push("· falaise 2→4p"); // le saut se joue entre mi-set et full set
+  if (Math.max(nu.maxTurns, mi.maxTurns, set.maxTurns) >= 90) f.push("· stalemate?");
   return f.join(" ");
 }
 
@@ -152,12 +157,13 @@ describe("équilibrage — simulation par rencontre", () => {
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
     out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${ELEM_DE_STAT[t.stat as string]})`).join(" ")}`);
     out.push(`Niveau attendu/zone: ${ZONES.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
-    out.push(`Colonnes — NU (sans stuff) | SET (panoplie de zone, rolls moyens) : win% · tours · PV%restant(sur victoire)\n`);
+    out.push(`Colonnes — NU (sans stuff) | MI (2 pièces + bonus 2p) | SET (4 pièces, rolls moyens) : win% · tours · PV%restant(sur victoire)\n`);
 
     for (let z = 0; z < ZONES.length; z++) {
       const zone = ZONES[z];
       const niveau = niveaux[z];
       const runNu = equipeReference(niveau);
+      const runMi = equipeReference(niveau, BUTIN_ZONE[zone.id], 2);
       const runSet = equipeReference(niveau, BUTIN_ZONE[zone.id]);
       out.push(`── ${zone.nom} (niv ${niveau}, set « ${PANOPLIES[BUTIN_ZONE[zone.id]]?.nom ?? "?"} ») ──`);
       const lignes: Array<{ id: string; type: string }> = [
@@ -168,11 +174,13 @@ describe("équilibrage — simulation par rencontre", () => {
       for (const { id, type } of lignes) {
         const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
         const nu = await simuler(runNu, id, seed);
+        const mi = await simuler(runMi, id, seed);
         const set = await simuler(runSet, id, seed);
-        const dr = drapeaux(type === "élite" ? "elite" : type, nu, set);
+        const dr = drapeaux(type === "élite" ? "elite" : type, nu, mi, set);
         out.push(
           `  ${type.padEnd(7)} ${id.padEnd(10)} ` +
           `NU ${pct(nu.win)} ${f1(nu.turns)}t ${pct(nu.hpWin)} | ` +
+          `MI ${pct(mi.win)} ${f1(mi.turns)}t ${pct(mi.hpWin)} | ` +
           `SET ${pct(set.win)} ${f1(set.turns)}t ${pct(set.hpWin)}  ` +
           `${dr}   [${labelEnnemis(id)}]`,
         );
