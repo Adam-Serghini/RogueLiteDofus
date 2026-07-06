@@ -1551,11 +1551,17 @@ export const COMBATS: Record<string, CombatDef> = {
 
 // --- Zones (mondes traversés successivement durant une run) ------------------
 export interface ZonePools { normales: string[]; elite: string[]; boss: string; }
-export interface ZoneDef { id: string; nom: string; pools: ZonePools; }
+export interface ZoneDef {
+  id: string;
+  nom: string;
+  pools: ZonePools;
+  sansNoeuds?: string[]; // types de nœuds exclus du plateau de cette zone
+}
 
 export const ZONES: ZoneDef[] = [
   { id: "incarnam", nom: "Incarnam",
-    pools: { normales: ["inc_1", "inc_2", "inc_3"], elite: ["inc_elite"], boss: "inc_boss" } },
+    pools: { normales: ["inc_1", "inc_2", "inc_3"], elite: ["inc_elite"], boss: "inc_boss" },
+    sansNoeuds: ["otomai"] }, // pas de restat en zone de départ
   { id: "astrub", nom: "Champs d'Astrub",
     pools: { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: "boss" } },
   { id: "tainela", nom: "Tainéla",

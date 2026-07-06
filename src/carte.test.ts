@@ -109,3 +109,12 @@ describe("atteignables", () => {
     expect(suite.map((n) => n.id).sort()).toEqual([...noeud(c, c.depart[0])!.suivants].sort());
   });
 });
+
+describe("sansNoeuds", () => {
+  it("les types exclus n'apparaissent jamais sur le plateau (ex. Otomai à Incarnam)", () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const c = genererCarte(mulberry32(seed), POOLS, ["otomai"]);
+      for (const n of c.noeuds) expect(n.type).not.toBe("otomai");
+    }
+  });
+});

@@ -170,7 +170,7 @@ async function deZaap(pools: ZonePools): Promise<{ type: NodeType; combatId?: st
 
 /** Parcourt le plateau d'une zone jusqu'au donjon. */
 async function jouerZone(run: RunState, zone: ZoneDef): Promise<"wipe" | "clear"> {
-  run.carte = genererCarte(Math.random, zone.pools);
+  run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[]);
   for (;;) {
     const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire);
 

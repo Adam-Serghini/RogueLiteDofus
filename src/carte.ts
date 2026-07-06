@@ -60,8 +60,11 @@ function profilLargeur(rng: Rng): number[] {
   return [...montee, ...Array(plateau).fill(W), ...descente];
 }
 
-export function genererCarte(rng: Rng, pools: ZonePools): GameMap {
-  const cfg = GEN_CARTE;
+export function genererCarte(rng: Rng, pools: ZonePools, sansNoeuds: NodeType[] = []): GameMap {
+  // types de nœuds exclus par la zone (ex. pas d'Otomai à Incarnam)
+  const poids = Object.fromEntries(
+    Object.entries(GEN_CARTE.poids).filter(([t]) => !sansNoeuds.includes(t as NodeType)),
+  );
   const profil = profilLargeur(rng);
   const nbLignes = profil.length;
   const lignes: MapNode[][] = [];
@@ -71,7 +74,7 @@ export function genererCarte(rng: Rng, pools: ZonePools): GameMap {
     const ligne: MapNode[] = [];
     for (let c = 0; c < nb; c++) {
       const type: NodeType =
-        l === 0 ? "combat" : l === nbLignes - 1 ? "donjon" : pickType(rng, cfg.poids);
+        l === 0 ? "combat" : l === nbLignes - 1 ? "donjon" : pickType(rng, poids);
       const colonne = c - (nb - 1) / 2; // offset centré
       const node: MapNode = { id: `n${l}_${c}`, type, ligne: l, colonne, suivants: [] };
       enrichir(rng, node, pools);
