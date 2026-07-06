@@ -1626,10 +1626,12 @@ function carteProgression(p: PersoState): string {
     const inv = prog.pointsInvestis[stat] ?? 0;
     const equip = bonus.stats[stat] ?? 0; // apport de l'équipement pour cette stat
     const total = (finals[stat] ?? 0) + equip;
+    // format : TOTAL (points investis) + (équipement) — total coloré par stat,
+    // investis en bleu foncé, équipement en violet
     return `
       <div class="stat-ligne">
         <span class="stat-nom" tabindex="0">${STAT_NOM[stat]}<span class="stat-info">ⓘ</span><span class="stat-aide">${STAT_AIDE[stat]}${STAT_ELEMENTAIRE.has(stat) ? AIDE_ELEMENT : ""}</span></span>
-        <span class="stat-val">${total}${inv ? ` <span class="muet">(+${inv})</span>` : ""}${equip ? ` <span class="stat-equip">+${equip} équip</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
+        <span class="stat-val"><b class="stat-total stat-c-${stat}">${total}</b><span class="stat-part-inv" title="Points investis">(${inv})</span>${equip ? ` + <span class="stat-part-equip" title="Équipement">(${equip})</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
         <span class="stat-actions">
           <button class="stat-champ" data-perso="${p.classeId}" data-stat="${stat}" ${peut ? "" : "disabled"} title="Montant libre">+…</button>
           <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="max" ${peut ? "" : "disabled"}>Max</button>

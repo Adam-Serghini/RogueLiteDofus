@@ -2246,10 +2246,27 @@ kbd {
 .stat-cout {
   font-size: 0.62rem;
 }
-.stat-equip {
-  font-size: 0.62rem;
+/* TOTAL (investis) + (équipement) : total à la couleur de la stat,
+   investis en bleu foncé, équipement en violet */
+.stat-total {
+  font-weight: 900;
+  font-size: 1.02em;
+}
+.stat-c-force { color: var(--terre); }
+.stat-c-intelligence { color: var(--feu); }
+.stat-c-agilite { color: var(--air); }
+.stat-c-chance { color: #3aa0e6; } /* eau */
+.stat-c-vitalite { color: var(--pv); }
+.stat-part-inv {
+  margin-left: 3px;
   font-weight: 800;
-  color: var(--pv);
+  font-size: 0.78em;
+  color: #2a4a8f; /* bleu foncé : points investis */
+}
+.stat-part-equip {
+  font-weight: 800;
+  font-size: 0.78em;
+  color: #8a4fb8; /* violet : apport de l'équipement */
 }
 .stat-actions {
   display: inline-flex;
