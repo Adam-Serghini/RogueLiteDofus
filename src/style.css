@@ -1782,7 +1782,7 @@ kbd {
 }
 .res-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* 4 éléments → grille 2×2 */
   gap: 4px;
   margin-top: 4px;
 }

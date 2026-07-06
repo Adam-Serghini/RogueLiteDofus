@@ -596,7 +596,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     ? Math.max(0, Math.min(100, Math.round((c.pvActuels / c.pvMax) * 100)))
     : 0;
   const bouclier = Math.round(c.bouclier);
-  // chips de résistance : les 6 éléments, toujours affichés (0 % inclus)
+  // chips de résistance : les 4 éléments, toujours affichés (0 % inclus), en grille 2×2
   const resChips = ELEMENTS.map((e) => {
     const v = Math.round((c.resistances[e] ?? 0) * 100);
     const etat = v < 0 ? "faible" : v === 0 ? "zero" : "";
