@@ -1021,6 +1021,31 @@ export const ZONES: ZoneDef[] = [
     pools: { normales: ["frg_1", "frg_2", "frg_3"], elite: ["frg_elite"], boss: "frg_boss" } },
 ];
 
+// --- Tranches (paliers de niveau — une run = une tranche) ---------------------
+// NB : les donjons ÉVÉNEMENTIELS (Nowel/Sapik, Halouine, Pwak…) sont réservés à un
+// futur contenu saisonnier et ne doivent JAMAIS figurer dans les zones d'une tranche.
+export interface TrancheDef {
+  id: string;
+  nom: string;
+  niveaux: [number, number]; // fourchette de niveaux affichée (fiction Dofus)
+  zones: string[]; // ids de ZONES, dans l'ordre de jeu
+  active: boolean; // false = affichée verrouillée à l'accueil (pas encore jouable)
+}
+
+export const TRANCHES: TrancheDef[] = [
+  { id: "t1", nom: "Tranche 1", niveaux: [1, 50], active: true,
+    zones: ["incarnam", "astrub", "tainela", "tofus", "scarafeuilles", "forgerons"] },
+  { id: "t2", nom: "Tranche 2", niveaux: [51, 100], active: false, zones: [] },
+  { id: "t3", nom: "Tranche 3", niveaux: [101, 150], active: false, zones: [] },
+  { id: "t4", nom: "Tranche 4", niveaux: [151, 199], active: false, zones: [] },
+  { id: "t5", nom: "Tranche 5", niveaux: [200, 200], active: false, zones: [] },
+];
+
+/** Zones (dans l'ordre de jeu) de la tranche active. */
+export function zonesDeTranche(tranche: TrancheDef): ZoneDef[] {
+  return tranche.zones.map((id) => ZONES.find((z) => z.id === id)!);
+}
+
 /** Récompense d'XP par type de nœud de combat (tunable). */
 export const XP_PAR_TYPE = { combat: 40, combat_dur: 70 } as const;
 

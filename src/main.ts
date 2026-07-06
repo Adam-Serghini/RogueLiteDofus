@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, ZONES, BUTIN_ZONE, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, TRANCHES, zonesDeTranche, BUTIN_ZONE, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
 import { restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
@@ -192,8 +192,9 @@ async function jouerZone(run: RunState, zone: ZoneDef): Promise<"wipe" | "clear"
 async function jouerRun(): Promise<void> {
   const choix = await ui.showChoixEquipe();
   const run = nouvelleRun(choix);
-  for (let z = 0; z < ZONES.length; z++) {
-    const zone = ZONES[z];
+  const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!); // une run = une tranche
+  for (let z = 0; z < zones.length; z++) {
+    const zone = zones[z];
     const issue = await jouerZone(run, zone);
     if (issue === "wipe") {
       enregistrerRun(meta, false); // run terminée : échec
@@ -201,8 +202,8 @@ async function jouerRun(): Promise<void> {
       return;
     }
     soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
-    if (z < ZONES.length - 1) {
-      await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${ZONES[z + 1].nom}.`);
+    if (z < zones.length - 1) {
+      await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${zones[z + 1].nom}.`);
     }
   }
   enregistrerRun(meta, true); // run terminée : toutes les zones vaincues

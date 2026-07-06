@@ -15,8 +15,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  ZONES, COMBATS, MONSTRES, CLASSES, ITEMS, PANOPLIES, BUTIN_ZONE, XP_PAR_TYPE, SORTS,
+  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, PANOPLIES, BUTIN_ZONE, XP_PAR_TYPE, SORTS,
 } from "./data";
+
 import { runCombat, controllerIA } from "./combat";
 import { progressionInitiale, gagnerXP, investirN } from "./progression";
 import {
@@ -24,6 +25,9 @@ import {
   type RunState,
 } from "./run";
 import type { ItemInstance, Stats } from "./types";
+
+// Zones de la tranche active, dans l'ORDRE DE JEU (la courbe d'XP en dépend).
+const ZONES_SIM = zonesDeTranche(TRANCHES.find((t) => t.active)!);
 
 // --- Paramètres du sim (tunables) --------------------------------------------
 // Les classes ont 0 stat offensive de base → l'élément vient des points investis.
@@ -70,7 +74,7 @@ function itemMoyen(id: string): ItemInstance {
 function courbeNiveaux(): number[] {
   const p = progressionInitiale();
   const niveaux: number[] = [];
-  for (let z = 0; z < ZONES.length; z++) {
+  for (let z = 0; z < ZONES_SIM.length; z++) {
     niveaux.push(p.niveau);
     for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, XP_PAR_TYPE.combat);
     for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, XP_PAR_TYPE.combat_dur);
@@ -156,11 +160,11 @@ describe("équilibrage — simulation par rencontre", () => {
     const out: string[] = [];
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
     out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${ELEM_DE_STAT[t.stat as string]})`).join(" ")}`);
-    out.push(`Niveau attendu/zone: ${ZONES.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
+    out.push(`Niveau attendu/zone: ${ZONES_SIM.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
     out.push(`Colonnes — NU (sans stuff) | MI (2 pièces + bonus 2p) | SET (4 pièces, rolls moyens) : win% · tours · PV%restant(sur victoire)\n`);
 
-    for (let z = 0; z < ZONES.length; z++) {
-      const zone = ZONES[z];
+    for (let z = 0; z < ZONES_SIM.length; z++) {
+      const zone = ZONES_SIM[z];
       const niveau = niveaux[z];
       const runNu = equipeReference(niveau);
       const runMi = equipeReference(niveau, BUTIN_ZONE[zone.id], 2);
@@ -189,6 +193,6 @@ describe("équilibrage — simulation par rencontre", () => {
     }
     // eslint-disable-next-line no-console
     console.log(out.join("\n"));
-    expect(niveaux.length).toBe(ZONES.length);
+    expect(niveaux.length).toBe(ZONES_SIM.length);
   });
 });

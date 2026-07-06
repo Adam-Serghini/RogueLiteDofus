@@ -3,7 +3,7 @@
 //  Garde-fou : à chaque nouvelle zone, ces invariants doivent tenir.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { ZONES, COMBATS, MONSTRES, PANOPLIES, ITEMS, BUTIN_ZONE } from "./data";
+import { ZONES, COMBATS, MONSTRES, PANOPLIES, ITEMS, BUTIN_ZONE, TRANCHES, zonesDeTranche } from "./data";
 
 describe("intégrité des zones", () => {
   for (const zone of ZONES) {
@@ -41,5 +41,20 @@ describe("intégrité des zones", () => {
     for (const c of Object.values(COMBATS)) {
       for (const e of c.ennemis) expect(e.position).toBeGreaterThanOrEqual(0), expect(e.position).toBeLessThan(8);
     }
+  });
+});
+
+describe("intégrité des tranches", () => {
+  it("chaque zone de tranche existe dans ZONES (sans doublon)", () => {
+    for (const t of TRANCHES) {
+      expect(new Set(t.zones).size, `${t.id} sans doublon`).toBe(t.zones.length);
+      for (const z of zonesDeTranche(t)) expect(z, `zone de ${t.id}`).toBeDefined();
+    }
+  });
+
+  it("exactement une tranche active, et elle couvre toutes les ZONES", () => {
+    const actives = TRANCHES.filter((t) => t.active);
+    expect(actives.length).toBe(1);
+    expect(new Set(actives[0].zones)).toEqual(new Set(ZONES.map((z) => z.id)));
   });
 });
