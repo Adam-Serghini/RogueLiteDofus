@@ -955,10 +955,29 @@ export function renderDofusRack(meta: Meta, compact = false): string {
   return `<div class="dofus-rack ${compact ? "compact" : ""}">${slots}</div>`;
 }
 
-export function showStart(meta: Meta, onReset: () => void): Promise<void> {
+/** Infos affichées pour proposer la reprise d'une run sauvegardée. */
+export interface RepriseInfo {
+  zoneNom: string;
+  zoneNum: number;
+  nbZones: number;
+}
+
+export type StartAction = "nouvelle" | "reprendre" | "abandonner";
+
+export function showStart(
+  meta: Meta,
+  onReset: () => void,
+  reprise: RepriseInfo | null = null,
+): Promise<StartAction> {
   return new Promise((res) => {
     const nbUniques = new Set(meta.dofus).size;
     const total = Object.keys(DOFUS).length;
+
+    // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
+    const boutons = reprise
+      ? `<button id="btn-reprendre" class="btn-jouer btn-reprendre" title="Reprendre la run — Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}"><img src="${BTN_JOUER}" alt="Reprendre" onerror="this.remove()" /></button>
+         <button id="btn-abandon" class="secondaire">Abandonner la run</button>`
+      : `<button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>`;
 
     ecran(`
       <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
@@ -966,6 +985,7 @@ export function showStart(meta: Meta, onReset: () => void): Promise<void> {
       <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
       <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
       <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
+      ${reprise ? `<p class="accueil-reprise">⚔ Run en cours — <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b></p>` : ""}
       <div class="tranches-rack">
         ${TRANCHES.map((t) => `
           <div class="tranche-carte ${t.active ? "active" : "locked"}" title="${t.active ? `${t.zones.length} zones` : "Bientôt disponible"}">
@@ -975,7 +995,7 @@ export function showStart(meta: Meta, onReset: () => void): Promise<void> {
           </div>`).join("")}
       </div>
       <div class="boutons-ecran">
-        <button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>
+        ${boutons}
         ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
       </div>
     `);
@@ -983,14 +1003,20 @@ export function showStart(meta: Meta, onReset: () => void): Promise<void> {
       .getElementById("btn-settings")
       ?.addEventListener("click", async () => {
         await showSettings();
-        showStart(meta, onReset).then(res);
+        showStart(meta, onReset, reprise).then(res);
       });
     document
       .getElementById("btn-start")
-      ?.addEventListener("click", () => res());
+      ?.addEventListener("click", () => res("nouvelle"));
+    document
+      .getElementById("btn-reprendre")
+      ?.addEventListener("click", () => res("reprendre"));
+    document
+      .getElementById("btn-abandon")
+      ?.addEventListener("click", () => res("abandonner"));
     document.getElementById("btn-reset")?.addEventListener("click", () => {
       onReset();
-      showStart(meta, onReset).then(res);
+      showStart(meta, onReset, reprise).then(res);
     });
   });
 }

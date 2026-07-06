@@ -36,11 +36,11 @@ Options sur la table :
 **Reco actuelle : (a) + (b).** Décision non urgente : `PersoState` est déjà du JSON
 sérialisable, l'option (c) reste techniquement ouverte quoi qu'on choisisse.
 
-### Conséquence technique : sauvegarde de run
+### Conséquence technique : sauvegarde de run — ✅ FAIT
 
-Une run de 10–12 zones est ~2× plus longue qu'aujourd'hui → il faudra **persister la
-`RunState` en cours** (localStorage, comme `Meta`) pour reprendre une run interrompue.
-À faire avant d'allonger les runs.
+`RunState` + index de zone persistés dans `rld_run_v0` après chaque nœud résolu.
+Reprise/abandon depuis l'accueil ; combat en cours non sauvegardé (nœud à refaire) ;
+l'abandon compte comme une run échouée.
 
 ## 2. Rareté d'équipement
 

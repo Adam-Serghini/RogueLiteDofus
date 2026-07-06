@@ -11,6 +11,7 @@ import {
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso,
   appliquerArchimonstres, capturerArchi, type RunState,
+  sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -169,9 +170,15 @@ async function deZaap(pools: ZonePools): Promise<{ type: NodeType; combatId?: st
   return { type, xp: 0 };
 }
 
-/** Parcourt le plateau d'une zone jusqu'au donjon. */
-async function jouerZone(run: RunState, zone: ZoneDef): Promise<"wipe" | "clear"> {
-  run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[]);
+/** Parcourt le plateau d'une zone jusqu'au donjon.
+ *  Sauvegarde la run après chaque nœud résolu (reprise possible à tout moment ;
+ *  un combat en cours n'est pas sauvegardé → nœud à refaire). */
+async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise<"wipe" | "clear"> {
+  if (!run.carte) {
+    // pas de carte sauvegardée (nouvelle zone) — sinon on reprend celle en cours
+    run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[]);
+    sauverRunEnCours(zoneIdx, run);
+  }
   for (;;) {
     const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire);
 
@@ -187,34 +194,56 @@ async function jouerZone(run: RunState, zone: ZoneDef): Promise<"wipe" | "clear"
 
     if (issue === "wipe") return "wipe";
     if (issue === "victoire") return "clear"; // donjon de la zone vaincu (+ Dofus)
+    sauverRunEnCours(zoneIdx, run); // étape franchie → point de reprise
   }
 }
 
-async function jouerRun(): Promise<void> {
-  const choix = await ui.showChoixEquipe();
-  const run = nouvelleRun(choix);
+async function jouerRun(reprise: RunSauvee | null): Promise<void> {
+  let run: RunState;
+  let depart = 0;
+  if (reprise) {
+    run = reprise.run;
+    depart = reprise.zoneIdx;
+  } else {
+    const choix = await ui.showChoixEquipe();
+    run = nouvelleRun(choix);
+  }
   const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!); // une run = une tranche
-  for (let z = 0; z < zones.length; z++) {
+  for (let z = depart; z < zones.length; z++) {
     const zone = zones[z];
-    const issue = await jouerZone(run, zone);
+    const issue = await jouerZone(run, zone, z);
     if (issue === "wipe") {
+      effacerRunEnCours();
       enregistrerRun(meta, false); // run terminée : échec
       await ui.showWipe(); // mort : Progression perdue, Meta (Dofus) conservé
       return;
     }
     soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
+    run.carte = null; // la zone est finie : la prochaine génère son plateau
     if (z < zones.length - 1) {
+      sauverRunEnCours(z + 1, run); // reprise en début de zone suivante
       await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${zones[z + 1].nom}.`);
     }
   }
+  effacerRunEnCours();
   enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
   await ui.showTransition("Krosmoz traversé !", "Tu as vaincu toutes les zones. Retour à l'accueil.");
 }
 
 async function boucle(): Promise<void> {
   for (;;) {
-    await ui.showStart(meta, () => reinitialiserMeta(meta));
-    await jouerRun();
+    const reprise = chargerRunEnCours();
+    const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!);
+    const repriseInfo = reprise
+      ? { zoneNom: zones[reprise.zoneIdx]?.nom ?? "?", zoneNum: reprise.zoneIdx + 1, nbZones: zones.length }
+      : null;
+    const action = await ui.showStart(meta, () => reinitialiserMeta(meta), repriseInfo);
+    if (action === "abandonner") {
+      effacerRunEnCours();
+      enregistrerRun(meta, false); // l'abandon compte comme une run échouée
+      continue; // retour à l'accueil
+    }
+    await jouerRun(action === "reprendre" ? reprise : null);
   }
 }
 

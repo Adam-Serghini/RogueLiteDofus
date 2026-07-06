@@ -388,6 +388,48 @@ export function appliquerArchimonstres(enemies: Combatant[], rng: () => number, 
   }
 }
 
+// --- Run en cours (persistance) ------------------------------------------------
+// La run est sauvegardée à chaque étape du plateau : on peut fermer la page et
+// reprendre où on en était. Un combat en cours n'est PAS sauvegardé (nœud à
+// refaire à la reprise). Effacée au wipe, à la victoire ou à l'abandon.
+const RUN_KEY = "rld_run_v0";
+
+export interface RunSauvee {
+  version: 1;
+  zoneIdx: number; // index dans les zones de la tranche active
+  run: RunState;
+}
+
+export function sauverRunEnCours(zoneIdx: number, run: RunState): void {
+  try {
+    localStorage.setItem(RUN_KEY, JSON.stringify({ version: 1, zoneIdx, run } satisfies RunSauvee));
+  } catch {
+    /* localStorage indisponible : pas de reprise possible */
+  }
+}
+
+export function chargerRunEnCours(): RunSauvee | null {
+  try {
+    const raw = localStorage.getItem(RUN_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as Partial<RunSauvee>;
+    // validation légère : version connue, persos existants dans CLASSES, zoneIdx sain
+    if (s.version !== 1 || typeof s.zoneIdx !== "number" || !s.run?.persos?.length) return null;
+    if (!s.run.persos.every((p) => CLASSES[p.classeId])) return null;
+    return s as RunSauvee;
+  } catch {
+    return null;
+  }
+}
+
+export function effacerRunEnCours(): void {
+  try {
+    localStorage.removeItem(RUN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 // --- Meta (persistance) ------------------------------------------------------
 const STORAGE_KEY = "rld_meta_v0";
 

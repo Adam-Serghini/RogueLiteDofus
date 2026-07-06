@@ -178,6 +178,18 @@ button:focus-visible {
 }
 
 /* collection de reliques (toujours affichée ; non possédées = transparentes) */
+/* Run en cours (accueil) */
+.accueil-reprise {
+  color: var(--txt);
+  background: var(--panel-2);
+  border: 1px solid var(--or);
+  border-radius: 10px;
+  display: inline-block;
+  padding: 5px 14px;
+  margin: 2px auto 4px;
+  box-shadow: 0 0 10px #e8b54e33;
+}
+
 /* Rack des tranches (paliers de niveau) à l'accueil */
 .tranches-rack {
   display: flex;

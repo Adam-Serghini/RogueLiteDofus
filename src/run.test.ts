@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
   appliquerElement, gagnerXPPerso, classesDisponibles,
+  sauverRunEnCours, chargerRunEnCours, effacerRunEnCours,
 } from "./run";
 import type { Meta } from "./types";
 
@@ -35,6 +36,40 @@ describe("compteur de runs", () => {
     enregistrerRun(meta, false); // mort
     expect(meta.runs).toBe(3);
     expect(meta.victoires).toBe(1);
+  });
+});
+
+describe("sauvegarde de run", () => {
+  // mock localStorage (l'environnement de test n'en a pas)
+  const store = new Map<string, string>();
+  (globalThis as Record<string, unknown>).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  };
+
+  it("round-trip : sauver puis charger restitue la run (zone, persos, PV, inventaire)", () => {
+    const run = nouvelleRun(["iop", "cra"]);
+    run.persos[0].pvActuels = 12;
+    run.inventaire.push({ id: "bouftou_coiffe", stats: { force: 10 } });
+    sauverRunEnCours(3, run);
+    const s = chargerRunEnCours();
+    expect(s).not.toBeNull();
+    expect(s!.zoneIdx).toBe(3);
+    expect(s!.run.persos.map((p) => p.classeId)).toEqual(["iop", "cra"]);
+    expect(s!.run.persos[0].pvActuels).toBe(12);
+    expect(s!.run.inventaire[0]).toEqual({ id: "bouftou_coiffe", stats: { force: 10 } });
+  });
+
+  it("effacer supprime la sauvegarde ; une save corrompue est ignorée", () => {
+    sauverRunEnCours(0, nouvelleRun(["iop", "cra"]));
+    effacerRunEnCours();
+    expect(chargerRunEnCours()).toBeNull();
+    store.set("rld_run_v0", "{pas du json");
+    expect(chargerRunEnCours()).toBeNull();
+    store.set("rld_run_v0", JSON.stringify({ version: 1, zoneIdx: 0, run: { persos: [{ classeId: "inconnue" }] } }));
+    expect(chargerRunEnCours()).toBeNull(); // classe inconnue → save invalide
+    store.clear();
   });
 });
 
