@@ -525,8 +525,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/sergent_chafer.png",
   },
   kardorim: {
-    id: "kardorim", nom: "Kardorim", pv: 175,
-    stats: { force: 30, intelligence: 50, agilite: 20, vitalite: 55 },
+    id: "kardorim", nom: "Kardorim", pv: 165,
+    stats: { force: 30, intelligence: 45, agilite: 20, vitalite: 55 },
     pa: 6, initiative: 9,
     resistances: { feu: 0.25, air: 0.1, terre: -0.2, eau: -0.15 },
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
@@ -579,8 +579,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gardienne_champetre.png",
   },
   tournesol_affame: {
-    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 280,
-    stats: { force: 20, intelligence: 72, agilite: 18, vitalite: 75 },
+    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 265,
+    stats: { force: 20, intelligence: 66, agilite: 18, vitalite: 75 },
     pa: 6, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
     sorts: ["ecrasement", "charge", "picotement"], ia: "agressif",
@@ -673,8 +673,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofukaz.png",
   },
   tofu_malefique: {
-    id: "tofu_malefique", nom: "Tofu Maléfique", pv: 95,
-    stats: { force: 12, intelligence: 8, agilite: 38, vitalite: 66 },
+    id: "tofu_malefique", nom: "Tofu Maléfique", pv: 88,
+    stats: { force: 12, intelligence: 8, agilite: 33, vitalite: 62 },
     pa: 5, initiative: 12,
     resistances: { eau: 0.2, terre: 0.15, air: -0.15, feu: -0.2 },
     sorts: ["morsure"], ia: "agressif",
@@ -756,8 +756,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_noir.png",
   },
   scarabosse_dore: {
-    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 560,
-    stats: { force: 60, intelligence: 16, agilite: 18, chance: 16, vitalite: 120 },
+    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 640,
+    stats: { force: 68, intelligence: 18, agilite: 20, chance: 18, vitalite: 132 },
     pa: 6, initiative: 10,
     resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // résiste tout : il faut le user
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
@@ -804,8 +804,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/forgeron_sombre.png",
   },
   coffre_forgerons: {
-    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 620,
-    stats: { force: 56, intelligence: 28, agilite: 20, chance: 18, vitalite: 150 },
+    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 720,
+    stats: { force: 64, intelligence: 30, agilite: 22, chance: 20, vitalite: 164 },
     pa: 6, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
     resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
@@ -902,8 +902,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/sakarien.png",
   },
   kankreblath: {
-    id: "kankreblath", nom: "Kankreblath", pv: 530,
-    stats: { force: 16, intelligence: 54, agilite: 18, vitalite: 122 },
+    id: "kankreblath", nom: "Kankreblath", pv: 560,
+    stats: { force: 16, intelligence: 58, agilite: 18, vitalite: 126 },
     pa: 6, initiative: 11,
     resistances: { terre: 0.25, eau: 0.2, feu: 0.15, air: -0.05 }, // résist. réelles DofusDB (terre/eau)
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
@@ -916,7 +916,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // (Signature future de Boostache : réinvoque un monstre vaincu.)
   fantome_farceur: {
     id: "fantome_farceur", nom: "Fantôme Farceur", pv: 58,
-    stats: { force: 8, intelligence: 10, agilite: 38, vitalite: 46 }, // frappe Air (esquive haute)
+    stats: { force: 8, intelligence: 10, agilite: 35, vitalite: 46 }, // frappe Air (esquive haute)
     pa: 5, initiative: 14,
     resistances: { air: 0.25, terre: -0.15 },
     sorts: ["coup_de_bec"], ia: "agressif",
@@ -924,7 +924,7 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   fantome_hanteur: {
     id: "fantome_hanteur", nom: "Fantôme Hanteur", pv: 64,
-    stats: { force: 8, intelligence: 38, agilite: 14, vitalite: 52 }, // frappe Feu (flammes spectrales)
+    stats: { force: 8, intelligence: 34, agilite: 14, vitalite: 50 }, // frappe Feu (flammes spectrales)
     pa: 5, initiative: 11,
     resistances: { feu: 0.2, air: 0.15, terre: -0.1 },
     sorts: ["morsure"], ia: "agressif",
@@ -939,16 +939,16 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/ashi_magari.png",
   },
   esprit_frappeur: {
-    id: "esprit_frappeur", nom: "Esprit Frappeur", pv: 125,
-    stats: { force: 12, intelligence: 16, agilite: 40, vitalite: 74 }, // élite/miniboss véloce
+    id: "esprit_frappeur", nom: "Esprit Frappeur", pv: 112,
+    stats: { force: 12, intelligence: 16, agilite: 33, vitalite: 68 }, // élite/miniboss véloce
     pa: 5, initiative: 13,
     resistances: { air: 0.2, feu: 0.1, terre: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
     img: "/assets/monstres/esprit_frappeur.png",
   },
   boostache: {
-    id: "boostache", nom: "Boostache", pv: 545,
-    stats: { force: 14, intelligence: 20, agilite: 56, vitalite: 126 },
+    id: "boostache", nom: "Boostache", pv: 520,
+    stats: { force: 14, intelligence: 20, agilite: 48, vitalite: 122 },
     pa: 6, initiative: 12,
     resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
@@ -991,8 +991,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_doree.png",
   },
   shin_larve: {
-    id: "shin_larve", nom: "Shin Larve", pv: 700,
-    stats: { force: 24, intelligence: 24, agilite: 18, chance: 62, vitalite: 160 },
+    id: "shin_larve", nom: "Shin Larve", pv: 820,
+    stats: { force: 24, intelligence: 24, agilite: 18, chance: 76, vitalite: 176 },
     pa: 6, initiative: 9,
     resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
@@ -1090,10 +1090,10 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwak_veteran.png",
   },
   kwakwa: {
-    id: "kwakwa", nom: "Kwakwa", pv: 950,
-    stats: { force: 42, intelligence: 42, agilite: 30, chance: 42, vitalite: 190 },
+    id: "kwakwa", nom: "Kwakwa", pv: 860,
+    stats: { force: 38, intelligence: 38, agilite: 26, chance: 38, vitalite: 180 },
     pa: 6, initiative: 12,
-    resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // placeholder de sa future signature
+    resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // placeholder de sa future signature
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/kwakwa.png",
