@@ -70,19 +70,25 @@ mécanique signature**, en réutilisant d'abord ce que le moteur sait déjà fai
 (poison, bouclier, HoT, vol de vie `soinEquipeRatio`, debuff d'initiative, `provoque`,
 cooldowns, `maxRoll`, `degatsInfliges`, `bonusOffensifProchain`).
 
-Propositions (coût moteur ≈ nul, tout est data + 1-2 flags) :
+État : **8/12 faits** (✅) — sorts signatures 6 PA en tête de kit, cadencés par cooldown.
 
-| Boss | Signature proposée | Mécanique moteur |
+| Boss | Signature | Statut |
 |---|---|---|
-| Kardorim | « Étreinte glaciale » — ralentit l'équipe | debuff d'initiative (existe : Déferlante) |
-| Tournesol Affamé | « Racines voraces » — draine la vie vers son camp | vol de vie (`soinEquipeRatio`, existe) |
-| Bouftou Royal | « Colère royale » — monte en puissance chaque X tours | buff `degatsInfliges`/`bonusOffensifProchain` cyclique |
-| Batofu | « Vol erratique » — très esquif, frappe garantie périodique | agilité haute + sort `maxRoll` en cooldown |
-| Scarabosse Doré | « Carapace dorée » — bouclier cyclique | `bouclier` sur soi, cooldown |
-| Coffre des Forgerons | « Ouvert/fermé » — alterne tour défensif (gros bouclier) / tour offensif | 2 sorts en cooldowns alternés |
+| Kardorim | « Étreinte glaciale » — dégâts de ligne + −initiative (2t) | ✅ |
+| Tournesol Affamé | « Racines voraces » — drain rendu en PV à son camp | ✅ |
+| Bouftou Royal | « Colère royale » — +25 Force cumulable (fin du stalemate) | ✅ |
+| Batofu | « Piqué fulgurant » — gros coup + 25 % d'esquive (2t) | ✅ |
+| Scarabosse Doré | « Carapace dorée » — bouclier = 100 % des dégâts | ✅ |
+| Coffre des Forgerons | « Mâchoire du coffre » — gros coup puis +30 % résists (1t) | ✅ |
+| Corailleur Magistral | « Rostre broyeur » — la cible inflige −25 % (1t) | ✅ |
+| **Kwakwa** | **Mue élémentaire** (moteur) — 65 % de résist partout sauf 1 élément aléatoire par tour | ✅ |
+| Directeur Grunob | « Travail d'équipe » — +dégâts par allié dans sa ligne | ⬜ moteur |
+| Kankreblath | invoque un monstre aléatoire de la zone | ⬜ moteur (invocations monstres) |
+| Boostache | « L'Enfer des Zombies » — réinvoque un monstre vaincu | ⬜ moteur (résurrection) |
+| Shin Larve | invoque des larves | ⬜ moteur (invocations monstres) |
 
-Nouveaux besoins moteur éventuels (plus tard) : invocations génériques côté monstre
-(le moteur n'a que la Poupée du Sadida), sorts multi-phases (< 50 % PV).
+Besoins moteur restants : invocations génériques côté monstre (le moteur n'a que la
+Poupée du Sadida), résurrection, bonus par allié en ligne. Multi-phases (< 50 % PV) : plus tard.
 
 ## 4. Brouillon des tranches (zones à valider)
 
