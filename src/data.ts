@@ -451,7 +451,28 @@ export const SORTS: Record<string, Spell> = {
     id: "rostre_broyeur", nom: "Rostre broyeur", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 24, baseMax: 32, scaling: 0.55,
     effet: { stat: "degatsInfliges", valeur: -0.25, duree: 1 }, cooldownTours: 3,
-    desc: "Corailleur Magistral — broie la ligne avant : la cible inflige −25 % de dégâts (2t).",
+    desc: "Corailleur Magistral — broie la ligne avant : la cible inflige −25 % de dégâts (1t).",
+  },
+  sfvc: {
+    id: "sfvc", nom: "Sfvc%$*R ?!", type: "invocation", coutPA: 6,
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    invoqueMonstre: { pool: ["pyrasite", "ceglumen", "cafarcher", "mirgrillon"], max: 2 },
+    cooldownTours: 3,
+    desc: "Kankreblath — borborygme imprévisible : invoque un monstre aléatoire de la zone (2 max).",
+  },
+  enfer_des_zombies: {
+    id: "enfer_des_zombies", nom: "L'Enfer des Zombies", type: "invocation", coutPA: 6,
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    ressuscite: { pvPct: 0.5 },
+    cooldownTours: 3,
+    desc: "Boostache — réinvoque un monstre vaincu à 50 % de ses PV.",
+  },
+  ponte_larvaire: {
+    id: "ponte_larvaire", nom: "Ponte larvaire", type: "invocation", coutPA: 2, // laisse 4 PA pour frapper le même tour
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    invoqueMonstre: { pool: ["larve_bleue", "larve_verte", "larve_orange"], max: 1 },
+    cooldownTours: 3,
+    desc: "Shin Larve — pond une larve (Bleue, Verte ou Orange, 1 à la fois).",
   },
 };
 
@@ -925,6 +946,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 52, intelligence: 14, agilite: 20, vitalite: 118 },
     pa: 6, initiative: 10,
     resistances: { terre: 0.2, feu: 0.15, air: 0.1, eau: -0.05 },
+    bonusParAllieLigne: 0.15, // « Travail d'équipe » : +15 % de dégâts par allié vivant dans sa rangée
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/directeur_grunob.png",
@@ -978,7 +1000,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 16, intelligence: 58, agilite: 18, vitalite: 126 },
     pa: 6, initiative: 11,
     resistances: { terre: 0.25, eau: 0.2, feu: 0.15, air: -0.05 }, // résist. réelles DofusDB (terre/eau)
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["sfvc", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/kankreblath.png",
   },
@@ -1027,7 +1049,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 14, intelligence: 20, agilite: 48, vitalite: 122 },
     pa: 6, initiative: 12,
     resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["enfer_des_zombies", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/boostache.png",
   },
@@ -1098,7 +1120,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 24, intelligence: 24, agilite: 18, chance: 76, vitalite: 176 },
     pa: 6, initiative: 9,
     resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["ponte_larvaire", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/shin_larve.png",
   },

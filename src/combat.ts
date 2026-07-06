@@ -3,10 +3,10 @@
 //  Boucle de tour, calcul de dégâts, règle de ligne, effets, IA.
 //  Pilotable sans UI : voir test.ts (deux IA qui s'affrontent en console).
 // =============================================================================
-import { SORTS } from "./data";
+import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, pctRembPA } from "./progression";
 import type {
-  Camp, Combatant, EffetSpec, EffetStat, Element, Spell, Stats, Action,
+  Camp, Combatant, EffetSpec, EffetStat, Element, Monstre, Spell, Stats, Action,
 } from "./types";
 
 // --- Aléatoire (injectable pour les tests) -----------------------------------
@@ -540,6 +540,77 @@ function invoquerPoupee(
   ctx.log(`${lanceur.nom} invoque une ${invo.nom} (${invo.pv} PV) qui provoque les ennemis.`);
 }
 
+// --- Invocations de monstres (signatures de boss) ------------------------------
+/** Première case libre (0-7) du camp — les invocations arrivent devant d'abord. */
+function caseLibre(camp: Camp, cs: Combatant[]): number | null {
+  const prises = new Set(vivants(cs).filter((c) => c.camp === camp).map((c) => c.position));
+  for (let p = 0; p < 8; p++) if (!prises.has(p)) return p;
+  return null;
+}
+
+/** Combatant complet depuis une espèce de MONSTRES (invocation en cours de combat).
+ *  Contrairement à la Poupée (estInvocation), il JOUE ses tours normalement. */
+function combattantInvoque(m: Monstre, ref: string, position: number, camp: Camp, invoquePar: string): Combatant {
+  return {
+    ref, nom: m.nom, pvBase: m.pv, pvMax: m.pv, pvActuels: m.pv,
+    stats: { ...m.stats }, paMax: m.pa, paActuels: m.pa, initiative: m.initiative,
+    resistances: { ...m.resistances }, sorts: [...m.sorts], camp, position,
+    niveau: 1, monstreId: m.id, ia: m.ia, effets: [], img: m.img,
+    maxRollCharges: 0, passeProchainTour: false, retraitPANextTurn: 0,
+    bouclier: 0, paBonusNextTurn: 0, cooldowns: {}, bonusOffensifProchain: 0,
+    poisonAmpliTours: 0, bonusDe: 0, bonusDeTours: 0, invoquePar,
+  };
+}
+
+/** Alliés monstres vaincus, réinvocables par `acteur` (ni boss, ni invocation). */
+const morteRessuscitable = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
+  cs.filter((c) =>
+    c.camp === acteur.camp && c.pvActuels <= 0 && c.ref !== acteur.ref &&
+    !c.estInvocation && !MONSTRES[c.monstreId ?? ""]?.boss);
+
+/** Un sort d'invocation a-t-il un effet utile là, tout de suite ? (guide l'IA) */
+export function invocationUtile(acteur: Combatant, sort: Spell, cs: Combatant[]): boolean {
+  if (sort.invoqueMonstre) {
+    const actives = vivants(cs).filter((c) => c.invoquePar === acteur.ref).length;
+    return actives < sort.invoqueMonstre.max && caseLibre(acteur.camp, cs) !== null;
+  }
+  if (sort.ressuscite) return morteRessuscitable(acteur, cs).length > 0;
+  return !!sort.invocation; // Poupée : géré par invoquerPoupee (refus si déjà active)
+}
+
+/** Invoque un monstre du pool (signature Kankreblath / Shin Larve). */
+function invoquerMonstre(lanceur: Combatant, spec: { pool: string[]; max: number }, cs: Combatant[], ctx: CombatCtx): void {
+  if (!invocationUtile(lanceur, { invoqueMonstre: spec } as Spell, cs)) {
+    ctx.log(`L'invocation de ${lanceur.nom} échoue (plus de place).`);
+    return;
+  }
+  const m = MONSTRES[spec.pool[Math.floor(ctx.rng() * spec.pool.length)]];
+  const pos = caseLibre(lanceur.camp, cs)!;
+  const ref = `invoc_${lanceur.ref}_${cs.length}`;
+  cs.push(combattantInvoque(m, ref, pos, lanceur.camp, lanceur.ref));
+  ctx.log(`${lanceur.nom} invoque ${m.nom} !`);
+}
+
+/** Réinvoque un allié monstre vaincu (signature Boostache). */
+function ressusciter(lanceur: Combatant, spec: { pvPct: number }, cs: Combatant[], ctx: CombatCtx): void {
+  const morts = morteRessuscitable(lanceur, cs);
+  if (!morts.length) {
+    ctx.log(`${lanceur.nom} appelle les morts… mais personne ne répond.`);
+    return;
+  }
+  const c = morts[Math.floor(ctx.rng() * morts.length)];
+  const prises = new Set(vivants(cs).filter((u) => u.camp === c.camp).map((u) => u.position));
+  if (prises.has(c.position)) {
+    const libre = caseLibre(c.camp, cs);
+    if (libre === null) { ctx.log(`${lanceur.nom} appelle les morts… mais il n'y a plus de place.`); return; }
+    c.position = libre;
+  }
+  c.pvActuels = Math.max(1, Math.round(c.pvMax * spec.pvPct));
+  c.effets = [];
+  c.bouclier = 0;
+  ctx.log(`${lanceur.nom} réinvoque ${c.nom} d'entre les morts (${c.pvActuels} PV) !`);
+}
+
 // --- Helpers des nouvelles mécaniques ----------------------------------------
 /** Cases voisines (haut/bas/gauche/droite) sur la grille 4×2 (positions 0-7). */
 function adjacents(pos: number): number[] {
@@ -711,6 +782,9 @@ export function lancerSort(
   // --- INVOCATION ---
   if (sort.type === "invocation") {
     if (sort.invocation) invoquerPoupee(lanceur, sort.invocation, cs, ctx);
+    if (sort.invoqueMonstre) invoquerMonstre(lanceur, sort.invoqueMonstre, cs, ctx);
+    if (sort.ressuscite) ressusciter(lanceur, sort.ressuscite, cs, ctx);
+    poseCooldown(lanceur);
     return;
   }
 
@@ -771,6 +845,9 @@ export function lancerSort(
   // Tir Puissant : la prochaine flèche applique ses effets à durée doublée (one-shot)
   const doubleDuree = !!lanceur.doubleEffetProchain;
   lanceur.doubleEffetProchain = false;
+  // Signature de Grunob (« Travail d'équipe ») : +X % par allié vivant dans sa rangée
+  const multLigne = 1 + (lanceur.bonusParAllieLigne ?? 0) *
+    allies(lanceur, cs).filter((a) => a.ref !== lanceur.ref && estAvant(a) === estAvant(lanceur)).length;
   let totalDmg = 0;
 
   // Mise à mort : échoue si la cible survivrait au coup (projection au max roll)
@@ -789,7 +866,7 @@ export function lancerSort(
   if (sort.projectiles) {
     const p = sort.projectiles;
     for (const t of ciblesAleatoires(adverses(lanceur, cs), p.nb, ctx.rng)) {
-      const dmg = frappe(lanceur, { baseMin: p.baseMin, baseMax: p.baseMax, scaling: p.scaling }, t, { useMax: false, mult: 1 + bonusVigueur, ctx }, sort.nom);
+      const dmg = frappe(lanceur, { baseMin: p.baseMin, baseMax: p.baseMax, scaling: p.scaling }, t, { useMax: false, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
       totalDmg += dmg;
       if (dmg > 0 && t.pvActuels > 0 && p.poison && p.pProc && ctx.rng() < p.pProc) {
         appliquerPoison(t, lanceur, p.poison);
@@ -802,7 +879,7 @@ export function lancerSort(
   if (sort.coups) {
     for (const coup of sort.coups) {
       if (cible.pvActuels <= 0) break;
-      const dmg = frappe(lanceur, coup, cible, { useMax, mult: 1 + bonusVigueur, ctx }, sort.nom);
+      const dmg = frappe(lanceur, coup, cible, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
       totalDmg += dmg;
       if (dmg > 0 && cible.pvActuels > 0 && coup.proc && ctx.rng() < coup.proc.p) {
         if (coup.proc.poison) appliquerPoison(cible, lanceur, coup.proc.poison);
@@ -826,7 +903,7 @@ export function lancerSort(
   let primaireMorte = false;
 
   touchees.forEach((t, i) => {
-    const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult;
+    const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult * multLigne;
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx });
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${sort.nom} !`);
@@ -981,6 +1058,14 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
 
 // --- IA ----------------------------------------------------------------------
 function iaAgressif(acteur: Combatant, cs: Combatant[]): Action | null {
+  // signatures d'invocation (boss) : jouées en priorité si utiles et hors cooldown
+  const invoc = acteur.sorts
+    .map((id) => SORTS[id])
+    .find((s) =>
+      s.type === "invocation" && acteur.paActuels >= s.coutPA &&
+      ciblesValides(acteur, s, cs).length > 0 && invocationUtile(acteur, s, cs));
+  if (invoc) return { sort: invoc, cibleRef: acteur.ref };
+
   const sorts = acteur.sorts
     .map((id) => SORTS[id])
     .filter((s) => s.type === "degats" && acteur.paActuels >= s.coutPA)

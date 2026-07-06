@@ -349,6 +349,7 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
     archiNom: m.archiNom,
     ia: m.ia,
     mueElementaire: m.mueElementaire,
+    bonusParAllieLigne: m.bonusParAllieLigne,
     effets: [],
     img: m.img,
     maxRollCharges: 0,

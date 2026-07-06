@@ -70,7 +70,8 @@ mécanique signature**, en réutilisant d'abord ce que le moteur sait déjà fai
 (poison, bouclier, HoT, vol de vie `soinEquipeRatio`, debuff d'initiative, `provoque`,
 cooldowns, `maxRoll`, `degatsInfliges`, `bonusOffensifProchain`).
 
-État : **8/12 faits** (✅) — sorts signatures 6 PA en tête de kit, cadencés par cooldown.
+État : **12/12 faits** (✅) — sorts signatures en tête de kit, cadencés par cooldown ;
+invocations/résurrection côté monstres et passif de ligne ajoutés au moteur.
 
 | Boss | Signature | Statut |
 |---|---|---|
@@ -82,13 +83,14 @@ cooldowns, `maxRoll`, `degatsInfliges`, `bonusOffensifProchain`).
 | Coffre des Forgerons | « Mâchoire du coffre » — gros coup puis +30 % résists (1t) | ✅ |
 | Corailleur Magistral | « Rostre broyeur » — la cible inflige −25 % (1t) | ✅ |
 | **Kwakwa** | **Mue élémentaire** (moteur) — 65 % de résist partout sauf 1 élément aléatoire par tour | ✅ |
-| Directeur Grunob | « Travail d'équipe » — +dégâts par allié dans sa ligne | ⬜ moteur |
-| Kankreblath | invoque un monstre aléatoire de la zone | ⬜ moteur (invocations monstres) |
-| Boostache | « L'Enfer des Zombies » — réinvoque un monstre vaincu | ⬜ moteur (résurrection) |
-| Shin Larve | invoque des larves | ⬜ moteur (invocations monstres) |
+| Directeur Grunob | « Travail d'équipe » — +15 % de dégâts par allié vivant dans sa rangée | ✅ |
+| Kankreblath | « Sfvc%$*R ?! » — invoque un monstre aléatoire de la zone (2 max) | ✅ |
+| Boostache | « L'Enfer des Zombies » — réinvoque un vaincu à 50 % PV | ✅ |
+| Shin Larve | « Ponte larvaire » — pond une larve (2 PA : frappe le même tour) | ✅ |
 
-Besoins moteur restants : invocations génériques côté monstre (le moteur n'a que la
-Poupée du Sadida), résurrection, bonus par allié en ligne. Multi-phases (< 50 % PV) : plus tard.
+Moteur ajouté : invocations génériques côté monstre (`invoqueMonstre`, elles JOUENT
+leurs tours contrairement à la Poupée), résurrection (`ressuscite`), passif
+`bonusParAllieLigne`, mue élémentaire. Multi-phases (< 50 % PV) : plus tard.
 
 ## 4. Brouillon des tranches (zones à valider)
 

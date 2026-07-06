@@ -145,6 +145,9 @@ export interface Spell {
   tarot?: boolean; // Tarot : handler dédié (tirage de couleur)
   espritFelin?: boolean; // Esprit félin : handler dédié (effet aléatoire par unité)
   effets?: EffetSpec[]; // plusieurs effets cumulés (ex. Maître des ombres)
+  // --- signatures de boss (invocations côté monstres) ---
+  invoqueMonstre?: { pool: string[]; max: number }; // invoque un monstre (id tiré dans pool) ; max = invocations vivantes simultanées
+  ressuscite?: { pvPct: number }; // réinvoque un allié monstre vaincu (Boostache) à pvPct de ses PV max
   effetParNiveau?: { stat: EffetStat; base: number; parNiveau: number; duree: number }; // valeur = base + parNiveau×niveau
   poisonAmpli?: number; // Arsenic : active le doublement des poisons pour N tours
   donneBonusDe?: { min: number; max: number; duree: number }; // Bonne pioche
@@ -214,6 +217,9 @@ export interface Monstre {
   /** Signature du Kwakwa : au début de son tour, résistances = cette valeur
    *  dans TOUS les éléments sauf un, tiré au hasard, qui tombe à 0. */
   mueElementaire?: number;
+  /** Signature de Grunob : +X (fraction) de dégâts infligés par allié vivant
+   *  dans sa rangée (avant/arrière), lui exclu. */
+  bonusParAllieLigne?: number;
 }
 
 export type Camp = "joueur" | "ennemi";
@@ -247,6 +253,8 @@ export interface Combatant {
   effets: EffetActif[];
   img?: string; // chemin du portrait/sprite
   mueElementaire?: number; // signature du Kwakwa (cf. Monstre.mueElementaire)
+  bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)
+  invoquePar?: string; // ref de l'invocateur (monstres invoqués en combat)
   elementChoisi?: Element; // élément de frappe choisi (parmi les 2 plus forts) ; sinon = le plus fort
   // état transitoire :
   maxRollCharges: number; // Œil affûté

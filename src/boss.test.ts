@@ -21,7 +21,8 @@ describe("signatures des boss", () => {
     for (const zone of ZONES) {
       const boss = bossDe(zone.pools.boss);
       const m = MONSTRES[boss.monstreId!];
-      const aSignatureSort = !["kwakwa", "directeur_grunob", "kankreblath", "boostache", "shin_larve"].includes(m.id);
+      const aSignatureSort = !["kwakwa", "directeur_grunob"].includes(m.id); // mue moteur / passif de ligne
+      if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.15);
       if (aSignatureSort) {
         const premier = SORTS[m.sorts[0]];
         expect(premier.desc, `${m.nom} : signature en tête de kit`).toContain(m.nom.split(" ")[0]);
@@ -80,6 +81,57 @@ describe("signatures des boss", () => {
     expect(kwakwa.resistances).toEqual({ terre: 0, feu: 0.65, eau: 0.65, air: 0.65 });
     appliquerMueElementaire(kwakwa, ctx({ rng: () => 0.6 })); // index 2 → eau
     expect(kwakwa.resistances).toEqual({ terre: 0.65, feu: 0.65, eau: 0, air: 0.65 });
+  });
+
+  it("Sfvc%$*R ?! : Kankreblath invoque un monstre de la zone (2 max en vie)", () => {
+    const cs = fabriquerEnnemis("kan_boss");
+    const boss = cs.find((c) => c.monstreId === "kankreblath")!;
+    lancerSort(boss, SORTS.sfvc, boss.ref, cs, ctx());
+    expect(cs.length).toBe(3); // boss + miniboss + 1 invocation
+    const invoc = cs[2];
+    expect(["pyrasite", "ceglumen", "cafarcher", "mirgrillon"]).toContain(invoc.monstreId);
+    expect(invoc.camp).toBe("ennemi");
+    expect(invoc.invoquePar).toBe(boss.ref);
+    expect(invoc.estInvocation).toBeFalsy(); // il JOUE ses tours (≠ Poupée)
+    lancerSort(boss, SORTS.sfvc, boss.ref, cs, ctx());
+    expect(cs.length).toBe(4); // 2e invocation OK
+    lancerSort(boss, SORTS.sfvc, boss.ref, cs, ctx());
+    expect(cs.length).toBe(4); // cap à 2 vivantes
+  });
+
+  it("L'Enfer des Zombies : Boostache réinvoque un allié vaincu à 50 % de ses PV", () => {
+    const cs = fabriquerEnnemis("fan_boss");
+    const boss = cs.find((c) => c.monstreId === "boostache")!;
+    const mini = cs.find((c) => c.monstreId === "boostache_prepubere")!;
+    mini.pvActuels = 0; // vaincu
+    lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
+    expect(mini.pvActuels).toBe(Math.round(mini.pvMax * 0.5));
+    // personne de mort → le sort ne fait rien
+    lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
+    expect(cs.length).toBe(2);
+  });
+
+  it("Travail d'équipe : Grunob inflige +15 % par allié vivant dans sa rangée", () => {
+    const cs = fabriquerEnnemis("gob_boss"); // Grunob (pos 0) + Gobaladée (pos 1)
+    const boss = cs.find((c) => c.monstreId === "directeur_grunob")!;
+    const [iop] = fabriquerEquipe();
+    iop.pvMax = 5000; iop.pvActuels = 5000;
+    lancerSort(boss, SORTS.morsure, iop.ref, [...cs, iop], ctx());
+    const avecAllie = 5000 - iop.pvActuels;
+    iop.pvActuels = 5000;
+    cs[1].pvActuels = 0; // la Gobaladée tombe → le bonus disparaît
+    lancerSort(boss, SORTS.morsure, iop.ref, [...cs, iop], ctx());
+    const seul = 5000 - iop.pvActuels;
+    expect(avecAllie).toBe(Math.round(seul * 1.15));
+  });
+
+  it("l'IA agressive joue l'invocation signature en priorité quand elle est utile", async () => {
+    const cs = fabriquerEnnemis("kan_boss");
+    const boss = cs.find((c) => c.monstreId === "kankreblath")!;
+    const [iop] = fabriquerEquipe();
+    boss.paActuels = 6;
+    const a = (await controllerIA(boss, [...cs, iop]))!;
+    expect(a.sort.id).toBe("sfvc");
   });
 
   it("l'IA agressive joue la signature en priorité, puis retombe sur le kit standard (cooldown)", async () => {
