@@ -211,6 +211,9 @@ export interface Monstre {
   dofus?: string; // id du Dofus lâché (boss uniquement)
   archiNom?: string; // vrai nom d'Archimonstre (DofusDB) ; absent = pas d'archi → non capturable
   img?: string; // chemin du sprite (public/assets)
+  /** Signature du Kwakwa : au début de son tour, résistances = cette valeur
+   *  dans TOUS les éléments sauf un, tiré au hasard, qui tombe à 0. */
+  mueElementaire?: number;
 }
 
 export type Camp = "joueur" | "ennemi";
@@ -243,6 +246,7 @@ export interface Combatant {
   ia?: IA;
   effets: EffetActif[];
   img?: string; // chemin du portrait/sprite
+  mueElementaire?: number; // signature du Kwakwa (cf. Monstre.mueElementaire)
   elementChoisi?: Element; // élément de frappe choisi (parmi les 2 plus forts) ; sinon = le plus fort
   // état transitoire :
   maxRollCharges: number; // Œil affûté

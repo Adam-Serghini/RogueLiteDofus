@@ -909,6 +909,18 @@ export function lancerSort(
   poseCooldown(cible);
 }
 
+// --- Signatures de boss --------------------------------------------------------
+/** Mue élémentaire (Kwakwa) : au début de son tour, le porteur devient très
+ *  résistant partout SAUF dans un élément tiré au hasard (résistance 0) —
+ *  force le joueur à changer d'élément de frappe à chaque tour du boss. */
+export function appliquerMueElementaire(acteur: Combatant, ctx: CombatCtx): void {
+  if (acteur.mueElementaire === undefined) return;
+  const faible = ELEMENTS[Math.floor(ctx.rng() * ELEMENTS.length)];
+  const haut = acteur.mueElementaire;
+  acteur.resistances = { terre: haut, feu: haut, eau: haut, air: haut, [faible]: 0 };
+  ctx.log(`${acteur.nom} mue : son plumage ne protège plus contre l'élément ${faible.toUpperCase()} !`);
+}
+
 // --- Fin de combat -----------------------------------------------------------
 const campMort = (cs: Combatant[], camp: Camp): boolean => vivants(cs).every((c) => c.camp !== camp);
 export const combatTermine = (cs: Combatant[]): boolean => campMort(cs, "joueur") || campMort(cs, "ennemi");
@@ -940,6 +952,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       aJoue.add(acteur.ref);
 
       acteur.paActuels = acteur.paMax; // recharge des PA
+      appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       if (effetsDebutTour(acteur, combatants, ctx)) {
         await hooks.onUpdate?.();
         continue;

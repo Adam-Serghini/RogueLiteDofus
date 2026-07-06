@@ -407,6 +407,52 @@ export const SORTS: Record<string, Spell> = {
     cooldownTours: 2,
     desc: "Piétine toute la ligne avant adverse (le soin de zone ne suit plus).",
   },
+
+  // ---- Sorts SIGNATURES des boss (1 par boss, en plus du kit standard) ----
+  // Placés en tête de la liste `sorts` du boss : à coût PA égal, l'IA agressive
+  // les joue en priorité dès que leur cooldown le permet.
+  etreinte_glaciale: {
+    id: "etreinte_glaciale", nom: "Étreinte glaciale", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 18, baseMax: 24, scaling: 0.5, zoneLigne: true,
+    effet: { stat: "initiative", valeur: -6, duree: 2 }, cooldownTours: 3,
+    desc: "Kardorim — glace toute la ligne avant : dégâts + initiative réduite (2t).",
+  },
+  racines_voraces: {
+    id: "racines_voraces", nom: "Racines voraces", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 18, baseMax: 24, scaling: 0.5,
+    soinEquipeRatio: 1.0, cooldownTours: 3,
+    desc: "Tournesol Affamé — draine la cible et rend les dégâts en PV à tout son camp.",
+  },
+  colere_royale: {
+    id: "colere_royale", nom: "Colère royale", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 14, baseMax: 20, scaling: 0.45,
+    effetLanceur: { stat: "force", valeur: 25, duree: 99 }, cooldownTours: 2,
+    desc: "Bouftou Royal — frappe et entre en rage : +25 Force cumulable jusqu'à la fin du combat.",
+  },
+  pique_fulgurant: {
+    id: "pique_fulgurant", nom: "Piqué fulgurant", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 26, baseMax: 34, scaling: 0.6,
+    effetLanceur: { stat: "esquive", valeur: 0.25, duree: 2 }, cooldownTours: 3,
+    desc: "Batofu — plonge sur sa proie puis vole en zigzag : +25 % d'esquive (2t).",
+  },
+  carapace_doree: {
+    id: "carapace_doree", nom: "Carapace dorée", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 16, baseMax: 22, scaling: 0.45,
+    bouclierRatioDegats: 1.0, cooldownTours: 3,
+    desc: "Scarabosse Doré — charge cornée : gagne un bouclier de 100 % des dégâts infligés.",
+  },
+  machoire_du_coffre: {
+    id: "machoire_du_coffre", nom: "Mâchoire du coffre", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 26, baseMax: 34, scaling: 0.6,
+    effetLanceur: { stat: "resAll", valeur: 0.3, duree: 1 }, cooldownTours: 2,
+    desc: "Coffre des Forgerons — happe violemment puis se referme : +30 % de résistances (1t).",
+  },
+  rostre_broyeur: {
+    id: "rostre_broyeur", nom: "Rostre broyeur", type: "degats", coutPA: 6,
+    cible: "ennemi_ligne", baseMin: 24, baseMax: 32, scaling: 0.55,
+    effet: { stat: "degatsInfliges", valeur: -0.25, duree: 1 }, cooldownTours: 3,
+    desc: "Corailleur Magistral — broie la ligne avant : la cible inflige −25 % de dégâts (2t).",
+  },
 };
 
 // --- Classes jouables --------------------------------------------------------
@@ -529,7 +575,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 30, intelligence: 45, agilite: 20, vitalite: 55 },
     pa: 6, initiative: 9,
     resistances: { feu: 0.25, air: 0.1, terre: -0.2, eau: -0.15 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["etreinte_glaciale", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofawa",
     img: "/assets/monstres/kardorim.png",
   },
@@ -583,7 +629,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 20, intelligence: 66, agilite: 18, vitalite: 75 },
     pa: 6, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
-    sorts: ["ecrasement", "charge", "picotement"], ia: "agressif",
+    sorts: ["racines_voraces", "ecrasement", "charge", "picotement"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/tournesol_affame.png",
   },
@@ -639,7 +685,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 78, intelligence: 15, agilite: 20, vitalite: 80 },
     pa: 6, initiative: 8,
     resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["colere_royale", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/bouftou_royal.png",
   },
@@ -710,7 +756,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 8, intelligence: 10, agilite: 82, vitalite: 110 },
     pa: 6, initiative: 11,
     resistances: { air: 0.25, terre: 0.1, eau: -0.05, feu: -0.15 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["pique_fulgurant", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/batofu.png",
   },
@@ -776,7 +822,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 68, intelligence: 18, agilite: 20, chance: 18, vitalite: 132 },
     pa: 6, initiative: 10,
     resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // résiste tout : il faut le user
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["carapace_doree", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/scarabosse_dore.png",
   },
@@ -824,7 +870,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 64, intelligence: 30, agilite: 22, chance: 20, vitalite: 164 },
     pa: 6, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
     resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["machoire_du_coffre", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/coffre_forgerons.png",
   },
@@ -1120,7 +1166,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 22, intelligence: 16, agilite: 18, chance: 70, vitalite: 175 },
     pa: 6, initiative: 8,
     resistances: { eau: 0.3, terre: 0.2, feu: -0.05 },
-    sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
+    sorts: ["rostre_broyeur", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/corailleur_magistral.png",
   },
@@ -1177,7 +1223,8 @@ export const MONSTRES: Record<string, Monstre> = {
     id: "kwakwa", nom: "Kwakwa", pv: 860,
     stats: { force: 38, intelligence: 38, agilite: 26, chance: 38, vitalite: 180 },
     pa: 6, initiative: 12,
-    resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // placeholder de sa future signature
+    resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // avant son 1er tour ; ensuite la mue prend le relais
+    mueElementaire: 0.65, // signature : 65 % de résist partout sauf 1 élément (aléatoire) à 0, retiré chaque tour
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/kwakwa.png",
