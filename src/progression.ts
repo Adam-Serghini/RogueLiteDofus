@@ -101,9 +101,9 @@ export function multOffensif(stats: Stats): number {
   return 1 + Math.min(0.5, stats.intelligence * 0.005);
 }
 
-/** Multiplicateur de puissance de soin (stat Soin, plafonné à +50 %). */
+/** Multiplicateur de puissance de soin (stat Soin + Intelligence, plafonné à +50 %). */
 export function multSoin(stats: Stats): number {
-  return 1 + Math.min(0.5, (stats.soin ?? 0) * 0.005);
+  return 1 + Math.min(0.5, ((stats.soin ?? 0) + stats.intelligence) * 0.005);
 }
 
 /** Chance de remboursement des PA (Flèche magique) : 5 % de base + Chance, plafonnée à 50 %. */

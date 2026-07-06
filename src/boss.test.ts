@@ -4,6 +4,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { lancerSort, appliquerMueElementaire, controllerIA, type CombatCtx } from "./combat";
+import { multSoin } from "./progression";
 import { SORTS, MONSTRES, ZONES } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import type { Combatant } from "./types";
@@ -63,7 +64,9 @@ describe("signatures des boss", () => {
     lancerSort(boss, SORTS.racines_voraces, iop.ref, [boss, allie, iop], ctx());
     const degats = 500 - iop.pvActuels;
     expect(degats).toBeGreaterThan(0);
-    expect(boss.pvActuels).toBe(Math.min(boss.pvMax, pvAvant + degats)); // soinEquipeRatio 1.0
+    // soinEquipeRatio 1.0 × multSoin (l'Intelligence scale aussi les soins des monstres)
+    const attendu = Math.round(degats * multSoin(boss.stats));
+    expect(boss.pvActuels).toBe(Math.min(boss.pvMax, pvAvant + attendu));
   });
 
   it("Rostre broyeur : la cible inflige −25 % de dégâts (1 tour)", () => {

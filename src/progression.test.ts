@@ -111,10 +111,12 @@ describe("multOffensif", () => {
 });
 
 describe("multSoin", () => {
-  it("vaut 1 sans stat Soin, croît avec, et plafonne à +50 %", () => {
+  it("vaut 1 sans stat, croît avec Soin ET Intelligence, plafonne à +50 %", () => {
     const s = { force: 0, intelligence: 0, agilite: 0, vitalite: 0 };
-    expect(multSoin(s)).toBeCloseTo(1); // pas de stat Soin → pas de bonus
+    expect(multSoin(s)).toBeCloseTo(1); // aucune stat → pas de bonus
     expect(multSoin({ ...s, soin: 40 })).toBeCloseTo(1.2);
+    expect(multSoin({ ...s, intelligence: 40 })).toBeCloseTo(1.2); // l'Intelligence scale les soins
+    expect(multSoin({ ...s, soin: 20, intelligence: 20 })).toBeCloseTo(1.2); // cumul
     expect(multSoin({ ...s, soin: 1000 })).toBeCloseTo(1.5); // plafond
   });
 });

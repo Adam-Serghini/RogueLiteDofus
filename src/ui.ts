@@ -542,7 +542,7 @@ const pctCrit = (s: Stats): number =>
 const pctDmgCrit = (s: Stats): number =>
   Math.round(Math.min(0.6, 0.25 + s.agilite * 0.004) * 100);
 const pctSoin = (s: Stats): number =>
-  Math.round(Math.min(0.5, (s.soin ?? 0) * 0.005) * 100);
+  Math.round(Math.min(0.5, ((s.soin ?? 0) + s.intelligence) * 0.005) * 100);
 const pctDgtsFinaux = (s: Stats): number =>
   Math.round(Math.min(0.5, s.intelligence * 0.005) * 100);
 const pctRembPA = (s: Stats): number =>
@@ -655,7 +655,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
       <div class="mini-stats">
         <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(c.stats)}%</span>
         <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(c.stats)}%</span>
-        <span class="ms" title="Soin (puissance de soin)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(c.stats)}%</span>
+        <span class="ms" title="Soins (Soin + Intelligence)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(c.stats)}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(c.stats)}%</span>
         ${(c.stats.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(c.stats)}%</span>` : ""}
       </div>
