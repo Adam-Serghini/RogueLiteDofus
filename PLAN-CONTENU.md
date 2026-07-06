@@ -97,36 +97,33 @@ leurs tours contrairement à la Poupée), résurrection (`ressuscite`), passif
 Chaque zone = 1 panoplie liée (+ éventuels rares nommés du boss). Ordre inspiré des
 zones/donjons emblématiques de Dofus ; **niveaux et choix à arbitrer ensemble**.
 
-### T1 · 1–50 (liste validée ensemble, ordre par niveau officiel de donjon)
+### T1 · 1–50 — ✅ IMPLÉMENTÉE (12 zones, ordre par niveau officiel de donjon)
 
-14 zones (6 existantes + 8 nouvelles). Niveaux officiels d'après
+Coupes actées : Château Ensablé (Mob l'Éponge : mécanique de poussée inadaptable)
+et Refuge Sylvestre (Rakoopeur : doublon des minibosses soutien) — réutilisables en T2.
+Rosters fidèles à DofusDB (`api.dofusdb.fr/dungeons/{id}`), niveaux officiels d'après
 [dofuspourlesnoobs.com/donjons](https://www.dofuspourlesnoobs.com/donjons.html)
-(référence pour tous les donjons, triables par niveau — à réutiliser pour les T2+).
-Colonne « Mécanique boss (jeu réel) » = la mécanique officielle du donjon, à adapter
-comme signature (souvent mieux que d'en inventer une).
+(référence à réutiliser pour les T2+). Toutes les signatures de boss sont en jeu (§3).
 
-| # | Zone (niv officiel) | Statut | Boss | Mécanique boss (jeu réel) → adaptation |
-|---|---|---|---|---|
-| 1 | Incarnam (10) | ✅ | Kardorim | (notre invention : debuff d'initiative) · Dofawa |
-| 2 | Champs d'Astrub (20) | ✅ | Tournesol Affamé | vol de vie / racines |
-| 3 | Château Ensablé (20) | ➕ | Mob l'Éponge | à creuser (absorption ?) |
-| 4 | Tainéla (30) | ✅ | Bouftou Royal | montée en rage · Dofus Argenté · rare nommé : Coiffe du Bouftou Royal |
-| 5 | Donjon des Tofus (40) | ✅ | Batofu | esquive + frappe garantie |
-| 6 | Akadémie des Gobs (40) | ➕ | Directeur Grunob | « Travail d'équipe » : +dégâts par gob adjacent → +X % par allié vivant dans sa ligne |
-| 7 | Cache de Kankreblath (40) | ➕ | Kankreblath | à creuser |
-| 8 | Maison Fantôme (40) | ➕ | Boostache | à creuser (fantômes ?) |
-| 9 | Donjon des Scarafeuilles (40) | ✅ | Scarabosse Doré | carapace/bouclier cyclique |
-| 10 | Donjon des Forgerons (50) | ✅ | Coffre des Forgerons | alternance ouvert/fermé |
-| 11 | Donjon des Larves (50) | ➕ | Shin Larve | larves multicolores → puzzle élémentaire |
-| 12 | Refuge Sylvestre (50) | ➕ | Rakoopeur | boss soutien : bouclier 100 sur un allié (existe : `bouclier`) → tuer les adds d'abord |
-| 13 | Grotte Hesque (50) | ➕ | Corailleur Magistral | ne frappe qu'au corps à corps → menace uniquement la ligne avant (règle de ligne !) |
-| 14 | Nid du Kwakwa (50) | ➕ | **Kwakwa** | **75 % de résistance partout sauf 1 élément aléatoire** → force le changement d'élément de frappe. **Boss final idéal de la T1.** |
+| # | Zone (niv officiel) | Boss | Signature en jeu |
+|---|---|---|---|
+| 1 | Incarnam (10) | Kardorim | Étreinte glaciale (−initiative) · Dofawa |
+| 2 | Champs d'Astrub (20) | Tournesol Affamé | Racines voraces (drain d'équipe) |
+| 3 | Tainéla (30) | Bouftou Royal | Colère royale (rage cumulable) · Dofus Argenté · rare nommé prévu : Coiffe du Bouftou Royal |
+| 4 | Donjon des Tofus (40) | Batofu | Piqué fulgurant (+esquive) |
+| 5 | Akadémie des Gobs (40) | Directeur Grunob | Travail d'équipe (+15 %/allié en ligne) |
+| 6 | Cache de Kankreblath (40) | Kankreblath | Sfvc%$*R ?! (invoque un monstre de la zone) |
+| 7 | Maison Fantôme (40) | Boostache | L'Enfer des Zombies (réinvoque un vaincu) |
+| 8 | Donjon des Scarafeuilles (40) | Scarabosse Doré | Carapace dorée (bouclier sur dégâts) |
+| 9 | Donjon des Forgerons (50) | Coffre des Forgerons | Mâchoire du coffre (gros coup puis +résists) |
+| 10 | Donjon des Larves (50) | Shin Larve | Ponte larvaire (pond et frappe le même tour) |
+| 11 | Grotte Hesque (50) | Corailleur Magistral | Rostre broyeur (−25 % dégâts à la cible) |
+| 12 | Nid du Kwakwa (50) | **Kwakwa** | **Mue élémentaire** (65 % de résist sauf 1 élément/tour) — boss final |
 
-Si on veut redescendre à 12 : couper/déplacer 2 parmi les niveaux 50
-(candidats : Grotte Hesque, Refuge Sylvestre — géographiquement Otomaï/Valonia).
-Réserve du même palier si on veut remplacer : Squelettes (Chafer Rönin, 40),
-Caverne des Bulbes (Bulbig Brozeur, 40), Bworks (Bworkette, 50),
-Clos des Blops (Blop Royal, 50), Nowel (Sapik, 50).
+Réserve du même palier pour de futures zones/échanges : Château Ensablé (20),
+Squelettes (Chafer Rönin, 40), Caverne des Bulbes (Bulbig Brozeur, 40),
+Bworks (Bworkette, 50), Clos des Blops (Blop Royal, 50), Refuge Sylvestre (50) ;
+Nowel (Sapik) réservé à l'événementiel.
 
 ### T2 · 51–100 (esquisse)
 
