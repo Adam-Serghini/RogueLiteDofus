@@ -672,9 +672,25 @@ export const MONSTRES: Record<string, Monstre> = {
     sorts: ["coup_de_bec"], ia: "agressif",
     img: "/assets/monstres/tofukaz.png",
   },
+  tofoune: {
+    id: "tofoune", nom: "Tofoune", pv: 50,
+    stats: { force: 6, intelligence: 8, agilite: 12, chance: 30, vitalite: 42 }, // frappe Eau (piaillarde)
+    pa: 4, initiative: 11,
+    resistances: { eau: 0.15, air: 0.1, terre: -0.1 },
+    sorts: ["coup_de_bec"], ia: "agressif",
+    img: "/assets/monstres/tofoune.png",
+  },
+  tofu_mutant: {
+    id: "tofu_mutant", nom: "Tofu Mutant", pv: 88,
+    stats: { force: 12, intelligence: 8, agilite: 33, vitalite: 62 }, // élite du donjon
+    pa: 5, initiative: 12,
+    resistances: { eau: 0.2, terre: 0.15, air: -0.15, feu: -0.2 },
+    sorts: ["morsure"], ia: "agressif",
+    img: "/assets/monstres/tofu_mutant.png",
+  },
   tofu_malefique: {
     id: "tofu_malefique", nom: "Tofu Maléfique", pv: 88,
-    stats: { force: 12, intelligence: 8, agilite: 33, vitalite: 62 },
+    stats: { force: 12, intelligence: 8, agilite: 33, vitalite: 62 }, // vit à la Maison Fantôme (pas au Donjon des Tofus)
     pa: 5, initiative: 12,
     resistances: { eau: 0.2, terre: 0.15, air: -0.15, feu: -0.2 },
     sorts: ["morsure"], ia: "agressif",
@@ -1279,13 +1295,13 @@ export const COMBATS: Record<string, CombatDef> = {
     { monstre: "tofu", position: 0 }, { monstre: "tofu_noir", position: 1 },
   ] },
   tof_2: { nom: "Nuée noire", ennemis: [
-    { monstre: "tofu_noir", position: 0 }, { monstre: "tofukaz", position: 1 }, { monstre: "tofu", position: 4 },
+    { monstre: "tofu_noir", position: 0 }, { monstre: "tofukaz", position: 1 }, { monstre: "tofoune", position: 4 },
   ] },
   tof_3: { nom: "Tourbillon de plumes", ennemis: [
     { monstre: "tofukaz", position: 0 }, { monstre: "tofu", position: 1 }, { monstre: "tofu_noir", position: 2 },
   ] },
   tof_elite: { nom: "Essaim maudit (dur)", ennemis: [
-    { monstre: "tofu_malefique", position: 0 }, { monstre: "tofukaz", position: 1 },
+    { monstre: "tofu_mutant", position: 0 }, { monstre: "tofukaz", position: 1 },
     { monstre: "tofu_noir", position: 2 }, { monstre: "tofu", position: 3 },
   ] },
   tof_boss: { nom: "Donjon — Batofu", ennemis: [
@@ -1372,7 +1388,7 @@ export const COMBATS: Record<string, CombatDef> = {
     { monstre: "vampire", position: 0 }, { monstre: "gargrouille", position: 1 }, { monstre: "kwoan", position: 4 },
   ] },
   fan_3: { nom: "Sarabande spectrale", ennemis: [
-    { monstre: "tofu_malefique", position: 0 }, { monstre: "vampire", position: 1 }, { monstre: "kwoan", position: 2 },
+    { monstre: "tofu_mutant", position: 0 }, { monstre: "vampire", position: 1 }, { monstre: "kwoan", position: 2 },
   ] },
   fan_elite: { nom: "Nuit de poltergeists (dur)", ennemis: [
     { monstre: "boostache_prepubere", position: 0 }, { monstre: "vampire", position: 1 },

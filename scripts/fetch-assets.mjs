@@ -20,6 +20,9 @@ const MONSTRES = {
   gobaliste: "Gobaliste",
   gobaladee: "Gobaladée",
   directeur_grunob: "Directeur Grunob",
+  // Donjon des Tofus (complément : roster réel DofusDB, donjon varie)
+  tofoune: "Tofoune",
+  tofu_mutant: "Tofu Mutant",
   // Cache de Kankreblath
   pyrasite: "Pyrasite",
   ceglumen: "Céglumen",
