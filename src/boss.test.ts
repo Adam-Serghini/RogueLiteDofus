@@ -23,13 +23,13 @@ describe("signatures des boss", () => {
       const boss = bossDe(zone.pools.boss);
       const m = MONSTRES[boss.monstreId!];
       const aSignatureSort = !["kwakwa", "directeur_grunob"].includes(m.id); // mue moteur / passif de ligne
-      if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.15);
+      if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.1);
       if (aSignatureSort) {
         const premier = SORTS[m.sorts[0]];
         expect(premier.desc, `${m.nom} : signature en tête de kit`).toContain(m.nom.split(" ")[0]);
         expect(premier.cooldownTours, `${m.nom} : signature sous cooldown`).toBeGreaterThan(0);
       }
-      if (m.id === "kwakwa") expect(m.mueElementaire).toBe(0.65);
+      if (m.id === "kwakwa") expect(m.mueElementaire).toBe(0.55);
     }
   });
 
@@ -40,7 +40,7 @@ describe("signatures des boss", () => {
     lancerSort(boss, SORTS.colere_royale, iop.ref, [boss, iop], ctx());
     lancerSort(boss, SORTS.colere_royale, iop.ref, [boss, iop], ctx());
     const bonus = boss.effets.filter((e) => e.stat === "force").reduce((s, e) => s + e.valeur, 0);
-    expect(bonus).toBe(50); // 2 lancers cumulés
+    expect(bonus).toBe(30); // 2 lancers cumulés (+15 chacun)
     expect(boss.stats.force).toBe(forceAvant); // la base ne bouge pas : c'est un effet temporaire
   });
 
@@ -69,37 +69,37 @@ describe("signatures des boss", () => {
     expect(boss.pvActuels).toBe(Math.min(boss.pvMax, pvAvant + attendu));
   });
 
-  it("Rostre broyeur : la cible inflige −25 % de dégâts (1 tour)", () => {
+  it("Rostre broyeur : la cible inflige −15 % de dégâts (1 tour)", () => {
     const boss = bossDe("hsk_boss");
     const [iop] = fabriquerEquipe();
     iop.pvMax = 500; iop.pvActuels = 500;
     lancerSort(boss, SORTS.rostre_broyeur, iop.ref, [boss, iop], ctx());
-    expect(iop.effets.some((e) => e.stat === "degatsInfliges" && e.valeur === -0.25 && e.toursRestants === 1)).toBe(true);
+    expect(iop.effets.some((e) => e.stat === "degatsInfliges" && e.valeur === -0.15 && e.toursRestants === 1)).toBe(true);
   });
 
-  it("mue élémentaire : 65 % partout sauf UN élément à 0, retiré via le rng", () => {
+  it("mue élémentaire : 55 % partout sauf UN élément à 0, retiré via le rng", () => {
     const kwakwa = bossDe("kwa_boss");
-    expect(kwakwa.mueElementaire).toBe(0.65);
+    expect(kwakwa.mueElementaire).toBe(0.55);
     appliquerMueElementaire(kwakwa, ctx({ rng: () => 0 })); // index 0 → terre
-    expect(kwakwa.resistances).toEqual({ terre: 0, feu: 0.65, eau: 0.65, air: 0.65 });
+    expect(kwakwa.resistances).toEqual({ terre: 0, feu: 0.55, eau: 0.55, air: 0.55 });
     appliquerMueElementaire(kwakwa, ctx({ rng: () => 0.6 })); // index 2 → eau
-    expect(kwakwa.resistances).toEqual({ terre: 0.65, feu: 0.65, eau: 0, air: 0.65 });
+    expect(kwakwa.resistances).toEqual({ terre: 0.55, feu: 0.55, eau: 0, air: 0.55 });
   });
 
   it("Sfvc%$*R ?! : Kankreblath invoque un monstre de la zone (2 max en vie)", () => {
     const cs = fabriquerEnnemis("kan_boss");
     const boss = cs.find((c) => c.monstreId === "kankreblath")!;
     lancerSort(boss, SORTS.sfvc, boss.ref, cs, ctx());
-    expect(cs.length).toBe(3); // boss + miniboss + 1 invocation
-    const invoc = cs[2];
+    expect(cs.length).toBe(4); // boss + miniboss + cafarcher + 1 invocation
+    const invoc = cs[3];
     expect(["pyrasite", "ceglumen", "cafarcher", "mirgrillon"]).toContain(invoc.monstreId);
     expect(invoc.camp).toBe("ennemi");
     expect(invoc.invoquePar).toBe(boss.ref);
     expect(invoc.estInvocation).toBeFalsy(); // il JOUE ses tours (≠ Poupée)
     lancerSort(boss, SORTS.sfvc, boss.ref, cs, ctx());
-    expect(cs.length).toBe(4); // 2e invocation OK
+    expect(cs.length).toBe(5); // 2e invocation OK
     lancerSort(boss, SORTS.sfvc, boss.ref, cs, ctx());
-    expect(cs.length).toBe(4); // cap à 2 vivantes
+    expect(cs.length).toBe(5); // cap à 2 vivantes
   });
 
   it("L'Enfer des Zombies : Boostache réinvoque un allié vaincu à 50 % de ses PV", () => {
@@ -109,23 +109,23 @@ describe("signatures des boss", () => {
     mini.pvActuels = 0; // vaincu
     lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
     expect(mini.pvActuels).toBe(Math.round(mini.pvMax * 0.5));
-    // personne de mort → le sort ne fait rien
+    // personne de mort → le sort ne fait rien (aucun combattant ajouté)
     lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
-    expect(cs.length).toBe(2);
+    expect(cs.length).toBe(3);
   });
 
-  it("Travail d'équipe : Grunob inflige +15 % par allié vivant dans sa rangée", () => {
-    const cs = fabriquerEnnemis("gob_boss"); // Grunob (pos 0) + Gobaladée (pos 1)
+  it("Travail d'équipe : Grunob inflige +10 % par allié vivant dans sa rangée", () => {
+    const cs = fabriquerEnnemis("gob_boss"); // Grunob + Gobaladée + Gobichon (avant) + Gobaliste (arrière)
     const boss = cs.find((c) => c.monstreId === "directeur_grunob")!;
     const [iop] = fabriquerEquipe();
     iop.pvMax = 5000; iop.pvActuels = 5000;
     lancerSort(boss, SORTS.morsure, iop.ref, [...cs, iop], ctx());
-    const avecAllie = 5000 - iop.pvActuels;
+    const deuxAllies = 5000 - iop.pvActuels; // Gobaladée + Gobichon en ligne avant → ×1.20
     iop.pvActuels = 5000;
-    cs[1].pvActuels = 0; // la Gobaladée tombe → le bonus disparaît
+    for (const c of cs) if (c.ref !== boss.ref && c.position < 4) c.pvActuels = 0; // la ligne avant tombe
     lancerSort(boss, SORTS.morsure, iop.ref, [...cs, iop], ctx());
-    const seul = 5000 - iop.pvActuels;
-    expect(avecAllie).toBe(Math.round(seul * 1.15));
+    const seul = 5000 - iop.pvActuels; // plus d'allié dans sa rangée → ×1.0
+    expect(Math.abs(deuxAllies - seul * 1.2)).toBeLessThanOrEqual(1); // ±1 d'arrondi interne
   });
 
   it("l'IA agressive joue l'invocation signature en priorité quand elle est utile", async () => {

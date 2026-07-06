@@ -426,8 +426,8 @@ export const SORTS: Record<string, Spell> = {
   colere_royale: {
     id: "colere_royale", nom: "Colère royale", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 14, baseMax: 20, scaling: 0.45,
-    effetLanceur: { stat: "force", valeur: 25, duree: 99 }, cooldownTours: 2,
-    desc: "Bouftou Royal — frappe et entre en rage : +25 Force cumulable jusqu'à la fin du combat.",
+    effetLanceur: { stat: "force", valeur: 15, duree: 99 }, cooldownTours: 2,
+    desc: "Bouftou Royal — frappe et entre en rage : +15 Force cumulable jusqu'à la fin du combat.",
   },
   pique_fulgurant: {
     id: "pique_fulgurant", nom: "Piqué fulgurant", type: "degats", coutPA: 6,
@@ -450,8 +450,8 @@ export const SORTS: Record<string, Spell> = {
   rostre_broyeur: {
     id: "rostre_broyeur", nom: "Rostre broyeur", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 24, baseMax: 32, scaling: 0.55,
-    effet: { stat: "degatsInfliges", valeur: -0.25, duree: 1 }, cooldownTours: 3,
-    desc: "Corailleur Magistral — broie la ligne avant : la cible inflige −25 % de dégâts (1t).",
+    effet: { stat: "degatsInfliges", valeur: -0.15, duree: 1 }, cooldownTours: 3,
+    desc: "Corailleur Magistral — broie la ligne avant : la cible inflige −15 % de dégâts (1t).",
   },
   sfvc: {
     id: "sfvc", nom: "Sfvc%$*R ?!", type: "invocation", coutPA: 6,
@@ -593,8 +593,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   kardorim: {
     id: "kardorim", nom: "Kardorim", pv: 165,
-    stats: { force: 30, intelligence: 45, agilite: 20, vitalite: 55 },
-    pa: 6, initiative: 9,
+    stats: { force: 18, intelligence: 27, agilite: 12, vitalite: 55 },
+    pa: 10, initiative: 9,
     resistances: { feu: 0.25, air: 0.1, terre: -0.2, eau: -0.15 },
     sorts: ["etreinte_glaciale", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofawa",
@@ -647,8 +647,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   tournesol_affame: {
     id: "tournesol_affame", nom: "Tournesol Affamé", pv: 265,
-    stats: { force: 20, intelligence: 66, agilite: 18, vitalite: 75 },
-    pa: 6, initiative: 9,
+    stats: { force: 12, intelligence: 40, agilite: 11, vitalite: 75 },
+    pa: 10, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
     sorts: ["racines_voraces", "ecrasement", "charge", "picotement"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
@@ -702,9 +702,9 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/chef_de_guerre_bouftou.png",
   },
   bouftou_royal: {
-    id: "bouftou_royal", nom: "Bouftou Royal", pv: 400,
-    stats: { force: 78, intelligence: 15, agilite: 20, vitalite: 80 },
-    pa: 6, initiative: 8,
+    id: "bouftou_royal", nom: "Bouftou Royal", pv: 340,
+    stats: { force: 47, intelligence: 9, agilite: 12, vitalite: 80 },
+    pa: 10, initiative: 8,
     resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
     sorts: ["colere_royale", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, dofus: "dofus_argente",
@@ -774,8 +774,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   batofu: {
     id: "batofu", nom: "Batofu", pv: 480,
-    stats: { force: 8, intelligence: 10, agilite: 82, vitalite: 110 },
-    pa: 6, initiative: 11,
+    stats: { force: 5, intelligence: 6, agilite: 49, vitalite: 110 },
+    pa: 10, initiative: 11,
     resistances: { air: 0.25, terre: 0.1, eau: -0.05, feu: -0.15 },
     sorts: ["pique_fulgurant", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
@@ -840,8 +840,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   scarabosse_dore: {
     id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 640,
-    stats: { force: 68, intelligence: 18, agilite: 20, chance: 18, vitalite: 132 },
-    pa: 6, initiative: 10,
+    stats: { force: 41, intelligence: 11, agilite: 12, chance: 11, vitalite: 132 },
+    pa: 10, initiative: 10,
     resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // résiste tout : il faut le user
     sorts: ["carapace_doree", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
@@ -887,9 +887,9 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/forgeron_sombre.png",
   },
   coffre_forgerons: {
-    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 720,
-    stats: { force: 64, intelligence: 30, agilite: 22, chance: 20, vitalite: 164 },
-    pa: 6, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
+    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 640,
+    stats: { force: 46, intelligence: 18, agilite: 13, chance: 12, vitalite: 164 },
+    pa: 10, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
     resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
     sorts: ["machoire_du_coffre", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
@@ -934,7 +934,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gob_trotteur.png",
   },
   gobaladee: {
-    id: "gobaladee", nom: "Gobaladée", pv: 115,
+    id: "gobaladee", nom: "Gobaladée", pv: 95,
     stats: { force: 38, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss de l'Akadémie
     pa: 5, initiative: 9,
     resistances: { terre: 0.15, feu: 0.1, eau: -0.1 },
@@ -942,11 +942,11 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gobaladee.png",
   },
   directeur_grunob: {
-    id: "directeur_grunob", nom: "Directeur Grunob", pv: 500,
-    stats: { force: 52, intelligence: 14, agilite: 20, vitalite: 118 },
-    pa: 6, initiative: 10,
+    id: "directeur_grunob", nom: "Directeur Grunob", pv: 450,
+    stats: { force: 31, intelligence: 8, agilite: 12, vitalite: 118 },
+    pa: 10, initiative: 10,
     resistances: { terre: 0.2, feu: 0.15, air: 0.1, eau: -0.05 },
-    bonusParAllieLigne: 0.15, // « Travail d'équipe » : +15 % de dégâts par allié vivant dans sa rangée
+    bonusParAllieLigne: 0.1, // « Travail d'équipe » : +10 % de dégâts par allié vivant dans sa rangée
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/directeur_grunob.png",
@@ -997,8 +997,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   kankreblath: {
     id: "kankreblath", nom: "Kankreblath", pv: 560,
-    stats: { force: 16, intelligence: 58, agilite: 18, vitalite: 126 },
-    pa: 6, initiative: 11,
+    stats: { force: 10, intelligence: 30, agilite: 11, vitalite: 126 },
+    pa: 10, initiative: 11,
     resistances: { terre: 0.25, eau: 0.2, feu: 0.15, air: -0.05 }, // résist. réelles DofusDB (terre/eau)
     sorts: ["sfvc", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
@@ -1046,8 +1046,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   boostache: {
     id: "boostache", nom: "Boostache", pv: 520,
-    stats: { force: 14, intelligence: 20, agilite: 48, vitalite: 122 },
-    pa: 6, initiative: 12,
+    stats: { force: 8, intelligence: 12, agilite: 29, vitalite: 122 },
+    pa: 10, initiative: 12,
     resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
     sorts: ["enfer_des_zombies", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
@@ -1117,8 +1117,8 @@ export const MONSTRES: Record<string, Monstre> = {
   },
   shin_larve: {
     id: "shin_larve", nom: "Shin Larve", pv: 820,
-    stats: { force: 24, intelligence: 24, agilite: 18, chance: 76, vitalite: 176 },
-    pa: 6, initiative: 9,
+    stats: { force: 14, intelligence: 14, agilite: 11, chance: 46, vitalite: 176 },
+    pa: 10, initiative: 9,
     resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
     sorts: ["ponte_larvaire", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
@@ -1184,9 +1184,9 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/palmifleur_morito.png",
   },
   corailleur_magistral: {
-    id: "corailleur_magistral", nom: "Corailleur Magistral", pv: 800,
-    stats: { force: 22, intelligence: 16, agilite: 18, chance: 70, vitalite: 175 },
-    pa: 6, initiative: 8,
+    id: "corailleur_magistral", nom: "Corailleur Magistral", pv: 660,
+    stats: { force: 13, intelligence: 10, agilite: 11, chance: 28, vitalite: 175 },
+    pa: 10, initiative: 8,
     resistances: { eau: 0.3, terre: 0.2, feu: -0.05 },
     sorts: ["rostre_broyeur", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
@@ -1242,11 +1242,11 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwakere_de_terre.png",
   },
   kwakwa: {
-    id: "kwakwa", nom: "Kwakwa", pv: 860,
-    stats: { force: 38, intelligence: 38, agilite: 26, chance: 38, vitalite: 180 },
-    pa: 6, initiative: 12,
+    id: "kwakwa", nom: "Kwakwa", pv: 780,
+    stats: { force: 23, intelligence: 23, agilite: 16, chance: 23, vitalite: 180 },
+    pa: 10, initiative: 12,
     resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // avant son 1er tour ; ensuite la mue prend le relais
-    mueElementaire: 0.65, // signature : 65 % de résist partout sauf 1 élément (aléatoire) à 0, retiré chaque tour
+    mueElementaire: 0.55, // signature : 55 % de résist partout sauf 1 élément (aléatoire) à 0, retiré chaque tour
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/kwakwa.png",
@@ -1348,6 +1348,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   inc_boss: { nom: "Donjon — Kardorim", ennemis: [
     { monstre: "kardorim", position: 0 }, { monstre: "sergent_chafer", position: 1 }, // boss + miniboss devant
+    { monstre: "chafer_piquier", position: 2 }, // garde rapprochée (4v3 : 1er boss)
   ] },
 
   // ===== Champs d'Astrub — fleurs (ids historiques, conservés) =====
@@ -1366,6 +1367,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   boss: { nom: "Donjon — Tournesol Affamé", ennemis: [
     { monstre: "tournesol_affame", position: 0 }, { monstre: "gardienne_champetre", position: 1 }, // boss + miniboss devant
+    { monstre: "pissenlit_diabolique", position: 2 }, { monstre: "rose_demoniaque", position: 4 }, // parterre hostile
   ] },
 
   // ===== Tainéla — Donjon Bouftou =====
@@ -1384,6 +1386,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   tai_boss: { nom: "Donjon — Bouftou Royal", ennemis: [
     { monstre: "bouftou_royal", position: 0 }, { monstre: "chef_de_guerre_bouftou", position: 1 }, // boss + miniboss devant
+    { monstre: "bouftou", position: 2 }, // le troupeau suit son roi (4v3)
   ] },
 
   // ===== Donjon des Tofus =====
@@ -1402,6 +1405,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   tof_boss: { nom: "Donjon — Batofu", ennemis: [
     { monstre: "batofu", position: 0 }, { monstre: "tofu_ventripotent", position: 1 }, // boss + miniboss devant
+    { monstre: "tofu_noir", position: 2 }, { monstre: "tofukaz", position: 4 }, // essaim d'escorte
   ] },
 
   // ===== Donjon des Scarafeuilles =====
@@ -1420,6 +1424,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   scr_boss: { nom: "Donjon — Scarabosse Doré", ennemis: [
     { monstre: "scarabosse_dore", position: 0 }, { monstre: "scarafeuille_noir", position: 1 }, // boss + miniboss devant
+    { monstre: "scarafeuille_rouge", position: 2 }, { monstre: "scarafeuille_blanc", position: 4 }, // couleurs de garde
   ] },
 
   // ===== Donjon des Forgerons =====
@@ -1438,6 +1443,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   frg_boss: { nom: "Donjon — Coffre des Forgerons", ennemis: [
     { monstre: "coffre_forgerons", position: 0 }, { monstre: "forgeron_sombre", position: 1 }, // boss + miniboss devant
+    { monstre: "bandit_roublard", position: 2 }, { monstre: "boulanger_sombre", position: 4 }, // le clan défend son butin
   ] },
 
   // ===== Akadémie des Gobs =====
@@ -1456,6 +1462,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   gob_boss: { nom: "Donjon — Directeur Grunob", ennemis: [
     { monstre: "directeur_grunob", position: 0 }, { monstre: "gobaladee", position: 1 }, // boss + miniboss devant
+    { monstre: "gobichon", position: 2 }, // Travail d'équipe : 2 alliés en ligne avant (4v3)
   ] },
 
   // ===== Cache de Kankreblath =====
@@ -1474,6 +1481,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   kan_boss: { nom: "Donjon — Kankreblath", ennemis: [
     { monstre: "kankreblath", position: 0 }, { monstre: "sakarien", position: 1 }, // boss + miniboss devant
+    { monstre: "cafarcher", position: 4 }, // 4v3 : le boss repeuple lui-même (Sfvc%$*R ?!)
   ] },
 
   // ===== Maison Fantôme =====
@@ -1492,6 +1500,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   fan_boss: { nom: "Donjon — Boostache", ennemis: [
     { monstre: "boostache", position: 0 }, { monstre: "boostache_prepubere", position: 1 }, // boss + miniboss devant
+    { monstre: "gargrouille", position: 2 }, // 4v3 : le boss réinvoque les vaincus
   ] },
 
   // ===== Donjon des Larves =====
@@ -1510,6 +1519,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   lrv_boss: { nom: "Donjon — Shin Larve", ennemis: [
     { monstre: "shin_larve", position: 0 }, { monstre: "larve_doree", position: 1 }, // boss + miniboss devant
+    { monstre: "larve_emeraude", position: 2 }, // 4v3 : la Shin Larve pond en combat
   ] },
 
   // ===== Grotte Hesque =====
@@ -1528,6 +1538,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   hsk_boss: { nom: "Donjon — Corailleur Magistral", ennemis: [
     { monstre: "corailleur_magistral", position: 0 }, { monstre: "palmifleur_morito", position: 1 }, // boss + miniboss devant
+    { monstre: "corailleur", position: 4 }, // 4v3 : récif dense
   ] },
 
   // ===== Nid du Kwakwa =====
@@ -1546,6 +1557,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   kwa_boss: { nom: "Donjon — Kwakwa", ennemis: [
     { monstre: "kwakwa", position: 0 }, { monstre: "kwakere_de_terre", position: 1 }, // boss + miniboss devant
+    { monstre: "kwak_d_eau", position: 4 }, // un kwak en soutien arrière (4v3)
   ] },
 };
 
