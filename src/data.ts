@@ -392,6 +392,12 @@ export const SORTS: Record<string, Spell> = {
     cible: "ennemi_ligne", baseMin: 5, baseMax: 9, scaling: 0.3,
     desc: "Dégâts faibles.",
   },
+  tir_courbe: {
+    id: "tir_courbe", nom: "Tir courbe", type: "degats", coutPA: 4,
+    cible: "ennemi_tous", baseMin: 9, baseMax: 14, scaling: 0.35,
+    cooldownTours: 2,
+    desc: "Projectile en cloche : touche n'importe quel ennemi, même en ligne arrière.",
+  },
   soin_noir: {
     id: "soin_noir", nom: "Soin noir", type: "soin", coutPA: 4,
     cible: "allie", baseMin: 12, baseMax: 18, scaling: 0,
@@ -565,7 +571,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 4, intelligence: 18, agilite: 10, vitalite: 11 },
     pa: 5, initiative: 11,
     resistances: { terre: 0.1, feu: -0.15 },
-    sorts: ["picotement"], ia: "agressif", // tireur
+    sorts: ["tir_courbe", "picotement"], ia: "agressif", // tireur
     img: "/assets/monstres/chafer_eclaireur.png",
   },
   chafer_furtif: {
@@ -737,7 +743,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 6, intelligence: 6, agilite: 40, vitalite: 38 },
     pa: 5, initiative: 16, // rapide et fragile
     resistances: { terre: 0.25, air: 0.1, eau: -0.1, feu: -0.15 },
-    sorts: ["coup_de_bec"], ia: "agressif",
+    sorts: ["tir_courbe", "coup_de_bec"], ia: "agressif",
     img: "/assets/monstres/tofukaz.png",
   },
   tofoune: {
@@ -865,7 +871,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 8, intelligence: 34, agilite: 8, vitalite: 48 }, // frappe Feu (four)
     pa: 5, initiative: 9,
     resistances: { feu: 0.2 },
-    sorts: ["morsure"], ia: "agressif",
+    sorts: ["tir_courbe", "morsure"], ia: "agressif",
     archiNom: "Boudur le Raide",
     img: "/assets/monstres/boulanger_sombre.png",
   },
@@ -922,7 +928,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 10, intelligence: 32, agilite: 12, vitalite: 46 }, // frappe Feu (projectiles)
     pa: 5, initiative: 12,
     resistances: { feu: 0.15, eau: -0.1 },
-    sorts: ["morsure"], ia: "agressif",
+    sorts: ["tir_courbe", "morsure"], ia: "agressif",
     img: "/assets/monstres/gobaliste.png",
   },
   gob_trotteur: {
@@ -977,7 +983,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 8, intelligence: 10, agilite: 36, vitalite: 46 }, // frappe Air (tireur)
     pa: 5, initiative: 13,
     resistances: { air: 0.15, feu: -0.1 },
-    sorts: ["coup_de_bec"], ia: "agressif",
+    sorts: ["tir_courbe", "coup_de_bec"], ia: "agressif",
     img: "/assets/monstres/cafarcher.png",
   },
   mirgrillon: {
@@ -1015,7 +1021,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 8, intelligence: 36, agilite: 14, vitalite: 48 }, // frappe Feu (drain nocturne)
     pa: 5, initiative: 12,
     resistances: { feu: 0.2, air: 0.1, terre: -0.1 },
-    sorts: ["morsure"], ia: "agressif",
+    sorts: ["tir_courbe", "morsure"], ia: "agressif",
     archiNom: "Vampunor le Glacial",
     img: "/assets/monstres/vampire.png",
   },
@@ -1162,7 +1168,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 12, intelligence: 46, agilite: 12, vitalite: 66 }, // frappe Feu
     pa: 5, initiative: 10,
     resistances: { feu: 0.3, eau: -0.2 },
-    sorts: ["morsure"], ia: "agressif",
+    sorts: ["tir_courbe", "morsure"], ia: "agressif",
     archiNom: "Palmiflette le Convivial",
     img: "/assets/monstres/palmifleur_passaoh.png",
   },
@@ -1171,7 +1177,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 12, intelligence: 10, agilite: 46, vitalite: 66 }, // frappe Air
     pa: 5, initiative: 11,
     resistances: { air: 0.3, terre: -0.2 },
-    sorts: ["coup_de_bec"], ia: "agressif",
+    sorts: ["tir_courbe", "coup_de_bec"], ia: "agressif",
     archiNom: "Palmito le Menteur",
     img: "/assets/monstres/palmifleur_malibout.png",
   },
@@ -1230,7 +1236,7 @@ export const MONSTRES: Record<string, Monstre> = {
     stats: { force: 10, intelligence: 10, agilite: 54, vitalite: 76 },
     pa: 5, initiative: 12,
     resistances: { air: 0.5, terre: -0.3 },
-    sorts: ["coup_de_bec"], ia: "agressif",
+    sorts: ["tir_courbe", "coup_de_bec"], ia: "agressif",
     archiNom: "Kwaké le Piraté",
     img: "/assets/monstres/kwak_de_vent.png",
   },

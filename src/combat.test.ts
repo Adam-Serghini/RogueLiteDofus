@@ -304,3 +304,18 @@ describe("Cra — nouvelles mécaniques", () => {
     expect(e.effets.some((x) => x.stat === "reductionDegats" && x.valeur === -0.1)).toBe(true);
   });
 });
+
+describe("Tir courbe (monstres tireurs)", () => {
+  it("touche la ligne arrière même si la ligne avant est vivante", () => {
+    const [iop, cra] = fabriquerEquipe();
+    iop.position = 0; // ligne avant
+    cra.position = 4; // ligne arrière
+    const tireur = fabriquerEnnemis("kan_2").find((e) => e.sorts.includes("tir_courbe"))!;
+    const cibles = ciblesValides(tireur, SORTS.tir_courbe, [iop, cra, tireur]);
+    expect(cibles.map((c) => c.ref)).toContain(cra.ref); // l'arrière est exposé
+    // …mais la provocation reste un contre : le taunt force la cible
+    iop.provoque = true;
+    const provoquees = ciblesValides(tireur, SORTS.tir_courbe, [iop, cra, tireur]);
+    expect(provoquees.map((c) => c.ref)).toEqual([iop.ref]);
+  });
+});
