@@ -2654,43 +2654,64 @@ kbd {
 /* layout : sidebar équipe (gauche) + plateau (droite) */
 .map-layout {
   display: flex;
-  gap: 18px;
-  align-items: flex-start;
-}
-/* colonne de menus à gauche (icônes verticales) */
-.map-menus {
-  flex: none;
-  padding: 10px 8px;
-  background: var(--panel-solide);
-  border: 1px solid var(--bord);
-  border-radius: 14px;
-  box-shadow: 0 8px 22px #0008;
-}
-.map-menus .aside-actions {
   flex-direction: column;
-  justify-content: flex-start;
   gap: 10px;
-  margin: 0;
+  /* plein écran : sort du gabarit centré de #app (1060px) */
+  width: calc(100vw - 28px);
+  margin-left: calc(50% - 50vw + 14px);
+  min-height: calc(100vh - 90px);
 }
-/* panneau d'équipe à droite */
-.map-equipe {
-  width: 234px;
-  flex: none;
+.map-topbar {
   display: flex;
-  flex-direction: column; /* les kamas se calent en bas (margin-top:auto) */
-  padding: 14px;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 10px;
+}
+.map-topbar .zone-titre {
+  margin: 0;
+  text-align: left;
+  flex: none;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.topbar-sep {
+  width: 1px;
+  height: 26px;
+  margin: 0 4px;
+  background: var(--bord-clair);
+  opacity: 0.7;
+}
+/* bandeau d'équipe en bas (horizontal) */
+.map-equipe-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
   background: var(--panel-solide);
   border: 1px solid var(--bord);
   border-radius: 14px;
-  box-shadow: 0 8px 22px #0008;
+}
+.equipe-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  flex: 1;
+}
+.equipe-bar .aside-perso {
+  min-width: 205px;
+}
+.map-equipe-bar .aside-kamas {
+  margin: 0;
+  padding: 0 4px;
+  white-space: nowrap;
 }
 .map-equipe h2 {
   margin: 0 0 12px;
   font-size: 1.2rem;
-}
-.map-main {
-  flex: 1;
-  min-width: 0;
 }
 .zone-titre {
   margin: 0 0 10px;
@@ -2780,24 +2801,17 @@ kbd {
   font-size: 0.64rem;
 }
 
-@media (max-width: 760px) {
-  .map-layout {
-    flex-direction: column;
-  }
-  .map-menus,
-  .map-equipe {
-    width: auto;
-    align-self: stretch;
-  }
-  .map-menus .aside-actions {
-    flex-direction: row;
-    justify-content: center;
-  }
-}
 
 .map-scroll {
-  overflow-x: auto; /* les plateaux profonds défilent horizontalement */
+  flex: 1;
+  overflow: auto; /* les plateaux profonds défilent horizontalement */
+  display: flex;
+  align-items: center; /* treillis centré verticalement dans l'espace dispo */
   padding-bottom: 6px;
+}
+.map-scroll .map-zone {
+  flex: none;
+  margin: auto; /* centré quand il reste de la place, scrollable sinon */
 }
 .map-zone {
   position: relative;

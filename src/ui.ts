@@ -2306,39 +2306,32 @@ Butin au taux donjon.`)}"` : "";
 
       root.innerHTML = `
         <div class="carte-ecran map-layout">
-          <aside class="map-menus">
-            <div class="aside-actions">
+          <header class="map-topbar">
+            <h2 class="zone-titre">${escapeHtml(zoneNom)}</h2>
+            <div class="topbar-actions">
               <button id="carte-persos" class="aside-icone" title="Caractéristiques${points ? ` · ${points} pts à dépenser` : ""}"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" />${points ? `<span class="aside-compte">${points}</span>` : ""}</button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>
               <button id="carte-equip" class="aside-icone" title="Équipement${inventaire.length ? ` · ${inventaire.length} objet(s)` : ""}"><img src="${MENU_INVENTAIRE}" alt="Équipement" onerror="this.remove()" />${inventaire.length ? `<span class="aside-compte">${inventaire.length}</span>` : ""}</button>
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
-              <span class="aside-sep"></span>
+              <button id="carte-dofus" class="aside-icone" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
+              <span class="topbar-sep"></span>
               <button id="carte-accueil" class="aside-icone aside-emoji" title="Retour à l'accueil (la run reste sauvegardée)">🏠</button>
               <button id="carte-restart" class="aside-icone aside-emoji" title="Recommencer avec les mêmes héros (abandonne la run en cours)">↻</button>
               <button id="carte-restart-choix" class="aside-icone aside-emoji" title="Recommencer en choisissant d'autres héros (abandonne la run en cours)">👥</button>
             </div>
-          </aside>
-          <div class="map-main">
-            <h2 class="zone-titre">${escapeHtml(zoneNom)}</h2>
-            <div class="map-scroll"><div class="map-zone" style="width:${W}px;height:${HAUTEUR_CARTE}px">
-              <svg class="map-svg" width="${W}" height="${HAUTEUR_CARTE}">${departSvg}${lignesSvg}</svg>
-              ${boutons}
-              <div class="map-depart" style="left:${departPos.x}px;top:${departPos.y}px">
-                <span class="case-art depart-art">🚩</span>
-                <span class="mn-lbl">Départ</span>
-              </div>
-            </div></div>
-            <p class="aide">Choisis un nœud accessible (surligné). Choisir un nœud, c'est renoncer à ses voisins.</p>
-          </div>
-          <aside class="map-equipe">
-            <h2>Équipe</h2>
-            <div class="aside-equipe">${asideEquipe}</div>
-            <div class="aside-dofus">
-              <h3>Dofus</h3>
-              ${renderDofusRack(meta, true)}
+          </header>
+          <div class="map-scroll"><div class="map-zone" style="width:${W}px;height:${HAUTEUR_CARTE}px">
+            <svg class="map-svg" width="${W}" height="${HAUTEUR_CARTE}">${departSvg}${lignesSvg}</svg>
+            ${boutons}
+            <div class="map-depart" style="left:${departPos.x}px;top:${departPos.y}px">
+              <span class="case-art depart-art">🚩</span>
+              <span class="mn-lbl">Départ</span>
             </div>
+          </div></div>
+          <footer class="map-equipe-bar">
+            <div class="equipe-bar">${asideEquipe}</div>
             <div class="aside-kamas" title="Kamas de la run (perdus à la mort)">${kamasHtml(kamas)}</div>
-          </aside>
+          </footer>
         </div>`;
 
       root
@@ -2371,6 +2364,12 @@ Butin au taux donjon.`)}"` : "";
         .getElementById("carte-bestiaire")
         ?.addEventListener("click", async () => {
           await showBestiaire(meta);
+          draw();
+        });
+      document
+        .getElementById("carte-dofus")
+        ?.addEventListener("click", async () => {
+          await showCollectionDofus(meta);
           draw();
         });
       document
