@@ -642,17 +642,17 @@ function elemRond(
 }
 
 /**
- * Indicateur de collection d'Archimonstre (coin haut-droit du mob) : présent
- * uniquement sur les espèces qui ont un Archimonstre réel. Opaque si l'espèce
- * est déjà capturée, translucide sinon.
+ * Indicateur d'Archimonstre (coin haut-droit du mob) : affiché UNIQUEMENT quand
+ * l'ennemi EST un Archimonstre (le montrer sur toute espèce capturable prêtait
+ * à confusion). Pleine opacité ; le tooltip précise si l'âme est déjà capturée.
  */
 function archiIndicateur(c: Combatant): string {
-  if (c.camp !== "ennemi" || !c.archiNom) return "";
+  if (c.camp !== "ennemi" || !c.archi || !c.archiNom) return "";
   const capture = !!(c.monstreId && metaCombat?.archis.includes(c.monstreId));
   const titre = capture
-    ? `Archimonstre capturé : ${c.archiNom}`
-    : `Archimonstre à capturer : ${c.archiNom}`;
-  return `<img class="archi-badge ${capture ? "capture" : ""}" src="${A("/assets/divers/Archmonster.webp")}" alt="" title="${escapeHtml(titre)}" onerror="this.remove()" />`;
+    ? `Archimonstre (âme déjà capturée) : ${c.archiNom}`
+    : `Archimonstre — vaincs-le pour capturer son âme : ${c.archiNom}`;
+  return `<img class="archi-badge capture" src="${A("/assets/divers/Archmonster.webp")}" alt="" title="${escapeHtml(titre)}" onerror="this.remove()" />`;
 }
 
 function carteCombattant(c: Combatant, clickable: boolean): string {
