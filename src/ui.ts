@@ -391,6 +391,7 @@ const MENU_PARAM = A("/assets/menu/parametres.png");
 const MENU_SUCCES = A("/assets/menu/succes.png");
 const MENU_ACCUEIL = A("/assets/menu/Menu.png");
 const MENU_RESTART = A("/assets/menu/Recommencer.png");
+const MENU_RESTART_PERSO = A("/assets/menu/Recommencer_avec_perso.png");
 const MENU_DOFUS = A("/assets/menu/dofus.png");
 const ICON_KAMAS = A("/assets/divers/kamas.png");
 const ICON_VITA = A("/assets/divers/coeur.png");
@@ -2330,7 +2331,7 @@ Butin au taux donjon.`)}"` : "";
               <span class="topbar-sep"></span>
               <button id="carte-accueil" class="aside-icone" title="Retour à l'accueil (la run reste sauvegardée)"><img src="${MENU_ACCUEIL}" alt="Accueil" onerror="this.remove()" /></button>
               <button id="carte-restart" class="aside-icone" title="Recommencer avec les mêmes héros (abandonne la run en cours)"><img src="${MENU_RESTART}" alt="Recommencer" onerror="this.remove()" /></button>
-              <button id="carte-restart-choix" class="aside-icone aside-emoji" title="Recommencer en choisissant d'autres héros (abandonne la run en cours)">👥</button>
+              <button id="carte-restart-choix" class="aside-icone" title="Recommencer en choisissant d'autres héros (abandonne la run en cours)"><img src="${MENU_RESTART_PERSO}" alt="Recommencer (autres héros)" onerror="this.remove()" /></button>
             </div>
           </header>
           <div class="map-scroll"><div class="map-zone" style="width:${W}px;height:${HAUTEUR_CARTE}px">
