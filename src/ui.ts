@@ -390,6 +390,7 @@ const MENU_PARAM = A("/assets/menu/parametres.png");
 const MENU_SUCCES = A("/assets/menu/succes.png");
 const MENU_DOFUS = A("/assets/menu/dofus.png");
 const ICON_KAMAS = A("/assets/divers/kamas.png");
+const ICON_VITA = A("/assets/divers/coeur.png");
 
 /** Montant de kamas avec l'icône. */
 const kamasHtml = (n: number): string =>
@@ -1262,7 +1263,8 @@ export function showFormation(persos: PersoState[]): Promise<void> {
               <span class="form-el-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
               <div class="form-el-choix">
                 ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${p.elementChoisi === el ? "sel" : ""}" data-perso="${p.classeId}" data-el="${el}" title="${elNom[el]} · points → ${STAT_NOM[STAT_PAR_ELEMENT[el]]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
-                <button class="form-el-btn libre ${p.elementChoisi ? "" : "sel"}" data-perso="${p.classeId}" data-el="libre" title="Allocation manuelle">Libre</button>
+                <button class="form-el-btn alloc-vita ${p.statAuto === "vitalite" ? "sel" : ""}" data-perso="${p.classeId}" data-el="vitalite" title="Points → Vitalité (PV) · frappe = plus haute carac"><img src="${ICON_VITA}" alt="" onerror="this.remove()" /><span>Vitalité</span></button>
+                <button class="form-el-btn libre ${p.elementChoisi || p.statAuto ? "" : "sel"}" data-perso="${p.classeId}" data-el="libre" title="Allocation manuelle">Libre</button>
               </div>
             </div>`).join("")}
         </div>
@@ -1273,7 +1275,7 @@ export function showFormation(persos: PersoState[]): Promise<void> {
           const p = persos.find((x) => x.classeId === btn.dataset.perso);
           if (!p) return;
           const el = btn.dataset.el;
-          appliquerElement(p, el === "libre" ? null : (el as Element));
+          appliquerElement(p, el === "libre" ? null : (el as Element | "vitalite"));
           draw();
         });
       });
@@ -1634,6 +1636,7 @@ export function showSettings(): Promise<void> {
               <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
               <div class="preset-el">
                 ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${elSel === el ? "sel" : ""}" data-classe="${cid}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
+                <button class="form-el-btn alloc-vita ${elSel === "vitalite" ? "sel" : ""}" data-classe="${cid}" data-el="vitalite" title="Points → Vitalité (PV)"><img src="${ICON_VITA}" alt="" onerror="this.remove()" /><span>Vitalité</span></button>
                 <button class="form-el-btn libre ${elSel ? "" : "sel"}" data-classe="${cid}" data-el="libre" title="Allocation manuelle">Libre</button>
                 <span class="preset-sep"></span>
                 <span class="preset-pos">
@@ -1651,7 +1654,7 @@ export function showSettings(): Promise<void> {
           const cid = btn.dataset.classe!;
           const el = btn.dataset.el!;
           if (el === "libre") delete config.elements[cid];
-          else config.elements[cid] = el as Element;
+          else config.elements[cid] = el as Element | "vitalite";
           sauverConfig(config);
           draw();
         });

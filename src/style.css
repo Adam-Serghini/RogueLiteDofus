@@ -245,6 +245,17 @@ button:focus-visible {
   text-shadow: 0 1px 2px #fff8;
 }
 
+.form-el-btn.alloc-vita.sel {
+  box-shadow:
+    0 0 0 1px #2b231866,
+    0 0 8px #2b231833;
+}
+.form-el-btn.alloc-vita img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
 /* Kamas & Hôtel de vente */
 .kamas {
   display: inline-flex;

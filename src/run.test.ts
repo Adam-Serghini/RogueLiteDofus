@@ -277,3 +277,29 @@ describe("rangée préférée", () => {
     localStorage.removeItem("rld_settings_v0");
   });
 });
+
+describe("allocation Vitalité", () => {
+  it("le préréglage vitalite investit en PV et laisse la frappe libre", () => {
+    localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "vitalite" } }));
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    expect(p.statAuto).toBe("vitalite");
+    expect(p.elementChoisi).toBeUndefined(); // frappe = plus haute carac
+    gagnerXPPerso(p, 50); // niveau 2 → 5 points auto en vitalité
+    expect(p.progression.pointsInvestis.vitalite).toBe(5);
+    expect(p.progression.pointsDispo).toBe(0);
+    localStorage.removeItem("rld_settings_v0");
+  });
+
+  it("appliquerElement bascule proprement élément ↔ vitalité ↔ libre", () => {
+    const p = nouvelleRun(["iop"]).persos[0];
+    appliquerElement(p, "feu");
+    expect(p.elementChoisi).toBe("feu");
+    expect(p.statAuto).toBe("intelligence");
+    appliquerElement(p, "vitalite");
+    expect(p.elementChoisi).toBeUndefined();
+    expect(p.statAuto).toBe("vitalite");
+    appliquerElement(p, null);
+    expect(p.statAuto).toBeUndefined();
+  });
+});

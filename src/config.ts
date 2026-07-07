@@ -3,6 +3,9 @@
 // =============================================================================
 import type { Element } from "./types";
 
+/** Préréglage d'allocation : un élément, la vitalité, ou absent (Libre). */
+export type AllocationPref = Element | "vitalite";
+
 /** Rangée préférée d'un héros (le placement exact s'empile dans la rangée). */
 export type Rangee = "avant" | "arriere";
 
@@ -10,11 +13,11 @@ export interface Settings {
   toucheFinTour: string; // valeur de KeyboardEvent.key (ex. " ", "Enter", "a")
   autoFinTour: boolean; // passer le tour automatiquement si aucune action possible
   formation: Record<string, Rangee>; // classe -> rangée préférée (les héros s'y empilent : marche à tous les coups)
-  elements: Record<string, Element>; // classe -> élément préféré (appliqué au début de run ; absent = Libre)
+  elements: Record<string, AllocationPref>; // classe -> allocation préférée (élément ou vitalité ; absent = Libre)
 }
 
 const STORAGE_KEY = "rld_settings_v0";
-const ELEMENTS_VALIDES = new Set<Element>(["terre", "feu", "eau", "air"]);
+const ALLOCS_VALIDES = new Set<AllocationPref>(["terre", "feu", "eau", "air", "vitalite"]);
 
 // Préréglages par défaut : mêlée devant, distance/soutien derrière ; un élément par classe.
 const DEFAUT: Settings = {
@@ -35,9 +38,9 @@ const migrerFormation = (f: Record<string, Rangee | number>): Record<string, Ran
   return out;
 };
 
-const elementsValides = (e: unknown): e is Record<string, Element> =>
+const elementsValides = (e: unknown): e is Record<string, AllocationPref> =>
   typeof e === "object" && e !== null && !Array.isArray(e) &&
-  Object.values(e).every((v) => ELEMENTS_VALIDES.has(v as Element));
+  Object.values(e).every((v) => ALLOCS_VALIDES.has(v as AllocationPref));
 
 export function chargerConfig(): Settings {
   try {

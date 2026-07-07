@@ -9,12 +9,17 @@ import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
+/** Choix d'allocation automatique : un élément (frappe + points dans sa stat),
+ *  la vitalité (points en PV, frappe = plus haute carac), ou rien (manuel). */
+export type Allocation = Element | "vitalite";
+
 export interface PersoState {
   classeId: string;
   progression: Progression;
   pvActuels: number; // PV conservés d'un nœud à l'autre
   position: number; // case de grille 0..7 (0-3 ligne avant, 4-7 arrière)
   elementChoisi?: Element; // élément de frappe choisi, conservé d'un combat à l'autre
+  statAuto?: keyof Stats; // stat d'auto-allocation (dérivée de l'élément, ou « vitalite »)
   equipement: Partial<Record<EquipSlot, ItemInstance>>; // exemplaire équipé par slot
   flashNiveau?: boolean; // transitoire (UI) : a monté de niveau au dernier combat → anime dans le panneau d'équipe
 }
@@ -52,9 +57,15 @@ export const STAT_PAR_ELEMENT: Record<Element, keyof Stats> = {
  * En mode « élément » : investit immédiatement les points dispo dans sa stat
  * (les futurs points de niveau suivront via `gagnerXPPerso`).
  */
-export function appliquerElement(perso: PersoState, element: Element | null): void {
-  perso.elementChoisi = element ?? undefined;
-  if (element) investirN(perso.progression, STAT_PAR_ELEMENT[element], Infinity);
+export function appliquerElement(perso: PersoState, choix: Allocation | null): void {
+  if (choix === "vitalite") {
+    perso.elementChoisi = undefined; // frappe = plus haute carac
+    perso.statAuto = "vitalite";
+  } else {
+    perso.elementChoisi = choix ?? undefined;
+    perso.statAuto = choix ? STAT_PAR_ELEMENT[choix] : undefined;
+  }
+  if (perso.statAuto) investirN(perso.progression, perso.statAuto, Infinity);
 }
 
 /**
@@ -63,7 +74,9 @@ export function appliquerElement(perso: PersoState, element: Element | null): vo
  */
 export function gagnerXPPerso(perso: PersoState, gain: number): number {
   const niveaux = gagnerXP(perso.progression, gain);
-  if (perso.elementChoisi) investirN(perso.progression, STAT_PAR_ELEMENT[perso.elementChoisi], Infinity);
+  // rétro-compat : les saves d'avant statAuto ne portent que elementChoisi
+  const stat = perso.statAuto ?? (perso.elementChoisi ? STAT_PAR_ELEMENT[perso.elementChoisi] : undefined);
+  if (stat) investirN(perso.progression, stat, Infinity);
   return niveaux;
 }
 
@@ -107,14 +120,16 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
   const elemsPref = chargerConfig().elements; // élément préféré par classe (préréglages)
   const persos: PersoState[] = choix.map((classeId) => {
     const progression = progressionInitiale();
-    return {
+    const perso: PersoState = {
       classeId,
       progression,
       pvActuels: pvMaxFor(CLASSES[classeId], progression),
       position: cells[classeId],
-      elementChoisi: elemsPref[classeId], // préréglage (absent = Libre)
       equipement: {},
     };
+    const pref = elemsPref[classeId]; // préréglage (absent = Libre)
+    if (pref) appliquerElement(perso, pref);
+    return perso;
   });
   return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix] };
 }
