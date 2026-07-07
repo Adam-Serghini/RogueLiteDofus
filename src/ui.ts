@@ -1374,16 +1374,17 @@ function itemStatsHtml(inst: ItemInstance): string {
   const it = ITEMS[inst.id];
   const chips: string[] = [];
   const chip = (cls: string, txt: string) => chips.push(`<span class="ichip ${cls}">${txt}</span>`);
+  const signe = (v: number) => (v > 0 ? `+${v}` : `${v}`); // les malus s'affichent en négatif
   if (it?.pvBonus) chip("ichip-vitalite", `+${it.pvBonus} PV`);
   for (const k of Object.keys(inst.stats) as (keyof Stats)[]) {
     const v = inst.stats[k];
-    if (v) chip(`ichip-${k}`, `+${v} ${STAT_ABBR[k] ?? k}`);
+    if (v) chip(`ichip-${k}${v < 0 ? " malus" : ""}`, `${signe(v)} ${STAT_ABBR[k] ?? k}`);
   }
   if (inst.pa) chip("ichip-pa", `+${inst.pa} PA`);
   const res = { ...(it?.resistances ?? {}), ...(inst.resistances ?? {}) };
   for (const e of Object.keys(res) as Element[]) {
     const v = res[e];
-    if (v) chip(`ichip-res elem-${e}`, `+${Math.round(v * 100)}% ${elNom[e]}`);
+    if (v) chip(`ichip-res elem-${e}${v < 0 ? " malus" : ""}`, `${signe(Math.round(v * 100))}% ${elNom[e]}`);
   }
   // attaque d'arme (palier prioritaire)
   const att = (inst.rarete ? it?.tiers?.[inst.rarete]?.attaque : undefined) ?? it?.attaque;

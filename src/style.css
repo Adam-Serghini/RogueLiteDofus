@@ -294,6 +294,7 @@ button:focus-visible {
 .ichip.ichip-prospection { color: #8a6d42; }
 .ichip.ichip-pa { color: var(--pa); border-color: var(--pa); }
 .ichip.ichip-arme { color: var(--txt); border-color: var(--bord); }
+.ichip.malus { color: var(--danger) !important; border-color: #b23b2e88; }
 .ichip.ichip-res.elem-terre { color: var(--terre); }
 .ichip.ichip-res.elem-feu { color: var(--feu); }
 .ichip.ichip-res.elem-eau { color: #3aa0e6; }

@@ -33,5 +33,67 @@ id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;r
 8;Bâton de Boisaille;arme;1;legendaire;;10;;;12;2;;;;;;;3;9;13;0.32
 9;Bandeau Komintot;coiffe;1;commun;2;2;2;2;;1;;;;;;;;;;
 9;Bandeau Komintot;coiffe;1;rare;3;3;3;3;;1;;;;;;;;;;
-9;Bandeau Komintot;coiffe;1;epique;5;5;5;5;;1;;;;;;;;;;
-9;Bandeau Komintot;coiffe;1;legendaire;7;7;7;7;;2;;;;;;;;;;
+9;Bandeau Komintot;coiffe;1;epique;4;4;4;4;;2;;;;;;;;;;
+9;Bandeau Komintot;coiffe;1;legendaire;5;5;5;5;;3;;;;;;;;;;
+10;Cape Pandawashu;cape;1;commun;;;;;10;;1;1;1;1;;;;;;
+10;Cape Pandawashu;cape;1;rare;;;;;14;;1;1;1;1;;;;;;
+10;Cape Pandawashu;cape;1;epique;;;;;20;;2;2;2;2;;;;;;
+10;Cape Pandawashu;cape;1;legendaire;;;;;30;;2;2;2;2;;;;;;
+11;Épée de Yanguru;arme;1;commun;4;;;;4;2;-3;-3;;;;;3;8;12;0.32
+11;Épée de Yanguru;arme;1;rare;7;;;;8;3;-2;-2;;;;;3;8;12;0.32
+11;Épée de Yanguru;arme;1;epique;10;;;;10;4;-2;-2;;;;;3;9;13;0.34
+11;Épée de Yanguru;arme;1;legendaire;16;;;;15;5;-1;-1;;;;;3;10;15;0.35
+12;Baguette de Glace;arme;1;commun;;4;;;4;;;;1;1;2;;3;7;11;0.3
+12;Baguette de Glace;arme;1;rare;;6;;;6;;;;1;1;3;;3;7;11;0.3
+12;Baguette de Glace;arme;1;epique;;10;;;10;;;;2;2;4;;3;8;12;0.3
+12;Baguette de Glace;arme;1;legendaire;;12;;;16;;;;3;3;6;;3;9;13;0.32
+13;Coiffe Champ Champ;coiffe;2;commun;;;3;;6;1;1;;1;;2;;;;;
+13;Coiffe Champ Champ;coiffe;2;rare;;;4;;8;1;2;;2;;3;;;;;
+13;Coiffe Champ Champ;coiffe;2;epique;;;6;;12;2;3;;3;;4;;;;;
+13;Coiffe Champ Champ;coiffe;2;legendaire;;;8;;16;3;4;;4;;6;;;;;
+14;Cape Champ Champ;cape;2;commun;;;2;;6;1;1;;1;;2;;;;;
+14;Cape Champ Champ;cape;2;rare;;;3;;10;1;2;;2;;3;;;;;
+14;Cape Champ Champ;cape;2;epique;;;5;;14;2;3;;3;;5;;;;;
+14;Cape Champ Champ;cape;2;legendaire;;;7;;22;3;4;;4;;7;;;;;
+15;Anneau Champ Champ;anneau;2;commun;;;4;;;1;;;;;;;;;;
+15;Anneau Champ Champ;anneau;2;rare;;;5;;;2;;;;;;;;;;
+15;Anneau Champ Champ;anneau;2;epique;;;6;;;2;;;;;;;;;;
+15;Anneau Champ Champ;anneau;2;legendaire;;;8;;;3;;;;;;;;;;
+16;Bâton Carnivore;arme;2;commun;;;5;;6;1;;;;;;;4;10;15;0.35
+16;Bâton Carnivore;arme;2;rare;;;7;;8;1;;;;;;;4;10;15;0.35
+16;Bâton Carnivore;arme;2;epique;;;9;;10;2;;;;;;;4;11;16;0.35
+16;Bâton Carnivore;arme;2;legendaire;;;12;;12;3;;;;;;;4;12;18;0.38
+17;Coiffe Champêtre;coiffe;2;commun;;;;3;6;1;;1;;1;2;;;;;
+17;Coiffe Champêtre;coiffe;2;rare;;;;4;8;1;;2;;2;3;;;;;
+17;Coiffe Champêtre;coiffe;2;epique;;;;6;12;2;;3;;3;4;;;;;
+17;Coiffe Champêtre;coiffe;2;legendaire;;;;8;16;3;;4;;4;6;;;;;
+18;Capouze des Champs;cape;2;commun;;;;2;6;1;;1;;1;2;;;;;
+18;Capouze des Champs;cape;2;rare;;;;3;10;1;;2;;2;3;;;;;
+18;Capouze des Champs;cape;2;epique;;;;5;14;2;;3;;3;5;;;;;
+18;Capouze des Champs;cape;2;legendaire;;;;7;22;3;;4;;4;7;;;;;
+19;Anneau Champêtre;anneau;2;commun;;;;4;;1;;;;;;;;;;
+19;Anneau Champêtre;anneau;2;rare;;;;5;;2;;;;;;;;;;
+19;Anneau Champêtre;anneau;2;epique;;;;6;;2;;;;;;;;;;
+19;Anneau Champêtre;anneau;2;legendaire;;;;8;;3;;;;;;;;;;
+20;Plantouze des Champs;arme;2;commun;;;;5;6;1;;;;;;;4;10;15;0.35
+20;Plantouze des Champs;arme;2;rare;;;;7;8;1;;;;;;;4;10;15;0.35
+20;Plantouze des Champs;arme;2;epique;;;;9;10;2;;;;;;;4;11;16;0.35
+20;Plantouze des Champs;arme;2;legendaire;;;;12;12;3;;;;;;;4;12;18;0.38
+21;Toady;coiffe;2;commun;;;4;;;1;;;;;;;;;;
+21;Toady;coiffe;2;rare;;;6;;;1;;;;;;;;;;
+21;Toady;coiffe;2;epique;;;9;;;2;;;;;;;;;;
+21;Toady;coiffe;2;legendaire;;;15;;;3;;;;;;;;;;
+22;Cape du Tofu Fou;cape;2;commun;;;;4;;;1;1;1;1;;;;;;
+22;Cape du Tofu Fou;cape;2;rare;;;;6;;;1;1;1;1;;;;;;
+22;Cape du Tofu Fou;cape;2;epique;;;;9;;;1;1;1;1;;;;;;
+22;Cape du Tofu Fou;cape;2;legendaire;;;;15;;;2;2;2;2;;;;;;
+23;Anneau du Bandit;anneau;2;commun;2;2;2;2;6;3;;;;;2;;;;;
+23;Anneau du Bandit;anneau;2;rare;2;2;2;2;8;4;;;;;3;;;;;
+23;Anneau du Bandit;anneau;2;epique;3;3;3;3;10;5;;;;;4;;;;;
+23;Anneau du Bandit;anneau;2;legendaire;4;4;4;4;12;7;;;;;6;;;;;
+24;Sargasse;arme;2;commun;1;1;1;1;10;3;;;;;;;4;9;14;0.32
+24;Sargasse;arme;2;rare;1;1;1;1;15;4;;;;;;;4;9;14;0.32
+24;Sargasse;arme;2;epique;2;2;2;2;20;5;;;;;;;4;10;15;0.34
+24;Sargasse;arme;2;legendaire;4;4;4;4;30;7;;;;;;;4;11;17;0.35
+25;Arc en Racine d'Abraknyde;arme;2;epique;;;;;-20;;-5;-5;-5;-5;;1;3;5;8;0.25
+25;Arc en Racine d'Abraknyde;arme;2;legendaire;;;;;-10;;-2;-2;-2;-2;;1;3;5;8;0.25

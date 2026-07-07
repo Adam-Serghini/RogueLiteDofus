@@ -66,9 +66,10 @@ for (const ligne of lignes.slice(1)) {
   }
 }
 
-// validations : 4 paliers par objet
+// validations : au moins un palier par objet (un objet peut n'exister qu'en
+// épique/légendaire, ex. l'Arc en Racine d'Abraknyde — le tirage se renormalise)
 for (const [id, it] of items) {
-  for (const r of RARETES) if (!it.tiers[r]) throw new Error(`${id} : palier « ${r} » manquant`);
+  if (!RARETES.some((r) => it.tiers[r])) throw new Error(`${id} : aucun palier défini`);
 }
 
 const parToile = {};

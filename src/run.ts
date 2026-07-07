@@ -289,15 +289,16 @@ export function soignerEquipe(run: RunState, pct: number): void {
 }
 
 // --- Butin (drops d'équipement) ----------------------------------------------
-/** Tire une rareté selon les poids du catalogue (commun 60 / rare 25 / épique 12 / légendaire 3). */
-export function tirerRarete(rng: () => number): Rarete {
-  const total = RARETES.reduce((s, r) => s + RARETE_INFO[r].poids, 0);
+/** Tire une rareté selon les poids du catalogue (commun 60 / rare 25 / épique 12 /
+ *  légendaire 3), renormalisés sur les paliers réellement disponibles. */
+export function tirerRarete(rng: () => number, disponibles: readonly Rarete[] = RARETES): Rarete {
+  const total = disponibles.reduce((s, r) => s + RARETE_INFO[r].poids, 0);
   let t = rng() * total;
-  for (const r of RARETES) {
+  for (const r of disponibles) {
     t -= RARETE_INFO[r].poids;
     if (t < 0) return r;
   }
-  return "commun";
+  return disponibles[0];
 }
 
 /** Crée un exemplaire d'item. Objet à rareté : palier tiré, stats fixes figées.
@@ -306,7 +307,8 @@ export function rollItem(itemId: string, rng: () => number): ItemInstance {
   const item = ITEMS[itemId];
   const tiers = item?.tiers;
   if (tiers) {
-    const rarete = tirerRarete(rng);
+    const disponibles = RARETES.filter((r) => tiers[r]);
+    const rarete = tirerRarete(rng, disponibles);
     const tier = tiers[rarete]!;
     return { id: itemId, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
   }
