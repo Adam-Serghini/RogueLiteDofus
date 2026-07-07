@@ -2795,11 +2795,13 @@ kbd {
   }
 }
 
+.map-scroll {
+  overflow-x: auto; /* les plateaux profonds défilent horizontalement */
+  padding-bottom: 6px;
+}
 .map-zone {
   position: relative;
   margin: 0 auto;
-  width: 860px;
-  max-width: 100%;
   border-radius: 16px;
   background:
     radial-gradient(120% 90% at 50% -10%, #dcc89c, transparent 70%),

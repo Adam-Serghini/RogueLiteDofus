@@ -2199,9 +2199,10 @@ const caseAsset = (n: MapNode): string =>
   (n.type === "donjon" ? bossImg(n) : null) ??
   A(`/assets/cases/${CASE_FILE[n.type]}.png`);
 
-const LARGEUR_CARTE = 720; // laisse la place à la sidebar d'équipe à gauche
-const ESPACE_LIGNE = 92;
-const MARGE_HAUT = 44;
+// Plateau HORIZONTAL : la progression va de gauche (Départ) à droite (Donjon).
+const HAUTEUR_CARTE = 440; // hauteur du treillis (3 rangées de large en quinconce)
+const ESPACE_COL = 116; // espacement horizontal entre deux rangées de la progression
+const MARGE_COTE = 56;
 
 export function showCarte(
   carte: GameMap,
@@ -2214,19 +2215,19 @@ export function showCarte(
   return new Promise((res) => {
     const draw = () => {
       const maxL = Math.max(...carte.noeuds.map((n) => n.ligne));
-      const H = MARGE_HAUT * 2 + (maxL + 1) * ESPACE_LIGNE; // +1 rangée pour le Départ
-      const departPos = { x: LARGEUR_CARTE / 2, y: MARGE_HAUT };
+      const W = MARGE_COTE * 2 + (maxL + 1) * ESPACE_COL; // +1 colonne pour le Départ
+      const departPos = { x: MARGE_COTE, y: HAUTEUR_CARTE / 2 };
       const pos = new Map<string, { x: number; y: number }>();
-      // Grille en colonnes alignées : `colonne` est un offset centré autour de 0.
-      // Le pas est calé sur la rangée la plus large pour tenir dans la largeur.
+      // Treillis couché : la « ligne » de génération devient l'axe X (progression),
+      // la « colonne » (offset centré autour de 0) devient l'axe Y.
       const parLigne = new Map<number, number>();
       for (const n of carte.noeuds) parLigne.set(n.ligne, (parLigne.get(n.ligne) ?? 0) + 1);
       const maxNb = Math.max(1, ...parLigne.values());
-      const pas = LARGEUR_CARTE / (maxNb + 1);
+      const pas = HAUTEUR_CARTE / (maxNb + 1);
       for (const n of carte.noeuds) {
         pos.set(n.id, {
-          x: LARGEUR_CARTE / 2 + n.colonne * pas,
-          y: MARGE_HAUT + (n.ligne + 1) * ESPACE_LIGNE,
+          x: MARGE_COTE + (n.ligne + 1) * ESPACE_COL,
+          y: HAUTEUR_CARTE / 2 + n.colonne * pas,
         });
       }
 
@@ -2319,14 +2320,14 @@ Butin au taux donjon.`)}"` : "";
           </aside>
           <div class="map-main">
             <h2 class="zone-titre">${escapeHtml(zoneNom)}</h2>
-            <div class="map-zone" style="height:${H}px">
-              <svg class="map-svg" width="${LARGEUR_CARTE}" height="${H}">${departSvg}${lignesSvg}</svg>
+            <div class="map-scroll"><div class="map-zone" style="width:${W}px;height:${HAUTEUR_CARTE}px">
+              <svg class="map-svg" width="${W}" height="${HAUTEUR_CARTE}">${departSvg}${lignesSvg}</svg>
               ${boutons}
               <div class="map-depart" style="left:${departPos.x}px;top:${departPos.y}px">
                 <span class="case-art depart-art">🚩</span>
                 <span class="mn-lbl">Départ</span>
               </div>
-            </div>
+            </div></div>
             <p class="aide">Choisis un nœud accessible (surligné). Choisir un nœud, c'est renoncer à ses voisins.</p>
           </div>
           <aside class="map-equipe">
