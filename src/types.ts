@@ -314,7 +314,7 @@ export interface Meta {
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------
-export type NodeType = "combat" | "combat_dur" | "taverne" | "otomai" | "zaap" | "donjon";
+export type NodeType = "combat" | "combat_dur" | "taverne" | "otomai" | "zaap" | "donjon" | "hdv";
 
 export interface MapNode {
   id: string;

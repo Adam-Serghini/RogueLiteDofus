@@ -214,3 +214,44 @@ describe("export / import de sauvegarde", () => {
     expect(JSON.parse(localStorage.getItem("rld_meta_v0")!).runs).toBe(1); // intact
   });
 });
+
+describe("kamas & Hôtel de vente", () => {
+  it("gainKamas scale avec le type de nœud et la toile", async () => {
+    const { gainKamas } = await import("./run");
+    const mid = () => 0.5; // variance neutre
+    expect(gainKamas("combat", 1, mid)).toBe(15);
+    expect(gainKamas("combat_dur", 1, mid)).toBe(30);
+    expect(gainKamas("donjon", 1, mid)).toBe(60);
+    expect(gainKamas("combat", 2, mid)).toBe(20); // ×1.3 en toile 2
+    expect(gainKamas("taverne", 1, mid)).toBe(0);
+  });
+
+  it("le stock HDV vient de la toile locale ET des toiles traversées", async () => {
+    const { genererStockHDV, toileDeItem } = await import("./run");
+    // astrub = toile 2 → le stock peut contenir des objets des toiles 1 et 2
+    const stock = genererStockHDV("astrub", () => 0.1);
+    expect(stock.length).toBe(5);
+    stock.forEach((a) => expect(toileDeItem(a.inst.id)).toBeLessThanOrEqual(2));
+    // incarnam = toile 1 → uniquement toile 1
+    const stock1 = genererStockHDV("incarnam", () => 0.9);
+    stock1.forEach((a) => expect(toileDeItem(a.inst.id)).toBe(1));
+  });
+
+  it("acheter débite et met l'objet en inventaire ; vendre crédite 50 % du prix", async () => {
+    const { genererStockHDV, acheterArticle, vendreItem, prixVente, prixAchat } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    const stock = genererStockHDV("incarnam", () => 0.1);
+    const art = stock[0];
+    expect(acheterArticle(run, stock, 0)).toBe(false); // 0 kama → refusé
+    run.kamas = art.prix + 10;
+    expect(acheterArticle(run, stock, 0)).toBe(true);
+    expect(run.kamas).toBe(10);
+    expect(run.inventaire[0]).toBe(art.inst);
+    expect(stock.length).toBe(4); // retiré du rayon
+    const attendu = prixVente(run.inventaire[0]);
+    expect(attendu).toBe(Math.max(1, Math.round(prixAchat(run.inventaire[0]) * 0.5)));
+    expect(vendreItem(run, 0)).toBe(true);
+    expect(run.kamas).toBe(10 + attendu);
+    expect(run.inventaire.length).toBe(0);
+  });
+});

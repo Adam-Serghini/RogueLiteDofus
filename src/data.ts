@@ -1573,7 +1573,7 @@ export interface ZoneDef {
 export const ZONES: ZoneDef[] = [
   { id: "incarnam", nom: "Incarnam",
     pools: { normales: ["inc_1", "inc_2", "inc_3"], elite: ["inc_elite"], boss: "inc_boss" },
-    sansNoeuds: ["otomai"] }, // pas de restat en zone de départ
+    sansNoeuds: ["otomai", "hdv"] }, // pas de restat ni d'HDV en zone de départ (0 kama)
   { id: "astrub", nom: "Champs d'Astrub",
     pools: { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: "boss" } },
   { id: "tainela", nom: "Tainéla",
@@ -1637,7 +1637,7 @@ export const GEN_CARTE = {
   lignesMax: 9,
   largeurMax: 4, // largeur du losange au plateau (nb de colonnes) — style Pokelike
   // poids des types pour les rangées intermédiaires
-  poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8 } as Record<string, number>,
+  poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8, hdv: 8 } as Record<string, number>,
 };
 
 // --- Rareté d'équipement --------------------------------------------------------
@@ -1850,6 +1850,19 @@ export const BUTIN_ZONE: Record<string, string> = {
   larves: "larve",
   grotte_hesque: "corailleur",
   kwakwa: "kwak",
+};
+
+// --- Kamas & Hôtel de vente ------------------------------------------------------
+/** Économie (par run — les kamas meurent avec l'équipe). Tunable. */
+export const KAMAS = {
+  // gain par victoire, selon le type de nœud, × (1 + parToile × (toile-1))
+  gain: { combat: 15, combat_dur: 30, donjon: 60 } as Record<string, number>,
+  gainParToile: 0.3,
+  // prix d'achat HDV par rareté, × (1 + prixParToile × (toile-1))
+  prix: { commun: 40, rare: 90, epique: 200, legendaire: 450 } as Record<Rarete, number>,
+  prixParToile: 0.3,
+  tauxRevente: 0.5, // revente = 50 % du prix d'achat
+  tailleStock: 5, // objets proposés par visite d'HDV
 };
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */

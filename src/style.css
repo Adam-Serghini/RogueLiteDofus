@@ -245,6 +245,41 @@ button:focus-visible {
   text-shadow: 0 1px 2px #fff8;
 }
 
+/* Kamas & Hôtel de vente */
+.kamas {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #b87b12;
+}
+.kamas img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.aside-kamas {
+  text-align: center;
+  padding: 4px 0 6px;
+  font-size: 1.02rem;
+}
+.hdv-solde {
+  font-size: 1.2rem;
+  margin: 2px 0 10px;
+}
+.item-carte .hdv-prix {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.hdv-prix.vente .kamas {
+  color: #3d8a42; /* ce qu'on encaisse */
+}
+button.item-carte:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .setting-actions {
   display: inline-flex;
   gap: 8px;

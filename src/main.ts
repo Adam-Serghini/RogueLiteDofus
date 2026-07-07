@@ -12,6 +12,7 @@ import {
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso,
   appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
+  gainKamas, crediterKamas, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
 } from "./run";
 import * as ui from "./ui";
@@ -122,7 +123,7 @@ type Issue = "continue" | "wipe" | "victoire";
 
 const LABEL_FR: Record<NodeType, string> = {
   combat: "un combat", combat_dur: "un combat dur", taverne: "une taverne",
-  otomai: "un Otomai", zaap: "un zaap", donjon: "le donjon",
+  otomai: "un Otomai", zaap: "un zaap", donjon: "le donjon", hdv: "un Hôtel de vente",
 };
 
 async function resoudreType(
@@ -133,6 +134,7 @@ async function resoudreType(
     case "combat_dur": {
       const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur", eliteModif);
       if (!gagne) return "wipe";
+      crediterKamas(run, gainKamas(type, zoneId ? toileDeZone(zoneId) : 1, Math.random));
       await recompenserXP(run, xp);
       // combat dur modifié → butin au taux donjon (la prise de risque paie)
       await recompenserButin(run, zoneId, type === "combat_dur" ? "donjon" : type);
@@ -148,6 +150,10 @@ async function resoudreType(
         recruter(run, choix.classeId, choix.remplace);
         await ui.showTransition("🍺 Recrue !", `${CLASSES[choix.classeId].nom} rejoint l'équipe.`);
       }
+      return "continue";
+    }
+    case "hdv": {
+      await ui.showHDV(run, genererStockHDV(zoneId ?? "", Math.random));
       return "continue";
     }
     case "otomai": {
@@ -200,7 +206,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
     sauverRunEnCours(zoneIdx, run);
   }
   for (;;) {
-    const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire);
+    const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas);
 
     let { type } = node;
     let combatId = node.combatId;
@@ -213,7 +219,10 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
     run.carte!.courant = node.id;
 
     if (issue === "wipe") return "wipe";
-    if (issue === "victoire") return "clear"; // donjon de la zone vaincu (+ Dofus)
+    if (issue === "victoire") {
+      crediterKamas(run, gainKamas("donjon", toileDeZone(zone.id), Math.random));
+      return "clear"; // donjon de la zone vaincu (+ Dofus)
+    }
     sauverRunEnCours(zoneIdx, run); // étape franchie → point de reprise
   }
 }

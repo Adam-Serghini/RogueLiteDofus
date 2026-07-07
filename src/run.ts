@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile, KAMAS, TRANCHES } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, investirN } from "./progression";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
@@ -26,14 +26,16 @@ export interface RunStats {
   archis: number; // âmes capturées pendant cette run
   objets: number; // pièces d'équipement trouvées
   zones: number; // zones terminées
+  kamasGagnes?: number; // kamas engrangés (combats + reventes)
 }
-export const statsRunVides = (): RunStats => ({ degats: {}, combats: 0, archis: 0, objets: 0, zones: 0 });
+export const statsRunVides = (): RunStats => ({ degats: {}, combats: 0, archis: 0, objets: 0, zones: 0, kamasGagnes: 0 });
 
 export interface RunState {
   persos: PersoState[];
   carte: GameMap | null;
   inventaire: ItemInstance[]; // exemplaires non équipés trouvés cette run (perdus à la mort)
   stats: RunStats; // récap de fin de run
+  kamas: number; // monnaie de la run (perdue à la mort)
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -108,7 +110,7 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
       equipement: {},
     };
   });
-  return { persos, carte: null, inventaire: [], stats: statsRunVides() };
+  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0 };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------
@@ -498,6 +500,7 @@ export function chargerRunEnCours(): RunSauvee | null {
     if (s.version !== 1 || typeof s.zoneIdx !== "number" || !s.run?.persos?.length) return null;
     if (!s.run.persos.every((p) => CLASSES[p.classeId])) return null;
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
+    s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
     return s as RunSauvee;
   } catch {
     return null;
@@ -559,6 +562,93 @@ export function verifierSucces(meta: Meta, run?: RunState, victoire?: boolean): 
     sauverMeta(meta);
   }
   return nouveaux;
+}
+
+// --- Kamas & Hôtel de vente ------------------------------------------------------
+/** Toile (1-based) d'une zone dans l'ordre de jeu de la tranche active ; 1 par défaut. */
+export function toileDeZone(zoneId: string): number {
+  const idx = TRANCHES[0].zones.indexOf(zoneId);
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+/** Toile d'origine d'un objet (pool de toile, sinon zone de sa panoplie legacy). */
+export function toileDeItem(itemId: string): number {
+  for (let t = 1; t <= TRANCHES[0].zones.length; t++) {
+    if (butinToile(TRANCHES[0].zones[t - 1])?.includes(itemId)) return t;
+  }
+  const panoId = ITEMS[itemId]?.panoplie;
+  if (panoId) {
+    const zoneId = Object.keys(BUTIN_ZONE).find((z) => BUTIN_ZONE[z] === panoId);
+    if (zoneId) return toileDeZone(zoneId);
+  }
+  return 1;
+}
+
+/** Kamas gagnés pour une victoire (type de nœud × progression de toile). */
+export function gainKamas(type: string, toile: number, rng: () => number): number {
+  const base = KAMAS.gain[type] ?? 0;
+  if (!base) return 0;
+  const mult = 1 + KAMAS.gainParToile * (toile - 1);
+  return Math.round(base * mult * (0.85 + rng() * 0.3)); // ±15 % de variance
+}
+
+/** Ajoute des kamas à la run (et au compteur du récap). */
+export function crediterKamas(run: RunState, montant: number): void {
+  run.kamas += montant;
+  run.stats.kamasGagnes = (run.stats.kamasGagnes ?? 0) + montant;
+}
+
+/** Prix d'achat HDV d'un exemplaire (rareté × toile d'origine). */
+export function prixAchat(inst: ItemInstance): number {
+  const base = KAMAS.prix[inst.rarete ?? "commun"];
+  const toile = toileDeItem(inst.id);
+  return Math.round(base * (1 + KAMAS.prixParToile * (toile - 1)));
+}
+
+/** Prix de revente (fraction du prix d'achat). */
+export const prixVente = (inst: ItemInstance): number =>
+  Math.max(1, Math.round(prixAchat(inst) * KAMAS.tauxRevente));
+
+/** Article en rayon à l'HDV. */
+export interface ArticleHDV {
+  inst: ItemInstance;
+  prix: number;
+}
+
+/** Stock d'un HDV : objets tirés (rareté aux poids normaux) dans la toile de la
+ *  zone + toutes les toiles déjà traversées (rattrapage du stuff raté). */
+export function genererStockHDV(zoneId: string, rng: () => number): ArticleHDV[] {
+  const toileMax = toileDeZone(zoneId);
+  const pool: string[] = [];
+  for (let t = 1; t <= toileMax; t++) {
+    pool.push(...(butinToile(TRANCHES[0].zones[t - 1]) ?? []));
+  }
+  if (!pool.length) return [];
+  const stock: ArticleHDV[] = [];
+  for (let i = 0; i < KAMAS.tailleStock; i++) {
+    const inst = rollItem(pool[Math.floor(rng() * pool.length)], rng);
+    stock.push({ inst, prix: prixAchat(inst) });
+  }
+  return stock;
+}
+
+/** Achète l'article `index` du stock (retiré du rayon, ajouté à l'inventaire). */
+export function acheterArticle(run: RunState, stock: ArticleHDV[], index: number): boolean {
+  const art = stock[index];
+  if (!art || run.kamas < art.prix) return false;
+  run.kamas -= art.prix;
+  run.inventaire.push(art.inst);
+  stock.splice(index, 1);
+  return true;
+}
+
+/** Vend l'exemplaire `index` de l'inventaire (au taux de revente). */
+export function vendreItem(run: RunState, index: number): boolean {
+  const inst = run.inventaire[index];
+  if (!inst) return false;
+  run.inventaire.splice(index, 1);
+  crediterKamas(run, prixVente(inst));
+  return true;
 }
 
 // --- Export / import de sauvegarde (changement de PC) ---------------------------

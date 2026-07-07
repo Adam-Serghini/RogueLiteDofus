@@ -61,6 +61,11 @@ import {
   SUCCES,
   exporterSauvegarde,
   importerSauvegarde,
+  prixVente,
+  vendreItem,
+  acheterArticle,
+  type ArticleHDV,
+  type RunState as RunStateT,
 } from "./run";
 import type {
   Action,
@@ -384,6 +389,11 @@ const MENU_BESTIAIRE = A("/assets/menu/bestiaires.png");
 const MENU_PARAM = A("/assets/menu/parametres.png");
 const MENU_SUCCES = A("/assets/menu/succes.png");
 const MENU_DOFUS = A("/assets/menu/dofus.png");
+const ICON_KAMAS = A("/assets/divers/kamas.png");
+
+/** Montant de kamas avec l'icône. */
+const kamasHtml = (n: number): string =>
+  `<span class="kamas"><img src="${ICON_KAMAS}" alt="k" onerror="this.remove()" />${n.toLocaleString("fr-FR")}</span>`;
 const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
 
 /** Les 2 éléments les plus forts d'un perso (stats finales + équipement), comme en combat. */
@@ -1743,6 +1753,7 @@ export function showRecap(run: RunState, victoire: boolean, nouveauxSucces: Succ
         <span class="recap-chip">⚔️ ${st.combats} combat${st.combats > 1 ? "s" : ""} gagné${st.combats > 1 ? "s" : ""}</span>
         <span class="recap-chip">🎒 ${st.objets} objet${st.objets > 1 ? "s" : ""}</span>
         <span class="recap-chip">✨ ${st.archis} âme${st.archis > 1 ? "s" : ""} capturée${st.archis > 1 ? "s" : ""}</span>
+        <span class="recap-chip">${kamasHtml(st.kamasGagnes ?? 0)} gagnés</span>
       </div>
       <div class="recap-degats">${barres}</div>
       ${nouveauxSucces.length ? `<div class="recap-succes">${nouveauxSucces.map((su) => `<span class="succes-chip nouveau" title="${escapeHtml(su.desc)}">🏆 ${escapeHtml(su.nom)}</span>`).join("")}</div>` : ""}
@@ -2085,6 +2096,63 @@ export function showSucces(meta: Meta): Promise<void> {
   });
 }
 
+/** Hôtel de vente : achat (stock de la zone + toiles traversées) et revente. */
+export function showHDV(run: RunStateT, stock: ArticleHDV[]): Promise<void> {
+  return new Promise((res) => {
+    const draw = () => {
+      const rayon = stock.length
+        ? stock
+          .map((art, i) => {
+            const abordable = run.kamas >= art.prix;
+            return `<button class="item-carte hdv-achat${rareteCls(art.inst)}" data-achat="${i}" ${abordable ? "" : "disabled"}>
+              <img src="${itemImg(art.inst.id)}" alt="" onerror="this.remove()" />
+              <span class="item-nom">${itemNomHtml(art.inst)}<small>${SLOT_NOM[ITEMS[art.inst.id].slot]} ${itemStatsHtml(art.inst)}</small></span>
+              <span class="hdv-prix">${kamasHtml(art.prix)}</span>
+            </button>`;
+          })
+          .join("")
+        : `<p class="muet">Rayons vides — reviens à un prochain Hôtel de vente.</p>`;
+      const vente = run.inventaire.length
+        ? run.inventaire
+          .map((inst, i) => `<button class="item-carte hdv-vente${rareteCls(inst)}" data-vente="${i}">
+              <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
+              <span class="item-nom">${itemNomHtml(inst)}<small>${SLOT_NOM[ITEMS[inst.id].slot]} ${itemStatsHtml(inst)}</small></span>
+              <span class="hdv-prix vente">${kamasHtml(prixVente(inst))}</span>
+            </button>`)
+          .join("")
+        : `<p class="muet">Rien à vendre — l'équipement non équipé de l'inventaire se revend ici.</p>`;
+      ecran(`
+        <h1>🪙 Hôtel de vente</h1>
+        <p class="sous-titre">Achète du stuff de la zone (et des précédentes) — revends tes doublons à ${Math.round(50)} % du prix.</p>
+        <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
+        <div class="equip-corps">
+          <div class="equip-col">
+            <h3>À vendre (${stock.length})</h3>
+            <div class="equip-inv">${rayon}</div>
+          </div>
+          <div class="equip-col">
+            <h3>Ton inventaire (${run.inventaire.length})</h3>
+            <div class="equip-inv">${vente}</div>
+          </div>
+        </div>
+        <div class="boutons-ecran"><button id="hdv-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>("[data-achat]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          if (acheterArticle(run, stock, Number(btn.dataset.achat))) draw();
+        }),
+      );
+      root.querySelectorAll<HTMLButtonElement>("[data-vente]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          if (vendreItem(run, Number(btn.dataset.vente))) draw();
+        }),
+      );
+      document.getElementById("hdv-retour")?.addEventListener("click", () => res());
+    };
+    draw();
+  });
+}
+
 export function showZaap(typeRevele: string): Promise<void> {
   return showTransition("🌀 Zaap", `La rencontre se révèle : ${typeRevele}.`);
 }
@@ -2097,6 +2165,7 @@ const NODE_ICON: Record<NodeType, string> = {
   otomai: "🔄",
   zaap: "🌀",
   donjon: "🐉",
+  hdv: "🪙",
 };
 const NODE_LABEL: Record<NodeType, string> = {
   combat: "Combat",
@@ -2105,6 +2174,7 @@ const NODE_LABEL: Record<NodeType, string> = {
   otomai: "Otomai",
   zaap: "Zaap",
   donjon: "Donjon",
+  hdv: "Hôtel de vente",
 };
 // fichier de tuile par type de nœud (le type "combat_dur" utilise l'asset "combat_elite")
 const CASE_FILE: Record<NodeType, string> = {
@@ -2114,6 +2184,7 @@ const CASE_FILE: Record<NodeType, string> = {
   otomai: "otomai",
   zaap: "zaap",
   donjon: "donjon",
+  hdv: "hdv",
 };
 /** Sprite du boss d'un nœud donjon (résolu depuis son combat → 1er ennemi « boss »). */
 function bossImg(n: MapNode): string | null {
@@ -2138,6 +2209,7 @@ export function showCarte(
   meta: Meta,
   zoneNom: string,
   inventaire: ItemInstance[] = [],
+  kamas = 0,
 ): Promise<MapNode> {
   return new Promise((res) => {
     const draw = () => {
@@ -2254,6 +2326,7 @@ Butin au taux donjon.`)}"` : "";
             <p class="aide">Choisis un nœud accessible (surligné). Choisir un nœud, c'est renoncer à ses voisins.</p>
           </div>
           <aside class="map-equipe">
+            <div class="aside-kamas" title="Kamas de la run (perdus à la mort)">${kamasHtml(kamas)}</div>
             <h2>Équipe</h2>
             <div class="aside-equipe">${asideEquipe}</div>
             <div class="aside-dofus">
