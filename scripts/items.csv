@@ -1,4 +1,4 @@
-id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;res_air;prospection;pa;att_pa;att_min;att_max;att_scaling
+id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;res_air;prospection;pa;att_pa;att_min;att_max;att_scaling;adapt;soin;source;att_cible;att_vamp
 1;Coiffe Boune;coiffe;1;commun;2;;;;4;;1;1;;;;;;;;
 1;Coiffe Boune;coiffe;1;rare;3;;;;6;;1;1;;;;;;;;
 1;Coiffe Boune;coiffe;1;epique;5;;;;8;1;2;2;;;;;;;;
@@ -97,3 +97,39 @@ id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;r
 24;Sargasse;arme;2;legendaire;4;4;4;4;30;7;;;;;;;4;11;17;0.35
 25;Arc en Racine d'Abraknyde;arme;2;epique;;;;;-20;;-5;-5;-5;-5;;1;3;5;8;0.25
 25;Arc en Racine d'Abraknyde;arme;2;legendaire;;;;;-10;;-2;-2;-2;-2;;1;3;5;8;0.25
+26;Coiffe Bouftou;coiffe;3;commun;;;;;;1;2;2;;;2;;;;;;3;;;;
+26;Coiffe Bouftou;coiffe;3;rare;;;;;;1;2;2;;;3;;;;;;5;;;;
+26;Coiffe Bouftou;coiffe;3;epique;;;;;;2;2;2;;;5;;;;;;7;;;;
+26;Coiffe Bouftou;coiffe;3;legendaire;;;;;;4;4;4;;;7;;;;;;12;;;;
+27;Cape du Bouftou;cape;3;commun;;;;;10;;2;2;;;3;;;;;;2;;;;
+27;Cape du Bouftou;cape;3;rare;;;;;14;;2;2;;;4;;;;;;3;;;;
+27;Cape du Bouftou;cape;3;epique;;;;;20;;3;3;;;6;;;;;;5;;;;
+27;Cape du Bouftou;cape;3;legendaire;;;;;30;;5;5;;;8;;;;;;7;;;;
+28;Anneau Bouftou;anneau;3;commun;;;;;;1;;;;;;;;;;;4;;;;
+28;Anneau Bouftou;anneau;3;rare;;;;;;1;;;;;;;;;;;5;;;;
+28;Anneau Bouftou;anneau;3;epique;;;;;;2;;;;;;;;;;;7;;;;
+28;Anneau Bouftou;anneau;3;legendaire;;;;;;4;;;;;;;;;;;9;;;;
+29;Marteau Bouftou;arme;3;commun;;;;;;1;;;;;;;4;12;17;0.4;7;;;;
+29;Marteau Bouftou;arme;3;rare;;;;;;1;;;;;;;4;12;17;0.4;9;;;;
+29;Marteau Bouftou;arme;3;epique;;;;;;2;;;;;;;4;13;18;0.4;11;;;;
+29;Marteau Bouftou;arme;3;legendaire;;;;;;3;;;;;;;4;14;20;0.42;14;;;;
+30;Boufcoiffe Royale;coiffe;3;commun;;;;;8;1;1;1;;;;;;;;;6;;boss;;
+30;Boufcoiffe Royale;coiffe;3;rare;;;;;12;1;1;1;;;;;;;;;8;;boss;;
+30;Boufcoiffe Royale;coiffe;3;epique;;;;;15;2;1;1;;;;;;;;;10;;boss;;
+30;Boufcoiffe Royale;coiffe;3;legendaire;;;;;22;3;2;2;;;;;;;;;16;;boss;;
+31;Boufcape Royale;cape;3;commun;;;;;16;;2;2;;;;;;;;;2;;boss;;
+31;Boufcape Royale;cape;3;rare;;;;;20;;2;2;;;;;;;;;4;;boss;;
+31;Boufcape Royale;cape;3;epique;;;;;30;;2;2;;;;;;;;;6;;boss;;
+31;Boufcape Royale;cape;3;legendaire;;;;;45;;4;4;;;;;;;;;8;;boss;;
+32;Alliance de Silimelle;anneau;3;commun;;;;;6;;1;1;1;1;2;;;;;;;;elite;;
+32;Alliance de Silimelle;anneau;3;rare;;;;;10;;1;1;1;1;4;;;;;;;;elite;;
+32;Alliance de Silimelle;anneau;3;epique;;;;;14;;1;1;1;1;6;;;;;;;;elite;;
+32;Alliance de Silimelle;anneau;3;legendaire;;;;;20;;2;2;2;2;9;;;;;;;;elite;;
+33;Arc en Corne de Bouftou;arme;3;commun;;;;;6;1;;;;;;;4;9;13;0.32;6;;elite;tous;
+33;Arc en Corne de Bouftou;arme;3;rare;;;;;8;1;;;;;;;4;9;13;0.32;8;;elite;tous;
+33;Arc en Corne de Bouftou;arme;3;epique;;;;;12;1;;;;;;;4;10;14;0.34;10;;elite;tous;
+33;Arc en Corne de Bouftou;arme;3;legendaire;;;;;16;2;;;;;;;4;11;15;0.35;12;;elite;tous;
+34;Ergot Mina;arme;3;commun;;;;;;;;;;;4;;3;6;9;0.3;1;;elite;;0.5
+34;Ergot Mina;arme;3;rare;;;;;;;;;;;6;;3;6;9;0.3;2;;elite;;0.5
+34;Ergot Mina;arme;3;epique;;;;;;;;;;;8;;3;7;10;0.32;3;;elite;;0.5
+34;Ergot Mina;arme;3;legendaire;;;;;;;;;;;12;;3;8;12;0.34;5;;elite;;0.5

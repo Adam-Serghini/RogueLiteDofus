@@ -239,11 +239,13 @@ describe("kamas & Hôtel de vente", () => {
         else expect(["rare", "epique", "legendaire"]).toContain(a.inst.rarete); // avant-première : rare+
       }
     }
-    // astrub = toile 2, pas encore de toile 3 → 100 % local épique+
+    // astrub = toile 2 : local épique+ OU avant-première toile 3 dès le rare
     const stock2 = genererStockHDV("astrub", () => 0.3);
     for (const a of stock2) {
-      expect(toileDeItem(a.inst.id)).toBe(2);
-      expect(["epique", "legendaire"]).toContain(a.inst.rarete);
+      const t = toileDeItem(a.inst.id);
+      expect([2, 3]).toContain(t);
+      if (t === 2) expect(["epique", "legendaire"]).toContain(a.inst.rarete);
+      else expect(["rare", "epique", "legendaire"]).toContain(a.inst.rarete);
     }
   });
 

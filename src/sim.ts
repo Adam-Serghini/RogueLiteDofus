@@ -76,7 +76,7 @@ const SLOTS_SIM = ["arme", "coiffe", "cape", "anneau"] as const;
 function itemPalier(id: string, rarete: "commun" | "rare"): ItemInstance {
   const tiers = ITEMS[id].tiers!;
   const tier = tiers[rarete] ?? tiers[Object.keys(tiers)[0] as keyof typeof tiers]!;
-  return { id, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
+  return { id, rarete, stats: { ...tier.stats }, adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
 }
 
 /** Meilleur objet du pool de toile pour un slot et une stat (celui qui maximise
@@ -86,7 +86,7 @@ function meilleurItemToile(pool: string[], slot: string, stat: keyof Stats): str
   if (!candidats.length) return null;
   const score = (id: string) => {
     const t = ITEMS[id].tiers!.commun!;
-    return (t.stats[stat] ?? 0) * 10 + (t.stats.vitalite ?? 0);
+    return ((t.stats[stat] ?? 0) + (t.adaptatif ?? 0)) * 10 + (t.stats.vitalite ?? 0);
   };
   return candidats.sort((a, b) => score(b) - score(a))[0];
 }
@@ -115,7 +115,7 @@ function courbeNiveaux(): { entree: number[]; fin: number[] } {
  */
 function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunState {
   const run = nouvelleRun(IDS);
-  const pool = zoneId ? butinToile(zoneId) : null;
+  const pool = zoneId ? (butinToile(zoneId)?.normales ?? null) : null;
   run.persos.forEach((perso, i) => {
     const p = progressionInitiale();
     p.niveau = niveau;

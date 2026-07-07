@@ -384,6 +384,7 @@ button.item-carte:disabled {
 .ichip.ichip-crit { color: #b23b2e; }
 .ichip.ichip-prospection { color: #8a6d42; }
 .ichip.ichip-pa { color: var(--pa); border-color: var(--pa); }
+.ichip.ichip-adapt { color: #b87b12; border-color: var(--or); font-weight: 900; }
 .ichip.ichip-arme { color: var(--txt); border-color: var(--bord); }
 .ichip.malus { color: var(--danger) !important; border-color: #b23b2e88; }
 .ichip.ichip-res.elem-terre { color: var(--terre); }

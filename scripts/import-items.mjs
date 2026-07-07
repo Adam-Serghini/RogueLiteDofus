@@ -41,7 +41,7 @@ for (const ligne of lignes.slice(1)) {
 
   const stats = {};
   for (const [csvCol, statKey] of [["for", "force"], ["int", "intelligence"], ["cha", "chance"],
-    ["agi", "agilite"], ["vita", "vitalite"], ["crit", "crit"], ["prospection", "prospection"]]) {
+    ["agi", "agilite"], ["vita", "vitalite"], ["crit", "crit"], ["prospection", "prospection"], ["soin", "soin"]]) {
     const v = num(row, csvCol);
     if (v !== undefined) stats[statKey] = v;
   }
@@ -51,10 +51,14 @@ for (const ligne of lignes.slice(1)) {
     if (v !== undefined) resistances[el] = v / 100; // le CSV est en % entiers
   }
   const tier = { stats };
+  const adapt = num(row, "adapt");
+  if (adapt) tier.adaptatif = adapt; // stat ADAPTATIVE (carac de la voie du porteur)
   if (Object.keys(resistances).length) tier.resistances = resistances;
   const pa = num(row, "pa");
   if (pa) tier.pa = pa;
   it.tiers[rarete] = tier;
+  const source = col(row, "source").toLowerCase();
+  if (source === "boss" || source === "elite") it.source = source;
 
   // attaque d'arme : lue sur la ligne (identique ou progressive par palier)
   const attPA = num(row, "att_pa");
@@ -62,6 +66,8 @@ for (const ligne of lignes.slice(1)) {
     it.tiers[rarete].attaque = {
       coutPA: attPA, baseMin: num(row, "att_min") ?? 0, baseMax: num(row, "att_max") ?? 0,
       scaling: num(row, "att_scaling") ?? 0.3,
+      ...(col(row, "att_cible") === "tous" ? { cible: "ennemi_tous" } : {}),
+      ...(num(row, "att_vamp") ? { vampirisme: num(row, "att_vamp") } : {}),
     };
   }
 }
@@ -72,8 +78,12 @@ for (const [id, it] of items) {
   if (!RARETES.some((r) => it.tiers[r])) throw new Error(`${id} : aucun palier défini`);
 }
 
+// pools par toile et par SOURCE de drop (normales / élites / boss)
 const parToile = {};
-for (const [id, it] of items) (parToile[it.toile] ??= []).push(id);
+for (const [id, it] of items) {
+  const t = (parToile[it.toile] ??= { normales: [], elites: [], boss: [] });
+  (it.source === "boss" ? t.boss : it.source === "elite" ? t.elites : t.normales).push(id);
+}
 
 const out = `// =============================================================================
 //  items_gen.ts — AUTO-GÉNÉRÉ par scripts/import-items.mjs depuis items.csv.
@@ -84,11 +94,12 @@ import type { Item } from "./types";
 /** Objets à rareté (stats fixes par palier), par id. */
 export const ITEMS_TOILES: Record<string, Item> = ${JSON.stringify(
   Object.fromEntries([...items].map(([id, it]) => [id, {
-    id, nom: it.nom, slot: it.slot, tiers: it.tiers,
+    id, nom: it.nom, slot: it.slot, tiers: it.tiers, ...(it.source ? { source: it.source } : {}),
   }])), null, 2)};
 
-/** Pool d'objets par toile (index de zone dans l'ordre de jeu de la tranche). */
-export const BUTIN_TOILES: Record<number, string[]> = ${JSON.stringify(parToile, null, 2)};
+/** Pools par toile et par source de drop (normales / élites / boss). */
+export interface PoolsToile { normales: string[]; elites: string[]; boss: string[] }
+export const BUTIN_TOILES: Record<number, PoolsToile> = ${JSON.stringify(parToile, null, 2)};
 `;
 writeFileSync(DEST, out);
 console.log(`✓ ${items.size} objets (${lignes.length - 1} lignes) → src/items_gen.ts · toiles : ${Object.keys(parToile).join(", ")}`);

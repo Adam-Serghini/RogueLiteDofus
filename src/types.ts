@@ -22,11 +22,19 @@ export type EquipSlot = "arme" | "coiffe" | "cape" | "anneau";
 /** Raretés d'objet (halo vert / bleu / violet / doré). */
 export type Rarete = "commun" | "rare" | "epique" | "legendaire";
 
-export interface AttaqueArme { coutPA: number; baseMin: number; baseMax: number; scaling: number }
+export interface AttaqueArme {
+  coutPA: number;
+  baseMin: number;
+  baseMax: number;
+  scaling: number;
+  cible?: "ennemi_ligne" | "ennemi_tous"; // ennemi_tous = l'arme atteint la ligne arrière (Arc)
+  vampirisme?: number; // fraction des dégâts rendue en PV au porteur (Ergot Mina)
+}
 
 /** Un palier de rareté d'un objet « à toiles » : stats FIXES (pas de roll). */
 export interface TierItem {
   stats: Partial<Stats>;
+  adaptatif?: number; // stat ADAPTATIVE : s'ajoute à la carac de la voie du porteur
   resistances?: Partial<Record<Element, number>>;
   pa?: number; // PA max bonus (ex. futur Gelano)
   attaque?: AttaqueArme; // armes : peut progresser avec la rareté
@@ -42,6 +50,7 @@ export interface Item {
   panoplie?: string; // id de la panoplie (objets legacy uniquement)
   rolls?: StatRolls; // fourchettes de stats tirées au drop (legacy)
   tiers?: Partial<Record<Rarete, TierItem>>; // objets à rareté (stats fixes par palier)
+  source?: "boss" | "elite"; // drop exclusif : donjon uniquement / combat dur uniquement
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
@@ -55,6 +64,7 @@ export interface ItemInstance {
   id: string; // id de l'Item de base
   stats: Partial<Stats>; // valeurs tirées (legacy) ou du palier (rareté)
   rarete?: Rarete; // absent = objet legacy (pas de halo)
+  adaptatif?: number; // stat adaptative du palier (carac de la voie du porteur)
   resistances?: Partial<Record<Element, number>>; // résistances du palier
   pa?: number; // PA bonus du palier
 }

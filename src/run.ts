@@ -198,6 +198,21 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
   for (const k of Object.keys(ajout) as Element[]) acc[k] = (acc[k] ?? 0) + (ajout[k] ?? 0);
 }
 
+/** Carac PRINCIPALE d'un perso (sa « voie ») : l'élément de frappe choisi,
+ *  sinon son auto-allocation élémentaire, sinon sa plus haute carac investie.
+ *  Cible des stats ADAPTATIVES d'équipement (calculée hors équipement). */
+export function statPrincipale(state: PersoState): keyof Stats {
+  if (state.elementChoisi) return STAT_PAR_ELEMENT[state.elementChoisi];
+  if (state.statAuto && state.statAuto !== "vitalite") return state.statAuto;
+  const finals = statsFinales(CLASSES[state.classeId], state.progression);
+  let best: keyof Stats = "force";
+  for (const el of ["terre", "feu", "eau", "air"] as Element[]) {
+    const k = STAT_PAR_ELEMENT[el];
+    if ((finals[k] ?? 0) > (finals[best] ?? 0)) best = k;
+  }
+  return best;
+}
+
 /** Bonus total apporté par l'équipement d'un perso (objets + bonus de panoplie). */
 export function bonusEquipement(state: PersoState): {
   stats: Stats; pvBonus: number; resistances: Partial<Record<Element, number>>; paBonus: number;
@@ -212,6 +227,7 @@ export function bonusEquipement(state: PersoState): {
     const item = inst ? ITEMS[inst.id] : undefined;
     if (!inst || !item) continue;
     ajouterStats(stats, inst.stats); // stats de l'exemplaire (rollées ou du palier de rareté)
+    if (inst.adaptatif) stats[statPrincipale(state)] = (stats[statPrincipale(state)] ?? 0) + inst.adaptatif; // stat adaptative
     pvBonus += item.pvBonus ?? 0;
     paBonus += inst.pa ?? 0; // PA d'équipement (paliers de rareté)
     ajouterRes(resistances, item.resistances);
@@ -246,10 +262,17 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
   const attaque = (armeInst?.rarete ? armeItem?.tiers?.[armeInst.rarete]?.attaque : undefined) ?? armeItem?.attaque;
   const armeSort: Spell | undefined = armeItem && attaque
     ? {
-      id: "arme_attaque", nom: armeItem.nom, type: "degats", cible: "ennemi_ligne",
+      id: "arme_attaque", nom: armeItem.nom, type: "degats",
+      cible: attaque.cible ?? "ennemi_ligne", // ennemi_tous : l'arme atteint la ligne arrière
       coutPA: attaque.coutPA, baseMin: attaque.baseMin,
       baseMax: attaque.baseMax, scaling: attaque.scaling,
-      img: `/assets/items/${armeItem.id}.png`, desc: "Attaque d'arme.",
+      ...(attaque.vampirisme ? { vampirismeRatio: attaque.vampirisme } : {}),
+      img: `/assets/items/${armeItem.id}.png`,
+      desc: attaque.cible === "ennemi_tous"
+        ? "Attaque d'arme — atteint la ligne arrière."
+        : attaque.vampirisme
+          ? `Attaque d'arme — rend ${Math.round(attaque.vampirisme * 100)} % des dégâts en PV.`
+          : "Attaque d'arme.",
     }
     : undefined;
   return {
@@ -334,7 +357,7 @@ export function rollItemRarete(itemId: string, rng: () => number, autorisees: re
   if (!disponibles.length) return null;
   const rarete = tirerRarete(rng, disponibles);
   const tier = tiers[rarete]!;
-  return { id: itemId, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
+  return { id: itemId, rarete, stats: { ...tier.stats }, adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
 }
 
 /** Crée un exemplaire d'item. Objet à rareté : palier tiré, stats fixes figées.
@@ -370,11 +393,19 @@ export function tenterButin(run: RunState, zoneId: string, type: string, rng: ()
   const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
   const p = taux * mult;
   const drops: ItemInstance[] = [];
-  const pool = butinToile(zoneId);
-  const tirages = pool ?? PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? [];
-  for (let i = 0; i < Math.min(tirages.length, 4); i++) {
+  const pools = butinToile(zoneId);
+  const tirages = pools ? pools.normales : (PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? []);
+  for (let i = 0; i < Math.min(Math.max(tirages.length, 1), 4); i++) {
     if (rng() < p) {
-      const id = pool ? pool[Math.floor(rng() * pool.length)] : tirages[i];
+      let source = tirages;
+      // le PREMIER tirage vient de la source exclusive du nœud (la carotte) :
+      // objets « boss » au donjon, objets « élite » aux combats durs
+      if (pools && i === 0) {
+        if (type === "donjon" && pools.boss.length) source = pools.boss;
+        else if (type === "combat_dur" && pools.elites.length) source = pools.elites;
+      }
+      if (!source.length) continue;
+      const id = pools ? source[Math.floor(rng() * source.length)] : source[i];
       const inst = rollItem(id, rng);
       run.inventaire.push(inst);
       drops.push(inst);
@@ -602,7 +633,8 @@ export function toileDeZone(zoneId: string): number {
 /** Toile d'origine d'un objet (pool de toile, sinon zone de sa panoplie legacy). */
 export function toileDeItem(itemId: string): number {
   for (let t = 1; t <= TRANCHES[0].zones.length; t++) {
-    if (butinToile(TRANCHES[0].zones[t - 1])?.includes(itemId)) return t;
+    const pools = butinToile(TRANCHES[0].zones[t - 1]);
+    if (pools && [...pools.normales, ...pools.elites, ...pools.boss].includes(itemId)) return t;
   }
   const panoId = ITEMS[itemId]?.panoplie;
   if (panoId) {
@@ -649,8 +681,8 @@ export interface ArticleHDV {
 export function genererStockHDV(zoneId: string, rng: () => number): ArticleHDV[] {
   const t = toileDeZone(zoneId);
   const zones = TRANCHES[0].zones;
-  const poolCourante = butinToile(zones[t - 1]) ?? [];
-  const poolSuivante = t < zones.length ? (butinToile(zones[t]) ?? []) : [];
+  const poolCourante = butinToile(zones[t - 1])?.normales ?? [];
+  const poolSuivante = t < zones.length ? (butinToile(zones[t])?.normales ?? []) : [];
   const stock: ArticleHDV[] = [];
   for (let i = 0; i < KAMAS.tailleStock; i++) {
     // ~40 % d'avant-première quand la toile suivante existe

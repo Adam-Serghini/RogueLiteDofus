@@ -1278,38 +1278,532 @@ export const ITEMS_TOILES: Record<string, Item> = {
         }
       }
     }
+  },
+  "coiffe_bouftou": {
+    "id": "coiffe_bouftou",
+    "nom": "Coiffe Bouftou",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 1,
+          "prospection": 2
+        },
+        "adaptatif": 3,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "crit": 1,
+          "prospection": 3
+        },
+        "adaptatif": 5,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "crit": 2,
+          "prospection": 5
+        },
+        "adaptatif": 7,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4,
+          "prospection": 7
+        },
+        "adaptatif": 12,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04
+        }
+      }
+    }
+  },
+  "cape_du_bouftou": {
+    "id": "cape_du_bouftou",
+    "nom": "Cape du Bouftou",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10,
+          "prospection": 3
+        },
+        "adaptatif": 2,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14,
+          "prospection": 4
+        },
+        "adaptatif": 3,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 20,
+          "prospection": 6
+        },
+        "adaptatif": 5,
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30,
+          "prospection": 8
+        },
+        "adaptatif": 7,
+        "resistances": {
+          "terre": 0.05,
+          "feu": 0.05
+        }
+      }
+    }
+  },
+  "anneau_bouftou": {
+    "id": "anneau_bouftou",
+    "nom": "Anneau Bouftou",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 1
+        },
+        "adaptatif": 4
+      },
+      "rare": {
+        "stats": {
+          "crit": 1
+        },
+        "adaptatif": 5
+      },
+      "epique": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 7
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 9
+      }
+    }
+  },
+  "marteau_bouftou": {
+    "id": "marteau_bouftou",
+    "nom": "Marteau Bouftou",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 1
+        },
+        "adaptatif": 7,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 12,
+          "baseMax": 17,
+          "scaling": 0.4
+        }
+      },
+      "rare": {
+        "stats": {
+          "crit": 1
+        },
+        "adaptatif": 9,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 12,
+          "baseMax": 17,
+          "scaling": 0.4
+        }
+      },
+      "epique": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 11,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 13,
+          "baseMax": 18,
+          "scaling": 0.4
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 14,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 14,
+          "baseMax": 20,
+          "scaling": 0.42
+        }
+      }
+    }
+  },
+  "boufcoiffe_royale": {
+    "id": "boufcoiffe_royale",
+    "nom": "Boufcoiffe Royale",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 8,
+          "crit": 1
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 12,
+          "crit": 1
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 15,
+          "crit": 2
+        },
+        "adaptatif": 10,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 22,
+          "crit": 3
+        },
+        "adaptatif": 16,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      }
+    },
+    "source": "boss"
+  },
+  "boufcape_royale": {
+    "id": "boufcape_royale",
+    "nom": "Boufcape Royale",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 2,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 20
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 30
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 45
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04
+        }
+      }
+    },
+    "source": "boss"
+  },
+  "alliance_de_silimelle": {
+    "id": "alliance_de_silimelle",
+    "nom": "Alliance de Silimelle",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 6,
+          "prospection": 2
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 10,
+          "prospection": 4
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 14,
+          "prospection": 6
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 20,
+          "prospection": 9
+        },
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "arc_en_corne_de_bouftou": {
+    "id": "arc_en_corne_de_bouftou",
+    "nom": "Arc en Corne de Bouftou",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 6,
+          "crit": 1
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 9,
+          "baseMax": 13,
+          "scaling": 0.32,
+          "cible": "ennemi_tous"
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 8,
+          "crit": 1
+        },
+        "adaptatif": 8,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 9,
+          "baseMax": 13,
+          "scaling": 0.32,
+          "cible": "ennemi_tous"
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 12,
+          "crit": 1
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 10,
+          "baseMax": 14,
+          "scaling": 0.34,
+          "cible": "ennemi_tous"
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 16,
+          "crit": 2
+        },
+        "adaptatif": 12,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 11,
+          "baseMax": 15,
+          "scaling": 0.35,
+          "cible": "ennemi_tous"
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "ergot_mina": {
+    "id": "ergot_mina",
+    "nom": "Ergot Mina",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "prospection": 4
+        },
+        "adaptatif": 1,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 6,
+          "baseMax": 9,
+          "scaling": 0.3,
+          "vampirisme": 0.5
+        }
+      },
+      "rare": {
+        "stats": {
+          "prospection": 6
+        },
+        "adaptatif": 2,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 6,
+          "baseMax": 9,
+          "scaling": 0.3,
+          "vampirisme": 0.5
+        }
+      },
+      "epique": {
+        "stats": {
+          "prospection": 8
+        },
+        "adaptatif": 3,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 7,
+          "baseMax": 10,
+          "scaling": 0.32,
+          "vampirisme": 0.5
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "prospection": 12
+        },
+        "adaptatif": 5,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 8,
+          "baseMax": 12,
+          "scaling": 0.34,
+          "vampirisme": 0.5
+        }
+      }
+    },
+    "source": "elite"
   }
 };
 
-/** Pool d'objets par toile (index de zone dans l'ordre de jeu de la tranche). */
-export const BUTIN_TOILES: Record<number, string[]> = {
-  "1": [
-    "coiffe_boune",
-    "cape_sloque",
-    "le_plussain",
-    "epee_de_boisaille",
-    "chapeau_de_l_intrepide",
-    "cape_de_l_intrepide",
-    "anneau_de_l_intrepide",
-    "baton_de_boisaille",
-    "bandeau_komintot",
-    "cape_pandawashu",
-    "epee_de_yanguru",
-    "baguette_de_glace"
-  ],
-  "2": [
-    "coiffe_champ_champ",
-    "cape_champ_champ",
-    "anneau_champ_champ",
-    "baton_carnivore",
-    "coiffe_champetre",
-    "capouze_des_champs",
-    "anneau_champetre",
-    "plantouze_des_champs",
-    "toady",
-    "cape_du_tofu_fou",
-    "anneau_du_bandit",
-    "sargasse",
-    "arc_en_racine_d_abraknyde"
-  ]
+/** Pools par toile et par source de drop (normales / élites / boss). */
+export interface PoolsToile { normales: string[]; elites: string[]; boss: string[] }
+export const BUTIN_TOILES: Record<number, PoolsToile> = {
+  "1": {
+    "normales": [
+      "coiffe_boune",
+      "cape_sloque",
+      "le_plussain",
+      "epee_de_boisaille",
+      "chapeau_de_l_intrepide",
+      "cape_de_l_intrepide",
+      "anneau_de_l_intrepide",
+      "baton_de_boisaille",
+      "bandeau_komintot",
+      "cape_pandawashu",
+      "epee_de_yanguru",
+      "baguette_de_glace"
+    ],
+    "elites": [],
+    "boss": []
+  },
+  "2": {
+    "normales": [
+      "coiffe_champ_champ",
+      "cape_champ_champ",
+      "anneau_champ_champ",
+      "baton_carnivore",
+      "coiffe_champetre",
+      "capouze_des_champs",
+      "anneau_champetre",
+      "plantouze_des_champs",
+      "toady",
+      "cape_du_tofu_fou",
+      "anneau_du_bandit",
+      "sargasse",
+      "arc_en_racine_d_abraknyde"
+    ],
+    "elites": [],
+    "boss": []
+  },
+  "3": {
+    "normales": [
+      "coiffe_bouftou",
+      "cape_du_bouftou",
+      "anneau_bouftou",
+      "marteau_bouftou"
+    ],
+    "elites": [
+      "alliance_de_silimelle",
+      "arc_en_corne_de_bouftou",
+      "ergot_mina"
+    ],
+    "boss": [
+      "boufcoiffe_royale",
+      "boufcape_royale"
+    ]
+  }
 };

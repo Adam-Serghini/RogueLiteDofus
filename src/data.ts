@@ -2,7 +2,8 @@
 //  data.ts — Données du jeu (data-driven)
 //  Classes, sorts, monstres et séquence de la run. Aucune logique ici.
 // =============================================================================
-import { ITEMS_TOILES, BUTIN_TOILES } from "./items_gen";
+import { ITEMS_TOILES, BUTIN_TOILES, type PoolsToile } from "./items_gen";
+export type { PoolsToile } from "./items_gen";
 import type { Classe, Item, Monstre, Panoplie, Rarete, Spell } from "./types";
 
 // --- Sorts -------------------------------------------------------------------
@@ -665,7 +666,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // ===== Tainéla — Donjon Bouftou (tier 3) =====
   // Iconique : toute la famille est faible à l'Air.
   bouftou: {
-    id: "bouftou", nom: "Bouftou", pv: 44,
+    id: "bouftou", nom: "Bouftou", pv: 31,
     stats: { force: 32, intelligence: 6, agilite: 14, vitalite: 36 },
     pa: 4, initiative: 7,
     resistances: { air: -0.3, eau: 0.05, terre: 0.1, feu: -0.1 },
@@ -674,7 +675,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/bouftou.png",
   },
   boufton_blanc: {
-    id: "boufton_blanc", nom: "Boufton Blanc", pv: 39,
+    id: "boufton_blanc", nom: "Boufton Blanc", pv: 27,
     stats: { force: 24, intelligence: 8, agilite: 24, vitalite: 30 },
     pa: 4, initiative: 13,
     resistances: { terre: 0.15, air: 0.1, eau: -0.15, feu: -0.1 },
@@ -683,7 +684,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/boufton_blanc.png",
   },
   boufton_noir: {
-    id: "boufton_noir", nom: "Boufton Noir", pv: 41,
+    id: "boufton_noir", nom: "Boufton Noir", pv: 29,
     stats: { force: 30, intelligence: 8, agilite: 16, vitalite: 30 },
     pa: 4, initiative: 11,
     resistances: { eau: 0.15, feu: 0.1, terre: -0.15, air: -0.1 },
@@ -692,7 +693,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/boufton_noir.png",
   },
   bouftou_noir: {
-    id: "bouftou_noir", nom: "Bouftou Noir", pv: 59,
+    id: "bouftou_noir", nom: "Bouftou Noir", pv: 41,
     stats: { force: 44, intelligence: 6, agilite: 12, vitalite: 46 },
     pa: 5, initiative: 7,
     resistances: { feu: 0.15, eau: 0.1, terre: -0.1, air: -0.15 },
@@ -700,8 +701,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/bouftou_noir.png",
   },
   chef_de_guerre_bouftou: {
-    id: "chef_de_guerre_bouftou", nom: "Chef de Guerre Bouftou", pv: 147,
-    stats: { force: 50, intelligence: 12, agilite: 18, vitalite: 64 },
+    id: "chef_de_guerre_bouftou", nom: "Chef de Guerre Bouftou", pv: 103,
+    stats: { force: 38, intelligence: 9, agilite: 14, vitalite: 64 },
     pa: 6, initiative: 8,
     resistances: { air: 0.1, terre: 0.1, eau: -0.1 },
     sorts: ["charge", "morsure"], ia: "agressif", // miniboss
@@ -709,8 +710,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/chef_de_guerre_bouftou.png",
   },
   bouftou_royal: {
-    id: "bouftou_royal", nom: "Bouftou Royal", pv: 333,
-    stats: { force: 47, intelligence: 9, agilite: 12, vitalite: 80 },
+    id: "bouftou_royal", nom: "Bouftou Royal", pv: 233,
+    stats: { force: 34, intelligence: 6, agilite: 9, vitalite: 80 },
     pa: 10, initiative: 8,
     resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
     sorts: ["colere_royale", "ecrasement", "charge", "morsure"], ia: "agressif",
@@ -1738,8 +1739,8 @@ export const ITEMS: Record<string, Item> = {
 // objets à rareté (générés depuis scripts/items.csv — voir import-items.mjs)
 Object.assign(ITEMS, ITEMS_TOILES);
 
-/** Pool d'objets à rareté d'une zone (toile = index+1 dans l'ordre de jeu t1) ; null = zone legacy. */
-export function butinToile(zoneId: string): string[] | null {
+/** Pools d'objets à rareté d'une zone, par source de drop ; null = zone legacy. */
+export function butinToile(zoneId: string): PoolsToile | null {
   const idx = TRANCHES[0].zones.indexOf(zoneId);
   if (idx < 0) return null;
   return BUTIN_TOILES[idx + 1] ?? null;

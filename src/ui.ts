@@ -1396,6 +1396,7 @@ function itemStatsHtml(inst: ItemInstance): string {
   const chips: string[] = [];
   const chip = (cls: string, txt: string) => chips.push(`<span class="ichip ${cls}">${txt}</span>`);
   const signe = (v: number) => (v > 0 ? `+${v}` : `${v}`); // les malus s'affichent en négatif
+  if (inst.adaptatif) chips.push(`<span class="ichip ichip-adapt" title="Stat adaptative : s'ajoute à la carac de ta voie (élément choisi)">+${inst.adaptatif} ★ Adapt.</span>`);
   if (it?.pvBonus) chip("ichip-vitalite", `+${it.pvBonus} PV`);
   for (const k of Object.keys(inst.stats) as (keyof Stats)[]) {
     const v = inst.stats[k];

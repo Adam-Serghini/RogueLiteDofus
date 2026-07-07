@@ -146,12 +146,47 @@ describe("rareté (objets à toiles)", () => {
     expect(leg.stats).toEqual({ force: 6, vitalite: 12, crit: 2 });
   });
 
-  it("Incarnam droppe depuis son pool de toile (rareté), Tainéla reste legacy", () => {
-    expect(butinToile("incarnam")).toContain("coiffe_boune");
-    expect(butinToile("tainela")).toBeNull();
+  it("Incarnam droppe depuis son pool de toile (rareté), Tofus reste legacy", () => {
+    expect(butinToile("incarnam")!.normales).toContain("coiffe_boune");
+    expect(butinToile("tofus")).toBeNull(); // toile 4 : pas encore saisie
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
     expect(drops.length).toBe(4);
     drops.forEach((d) => expect(d.rarete).toBe("commun"));
+  });
+});
+
+describe("toile 3 — stat adaptative & sources de drop", () => {
+  it("la stat adaptative rejoint la carac de la voie du perso", async () => {
+    const { nouvelleRun, appliquerElement, bonusEquipement, rollItemRarete } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    appliquerElement(p, "feu"); // voie Feu → intelligence
+    p.equipement.coiffe = rollItemRarete("coiffe_bouftou", () => 0)!; // commun : adapt 3
+    expect(p.equipement.coiffe.adaptatif).toBe(3);
+    expect(bonusEquipement(p).stats.intelligence).toBe(3);
+    appliquerElement(p, "terre"); // même objet, voie Terre → force
+    expect(bonusEquipement(p).stats.force).toBe(3);
+  });
+
+  it("le donjon droppe les objets « boss », les combats durs les « élite »", async () => {
+    const { nouvelleRun, tenterButin } = await import("./run");
+    const { ITEMS } = await import("./data");
+    // rng 0 → tout tombe ; 1er tirage = pool exclusif du nœud
+    const donjon = tenterButin(nouvelleRun(["iop"]), "tainela", "donjon", () => 0);
+    expect(ITEMS[donjon[0].id].source).toBe("boss");
+    const dur = tenterButin(nouvelleRun(["iop"]), "tainela", "combat_dur", () => 0);
+    expect(ITEMS[dur[0].id].source).toBe("elite");
+    const normal = tenterButin(nouvelleRun(["iop"]), "tainela", "combat", () => 0);
+    normal.forEach((d) => expect(ITEMS[d.id].source).toBeUndefined());
+  });
+
+  it("l'Arc atteint la ligne arrière, l'Ergot Mina est vampirique", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.arme = rollItemRarete("arc_en_corne_de_bouftou", () => 0)!;
+    expect(combattantDepuisPerso(run.persos[0]).armeSort?.cible).toBe("ennemi_tous");
+    run.persos[0].equipement.arme = rollItemRarete("ergot_mina", () => 0)!;
+    expect(combattantDepuisPerso(run.persos[0]).armeSort?.vampirismeRatio).toBe(0.5);
   });
 });
