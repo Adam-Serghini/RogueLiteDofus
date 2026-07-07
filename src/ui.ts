@@ -388,6 +388,8 @@ const MENU_INVENTAIRE = A("/assets/menu/Inventaire.png");
 const MENU_BESTIAIRE = A("/assets/menu/bestiaires.png");
 const MENU_PARAM = A("/assets/menu/parametres.png");
 const MENU_SUCCES = A("/assets/menu/succes.png");
+const MENU_ACCUEIL = A("/assets/menu/Menu.png");
+const MENU_RESTART = A("/assets/menu/Recommencer.png");
 const MENU_DOFUS = A("/assets/menu/dofus.png");
 const ICON_KAMAS = A("/assets/divers/kamas.png");
 const ICON_VITA = A("/assets/divers/coeur.png");
@@ -1088,7 +1090,7 @@ const classe_img = (classeId: string): string =>
   A(CLASSES[classeId]?.img ?? `/assets/classes/${classeId}.png`);
 
 /** Écran de départ : choisir 2 classes parmi les classes jouables pour commencer la run. */
-export function showChoixEquipe(): Promise<string[]> {
+export function showChoixEquipe(): Promise<string[] | null> {
   return new Promise((res) => {
     const choix: string[] = [];
     const draw = () => {
@@ -1100,6 +1102,7 @@ export function showChoixEquipe(): Promise<string[]> {
         <p class="sous-titre">Choisis <b>2 classes</b> pour commencer. Tu pourras en recruter d'autres dans les tavernes (équipe de 4 max).</p>
         <div class="choix-grille">${cartes}</div>
         <div class="boutons-ecran">
+          <button id="choix-retour" class="aside-icone" title="Retour à l'accueil"><img src="${MENU_ACCUEIL}" alt="Accueil" onerror="this.remove()" /></button>
           <button id="choix-go" class="btn-jouer" title="Jouer" ${choix.length === 2 ? "" : "disabled"}><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>
           <span class="choix-compte">${choix.length}/2</span>
         </div>
@@ -1118,6 +1121,7 @@ export function showChoixEquipe(): Promise<string[]> {
       document.getElementById("choix-go")?.addEventListener("click", () => {
         if (choix.length === 2) res([...choix]);
       });
+      document.getElementById("choix-retour")?.addEventListener("click", () => res(null));
     };
     draw();
   });
@@ -2318,8 +2322,8 @@ Butin au taux donjon.`)}"` : "";
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
               <button id="carte-dofus" class="aside-icone" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
               <span class="topbar-sep"></span>
-              <button id="carte-accueil" class="aside-icone aside-emoji" title="Retour à l'accueil (la run reste sauvegardée)">🏠</button>
-              <button id="carte-restart" class="aside-icone aside-emoji" title="Recommencer avec les mêmes héros (abandonne la run en cours)">↻</button>
+              <button id="carte-accueil" class="aside-icone" title="Retour à l'accueil (la run reste sauvegardée)"><img src="${MENU_ACCUEIL}" alt="Accueil" onerror="this.remove()" /></button>
+              <button id="carte-restart" class="aside-icone" title="Recommencer avec les mêmes héros (abandonne la run en cours)"><img src="${MENU_RESTART}" alt="Recommencer" onerror="this.remove()" /></button>
               <button id="carte-restart-choix" class="aside-icone aside-emoji" title="Recommencer en choisissant d'autres héros (abandonne la run en cours)">👥</button>
             </div>
           </header>

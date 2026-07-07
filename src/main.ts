@@ -241,6 +241,7 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[]): Prom
     depart = reprise.zoneIdx;
   } else {
     const choix = choixImpose ?? (await ui.showChoixEquipe());
+    if (!choix) return null; // retour à l'accueil depuis la sélection
     run = nouvelleRun(choix);
   }
   const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!); // une run = une tranche
