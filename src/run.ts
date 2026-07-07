@@ -4,7 +4,7 @@
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
 import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile, KAMAS, TRANCHES } from "./data";
-import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, investirN } from "./progression";
+import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
@@ -72,8 +72,11 @@ export function appliquerElement(perso: PersoState, choix: Allocation | null): v
  * XP d'un perso : monte de niveau ; si un élément est choisi, alloue
  * automatiquement les points gagnés dans sa stat. Renvoie les niveaux gagnés.
  */
+/** Niveau maximum de la tranche active (cap d'XP). */
+export const niveauMaxTranche = (): number => (TRANCHES.find((t) => t.active) ?? TRANCHES[0]).niveaux[1];
+
 export function gagnerXPPerso(perso: PersoState, gain: number): number {
-  const niveaux = gagnerXP(perso.progression, gain);
+  const niveaux = gagnerXP(perso.progression, gain, niveauMaxTranche());
   // rétro-compat : les saves d'avant statAuto ne portent que elementChoisi
   const stat = perso.statAuto ?? (perso.elementChoisi ? STAT_PAR_ELEMENT[perso.elementChoisi] : undefined);
   if (stat) investirN(perso.progression, stat, Infinity);
@@ -164,7 +167,7 @@ function nouveauPerso(run: RunState, classeId: string, position: number): PersoS
   const niveau = niveauMoyen(run);
   const progression = progressionInitiale();
   progression.niveau = niveau;
-  progression.pointsDispo = (niveau - 1) * 5; // points cumulés des montées de niveau
+  progression.pointsDispo = (niveau - 1) * POINTS_PAR_NIVEAU; // points cumulés des montées de niveau
   return { classeId, progression, pvActuels: pvMaxFor(CLASSES[classeId], progression), position, equipement: {} };
 }
 

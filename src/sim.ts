@@ -19,7 +19,7 @@ import {
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
-import { progressionInitiale, gagnerXP, investirN } from "./progression";
+import { progressionInitiale, gagnerXP, investirN, POINTS_PAR_NIVEAU } from "./progression";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateurElite,
   type RunState,
@@ -101,8 +101,8 @@ function courbeNiveaux(): { entree: number[]; fin: number[] } {
   for (let z = 0; z < ZONES_SIM.length; z++) {
     entree.push(p.niveau);
     const mult = 1 + XP_PAR_TOILE * z; // toile = z+1
-    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, Math.round(XP_PAR_TYPE.combat * mult));
-    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, Math.round(XP_PAR_TYPE.combat_dur * mult));
+    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, Math.round(XP_PAR_TYPE.combat * mult), 50);
+    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, Math.round(XP_PAR_TYPE.combat_dur * mult), 50);
     fin.push(p.niveau);
   }
   return { entree, fin };
@@ -119,7 +119,7 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
   run.persos.forEach((perso, i) => {
     const p = progressionInitiale();
     p.niveau = niveau;
-    p.pointsDispo = 5 * (niveau - 1);
+    p.pointsDispo = POINTS_PAR_NIVEAU * (niveau - 1);
     investirN(p, TEAM[i].stat, Infinity);
     perso.progression = p;
     if (pool) {

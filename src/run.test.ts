@@ -15,7 +15,7 @@ describe("allocation par élément", () => {
     appliquerElement(p, "feu"); // feu → intelligence
     gagnerXPPerso(p, 50); // assez pour passer niveau 2 (+5 pts)
     expect(p.progression.niveau).toBe(2);
-    expect(p.progression.pointsInvestis.intelligence).toBe(5); // auto-investis
+    expect(p.progression.pointsInvestis.intelligence).toBe(3); // auto-investis
     expect(p.progression.pointsDispo).toBe(0); // rien à dépenser à la main
   });
 
@@ -24,7 +24,7 @@ describe("allocation par élément", () => {
     appliquerElement(p, null);
     gagnerXPPerso(p, 50);
     expect(p.elementChoisi).toBeUndefined();
-    expect(p.progression.pointsDispo).toBe(5); // manuel : à dépenser soi-même
+    expect(p.progression.pointsDispo).toBe(3); // manuel : à dépenser soi-même
   });
 });
 
@@ -113,7 +113,7 @@ describe("recrutement", () => {
     recruter(run, "eniripsa");
     const recrue = run.persos.find((p) => p.classeId === "eniripsa")!;
     expect(recrue.progression.niveau).toBe(5);
-    expect(recrue.progression.pointsDispo).toBe((5 - 1) * 5); // points cumulés
+    expect(recrue.progression.pointsDispo).toBe((5 - 1) * 3); // points cumulés
   });
 
   it("remplace un membre quand l'équipe est pleine (même case)", () => {
@@ -285,8 +285,8 @@ describe("allocation Vitalité", () => {
     const p = run.persos[0];
     expect(p.statAuto).toBe("vitalite");
     expect(p.elementChoisi).toBeUndefined(); // frappe = plus haute carac
-    gagnerXPPerso(p, 50); // niveau 2 → 5 points auto en vitalité
-    expect(p.progression.pointsInvestis.vitalite).toBe(5);
+    gagnerXPPerso(p, 50); // niveau 2 → 3 points auto en vitalité
+    expect(p.progression.pointsInvestis.vitalite).toBe(3);
     expect(p.progression.pointsDispo).toBe(0);
     localStorage.removeItem("rld_settings_v0");
   });

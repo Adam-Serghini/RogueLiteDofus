@@ -6,6 +6,7 @@ import type { Classe, Progression, Stats } from "./types";
 
 // --- Constantes tunables -----------------------------------------------------
 export const PV_PAR_VITA = 1; // PV max gagnés par point de Vitalité
+export const POINTS_PAR_NIVEAU = 3; // points de caractéristique par niveau
 const SEUIL_COUT_2 = 200; // au-delà, un point coûte 2
 const SEUIL_COUT_3 = 300; // au-delà, un point coûte 3
 
@@ -38,16 +39,19 @@ export function coutPoint(dejaInvesti: number): number {
   return 3;
 }
 
-/** Ajoute de l'XP et fait monter de niveau. Renvoie le nb de niveaux gagnés. */
-export function gagnerXP(p: Progression, gain: number): number {
+/** Ajoute de l'XP et fait monter de niveau (plafonné à `niveauMax` : l'XP
+ *  excédentaire est perdue — le cap de la tranche). Renvoie les niveaux gagnés. */
+export function gagnerXP(p: Progression, gain: number, niveauMax = Infinity): number {
+  if (p.niveau >= niveauMax) return 0;
   p.xp += gain;
   let niveauxGagnes = 0;
-  while (p.xp >= xpRequis(p.niveau)) {
+  while (p.niveau < niveauMax && p.xp >= xpRequis(p.niveau)) {
     p.xp -= xpRequis(p.niveau);
     p.niveau += 1;
-    p.pointsDispo += 5;
+    p.pointsDispo += POINTS_PAR_NIVEAU;
     niveauxGagnes += 1;
   }
+  if (p.niveau >= niveauMax) p.xp = 0; // cap atteint : surplus perdu
   return niveauxGagnes;
 }
 

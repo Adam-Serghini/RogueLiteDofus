@@ -610,7 +610,7 @@ export const MONSTRES: Record<string, Monstre> = {
 
   // ===== Champs d'Astrub — fleurs (tier 2) =====
   tournesol_sauvage: {
-    id: "tournesol_sauvage", nom: "Tournesol Sauvage", pv: 59,
+    id: "tournesol_sauvage", nom: "Tournesol Sauvage", pv: 44,
     stats: { force: 12, intelligence: 34, agilite: 14, vitalite: 36 },
     pa: 5, initiative: 10,
     resistances: { eau: 0.1, terre: 0.05, feu: -0.1, air: -0.15 },
@@ -619,7 +619,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tournesol_sauvage.png",
   },
   rose_demoniaque: {
-    id: "rose_demoniaque", nom: "Rose Démoniaque", pv: 62,
+    id: "rose_demoniaque", nom: "Rose Démoniaque", pv: 46,
     stats: { force: 14, intelligence: 36, agilite: 16, vitalite: 34 },
     pa: 5, initiative: 11,
     resistances: { feu: 0.3, air: 0.05, terre: -0.2, eau: -0.1 },
@@ -628,7 +628,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/rose_demoniaque.png",
   },
   pissenlit_diabolique: {
-    id: "pissenlit_diabolique", nom: "Pissenlit Diabolique", pv: 64,
+    id: "pissenlit_diabolique", nom: "Pissenlit Diabolique", pv: 47,
     stats: { force: 12, intelligence: 32, agilite: 18, vitalite: 38 },
     pa: 5, initiative: 10,
     resistances: { terre: 0.15, air: 0.1, feu: -0.1 },
@@ -637,7 +637,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/pissenlit_diabolique.png",
   },
   epouvanteur: {
-    id: "epouvanteur", nom: "Épouvanteur", pv: 84,
+    id: "epouvanteur", nom: "Épouvanteur", pv: 62,
     stats: { force: 34, intelligence: 8, agilite: 12, vitalite: 46 },
     pa: 5, initiative: 8,
     resistances: { eau: 0.1, air: 0.05, feu: -0.1 },
@@ -645,7 +645,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/epouvanteur.png",
   },
   gardienne_champetre: {
-    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 119,
+    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 88,
     stats: { force: 18, intelligence: 20, agilite: 28, vitalite: 50 },
     pa: 6, initiative: 11,
     resistances: { air: 0.2, eau: 0.15, terre: -0.1, feu: -0.15 },
@@ -653,7 +653,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gardienne_champetre.png",
   },
   tournesol_affame: {
-    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 308,
+    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 228,
     stats: { force: 12, intelligence: 30, agilite: 11, vitalite: 75 },
     pa: 10, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
@@ -665,7 +665,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // ===== Tainéla — Donjon Bouftou (tier 3) =====
   // Iconique : toute la famille est faible à l'Air.
   bouftou: {
-    id: "bouftou", nom: "Bouftou", pv: 63,
+    id: "bouftou", nom: "Bouftou", pv: 44,
     stats: { force: 32, intelligence: 6, agilite: 14, vitalite: 36 },
     pa: 4, initiative: 7,
     resistances: { air: -0.3, eau: 0.05, terre: 0.1, feu: -0.1 },
@@ -674,7 +674,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/bouftou.png",
   },
   boufton_blanc: {
-    id: "boufton_blanc", nom: "Boufton Blanc", pv: 56,
+    id: "boufton_blanc", nom: "Boufton Blanc", pv: 39,
     stats: { force: 24, intelligence: 8, agilite: 24, vitalite: 30 },
     pa: 4, initiative: 13,
     resistances: { terre: 0.15, air: 0.1, eau: -0.15, feu: -0.1 },
@@ -683,7 +683,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/boufton_blanc.png",
   },
   boufton_noir: {
-    id: "boufton_noir", nom: "Boufton Noir", pv: 59,
+    id: "boufton_noir", nom: "Boufton Noir", pv: 41,
     stats: { force: 30, intelligence: 8, agilite: 16, vitalite: 30 },
     pa: 4, initiative: 11,
     resistances: { eau: 0.15, feu: 0.1, terre: -0.15, air: -0.1 },
@@ -692,7 +692,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/boufton_noir.png",
   },
   bouftou_noir: {
-    id: "bouftou_noir", nom: "Bouftou Noir", pv: 84,
+    id: "bouftou_noir", nom: "Bouftou Noir", pv: 59,
     stats: { force: 44, intelligence: 6, agilite: 12, vitalite: 46 },
     pa: 5, initiative: 7,
     resistances: { feu: 0.15, eau: 0.1, terre: -0.1, air: -0.15 },
@@ -700,7 +700,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/bouftou_noir.png",
   },
   chef_de_guerre_bouftou: {
-    id: "chef_de_guerre_bouftou", nom: "Chef de Guerre Bouftou", pv: 210,
+    id: "chef_de_guerre_bouftou", nom: "Chef de Guerre Bouftou", pv: 147,
     stats: { force: 50, intelligence: 12, agilite: 18, vitalite: 64 },
     pa: 6, initiative: 8,
     resistances: { air: 0.1, terre: 0.1, eau: -0.1 },
@@ -709,7 +709,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/chef_de_guerre_bouftou.png",
   },
   bouftou_royal: {
-    id: "bouftou_royal", nom: "Bouftou Royal", pv: 476,
+    id: "bouftou_royal", nom: "Bouftou Royal", pv: 333,
     stats: { force: 47, intelligence: 9, agilite: 12, vitalite: 80 },
     pa: 10, initiative: 8,
     resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
@@ -722,7 +722,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // Iconique : essaim volant, attaquants Air (agilité dominante) ;
   // le gros du groupe est faible au Feu (sauf le Tofu de base, weak Terre/Air).
   tofu: {
-    id: "tofu", nom: "Tofu", pv: 75,
+    id: "tofu", nom: "Tofu", pv: 51,
     stats: { force: 6, intelligence: 6, agilite: 32, vitalite: 42 },
     pa: 4, initiative: 12,
     resistances: { feu: 0.15, eau: 0.1, terre: -0.1, air: -0.1 },
@@ -731,7 +731,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofu.png",
   },
   tofu_noir: {
-    id: "tofu_noir", nom: "Tofu Noir", pv: 82,
+    id: "tofu_noir", nom: "Tofu Noir", pv: 56,
     stats: { force: 8, intelligence: 6, agilite: 34, vitalite: 46 },
     pa: 4, initiative: 13,
     resistances: { eau: 0.15, air: 0.15, terre: 0.1, feu: -0.15 },
@@ -739,7 +739,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofu_noir.png",
   },
   tofukaz: {
-    id: "tofukaz", nom: "Tofukaz", pv: 72,
+    id: "tofukaz", nom: "Tofukaz", pv: 49,
     stats: { force: 6, intelligence: 6, agilite: 40, vitalite: 38 },
     pa: 5, initiative: 16, // rapide et fragile
     resistances: { terre: 0.25, air: 0.1, eau: -0.1, feu: -0.15 },
@@ -747,7 +747,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofukaz.png",
   },
   tofoune: {
-    id: "tofoune", nom: "Tofoune", pv: 75,
+    id: "tofoune", nom: "Tofoune", pv: 51,
     stats: { force: 6, intelligence: 8, agilite: 12, chance: 30, vitalite: 42 }, // frappe Eau (piaillarde)
     pa: 4, initiative: 11,
     resistances: { eau: 0.15, air: 0.1, terre: -0.1 },
@@ -755,7 +755,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofoune.png",
   },
   tofu_mutant: {
-    id: "tofu_mutant", nom: "Tofu Mutant", pv: 132,
+    id: "tofu_mutant", nom: "Tofu Mutant", pv: 90,
     stats: { force: 12, intelligence: 8, agilite: 33, vitalite: 62 }, // élite du donjon
     pa: 5, initiative: 12,
     resistances: { eau: 0.2, terre: 0.15, air: -0.15, feu: -0.2 },
@@ -772,7 +772,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofu_malefique.png",
   },
   tofu_ventripotent: {
-    id: "tofu_ventripotent", nom: "Tofu Ventripotent", pv: 262,
+    id: "tofu_ventripotent", nom: "Tofu Ventripotent", pv: 178,
     stats: { force: 14, intelligence: 10, agilite: 30, vitalite: 96 },
     pa: 5, initiative: 6, // miniboss encaisseur
     resistances: { air: 0.2, feu: 0.15, eau: 0.1, terre: -0.2 },
@@ -780,7 +780,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofu_ventripotent.png",
   },
   batofu: {
-    id: "batofu", nom: "Batofu", pv: 720,
+    id: "batofu", nom: "Batofu", pv: 490,
     stats: { force: 5, intelligence: 6, agilite: 49, vitalite: 110 },
     pa: 10, initiative: 11,
     resistances: { air: 0.25, terre: 0.1, eau: -0.05, feu: -0.15 },
@@ -794,7 +794,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // à un autre, et frappe dans son propre élément. Une équipe mono-élément bute
   // → récompense le multi-élément. (résist. fortes mais non totales : pas d'immunité)
   scarafeuille_rouge: {
-    id: "scarafeuille_rouge", nom: "Scarafeuille Rouge", pv: 111,
+    id: "scarafeuille_rouge", nom: "Scarafeuille Rouge", pv: 70,
     stats: { force: 6, intelligence: 34, agilite: 8, vitalite: 48 }, // frappe Feu
     pa: 5, initiative: 10,
     resistances: { feu: 0.5, eau: -0.4 },
@@ -803,7 +803,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_rouge.png",
   },
   scarafeuille_bleu: {
-    id: "scarafeuille_bleu", nom: "Scarafeuille Bleu", pv: 111,
+    id: "scarafeuille_bleu", nom: "Scarafeuille Bleu", pv: 70,
     stats: { force: 6, intelligence: 6, agilite: 8, chance: 34, vitalite: 48 }, // frappe Eau
     pa: 5, initiative: 10,
     resistances: { eau: 0.5, feu: -0.4 },
@@ -812,7 +812,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_bleu.png",
   },
   scarafeuille_vert: {
-    id: "scarafeuille_vert", nom: "Scarafeuille Vert", pv: 111,
+    id: "scarafeuille_vert", nom: "Scarafeuille Vert", pv: 70,
     stats: { force: 34, intelligence: 6, agilite: 8, vitalite: 48 }, // frappe Terre
     pa: 5, initiative: 10,
     resistances: { terre: 0.5, air: -0.4 },
@@ -821,7 +821,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_vert.png",
   },
   scarafeuille_blanc: {
-    id: "scarafeuille_blanc", nom: "Scarafeuille Blanc", pv: 111,
+    id: "scarafeuille_blanc", nom: "Scarafeuille Blanc", pv: 70,
     stats: { force: 6, intelligence: 6, agilite: 34, vitalite: 48 }, // frappe Air
     pa: 5, initiative: 11,
     resistances: { air: 0.5, terre: -0.4 },
@@ -830,7 +830,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_blanc.png",
   },
   scarafeuille_immature: {
-    id: "scarafeuille_immature", nom: "Scarafeuille Immature", pv: 78,
+    id: "scarafeuille_immature", nom: "Scarafeuille Immature", pv: 49,
     stats: { force: 22, intelligence: 4, agilite: 4, vitalite: 34 }, // faible partout sauf Terre
     pa: 4, initiative: 8,
     resistances: { terre: 0.5, feu: -0.15, eau: -0.15, air: -0.15 },
@@ -838,7 +838,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_immature.png",
   },
   scarafeuille_noir: {
-    id: "scarafeuille_noir", nom: "Scarafeuille Noir", pv: 166,
+    id: "scarafeuille_noir", nom: "Scarafeuille Noir", pv: 105,
     stats: { force: 30, intelligence: 12, agilite: 12, vitalite: 60 }, // encaisseur équilibré (élite/miniboss)
     pa: 5, initiative: 9,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
@@ -846,7 +846,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_noir.png",
   },
   scarabosse_dore: {
-    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 1184,
+    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 746,
     stats: { force: 41, intelligence: 11, agilite: 12, chance: 11, vitalite: 132 },
     pa: 10, initiative: 10,
     resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // résiste tout : il faut le user
@@ -858,7 +858,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // ===== Donjon des Forgerons (tier 6, après les Scarafeuilles) =====
   // Le clan des Sombres (artisans maléfiques) + un bandit, gardant un coffre piégé.
   mineur_sombre: {
-    id: "mineur_sombre", nom: "Mineur Sombre", pv: 117,
+    id: "mineur_sombre", nom: "Mineur Sombre", pv: 74,
     stats: { force: 10, intelligence: 6, agilite: 34, vitalite: 52 }, // frappe Air (vif)
     pa: 5, initiative: 10,
     resistances: { terre: 0.15, air: 0.1 },
@@ -867,7 +867,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/mineur_sombre.png",
   },
   boulanger_sombre: {
-    id: "boulanger_sombre", nom: "Boulanger Sombre", pv: 107,
+    id: "boulanger_sombre", nom: "Boulanger Sombre", pv: 67,
     stats: { force: 8, intelligence: 34, agilite: 8, vitalite: 48 }, // frappe Feu (four)
     pa: 5, initiative: 9,
     resistances: { feu: 0.2 },
@@ -876,7 +876,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/boulanger_sombre.png",
   },
   bandit_roublard: {
-    id: "bandit_roublard", nom: "Bandit du clan des Roublards", pv: 140,
+    id: "bandit_roublard", nom: "Bandit du clan des Roublards", pv: 88,
     stats: { force: 36, intelligence: 8, agilite: 16, vitalite: 56 }, // frappe Terre (brutal)
     pa: 5, initiative: 11,
     resistances: { terre: 0.1 },
@@ -885,7 +885,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/bandit_roublard.png",
   },
   forgeron_sombre: {
-    id: "forgeron_sombre", nom: "Forgeron Sombre", pv: 205,
+    id: "forgeron_sombre", nom: "Forgeron Sombre", pv: 129,
     stats: { force: 36, intelligence: 10, agilite: 14, vitalite: 66 }, // frappe Terre (marteau) — élite/miniboss
     pa: 5, initiative: 8,
     resistances: { terre: 0.1, feu: 0.1, eau: -0.1, air: -0.1 },
@@ -894,7 +894,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/forgeron_sombre.png",
   },
   coffre_forgerons: {
-    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 1248,
+    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 786,
     stats: { force: 46, intelligence: 18, agilite: 13, chance: 12, vitalite: 164 },
     pa: 10, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
     resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
@@ -907,7 +907,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // Gobelins bagarreurs : mêlée Terre + un coureur Air. Boss : le Directeur.
   // (Signature future : « Travail d'équipe » — +dégâts par gob dans la ligne.)
   gobet: {
-    id: "gobet", nom: "Gobet", pv: 83,
+    id: "gobet", nom: "Gobet", pv: 56,
     stats: { force: 30, intelligence: 6, agilite: 10, vitalite: 44 }, // frappe Terre (petit teigneux)
     pa: 4, initiative: 11,
     resistances: { terre: 0.15, feu: -0.1 },
@@ -916,7 +916,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gobet.png",
   },
   gobichon: {
-    id: "gobichon", nom: "Gobichon", pv: 99,
+    id: "gobichon", nom: "Gobichon", pv: 66,
     stats: { force: 34, intelligence: 6, agilite: 12, vitalite: 50 }, // frappe Terre
     pa: 5, initiative: 10,
     resistances: { terre: 0.15, air: -0.1 },
@@ -924,7 +924,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gobichon.png",
   },
   gobaliste: {
-    id: "gobaliste", nom: "Gobaliste", pv: 90,
+    id: "gobaliste", nom: "Gobaliste", pv: 60,
     stats: { force: 10, intelligence: 32, agilite: 12, vitalite: 46 }, // frappe Feu (projectiles)
     pa: 5, initiative: 12,
     resistances: { feu: 0.15, eau: -0.1 },
@@ -932,7 +932,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gobaliste.png",
   },
   gob_trotteur: {
-    id: "gob_trotteur", nom: "Gob-Trotteur", pv: 86,
+    id: "gob_trotteur", nom: "Gob-Trotteur", pv: 58,
     stats: { force: 8, intelligence: 6, agilite: 36, vitalite: 44 }, // frappe Air (coureur)
     pa: 5, initiative: 15,
     resistances: { air: 0.15, terre: -0.1 },
@@ -941,7 +941,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gob_trotteur.png",
   },
   gobaladee: {
-    id: "gobaladee", nom: "Gobaladée", pv: 152,
+    id: "gobaladee", nom: "Gobaladée", pv: 102,
     stats: { force: 38, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss de l'Akadémie
     pa: 5, initiative: 9,
     resistances: { terre: 0.15, feu: 0.1, eau: -0.1 },
@@ -949,7 +949,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gobaladee.png",
   },
   directeur_grunob: {
-    id: "directeur_grunob", nom: "Directeur Grunob", pv: 720,
+    id: "directeur_grunob", nom: "Directeur Grunob", pv: 482,
     stats: { force: 31, intelligence: 8, agilite: 12, vitalite: 118 },
     pa: 10, initiative: 10,
     resistances: { terre: 0.2, feu: 0.15, air: 0.1, eau: -0.05 },
@@ -963,7 +963,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // Vermine pyromane : frappes Feu dominantes + un archer Air en retrait.
   // (Signature future : sort aléatoire — invoque un monstre de la zone.)
   pyrasite: {
-    id: "pyrasite", nom: "Pyrasite", pv: 95,
+    id: "pyrasite", nom: "Pyrasite", pv: 63,
     stats: { force: 8, intelligence: 38, agilite: 10, vitalite: 46 }, // frappe Feu (le plus dangereux)
     pa: 5, initiative: 12,
     resistances: { feu: 0.25, eau: -0.2 },
@@ -971,7 +971,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/pyrasite.png",
   },
   ceglumen: {
-    id: "ceglumen", nom: "Céglumen", pv: 105,
+    id: "ceglumen", nom: "Céglumen", pv: 69,
     stats: { force: 8, intelligence: 34, agilite: 12, vitalite: 52 }, // frappe Feu (luciole)
     pa: 5, initiative: 10,
     resistances: { feu: 0.2, air: 0.1, terre: -0.1 },
@@ -979,7 +979,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/ceglumen.png",
   },
   cafarcher: {
-    id: "cafarcher", nom: "Cafarcher", pv: 99,
+    id: "cafarcher", nom: "Cafarcher", pv: 65,
     stats: { force: 8, intelligence: 10, agilite: 36, vitalite: 46 }, // frappe Air (tireur)
     pa: 5, initiative: 13,
     resistances: { air: 0.15, feu: -0.1 },
@@ -987,7 +987,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/cafarcher.png",
   },
   mirgrillon: {
-    id: "mirgrillon", nom: "Mirgrillon", pv: 82,
+    id: "mirgrillon", nom: "Mirgrillon", pv: 54,
     stats: { force: 6, intelligence: 30, agilite: 14, vitalite: 40 }, // frappe Feu (fragile)
     pa: 4, initiative: 14,
     resistances: { feu: 0.15, terre: -0.15 },
@@ -995,7 +995,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/mirgrillon.png",
   },
   sakarien: {
-    id: "sakarien", nom: "Sakarien", pv: 204,
+    id: "sakarien", nom: "Sakarien", pv: 135,
     stats: { force: 36, intelligence: 14, agilite: 14, vitalite: 72 }, // élite/miniboss cuirassé
     pa: 5, initiative: 8,
     resistances: { terre: 0.2, feu: 0.15, eau: -0.1 },
@@ -1003,7 +1003,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/sakarien.png",
   },
   kankreblath: {
-    id: "kankreblath", nom: "Kankreblath", pv: 952,
+    id: "kankreblath", nom: "Kankreblath", pv: 628,
     stats: { force: 10, intelligence: 30, agilite: 11, vitalite: 126 },
     pa: 10, initiative: 11,
     resistances: { terre: 0.25, eau: 0.2, feu: 0.15, air: -0.05 }, // résist. réelles DofusDB (terre/eau)
@@ -1017,7 +1017,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // Tofu Maléfique (réutilisé de la zone Tofus), Boostache Prépubère (miniboss).
   // (Signature future de Boostache : réinvoque un monstre vaincu.)
   vampire: {
-    id: "vampire", nom: "Vampire", pv: 108,
+    id: "vampire", nom: "Vampire", pv: 69,
     stats: { force: 8, intelligence: 36, agilite: 14, vitalite: 48 }, // frappe Feu (drain nocturne)
     pa: 5, initiative: 12,
     resistances: { feu: 0.2, air: 0.1, terre: -0.1 },
@@ -1026,7 +1026,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/vampire.png",
   },
   kwoan: {
-    id: "kwoan", nom: "Kwoan", pv: 101,
+    id: "kwoan", nom: "Kwoan", pv: 65,
     stats: { force: 8, intelligence: 10, agilite: 35, vitalite: 46 }, // frappe Air (vif)
     pa: 5, initiative: 14,
     resistances: { air: 0.2, terre: -0.15 },
@@ -1035,7 +1035,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwoan.png",
   },
   gargrouille: {
-    id: "gargrouille", nom: "Gargrouille", pv: 119,
+    id: "gargrouille", nom: "Gargrouille", pv: 76,
     stats: { force: 34, intelligence: 10, agilite: 12, vitalite: 54 }, // frappe Terre (pierre animée)
     pa: 4, initiative: 9,
     resistances: { terre: 0.2, eau: 0.1, feu: -0.1 },
@@ -1044,7 +1044,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gargrouille.png",
   },
   boostache_prepubere: {
-    id: "boostache_prepubere", nom: "Boostache Prépubère", pv: 202,
+    id: "boostache_prepubere", nom: "Boostache Prépubère", pv: 129,
     stats: { force: 12, intelligence: 16, agilite: 33, vitalite: 68 }, // miniboss (rejeton du boss)
     pa: 5, initiative: 13,
     resistances: { air: 0.2, feu: 0.1, terre: -0.1 },
@@ -1052,7 +1052,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/boostache_prepubere.png",
   },
   boostache: {
-    id: "boostache", nom: "Boostache", pv: 936,
+    id: "boostache", nom: "Boostache", pv: 599,
     stats: { force: 8, intelligence: 12, agilite: 29, vitalite: 122 },
     pa: 10, initiative: 12,
     resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
@@ -1064,7 +1064,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // ===== Donjon des Larves (joué après les Forgerons) =====
   // Puzzle élémentaire allégé (3 couleurs), chiffres au-dessus des Forgerons.
   larve_bleue: {
-    id: "larve_bleue", nom: "Larve Bleue", pv: 144,
+    id: "larve_bleue", nom: "Larve Bleue", pv: 91,
     stats: { force: 8, intelligence: 8, agilite: 10, chance: 40, vitalite: 54 }, // frappe Eau
     pa: 5, initiative: 8,
     resistances: { eau: 0.3, feu: -0.25 },
@@ -1073,7 +1073,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_bleue.png",
   },
   larve_verte: {
-    id: "larve_verte", nom: "Larve Verte", pv: 144,
+    id: "larve_verte", nom: "Larve Verte", pv: 91,
     stats: { force: 40, intelligence: 8, agilite: 10, vitalite: 54 }, // frappe Terre
     pa: 5, initiative: 8,
     resistances: { terre: 0.3, air: -0.25 },
@@ -1082,7 +1082,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_verte.png",
   },
   larve_orange: {
-    id: "larve_orange", nom: "Larve Orange", pv: 144,
+    id: "larve_orange", nom: "Larve Orange", pv: 91,
     stats: { force: 8, intelligence: 40, agilite: 10, vitalite: 54 }, // frappe Feu
     pa: 5, initiative: 8,
     resistances: { feu: 0.3, eau: -0.25 },
@@ -1091,7 +1091,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_orange.png",
   },
   larve_saphir: {
-    id: "larve_saphir", nom: "Larve Saphir", pv: 160,
+    id: "larve_saphir", nom: "Larve Saphir", pv: 101,
     stats: { force: 8, intelligence: 8, agilite: 10, chance: 44, vitalite: 60 }, // frappe Eau
     pa: 5, initiative: 9,
     resistances: { eau: 0.4, feu: -0.3 },
@@ -1099,7 +1099,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_saphir.png",
   },
   larve_emeraude: {
-    id: "larve_emeraude", nom: "Larve Émeraude", pv: 160,
+    id: "larve_emeraude", nom: "Larve Émeraude", pv: 101,
     stats: { force: 44, intelligence: 8, agilite: 10, vitalite: 60 }, // frappe Terre
     pa: 5, initiative: 9,
     resistances: { terre: 0.4, air: -0.3 },
@@ -1107,7 +1107,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_emeraude.png",
   },
   larve_rubis: {
-    id: "larve_rubis", nom: "Larve Rubis", pv: 160,
+    id: "larve_rubis", nom: "Larve Rubis", pv: 101,
     stats: { force: 8, intelligence: 44, agilite: 10, vitalite: 60 }, // frappe Feu
     pa: 5, initiative: 9,
     resistances: { feu: 0.4, eau: -0.3 },
@@ -1115,7 +1115,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_rubis.png",
   },
   larve_doree: {
-    id: "larve_doree", nom: "Larve Dorée", pv: 308,
+    id: "larve_doree", nom: "Larve Dorée", pv: 194,
     stats: { force: 46, intelligence: 18, agilite: 14, vitalite: 88 }, // élite/miniboss luisant
     pa: 5, initiative: 8,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
@@ -1123,7 +1123,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_doree.png",
   },
   shin_larve: {
-    id: "shin_larve", nom: "Shin Larve", pv: 1681,
+    id: "shin_larve", nom: "Shin Larve", pv: 1059,
     stats: { force: 14, intelligence: 14, agilite: 11, chance: 46, vitalite: 176 },
     pa: 10, initiative: 9,
     resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
@@ -1137,7 +1137,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // (déclinaisons élémentaires Kouraçao/Morito/Passaoh/Malibout).
   // (Signature future du Magistral : ne frappe qu'au corps à corps.)
   corailleur: {
-    id: "corailleur", nom: "Corailleur", pv: 174,
+    id: "corailleur", nom: "Corailleur", pv: 110,
     stats: { force: 12, intelligence: 10, agilite: 12, chance: 48, vitalite: 66 }, // frappe Eau
     pa: 5, initiative: 9,
     resistances: { eau: 0.3, terre: 0.1, feu: -0.15 },
@@ -1146,7 +1146,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/corailleur.png",
   },
   crustorail_kouracao: {
-    id: "crustorail_kouracao", nom: "Crustorail Kouraçao", pv: 184,
+    id: "crustorail_kouracao", nom: "Crustorail Kouraçao", pv: 116,
     stats: { force: 12, intelligence: 10, agilite: 12, chance: 46, vitalite: 68 }, // frappe Eau
     pa: 5, initiative: 8,
     resistances: { eau: 0.3, feu: -0.2 },
@@ -1155,7 +1155,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/crustorail_kouracao.png",
   },
   crustorail_morito: {
-    id: "crustorail_morito", nom: "Crustorail Morito", pv: 195,
+    id: "crustorail_morito", nom: "Crustorail Morito", pv: 123,
     stats: { force: 48, intelligence: 10, agilite: 12, vitalite: 72 }, // frappe Terre (pinces)
     pa: 5, initiative: 8,
     resistances: { terre: 0.3, air: -0.2 },
@@ -1164,7 +1164,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/crustorail_morito.png",
   },
   palmifleur_passaoh: {
-    id: "palmifleur_passaoh", nom: "Palmifleur Passaoh", pv: 180,
+    id: "palmifleur_passaoh", nom: "Palmifleur Passaoh", pv: 113,
     stats: { force: 12, intelligence: 46, agilite: 12, vitalite: 66 }, // frappe Feu
     pa: 5, initiative: 10,
     resistances: { feu: 0.3, eau: -0.2 },
@@ -1173,7 +1173,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/palmifleur_passaoh.png",
   },
   palmifleur_malibout: {
-    id: "palmifleur_malibout", nom: "Palmifleur Malibout", pv: 180,
+    id: "palmifleur_malibout", nom: "Palmifleur Malibout", pv: 113,
     stats: { force: 12, intelligence: 10, agilite: 46, vitalite: 66 }, // frappe Air
     pa: 5, initiative: 11,
     resistances: { air: 0.3, terre: -0.2 },
@@ -1182,7 +1182,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/palmifleur_malibout.png",
   },
   palmifleur_morito: {
-    id: "palmifleur_morito", nom: "Palmifleur Morito", pv: 348,
+    id: "palmifleur_morito", nom: "Palmifleur Morito", pv: 219,
     stats: { force: 50, intelligence: 14, agilite: 14, vitalite: 96 }, // élite/miniboss du récif
     pa: 5, initiative: 9,
     resistances: { terre: 0.25, eau: 0.15, feu: -0.1 },
@@ -1191,7 +1191,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/palmifleur_morito.png",
   },
   corailleur_magistral: {
-    id: "corailleur_magistral", nom: "Corailleur Magistral", pv: 1353,
+    id: "corailleur_magistral", nom: "Corailleur Magistral", pv: 852,
     stats: { force: 13, intelligence: 10, agilite: 11, chance: 28, vitalite: 175 },
     pa: 10, initiative: 8,
     resistances: { eau: 0.3, terre: 0.2, feu: -0.05 },
@@ -1205,7 +1205,7 @@ export const MONSTRES: Record<string, Monstre> = {
   // l'aboutissement du puzzle multi-élément de la tranche.
   // (Signature future du Kwakwa : 75 % de résist partout sauf 1 élément aléatoire.)
   kwak_de_terre: {
-    id: "kwak_de_terre", nom: "Kwak de Terre", pv: 205,
+    id: "kwak_de_terre", nom: "Kwak de Terre", pv: 131,
     stats: { force: 54, intelligence: 10, agilite: 12, vitalite: 76 },
     pa: 5, initiative: 10,
     resistances: { terre: 0.5, air: -0.3 },
@@ -1214,7 +1214,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwak_de_terre.png",
   },
   kwak_de_feu: {
-    id: "kwak_de_feu", nom: "Kwak de Flamme", pv: 205,
+    id: "kwak_de_feu", nom: "Kwak de Flamme", pv: 131,
     stats: { force: 10, intelligence: 54, agilite: 12, vitalite: 76 },
     pa: 5, initiative: 10,
     resistances: { feu: 0.5, eau: -0.3 },
@@ -1223,7 +1223,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwak_de_feu.png",
   },
   kwak_d_eau: {
-    id: "kwak_d_eau", nom: "Kwak de Glace", pv: 205,
+    id: "kwak_d_eau", nom: "Kwak de Glace", pv: 131,
     stats: { force: 10, intelligence: 10, agilite: 12, chance: 54, vitalite: 76 },
     pa: 5, initiative: 10,
     resistances: { eau: 0.5, feu: -0.3 },
@@ -1232,7 +1232,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwak_d_eau.png",
   },
   kwak_de_vent: {
-    id: "kwak_de_vent", nom: "Kwak de Vent", pv: 205,
+    id: "kwak_de_vent", nom: "Kwak de Vent", pv: 131,
     stats: { force: 10, intelligence: 10, agilite: 54, vitalite: 76 },
     pa: 5, initiative: 12,
     resistances: { air: 0.5, terre: -0.3 },
@@ -1241,7 +1241,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwak_de_vent.png",
   },
   kwakere_de_terre: {
-    id: "kwakere_de_terre", nom: "Kwakere de Terre", pv: 389,
+    id: "kwakere_de_terre", nom: "Kwakere de Terre", pv: 249,
     stats: { force: 30, intelligence: 30, agilite: 22, chance: 30, vitalite: 104 }, // élite/miniboss multi-élément
     pa: 5, initiative: 11,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
@@ -1249,7 +1249,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwakere_de_terre.png",
   },
   kwakwa: {
-    id: "kwakwa", nom: "Kwakwa", pv: 1599,
+    id: "kwakwa", nom: "Kwakwa", pv: 1023,
     stats: { force: 23, intelligence: 23, agilite: 16, chance: 23, vitalite: 180 },
     pa: 10, initiative: 12,
     resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // avant son 1er tour ; ensuite la mue prend le relais
@@ -1633,7 +1633,7 @@ export function zonesDeTranche(tranche: TrancheDef): ZoneDef[] {
 
 /** Récompense d'XP par type de nœud de combat (tunable), multipliée par
  *  1 + XP_PAR_TOILE × (toile − 1) : calibrée pour finir la tranche ~niveau 50. */
-export const XP_PAR_TYPE = { combat: 130, combat_dur: 230 } as const;
+export const XP_PAR_TYPE = { combat: 110, combat_dur: 195 } as const;
 export const XP_PAR_TOILE = 0.3;
 
 /** Fraction de PV max rendue par la Taverne. */

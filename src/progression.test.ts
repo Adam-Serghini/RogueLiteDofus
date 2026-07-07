@@ -27,12 +27,12 @@ describe("coutPoint", () => {
 });
 
 describe("gagnerXP", () => {
-  it("monte d'un niveau et octroie 5 points", () => {
+  it("monte d'un niveau et octroie 3 points", () => {
     const p = progressionInitiale();
     const niv = gagnerXP(p, 50); // xpRequis(1) = 50
     expect(niv).toBe(1);
     expect(p.niveau).toBe(2);
-    expect(p.pointsDispo).toBe(5);
+    expect(p.pointsDispo).toBe(3);
     expect(p.xp).toBe(0);
   });
 
@@ -42,8 +42,17 @@ describe("gagnerXP", () => {
     // niveaux : 50 (→2), 75 (→3), 100 (→4) = 225 > 200 ; donc 2 niveaux, reste 200-125=75
     expect(niv).toBe(2);
     expect(p.niveau).toBe(3);
-    expect(p.pointsDispo).toBe(10);
+    expect(p.pointsDispo).toBe(6);
     expect(p.xp).toBe(75);
+  });
+
+  it("plafonne au niveau max de la tranche (surplus d'XP perdu)", () => {
+    const p = progressionInitiale();
+    gagnerXP(p, 999999, 5); // cap niveau 5
+    expect(p.niveau).toBe(5);
+    expect(p.xp).toBe(0); // surplus jeté
+    expect(gagnerXP(p, 500, 5)).toBe(0); // au cap : plus rien ne rentre
+    expect(p.niveau).toBe(5);
   });
 });
 
