@@ -79,18 +79,23 @@ export const classesDisponibles = (): string[] =>
  *  (avant = cases 0-3, arrière = 4-7). Les héros s'EMPILENT dans leur rangée
  *  (1re case libre) → la préférence marche à tous les coups ; si la rangée est
  *  pleine, on déborde dans l'autre. */
-function cellulesPour(ids: string[]): Record<string, number> {
-  const f = chargerConfig().formation;
-  const cells: Record<string, number> = {};
-  const pris = new Set<number>();
+/** Première case libre de la rangée PRÉFÉRÉE de la classe (débordement dans
+ *  l'autre rangée si pleine) — utilisée au départ ET au recrutement. */
+function caseLibrePreferee(classeId: string, pris: Set<number>): number {
+  const pref = chargerConfig().formation[classeId] === "arriere" ? "arriere" : "avant";
   const caseLibreDans = (rangee: "avant" | "arriere"): number | undefined => {
     const [debut, fin] = rangee === "avant" ? [0, 4] : [4, 8];
     for (let c = debut; c < fin; c++) if (!pris.has(c)) return c;
     return undefined;
   };
+  return caseLibreDans(pref) ?? caseLibreDans(pref === "avant" ? "arriere" : "avant")!;
+}
+
+function cellulesPour(ids: string[]): Record<string, number> {
+  const cells: Record<string, number> = {};
+  const pris = new Set<number>();
   for (const id of ids) {
-    const pref = f[id] === "arriere" ? "arriere" : "avant"; // défaut : avant
-    const cell = caseLibreDans(pref) ?? caseLibreDans(pref === "avant" ? "arriere" : "avant")!;
+    const cell = caseLibrePreferee(id, pris);
     cells[id] = cell;
     pris.add(cell);
   }
@@ -158,9 +163,7 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
     }
   }
   const pris = new Set(run.persos.map((p) => p.position));
-  let libre = 0;
-  while (pris.has(libre)) libre++;
-  run.persos.push(nouveauPerso(run, classeId, libre));
+  run.persos.push(nouveauPerso(run, classeId, caseLibrePreferee(classeId, pris)));
 }
 
 // --- Équipement --------------------------------------------------------------

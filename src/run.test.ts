@@ -255,3 +255,15 @@ describe("kamas & Hôtel de vente", () => {
     expect(run.inventaire.length).toBe(0);
   });
 });
+
+describe("rangée préférée", () => {
+  it("le départ ET le recrutement respectent la rangée préférée de la classe", async () => {
+    localStorage.setItem("rld_settings_v0", JSON.stringify({ formation: { iop: "avant", cra: "arriere", eniripsa: "arriere" } }));
+    const run = nouvelleRun(["iop", "cra"]);
+    expect(run.persos.find((p) => p.classeId === "iop")!.position).toBeLessThan(4);
+    expect(run.persos.find((p) => p.classeId === "cra")!.position).toBeGreaterThanOrEqual(4);
+    recruter(run, "eniripsa"); // la recrue va dans SA rangée, pas « devant par défaut »
+    expect(run.persos.find((p) => p.classeId === "eniripsa")!.position).toBeGreaterThanOrEqual(4);
+    localStorage.removeItem("rld_settings_v0");
+  });
+});
