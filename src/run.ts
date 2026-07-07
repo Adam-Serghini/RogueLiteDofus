@@ -36,6 +36,7 @@ export interface RunState {
   inventaire: ItemInstance[]; // exemplaires non équipés trouvés cette run (perdus à la mort)
   stats: RunStats; // récap de fin de run
   kamas: number; // monnaie de la run (perdue à la mort)
+  choixDepart?: string[]; // roster choisi au départ (pour « recommencer avec les mêmes héros »)
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -110,7 +111,7 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
       equipement: {},
     };
   });
-  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0 };
+  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix] };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------

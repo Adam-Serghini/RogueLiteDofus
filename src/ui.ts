@@ -2210,7 +2210,7 @@ export function showCarte(
   zoneNom: string,
   inventaire: ItemInstance[] = [],
   kamas = 0,
-): Promise<MapNode> {
+): Promise<MapNode | "accueil" | "recommencer"> {
   return new Promise((res) => {
     const draw = () => {
       const maxL = Math.max(...carte.noeuds.map((n) => n.ligne));
@@ -2311,6 +2311,9 @@ Butin au taux donjon.`)}"` : "";
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>
               <button id="carte-equip" class="aside-icone" title="Équipement${inventaire.length ? ` · ${inventaire.length} objet(s)` : ""}"><img src="${MENU_INVENTAIRE}" alt="Équipement" onerror="this.remove()" />${inventaire.length ? `<span class="aside-compte">${inventaire.length}</span>` : ""}</button>
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
+              <span class="aside-sep"></span>
+              <button id="carte-accueil" class="aside-icone aside-emoji" title="Retour à l'accueil (la run reste sauvegardée)">🏠</button>
+              <button id="carte-restart" class="aside-icone aside-emoji" title="Recommencer une run (abandonne celle-ci)">↻</button>
             </div>
           </aside>
           <div class="map-main">
@@ -2326,13 +2329,13 @@ Butin au taux donjon.`)}"` : "";
             <p class="aide">Choisis un nœud accessible (surligné). Choisir un nœud, c'est renoncer à ses voisins.</p>
           </div>
           <aside class="map-equipe">
-            <div class="aside-kamas" title="Kamas de la run (perdus à la mort)">${kamasHtml(kamas)}</div>
             <h2>Équipe</h2>
             <div class="aside-equipe">${asideEquipe}</div>
             <div class="aside-dofus">
               <h3>Dofus</h3>
               ${renderDofusRack(meta, true)}
             </div>
+            <div class="aside-kamas" title="Kamas de la run (perdus à la mort)">${kamasHtml(kamas)}</div>
           </aside>
         </div>`;
 
@@ -2368,7 +2371,31 @@ Butin au taux donjon.`)}"` : "";
           await showBestiaire(meta);
           draw();
         });
+      document
+        .getElementById("carte-accueil")
+        ?.addEventListener("click", () => res("accueil"));
+      document
+        .getElementById("carte-restart")
+        ?.addEventListener("click", () => res("recommencer"));
     };
     draw();
+  });
+}
+
+/** Confirmation de redémarrage : mêmes héros, nouveau choix, ou annuler. */
+export function showRecommencer(): Promise<"memes" | "choix" | null> {
+  return new Promise((res) => {
+    ecran(`
+      <h1>↻ Recommencer une run ?</h1>
+      <p class="sous-titre">La run en cours est abandonnée (comptée comme échouée). Tes Dofus, captures et succès sont conservés.</p>
+      <div class="boutons-ecran boutons-colonne">
+        <button id="re-memes" class="secondaire">Recommencer avec les mêmes héros</button>
+        <button id="re-choix" class="secondaire">Choisir d'autres héros</button>
+        <button id="re-annule" class="btn-retour" title="Continuer la run"><img src="${BTN_RETOUR}" alt="Annuler" onerror="this.remove()" /></button>
+      </div>
+    `);
+    document.getElementById("re-memes")?.addEventListener("click", () => res("memes"));
+    document.getElementById("re-choix")?.addEventListener("click", () => res("choix"));
+    document.getElementById("re-annule")?.addEventListener("click", () => res(null));
   });
 }

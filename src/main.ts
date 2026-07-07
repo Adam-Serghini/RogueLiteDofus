@@ -199,7 +199,7 @@ async function deZaap(pools: ZonePools): Promise<{ type: NodeType; combatId?: st
 /** Parcourt le plateau d'une zone jusqu'au donjon.
  *  Sauvegarde la run après chaque nœud résolu (reprise possible à tout moment ;
  *  un combat en cours n'est pas sauvegardé → nœud à refaire). */
-async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise<"wipe" | "clear"> {
+async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise<"wipe" | "clear" | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   if (!run.carte) {
     // pas de carte sauvegardée (nouvelle zone) — sinon on reprend celle en cours
     run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[]);
@@ -207,6 +207,13 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
   }
   for (;;) {
     const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas);
+    if (node === "accueil") return "accueil"; // la run reste sauvegardée → « Reprendre »
+    if (node === "recommencer") {
+      const choix = await ui.showRecommencer();
+      if (choix === "memes") return "recommencer-memes";
+      if (choix === "choix") return "recommencer-choix";
+      continue; // annulé → retour au plateau
+    }
 
     let { type } = node;
     let combatId = node.combatId;
@@ -227,25 +234,34 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
   }
 }
 
-async function jouerRun(reprise: RunSauvee | null): Promise<void> {
+/** Ce que la boucle doit faire après une run : rien, ou en relancer une. */
+type SuiteRun = null | { relancer: string[] | "selection" };
+
+async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[]): Promise<SuiteRun> {
   let run: RunState;
   let depart = 0;
   if (reprise) {
     run = reprise.run;
     depart = reprise.zoneIdx;
   } else {
-    const choix = await ui.showChoixEquipe();
+    const choix = choixImpose ?? (await ui.showChoixEquipe());
     run = nouvelleRun(choix);
   }
   const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!); // une run = une tranche
   for (let z = depart; z < zones.length; z++) {
     const zone = zones[z];
     const issue = await jouerZone(run, zone, z);
+    if (issue === "accueil") return null; // run sauvegardée, retour au lobby
+    if (issue === "recommencer-memes" || issue === "recommencer-choix") {
+      effacerRunEnCours();
+      enregistrerRun(meta, false); // recommencer = abandonner (run échouée)
+      return { relancer: issue === "recommencer-memes" ? (run.choixDepart ?? run.persos.slice(0, 2).map((p) => p.classeId)) : "selection" };
+    }
     if (issue === "wipe") {
       effacerRunEnCours();
       enregistrerRun(meta, false); // run terminée : échec
       await ui.showRecap(run, false, verifierSucces(meta, run, false)); // mort : Meta conservée
-      return;
+      return null;
     }
     soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
     run.stats.zones += 1;
@@ -258,6 +274,7 @@ async function jouerRun(reprise: RunSauvee | null): Promise<void> {
   effacerRunEnCours();
   enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
   await ui.showRecap(run, true, verifierSucces(meta, run, true));
+  return null;
 }
 
 async function boucle(): Promise<void> {
@@ -273,7 +290,11 @@ async function boucle(): Promise<void> {
       enregistrerRun(meta, false); // l'abandon compte comme une run échouée
       continue; // retour à l'accueil
     }
-    await jouerRun(action === "reprendre" ? reprise : null);
+    let suite = await jouerRun(action === "reprendre" ? reprise : null);
+    // redémarrages en chaîne (bouton ↻ de la carte), sans repasser par l'accueil
+    while (suite?.relancer) {
+      suite = await jouerRun(null, suite.relancer === "selection" ? undefined : suite.relancer);
+    }
   }
 }
 
