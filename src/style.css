@@ -245,6 +245,60 @@ button:focus-visible {
   text-shadow: 0 1px 2px #fff8;
 }
 
+/* Rareté d'équipement : halos vert / bleu / violet / doré */
+:root {
+  --r-commun: #58c15e;
+  --r-rare: #3a8fe6;
+  --r-epique: #a44fd0;
+  --r-legendaire: #eaa12a;
+}
+.rarete-commun { border-color: var(--r-commun) !important; box-shadow: 0 0 8px #58c15e55, inset 0 1px 0 #fff6; }
+.rarete-rare { border-color: var(--r-rare) !important; box-shadow: 0 0 9px #3a8fe655, inset 0 1px 0 #fff6; }
+.rarete-epique { border-color: var(--r-epique) !important; box-shadow: 0 0 10px #a44fd060, inset 0 1px 0 #fff6; }
+.rarete-legendaire { border-color: var(--r-legendaire) !important; box-shadow: 0 0 13px #eaa12a77, inset 0 1px 0 #fff6; }
+.inom-commun { color: #3d8a42; font-weight: 800; }
+.inom-rare { color: #2565b3; font-weight: 800; }
+.inom-epique { color: #8a3bb5; font-weight: 800; }
+.inom-legendaire { color: #b87b12; font-weight: 800; }
+.drop-rarete {
+  display: block;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Chips de stats d'items (inventaire, slots, drops) */
+.ichips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 2px;
+}
+.ichip {
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: #e4d6b2;
+  border: 1px solid var(--bord-clair);
+  color: var(--txt);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ichip.ichip-force { color: var(--terre); }
+.ichip.ichip-intelligence { color: var(--feu); }
+.ichip.ichip-agilite { color: #4d9c5e; }
+.ichip.ichip-chance { color: #3aa0e6; }
+.ichip.ichip-vitalite { color: #2b2318; }
+.ichip.ichip-crit { color: #b23b2e; }
+.ichip.ichip-prospection { color: #8a6d42; }
+.ichip.ichip-pa { color: var(--pa); border-color: var(--pa); }
+.ichip.ichip-arme { color: var(--txt); border-color: var(--bord); }
+.ichip.ichip-res.elem-terre { color: var(--terre); }
+.ichip.ichip-res.elem-feu { color: var(--feu); }
+.ichip.ichip-res.elem-eau { color: #3aa0e6; }
+.ichip.ichip-res.elem-air { color: #4d9c5e; }
+
 /* Succès */
 .recap-succes {
   display: flex;

@@ -3,10 +3,10 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, investirN } from "./progression";
 import { chargerConfig } from "./config";
-import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Spell, Stats } from "./types";
+import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -176,27 +176,30 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
 
 /** Bonus total apporté par l'équipement d'un perso (objets + bonus de panoplie). */
 export function bonusEquipement(state: PersoState): {
-  stats: Stats; pvBonus: number; resistances: Partial<Record<Element, number>>;
+  stats: Stats; pvBonus: number; resistances: Partial<Record<Element, number>>; paBonus: number;
 } {
   const stats = statsVides();
   let pvBonus = 0;
+  let paBonus = 0;
   const resistances: Partial<Record<Element, number>> = {};
   const comptePano: Record<string, number> = {};
   for (const slot of Object.keys(state.equipement) as EquipSlot[]) {
     const inst = state.equipement[slot];
     const item = inst ? ITEMS[inst.id] : undefined;
     if (!inst || !item) continue;
-    ajouterStats(stats, inst.stats); // stats rollées de l'exemplaire
+    ajouterStats(stats, inst.stats); // stats de l'exemplaire (rollées ou du palier de rareté)
     pvBonus += item.pvBonus ?? 0;
+    paBonus += inst.pa ?? 0; // PA d'équipement (paliers de rareté)
     ajouterRes(resistances, item.resistances);
-    comptePano[item.panoplie] = (comptePano[item.panoplie] ?? 0) + 1;
+    ajouterRes(resistances, inst.resistances); // résistances du palier de rareté
+    if (item.panoplie) comptePano[item.panoplie] = (comptePano[item.panoplie] ?? 0) + 1;
   }
   for (const [panoId, n] of Object.entries(comptePano)) {
     for (const b of PANOPLIES[panoId]?.bonus ?? []) {
       if (n >= b.seuil) { ajouterStats(stats, b.stats); pvBonus += b.pvBonus ?? 0; ajouterRes(resistances, b.resistances); }
     }
   }
-  return { stats, pvBonus, resistances };
+  return { stats, pvBonus, resistances, paBonus };
 }
 
 /** PV max d'un perso, équipement inclus (vitalité d'équipement + PV plats). */
@@ -212,14 +215,19 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
   const stats = statsFinales(classe, state.progression);
   ajouterStats(stats, bonus.stats);
   const pvMax = pvMaxPerso(state);
-  // attaque d'arme (case 1 « corps à corps ») dérivée de l'arme équipée
-  const armeItem = state.equipement.arme ? ITEMS[state.equipement.arme.id] : undefined;
-  const armeSort: Spell | undefined = armeItem?.attaque && {
-    id: "arme_attaque", nom: armeItem.nom, type: "degats", cible: "ennemi_ligne",
-    coutPA: armeItem.attaque.coutPA, baseMin: armeItem.attaque.baseMin,
-    baseMax: armeItem.attaque.baseMax, scaling: armeItem.attaque.scaling,
-    img: `/assets/items/${armeItem.id}.png`, desc: "Attaque d'arme.",
-  };
+  // attaque d'arme (case 1 « corps à corps ») dérivée de l'arme équipée ;
+  // pour un objet à rareté, l'attaque du palier prime (elle peut progresser)
+  const armeInst = state.equipement.arme;
+  const armeItem = armeInst ? ITEMS[armeInst.id] : undefined;
+  const attaque = (armeInst?.rarete ? armeItem?.tiers?.[armeInst.rarete]?.attaque : undefined) ?? armeItem?.attaque;
+  const armeSort: Spell | undefined = armeItem && attaque
+    ? {
+      id: "arme_attaque", nom: armeItem.nom, type: "degats", cible: "ennemi_ligne",
+      coutPA: attaque.coutPA, baseMin: attaque.baseMin,
+      baseMax: attaque.baseMax, scaling: attaque.scaling,
+      img: `/assets/items/${armeItem.id}.png`, desc: "Attaque d'arme.",
+    }
+    : undefined;
   return {
     armeSort,
     ref: `j_${state.classeId}`,
@@ -228,8 +236,8 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     pvMax,
     pvActuels: Math.min(state.pvActuels, pvMax),
     stats,
-    paMax: classe.pa,
-    paActuels: classe.pa,
+    paMax: classe.pa + bonus.paBonus,
+    paActuels: classe.pa + bonus.paBonus,
     initiative: classe.initiative,
     resistances: bonus.resistances, // résistances issues de l'équipement
     sorts: [...classe.sorts],
@@ -281,10 +289,29 @@ export function soignerEquipe(run: RunState, pct: number): void {
 }
 
 // --- Butin (drops d'équipement) ----------------------------------------------
-/** Crée un exemplaire d'item en tirant chaque stat dans sa fourchette (jet façon Dofus). */
+/** Tire une rareté selon les poids du catalogue (commun 60 / rare 25 / épique 12 / légendaire 3). */
+export function tirerRarete(rng: () => number): Rarete {
+  const total = RARETES.reduce((s, r) => s + RARETE_INFO[r].poids, 0);
+  let t = rng() * total;
+  for (const r of RARETES) {
+    t -= RARETE_INFO[r].poids;
+    if (t < 0) return r;
+  }
+  return "commun";
+}
+
+/** Crée un exemplaire d'item. Objet à rareté : palier tiré, stats fixes figées.
+ *  Objet legacy : chaque stat tirée dans sa fourchette (jet façon Dofus). */
 export function rollItem(itemId: string, rng: () => number): ItemInstance {
+  const item = ITEMS[itemId];
+  const tiers = item?.tiers;
+  if (tiers) {
+    const rarete = tirerRarete(rng);
+    const tier = tiers[rarete]!;
+    return { id: itemId, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
+  }
   const stats: Partial<Stats> = {};
-  const rolls = ITEMS[itemId]?.rolls ?? {};
+  const rolls = item?.rolls ?? {};
   for (const k of Object.keys(rolls) as (keyof Stats)[]) {
     const [lo, hi] = rolls[k]!;
     stats[k] = lo + Math.floor(rng() * (hi - lo + 1));
@@ -301,17 +328,25 @@ export function prospectionEquipe(run: RunState): number {
 }
 
 /**
- * Tire le butin d'une victoire : chaque pièce de la panoplie de zone a une chance
- * de tomber. Les doublons sont autorisés (on pourra valoriser les doublons plus tard).
+ * Tire le butin d'une victoire. Zone à toile (objets à rareté) : 4 tirages, chacun
+ * pioche un objet au hasard dans le pool de la zone. Zone legacy : chaque pièce de
+ * la panoplie a sa chance. Doublons autorisés.
  */
-export function tenterButin(run: RunState, panoplieId: string, type: string, rng: () => number): ItemInstance[] {
+export function tenterButin(run: RunState, zoneId: string, type: string, rng: () => number): ItemInstance[] {
   const taux = DROP.taux[type] ?? 0;
   if (taux <= 0) return [];
   const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
   const p = taux * mult;
   const drops: ItemInstance[] = [];
-  for (const id of PANOPLIES[panoplieId]?.pieces ?? []) {
-    if (rng() < p) { const inst = rollItem(id, rng); run.inventaire.push(inst); drops.push(inst); }
+  const pool = butinToile(zoneId);
+  const tirages = pool ?? PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? [];
+  for (let i = 0; i < Math.min(tirages.length, 4); i++) {
+    if (rng() < p) {
+      const id = pool ? pool[Math.floor(rng() * pool.length)] : tirages[i];
+      const inst = rollItem(id, rng);
+      run.inventaire.push(inst);
+      drops.push(inst);
+    }
   }
   return drops;
 }

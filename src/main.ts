@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, TRANCHES, zonesDeTranche, BUTIN_ZONE, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, TRANCHES, zonesDeTranche, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
 import { restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
@@ -110,9 +110,9 @@ async function capturerArchis(combatants: Combatant[]): Promise<number> {
 }
 
 /** Tire le butin d'équipement de la zone après une victoire et l'annonce. */
-async function recompenserButin(run: RunState, butinPano: string | undefined, type: NodeType): Promise<void> {
-  if (!butinPano) return;
-  const drops = tenterButin(run, butinPano, type, Math.random);
+async function recompenserButin(run: RunState, zoneId: string | undefined, type: NodeType): Promise<void> {
+  if (!zoneId) return;
+  const drops = tenterButin(run, zoneId, type, Math.random);
   run.stats.objets += drops.length;
   if (drops.length) await ui.showDrop(drops);
 }
@@ -125,7 +125,7 @@ const LABEL_FR: Record<NodeType, string> = {
 };
 
 async function resoudreType(
-  run: RunState, type: NodeType, combatId: string | undefined, xp: number, butinPano?: string,
+  run: RunState, type: NodeType, combatId: string | undefined, xp: number, zoneId?: string,
 ): Promise<Issue> {
   switch (type) {
     case "combat":
@@ -134,7 +134,7 @@ async function resoudreType(
       if (!gagne) return "wipe";
       await recompenserXP(run, xp);
       // combat dur modifié → butin au taux donjon (la prise de risque paie)
-      await recompenserButin(run, butinPano, type === "combat_dur" ? "donjon" : type);
+      await recompenserButin(run, zoneId, type === "combat_dur" ? "donjon" : type);
       return "continue";
     }
     case "taverne": {
@@ -160,7 +160,7 @@ async function resoudreType(
     case "donjon": {
       const { gagne, combatants } = await resoudreCombat(run, combatId!);
       if (!gagne) return "wipe";
-      await recompenserButin(run, butinPano, type);
+      await recompenserButin(run, zoneId, type);
       const boss = combatants.find((c) => c.camp === "ennemi" && c.dofusLache);
       if (boss?.dofusLache) {
         // 1 % de base, boosté par la prospection d'équipe (même formule que les items)
@@ -206,7 +206,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
     let xp = node.xp ?? 0;
     if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools));
 
-    const issue = await resoudreType(run, type, combatId, xp, BUTIN_ZONE[zone.id]);
+    const issue = await resoudreType(run, type, combatId, xp, zone.id);
 
     node.visite = true;
     run.carte!.courant = node.id;

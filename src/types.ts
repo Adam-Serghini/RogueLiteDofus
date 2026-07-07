@@ -13,31 +13,50 @@ export interface Stats {
   chance?: number; // dégâts Eau
   soin?: number; // puissance de soin (× les soins prodigués)
   prospection?: number; // booste le taux de drop d'équipement (cumulé sur l'équipe)
+  crit?: number; // % plat de coup critique (équipement) — s'ajoute au crit dérivé de la Force
 }
 
 // --- Équipement --------------------------------------------------------------
 export type EquipSlot = "arme" | "coiffe" | "cape" | "anneau";
 
-/** Fourchette de jet [min, max] d'une stat sur un item. */
+/** Raretés d'objet (halo vert / bleu / violet / doré). */
+export type Rarete = "commun" | "rare" | "epique" | "legendaire";
+
+export interface AttaqueArme { coutPA: number; baseMin: number; baseMax: number; scaling: number }
+
+/** Un palier de rareté d'un objet « à toiles » : stats FIXES (pas de roll). */
+export interface TierItem {
+  stats: Partial<Stats>;
+  resistances?: Partial<Record<Element, number>>;
+  pa?: number; // PA max bonus (ex. futur Gelano)
+  attaque?: AttaqueArme; // armes : peut progresser avec la rareté
+}
+
+/** Fourchette de jet [min, max] d'une stat sur un item (système legacy). */
 export type StatRolls = Partial<Record<keyof Stats, [number, number]>>;
 
 export interface Item {
   id: string;
   nom: string;
   slot: EquipSlot;
-  panoplie: string; // id de la panoplie
-  rolls?: StatRolls; // fourchettes de stats (tirées au drop)
+  panoplie?: string; // id de la panoplie (objets legacy uniquement)
+  rolls?: StatRolls; // fourchettes de stats tirées au drop (legacy)
+  tiers?: Partial<Record<Rarete, TierItem>>; // objets à rareté (stats fixes par palier)
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
-  attaque?: { coutPA: number; baseMin: number; baseMax: number; scaling: number };
+  attaque?: AttaqueArme;
   img?: string;
 }
 
-/** Exemplaire d'item (inventaire/équipement) : stats rollées dans les fourchettes au drop. */
+/** Exemplaire d'item (inventaire/équipement). Legacy : stats rollées au drop.
+ *  Rareté : stats/résists/PA du palier, FIGÉS ici au drop (la save reste autonome). */
 export interface ItemInstance {
   id: string; // id de l'Item de base
-  stats: Partial<Stats>; // valeurs tirées
+  stats: Partial<Stats>; // valeurs tirées (legacy) ou du palier (rareté)
+  rarete?: Rarete; // absent = objet legacy (pas de halo)
+  resistances?: Partial<Record<Element, number>>; // résistances du palier
+  pa?: number; // PA bonus du palier
 }
 
 /** Bonus de panoplie accordé à partir de `seuil` pièces équipées. */

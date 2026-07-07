@@ -227,7 +227,7 @@ function degatsAvec(
 
   // critique : chance via Force (≤ 50 %), bonus de dégâts via Agilité (+25 % à +60 %)
   let crit = false;
-  if (ctx.rng() < Math.min(0.5, se.force * 0.005)) {
+  if (ctx.rng() < Math.min(0.5, se.force * 0.005 + (se.crit ?? 0) / 100)) { // + crit plat d'équipement
     dmg *= 1 + Math.min(0.6, 0.25 + se.agilite * 0.004);
     crit = true;
   }

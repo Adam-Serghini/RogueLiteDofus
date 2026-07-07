@@ -4,9 +4,9 @@
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, combattantDepuisPerso, bonusEquipement,
-  equiper, desequiper, tenterButin, rollItem,
+  equiper, desequiper, tenterButin, rollItem, tirerRarete,
 } from "./run";
-import { PANOPLIES } from "./data";
+import { PANOPLIES, butinToile } from "./data";
 
 const MIN = () => 0;     // jet au minimum de la fourchette (déterministe)
 const MAX = () => 0.999; // jet au maximum
@@ -67,25 +67,25 @@ describe("bonus d'équipement & panoplie", () => {
 describe("drops", () => {
   it("tenterButin renvoie des exemplaires et autorise les doublons", () => {
     const run = nouvelleRun(["iop"]);
-    const drops = tenterButin(run, "aventurier", "combat", MIN); // rng 0 → tout tombe
+    const drops = tenterButin(run, "tainela", "combat", MIN); // rng 0 → tout tombe (zone legacy)
     expect(drops.length).toBe(4);
     expect(drops[0]).toHaveProperty("stats"); // exemplaire rollé
-    const drops2 = tenterButin(run, "aventurier", "combat", MIN); // re-drop possible
+    const drops2 = tenterButin(run, "tainela", "combat", MIN); // re-drop possible
     expect(drops2.length).toBe(4);
     expect(run.inventaire.length).toBe(8); // doublons cumulés
   });
 
   it("aucun drop si le tirage dépasse la probabilité", () => {
     const run = nouvelleRun(["iop"]);
-    expect(tenterButin(run, "aventurier", "combat", () => 0.99).length).toBe(0);
+    expect(tenterButin(run, "tainela", "combat", () => 0.99).length).toBe(0);
   });
 
   it("la prospection de l'équipe augmente le taux de drop", () => {
     const faible = nouvelleRun(["iop"]);        // prospection 100 → p = 0,20×1,10 = 0,22
     const forte = nouvelleRun(["cra", "sram"]); // prospection 200 → p = 0,20×1,20 = 0,24
     const rng = () => 0.23; // entre les deux seuils
-    expect(tenterButin(faible, "aventurier", "combat", rng).length).toBe(0);
-    expect(tenterButin(forte, "aventurier", "combat", rng).length).toBeGreaterThan(0);
+    expect(tenterButin(faible, "tainela", "combat", rng).length).toBe(0);
+    expect(tenterButin(forte, "tainela", "combat", rng).length).toBeGreaterThan(0);
   });
 });
 
@@ -124,5 +124,34 @@ describe("attaque d'arme (case 1)", () => {
     expect(c.armeSort?.coutPA).toBe(4); // coût propre à l'arme
     expect(c.armeSort?.baseMax).toBe(22); // dégâts propres à l'arme
     expect(c.armeSort?.cible).toBe("ennemi_ligne");
+  });
+});
+
+describe("rareté (objets à toiles)", () => {
+  it("tirerRarete suit les poids 60/25/12/3", () => {
+    expect(tirerRarete(() => 0)).toBe("commun");
+    expect(tirerRarete(() => 0.59)).toBe("commun");
+    expect(tirerRarete(() => 0.61)).toBe("rare");
+    expect(tirerRarete(() => 0.86)).toBe("epique");
+    expect(tirerRarete(() => 0.98)).toBe("legendaire");
+  });
+
+  it("rollItem fige les stats du palier tiré (fixes, pas de roll)", () => {
+    const commun = rollItem("coiffe_boune", () => 0);
+    expect(commun.rarete).toBe("commun");
+    expect(commun.stats).toEqual({ force: 2, vitalite: 4 });
+    expect(commun.resistances).toEqual({ terre: 0.01, feu: 0.01 });
+    const leg = rollItem("coiffe_boune", () => 0.99);
+    expect(leg.rarete).toBe("legendaire");
+    expect(leg.stats).toEqual({ force: 6, vitalite: 12, crit: 2 });
+  });
+
+  it("Incarnam droppe depuis son pool de toile (rareté), Tainéla reste legacy", () => {
+    expect(butinToile("incarnam")).toContain("coiffe_boune");
+    expect(butinToile("tainela")).toBeNull();
+    const run = nouvelleRun(["iop"]);
+    const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
+    expect(drops.length).toBe(4);
+    drops.forEach((d) => expect(d.rarete).toBe("commun"));
   });
 });

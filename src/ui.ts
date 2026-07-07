@@ -13,6 +13,7 @@ import {
   MONSTRES,
   ZONES,
   TRANCHES,
+  RARETE_INFO,
   monstresDeZone,
   OCRE_PALIERS,
   SORT_DOSSIER,
@@ -587,7 +588,7 @@ function choisirSort(s: Spell): void {
 
 // Stats secondaires affichées sur la carte (mêmes formules que le moteur).
 const pctCrit = (s: Stats): number =>
-  Math.round(Math.min(0.5, s.force * 0.005) * 100);
+  Math.round(Math.min(0.5, s.force * 0.005 + (s.crit ?? 0) / 100) * 100);
 const pctDmgCrit = (s: Stats): number =>
   Math.round(Math.min(0.6, 0.25 + s.agilite * 0.004) * 100);
 const pctSoin = (s: Stats): number =>
@@ -1334,6 +1335,7 @@ const STAT_ABBR: Partial<Record<keyof Stats, string>> = {
   chance: "Cha",
   soin: "Soin",
   prospection: "PP",
+  crit: "% Crit",
 };
 const itemImg = (id: string): string => A(`/assets/items/${id}.png`);
 
@@ -1354,6 +1356,39 @@ function itemLignes(
     if (v) parts.push(`+${Math.round(v * 100)} % rés ${elNom[e]}`);
   }
   return parts.join(" · ");
+}
+
+/** Classe CSS de rareté d'un exemplaire ("" pour les objets legacy). */
+const rareteCls = (inst?: ItemInstance | null): string => (inst?.rarete ? ` rarete-${inst.rarete}` : "");
+
+/** Nom d'objet coloré selon la rareté, avec libellé du palier en tooltip. */
+function itemNomHtml(inst: ItemInstance): string {
+  const it = ITEMS[inst.id];
+  const nom = escapeHtml(it?.nom ?? inst.id);
+  if (!inst.rarete) return nom;
+  return `<span class="inom-${inst.rarete}" title="${RARETE_INFO[inst.rarete].nom}">${nom}</span>`;
+}
+
+/** Stats d'un exemplaire en chips colorées (par stat), lisibles d'un coup d'œil. */
+function itemStatsHtml(inst: ItemInstance): string {
+  const it = ITEMS[inst.id];
+  const chips: string[] = [];
+  const chip = (cls: string, txt: string) => chips.push(`<span class="ichip ${cls}">${txt}</span>`);
+  if (it?.pvBonus) chip("ichip-vitalite", `+${it.pvBonus} PV`);
+  for (const k of Object.keys(inst.stats) as (keyof Stats)[]) {
+    const v = inst.stats[k];
+    if (v) chip(`ichip-${k}`, `+${v} ${STAT_ABBR[k] ?? k}`);
+  }
+  if (inst.pa) chip("ichip-pa", `+${inst.pa} PA`);
+  const res = { ...(it?.resistances ?? {}), ...(inst.resistances ?? {}) };
+  for (const e of Object.keys(res) as Element[]) {
+    const v = res[e];
+    if (v) chip(`ichip-res elem-${e}`, `+${Math.round(v * 100)}% ${elNom[e]}`);
+  }
+  // attaque d'arme (palier prioritaire)
+  const att = (inst.rarete ? it?.tiers?.[inst.rarete]?.attaque : undefined) ?? it?.attaque;
+  if (att) chip("ichip-arme", `⚔ ${att.baseMin}–${att.baseMax} (${att.coutPA} PA)`);
+  return `<span class="ichips">${chips.join("")}</span>`;
 }
 
 /** Écran Équipement : équiper/déséquiper les pièces trouvées, par personnage. */
@@ -1382,11 +1417,11 @@ export function showInventaire(
       const slots = SLOTS.map((slot) => {
         const inst = perso.equipement[slot];
         const item = inst ? ITEMS[inst.id] : undefined;
-        return `<div class="equip-slot ${item ? "rempli" : "vide"}" data-slot="${slot}" ${item ? `data-desequip="${slot}" draggable="true"` : ""}>
+        return `<div class="equip-slot ${item ? "rempli" : "vide"}${rareteCls(inst)}" data-slot="${slot}" ${item ? `data-desequip="${slot}" draggable="true"` : ""}>
           <span class="slot-nom">${SLOT_NOM[slot]}</span>
           ${
             item && inst
-              ? `<img class="slot-img" src="${itemImg(item.id)}" alt="" onerror="this.remove()" /><span class="slot-item">${escapeHtml(item.nom)}<small>${itemLignes(inst.stats) || "—"}</small></span>`
+              ? `<img class="slot-img" src="${itemImg(item.id)}" alt="" onerror="this.remove()" /><span class="slot-item">${itemNomHtml(inst)}<small>${itemStatsHtml(inst)}</small></span>`
               : `<span class="slot-vide-txt">— vide —</span>`
           }
         </div>`;
@@ -1397,7 +1432,7 @@ export function showInventaire(
       for (const s of SLOTS) {
         const inst = perso.equipement[s];
         const it = inst ? ITEMS[inst.id] : undefined;
-        if (it) compte[it.panoplie] = (compte[it.panoplie] ?? 0) + 1;
+        if (it?.panoplie) compte[it.panoplie] = (compte[it.panoplie] ?? 0) + 1;
       }
       const panoTxt = Object.entries(compte)
         .map(([pid, n]) => `${PANOPLIES[pid]?.nom ?? pid} ${n}/${PANOPLIES[pid]?.pieces.length ?? 6}`)
@@ -1407,9 +1442,9 @@ export function showInventaire(
         ? inventaire
             .map((inst, i) => {
               const it = ITEMS[inst.id];
-              return `<button class="item-carte" data-index="${i}" draggable="true">
+              return `<button class="item-carte${rareteCls(inst)}" data-index="${i}" draggable="true">
               <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
-              <span class="item-nom">${escapeHtml(it?.nom ?? inst.id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(inst.stats) || "—"}</small></span>
+              <span class="item-nom">${itemNomHtml(inst)}<small>${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
             </button>`;
             })
             .join("")
@@ -1532,9 +1567,9 @@ export function showDrop(drops: ItemInstance[]): Promise<void> {
     const cartes = drops
       .map((inst) => {
         const it = ITEMS[inst.id];
-        return `<div class="drop-item">
+        return `<div class="drop-item${rareteCls(inst)}">
         <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
-        <span class="drop-nom">${escapeHtml(it?.nom ?? inst.id)}<small>${SLOT_NOM[it.slot]} · ${itemLignes(inst.stats) || "—"}</small></span>
+        <span class="drop-nom">${itemNomHtml(inst)}${inst.rarete ? `<span class="drop-rarete inom-${inst.rarete}">${RARETE_INFO[inst.rarete].nom}</span>` : ""}<small>${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
       </div>`;
       })
       .join("");
@@ -1718,6 +1753,7 @@ const STAT_NOM: Record<keyof Stats, string> = {
   vitalite: "Vitalité",
   soin: "Soin",
   prospection: "Prospection",
+  crit: "Critique",
 };
 // Description complète affichée au survol d'une caractéristique (peut contenir du HTML).
 const STAT_AIDE: Record<keyof Stats, string> = {
@@ -1732,6 +1768,7 @@ const STAT_AIDE: Record<keyof Stats, string> = {
   soin: "Puissance des soins prodigués : <b>+0,5 %</b> par point (max 50 %).",
   prospection:
     "Augmente les chances de butin d'équipement (cumulé sur toute l'équipe).",
+  crit: "% plat de coup critique (équipement).",
 };
 // Ta plus haute stat élémentaire (Force/Int/Agi/Chance) définit ton élément de frappe.
 const AIDE_ELEMENT =

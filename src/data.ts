@@ -2,7 +2,8 @@
 //  data.ts — Données du jeu (data-driven)
 //  Classes, sorts, monstres et séquence de la run. Aucune logique ici.
 // =============================================================================
-import type { Classe, Item, Monstre, Panoplie, Spell } from "./types";
+import { ITEMS_TOILES, BUTIN_TOILES } from "./items_gen";
+import type { Classe, Item, Monstre, Panoplie, Rarete, Spell } from "./types";
 
 // --- Sorts -------------------------------------------------------------------
 export const SORTS: Record<string, Spell> = {
@@ -1640,6 +1641,15 @@ export const GEN_CARTE = {
   poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8 } as Record<string, number>,
 };
 
+// --- Rareté d'équipement --------------------------------------------------------
+export const RARETES = ["commun", "rare", "epique", "legendaire"] as const;
+export const RARETE_INFO: Record<Rarete, { nom: string; poids: number }> = {
+  commun: { nom: "Commun", poids: 60 },
+  rare: { nom: "Rare", poids: 25 },
+  epique: { nom: "Épique", poids: 12 },
+  legendaire: { nom: "Légendaire", poids: 3 },
+};
+
 // --- Équipement & panoplies --------------------------------------------------
 // Stats en FOURCHETTES (rolls) tirées au drop — valeurs réelles DofusDB,
 // filtrées aux stats gérées par le moteur (vita/force/int/agi/chance/prospection).
@@ -1717,6 +1727,15 @@ export const ITEMS: Record<string, Item> = {
   kwak_anneau: { id: "kwak_anneau", nom: "Anneau du Kwak", slot: "anneau", panoplie: "kwak", rolls: { force: [6, 10], intelligence: [6, 10], agilite: [6, 10], chance: [6, 10] } },
   kwak_arme: { id: "kwak_arme", nom: "Bec du Kwakwa", slot: "arme", panoplie: "kwak", rolls: { vitalite: [16, 20] }, attaque: { coutPA: 5, baseMin: 24, baseMax: 33, scaling: 0.55 } },
 };
+// objets à rareté (générés depuis scripts/items.csv — voir import-items.mjs)
+Object.assign(ITEMS, ITEMS_TOILES);
+
+/** Pool d'objets à rareté d'une zone (toile = index+1 dans l'ordre de jeu t1) ; null = zone legacy. */
+export function butinToile(zoneId: string): string[] | null {
+  const idx = TRANCHES[0].zones.indexOf(zoneId);
+  if (idx < 0) return null;
+  return BUTIN_TOILES[idx + 1] ?? null;
+}
 
 // Sets de 4 pièces : bonus à 2/4 (moitié / complet).
 export const PANOPLIES: Record<string, Panoplie> = {
