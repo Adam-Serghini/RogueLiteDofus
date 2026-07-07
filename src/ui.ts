@@ -378,6 +378,8 @@ const MENU_FORMATION = A("/assets/menu/Formation.png");
 const MENU_INVENTAIRE = A("/assets/menu/Inventaire.png");
 const MENU_BESTIAIRE = A("/assets/menu/bestiaires.png");
 const MENU_PARAM = A("/assets/menu/parametres.png");
+const MENU_SUCCES = A("/assets/menu/succes.png");
+const MENU_DOFUS = A("/assets/menu/dofus.png");
 const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
 
 /** Les 2 éléments les plus forts d'un perso (stats finales + équipement), comme en combat. */
@@ -983,8 +985,12 @@ export function showStart(
       : `<button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>`;
 
     ecran(`
-      <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
-      <button id="btn-succes" class="coin-param coin-succes" title="Succès">🏆</button>
+      <div class="coin-menu">
+        <button id="btn-dofus" class="coin-param" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
+        <button id="btn-bestiaire" class="coin-param" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
+        <button id="btn-succes" class="coin-param" title="Succès"><img src="${MENU_SUCCES}" alt="Succès" onerror="this.remove()" /></button>
+        <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
+      </div>
       <img class="logo-accueil" src="${LOGO}" alt="Roguefus Lite" onerror="this.remove()" />
       <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
       <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
@@ -1013,6 +1019,18 @@ export function showStart(
       .getElementById("btn-succes")
       ?.addEventListener("click", async () => {
         await showSucces(meta);
+        showStart(meta, onReset, reprise).then(res);
+      });
+    document
+      .getElementById("btn-bestiaire")
+      ?.addEventListener("click", async () => {
+        await showBestiaire(meta);
+        showStart(meta, onReset, reprise).then(res);
+      });
+    document
+      .getElementById("btn-dofus")
+      ?.addEventListener("click", async () => {
+        await showCollectionDofus(meta);
         showStart(meta, onReset, reprise).then(res);
       });
     document
@@ -1956,6 +1974,20 @@ export function showCapture(especes: string[]): Promise<void> {
       <div class="boutons-ecran"><button id="capt-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
     `);
     document.getElementById("capt-ok")?.addEventListener("click", () => res());
+  });
+}
+
+/** Collection de Dofus (accueil) : tout le catalogue, possédés en couleurs. */
+export function showCollectionDofus(meta: Meta): Promise<void> {
+  return new Promise((res) => {
+    const nbUniques = new Set(meta.dofus).size;
+    ecran(`
+      <h1>🐉 Dofus</h1>
+      <p class="sous-titre">${nbUniques} / ${Object.keys(DOFUS).length} reliques collectées. Elles survivent à la mort et se cumulent.</p>
+      ${renderDofusRack(meta)}
+      <div class="boutons-ecran"><button id="dofus-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+    `);
+    document.getElementById("dofus-retour")?.addEventListener("click", () => res());
   });
 }
 

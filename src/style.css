@@ -296,9 +296,17 @@ button:focus-visible {
   color: var(--muet);
   font-weight: 600;
 }
-.coin-succes {
-  right: 64px; /* à gauche du bouton Paramètres */
-  font-size: 1.1rem;
+/* rangée d'icônes de l'accueil (dofus · bestiaire · succès · paramètres) */
+.coin-menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.coin-menu .coin-param {
+  position: static; /* le conteneur gère le placement */
 }
 
 /* Run en cours (accueil) */
