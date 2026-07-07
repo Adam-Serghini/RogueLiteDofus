@@ -15,7 +15,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, PANOPLIES, BUTIN_ZONE, XP_PAR_TYPE, SORTS,
+  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, PANOPLIES, BUTIN_ZONE, XP_PAR_TYPE, SORTS, butinToile,
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
@@ -59,7 +59,7 @@ function mulberry32(a: number): () => number {
 const estSoutien = (classeId: string): boolean =>
   CLASSES[classeId].sorts.some((id) => SORTS[id]?.type === "soin");
 
-/** ItemInstance aux stats = milieu de chaque fourchette (drop « moyen »). */
+/** ItemInstance aux stats = milieu de chaque fourchette (drop « moyen », legacy). */
 function itemMoyen(id: string): ItemInstance {
   const rolls = ITEMS[id]?.rolls ?? {};
   const stats: Partial<Stats> = {};
@@ -70,16 +70,41 @@ function itemMoyen(id: string): ItemInstance {
   return { id, stats };
 }
 
-/** Niveau attendu à l'ENTRÉE de chaque zone, dérivé d'un path d'XP moyen. */
-function courbeNiveaux(): number[] {
+const SLOTS_SIM = ["arme", "coiffe", "cape", "anneau"] as const;
+
+/** Exemplaire d'un objet à rareté au palier demandé (stats fixes). */
+function itemPalier(id: string, rarete: "commun" | "rare"): ItemInstance {
+  const tiers = ITEMS[id].tiers!;
+  const tier = tiers[rarete] ?? tiers[Object.keys(tiers)[0] as keyof typeof tiers]!;
+  return { id, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
+}
+
+/** Meilleur objet du pool de toile pour un slot et une stat (celui qui maximise
+ *  la stat investie du membre, vitalité en départage) — ce qu'un joueur garderait. */
+function meilleurItemToile(pool: string[], slot: string, stat: keyof Stats): string | null {
+  const candidats = pool.filter((id) => ITEMS[id].slot === slot && ITEMS[id].tiers?.commun);
+  if (!candidats.length) return null;
+  const score = (id: string) => {
+    const t = ITEMS[id].tiers!.commun!;
+    return (t.stats[stat] ?? 0) * 10 + (t.stats.vitalite ?? 0);
+  };
+  return candidats.sort((a, b) => score(b) - score(a))[0];
+}
+
+/** Niveaux attendus par zone : à l'ENTRÉE (normales/élites) et en FIN de zone
+ *  (le donjon se joue après les combats de la zone — mesurer le boss au niveau
+ *  d'entrée le rendait artificiellement injouable en début de tranche). */
+function courbeNiveaux(): { entree: number[]; fin: number[] } {
   const p = progressionInitiale();
-  const niveaux: number[] = [];
+  const entree: number[] = [];
+  const fin: number[] = [];
   for (let z = 0; z < ZONES_SIM.length; z++) {
-    niveaux.push(p.niveau);
+    entree.push(p.niveau);
     for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, XP_PAR_TYPE.combat);
     for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, XP_PAR_TYPE.combat_dur);
+    fin.push(p.niveau);
   }
-  return niveaux;
+  return { entree, fin };
 }
 
 /**
@@ -87,16 +112,26 @@ function courbeNiveaux(): number[] {
  * `nbPieces` premières pièces du set `setId` (2 = mi-set réaliste, avec le
  * bonus de panoplie 2 pièces ; défaut = set complet).
  */
-function equipeReference(niveau: number, setId?: string, nbPieces = 4): RunState {
+function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunState {
   const run = nouvelleRun(IDS);
+  const pool = zoneId ? butinToile(zoneId) : null;
   run.persos.forEach((perso, i) => {
     const p = progressionInitiale();
     p.niveau = niveau;
     p.pointsDispo = 5 * (niveau - 1);
     investirN(p, TEAM[i].stat, Infinity);
     perso.progression = p;
-    if (setId) {
-      for (const pieceId of PANOPLIES[setId].pieces.slice(0, nbPieces)) {
+    if (pool) {
+      // zone à toile : chaque membre porte le meilleur objet COMMUN de sa stat
+      // par slot (arme et coiffe d'abord pour le mi-set) — plancher réaliste,
+      // les paliers rare/épique/légendaire rendent le vrai jeu plus facile.
+      for (const slot of SLOTS_SIM.slice(0, nbPieces)) {
+        const id = meilleurItemToile(pool, slot, TEAM[i].stat);
+        if (id) perso.equipement[slot] = itemPalier(id, "commun");
+      }
+    } else if (zoneId) {
+      const setId = BUTIN_ZONE[zoneId];
+      for (const pieceId of PANOPLIES[setId]?.pieces.slice(0, nbPieces) ?? []) {
         perso.equipement[ITEMS[pieceId].slot] = itemMoyen(pieceId);
       }
     }
@@ -156,7 +191,7 @@ function drapeaux(type: string, nu: Bilan, mi: Bilan, set: Bilan): string {
 // --- Rapport -----------------------------------------------------------------
 describe("équilibrage — simulation par rencontre", () => {
   it("rapport", async () => {
-    const niveaux = courbeNiveaux();
+    const { entree: niveaux, fin: niveauxFin } = courbeNiveaux();
     const out: string[] = [];
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
     out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${ELEM_DE_STAT[t.stat as string]})`).join(" ")}`);
@@ -167,19 +202,24 @@ describe("équilibrage — simulation par rencontre", () => {
       const zone = ZONES_SIM[z];
       const niveau = niveaux[z];
       const runNu = equipeReference(niveau);
-      const runMi = equipeReference(niveau, BUTIN_ZONE[zone.id], 2);
-      const runSet = equipeReference(niveau, BUTIN_ZONE[zone.id]);
-      out.push(`── ${zone.nom} (niv ${niveau}, set « ${PANOPLIES[BUTIN_ZONE[zone.id]]?.nom ?? "?"} ») ──`);
+      const runMi = equipeReference(niveau, zone.id, 2);
+      const runSet = equipeReference(niveau, zone.id);
+      out.push(`── ${zone.nom} (niv ${niveau}, ${butinToile(zone.id) ? "toile (objets communs)" : `set « ${PANOPLIES[BUTIN_ZONE[zone.id]]?.nom ?? "?"} »`}) ──`);
       const lignes: Array<{ id: string; type: string }> = [
         ...zone.pools.normales.map((id) => ({ id, type: "normale" })),
         ...zone.pools.elite.map((id) => ({ id, type: "élite" })),
         { id: zone.pools.boss, type: "boss" },
       ];
+      // le donjon se joue en FIN de zone : équipes de boss au niveau de sortie
+      const runNuBoss = equipeReference(niveauxFin[z]);
+      const runMiBoss = equipeReference(niveauxFin[z], zone.id, 2);
+      const runSetBoss = equipeReference(niveauxFin[z], zone.id);
       for (const { id, type } of lignes) {
         const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
-        const nu = await simuler(runNu, id, seed);
-        const mi = await simuler(runMi, id, seed);
-        const set = await simuler(runSet, id, seed);
+        const boss = type === "boss";
+        const nu = await simuler(boss ? runNuBoss : runNu, id, seed);
+        const mi = await simuler(boss ? runMiBoss : runMi, id, seed);
+        const set = await simuler(boss ? runSetBoss : runSet, id, seed);
         const dr = drapeaux(type === "élite" ? "elite" : type, nu, mi, set);
         out.push(
           `  ${type.padEnd(7)} ${id.padEnd(10)} ` +
@@ -194,5 +234,6 @@ describe("équilibrage — simulation par rencontre", () => {
     // eslint-disable-next-line no-console
     console.log(out.join("\n"));
     expect(niveaux.length).toBe(ZONES_SIM.length);
+    expect(niveauxFin.length).toBe(ZONES_SIM.length);
   });
 });

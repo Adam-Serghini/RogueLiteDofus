@@ -421,8 +421,8 @@ export const SORTS: Record<string, Spell> = {
   racines_voraces: {
     id: "racines_voraces", nom: "Racines voraces", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 18, baseMax: 24, scaling: 0.5,
-    soinEquipeRatio: 1.0, cooldownTours: 3,
-    desc: "Tournesol Affamé — draine la cible et rend les dégâts en PV à tout son camp.",
+    soinEquipeRatio: 0.6, cooldownTours: 3,
+    desc: "Tournesol Affamé — draine la cible et rend 60 % des dégâts en PV à tout son camp.",
   },
   colere_royale: {
     id: "colere_royale", nom: "Colère royale", type: "degats", coutPA: 6,
@@ -639,16 +639,16 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/epouvanteur.png",
   },
   gardienne_champetre: {
-    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 95,
-    stats: { force: 18, intelligence: 30, agilite: 28, vitalite: 50 },
+    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 85,
+    stats: { force: 18, intelligence: 20, agilite: 28, vitalite: 50 },
     pa: 6, initiative: 11,
     resistances: { air: 0.2, eau: 0.15, terre: -0.1, feu: -0.15 },
     sorts: ["soin_noir", "picotement"], ia: "soutien", // miniboss : soigne les fleurs
     img: "/assets/monstres/gardienne_champetre.png",
   },
   tournesol_affame: {
-    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 265,
-    stats: { force: 12, intelligence: 40, agilite: 11, vitalite: 75 },
+    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 220,
+    stats: { force: 12, intelligence: 30, agilite: 11, vitalite: 75 },
     pa: 10, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
     sorts: ["racines_voraces", "ecrasement", "charge", "picotement"], ia: "agressif",
@@ -1368,7 +1368,7 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   boss: { nom: "Donjon — Tournesol Affamé", ennemis: [
     { monstre: "tournesol_affame", position: 0 }, { monstre: "gardienne_champetre", position: 1 }, // boss + miniboss devant
-    { monstre: "pissenlit_diabolique", position: 2 }, { monstre: "rose_demoniaque", position: 4 }, // parterre hostile
+    { monstre: "pissenlit_diabolique", position: 2 }, // parterre hostile (4v3 : le drain suffit)
   ] },
 
   // ===== Tainéla — Donjon Bouftou =====
@@ -1627,7 +1627,7 @@ export function zonesDeTranche(tranche: TrancheDef): ZoneDef[] {
 }
 
 /** Récompense d'XP par type de nœud de combat (tunable). */
-export const XP_PAR_TYPE = { combat: 40, combat_dur: 70 } as const;
+export const XP_PAR_TYPE = { combat: 60, combat_dur: 105 } as const;
 
 /** Fraction de PV max rendue par la Taverne. */
 export const TAVERNE_PCT = 0.5;

@@ -64,8 +64,8 @@ describe("signatures des boss", () => {
     lancerSort(boss, SORTS.racines_voraces, iop.ref, [boss, allie, iop], ctx());
     const degats = 500 - iop.pvActuels;
     expect(degats).toBeGreaterThan(0);
-    // soinEquipeRatio 1.0 × multSoin (l'Intelligence scale aussi les soins des monstres)
-    const attendu = Math.round(degats * multSoin(boss.stats));
+    // soinEquipeRatio 0.6 × multSoin (l'Intelligence scale aussi les soins des monstres)
+    const attendu = Math.round(degats * 0.6 * multSoin(boss.stats));
     expect(boss.pvActuels).toBe(Math.min(boss.pvMax, pvAvant + attendu));
   });
 
