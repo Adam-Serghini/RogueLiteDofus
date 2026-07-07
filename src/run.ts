@@ -307,17 +307,23 @@ export function tirerRarete(rng: () => number, disponibles: readonly Rarete[] = 
   return disponibles[0];
 }
 
+/** Exemplaire d'un objet à rareté, tirage restreint aux paliers `autorisees`
+ *  (∩ paliers réellement définis sur l'objet). null si aucun palier ne convient. */
+export function rollItemRarete(itemId: string, rng: () => number, autorisees: readonly Rarete[] = RARETES): ItemInstance | null {
+  const tiers = ITEMS[itemId]?.tiers;
+  if (!tiers) return null;
+  const disponibles = autorisees.filter((r) => tiers[r]);
+  if (!disponibles.length) return null;
+  const rarete = tirerRarete(rng, disponibles);
+  const tier = tiers[rarete]!;
+  return { id: itemId, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
+}
+
 /** Crée un exemplaire d'item. Objet à rareté : palier tiré, stats fixes figées.
  *  Objet legacy : chaque stat tirée dans sa fourchette (jet façon Dofus). */
 export function rollItem(itemId: string, rng: () => number): ItemInstance {
   const item = ITEMS[itemId];
-  const tiers = item?.tiers;
-  if (tiers) {
-    const disponibles = RARETES.filter((r) => tiers[r]);
-    const rarete = tirerRarete(rng, disponibles);
-    const tier = tiers[rarete]!;
-    return { id: itemId, rarete, stats: { ...tier.stats }, resistances: tier.resistances, pa: tier.pa };
-  }
+  if (item?.tiers) return rollItemRarete(itemId, rng)!;
   const stats: Partial<Stats> = {};
   const rolls = item?.rolls ?? {};
   for (const k of Object.keys(rolls) as (keyof Stats)[]) {
@@ -619,19 +625,23 @@ export interface ArticleHDV {
   prix: number;
 }
 
-/** Stock d'un HDV : objets tirés (rareté aux poids normaux) dans la toile de la
- *  zone + toutes les toiles déjà traversées (rattrapage du stuff raté). */
+/** Stock d'un HDV — boutique premium : les objets de la toile COURANTE n'y
+ *  paraissent qu'en épique/légendaire (l'excellence locale — le commun/rare
+ *  se gagne au combat), ceux de la toile SUIVANTE dès le rare (avant-première). */
 export function genererStockHDV(zoneId: string, rng: () => number): ArticleHDV[] {
-  const toileMax = toileDeZone(zoneId);
-  const pool: string[] = [];
-  for (let t = 1; t <= toileMax; t++) {
-    pool.push(...(butinToile(TRANCHES[0].zones[t - 1]) ?? []));
-  }
-  if (!pool.length) return [];
+  const t = toileDeZone(zoneId);
+  const zones = TRANCHES[0].zones;
+  const poolCourante = butinToile(zones[t - 1]) ?? [];
+  const poolSuivante = t < zones.length ? (butinToile(zones[t]) ?? []) : [];
   const stock: ArticleHDV[] = [];
   for (let i = 0; i < KAMAS.tailleStock; i++) {
-    const inst = rollItem(pool[Math.floor(rng() * pool.length)], rng);
-    stock.push({ inst, prix: prixAchat(inst) });
+    // ~40 % d'avant-première quand la toile suivante existe
+    const suivante = poolSuivante.length > 0 && (poolCourante.length === 0 || rng() < 0.4);
+    const pool = suivante ? poolSuivante : poolCourante;
+    if (!pool.length) break;
+    const autorisees: Rarete[] = suivante ? ["rare", "epique", "legendaire"] : ["epique", "legendaire"];
+    const inst = rollItemRarete(pool[Math.floor(rng() * pool.length)], rng, autorisees);
+    if (inst) stock.push({ inst, prix: prixAchat(inst) });
   }
   return stock;
 }

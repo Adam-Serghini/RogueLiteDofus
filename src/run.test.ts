@@ -226,15 +226,25 @@ describe("kamas & Hôtel de vente", () => {
     expect(gainKamas("taverne", 1, mid)).toBe(0);
   });
 
-  it("le stock HDV vient de la toile locale ET des toiles traversées", async () => {
+  it("stock HDV : toile courante en épique+ uniquement, toile suivante dès le rare", async () => {
     const { genererStockHDV, toileDeItem } = await import("./run");
-    // astrub = toile 2 → le stock peut contenir des objets des toiles 1 et 2
-    const stock = genererStockHDV("astrub", () => 0.1);
-    expect(stock.length).toBe(5);
-    stock.forEach((a) => expect(toileDeItem(a.inst.id)).toBeLessThanOrEqual(2));
-    // incarnam = toile 1 → uniquement toile 1
-    const stock1 = genererStockHDV("incarnam", () => 0.9);
-    stock1.forEach((a) => expect(toileDeItem(a.inst.id)).toBe(1));
+    // rng séquencé : on force des articles des deux origines
+    for (const seedFn of [(() => { let i = 0; const seq = [0.9, 0.5, 0.1, 0.5, 0.1, 0.5, 0.9, 0.5, 0.1, 0.5]; return () => seq[i++ % seq.length]; })()]) {
+      const stock = genererStockHDV("incarnam", seedFn); // toile 1 courante, toile 2 suivante
+      expect(stock.length).toBeGreaterThan(0);
+      for (const a of stock) {
+        const t = toileDeItem(a.inst.id);
+        expect([1, 2]).toContain(t);
+        if (t === 1) expect(["epique", "legendaire"]).toContain(a.inst.rarete); // local : épique+
+        else expect(["rare", "epique", "legendaire"]).toContain(a.inst.rarete); // avant-première : rare+
+      }
+    }
+    // astrub = toile 2, pas encore de toile 3 → 100 % local épique+
+    const stock2 = genererStockHDV("astrub", () => 0.3);
+    for (const a of stock2) {
+      expect(toileDeItem(a.inst.id)).toBe(2);
+      expect(["epique", "legendaire"]).toContain(a.inst.rarete);
+    }
   });
 
   it("acheter débite et met l'objet en inventaire ; vendre crédite 50 % du prix", async () => {

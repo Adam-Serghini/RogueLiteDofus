@@ -2123,7 +2123,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[]): Promise<void> {
         : `<p class="muet">Rien à vendre — l'équipement non équipé de l'inventaire se revend ici.</p>`;
       ecran(`
         <h1>🪙 Hôtel de vente</h1>
-        <p class="sous-titre">Achète du stuff de la zone (et des précédentes) — revends tes doublons à ${Math.round(50)} % du prix.</p>
+        <p class="sous-titre">Le rayon local ne propose que l'épique et le légendaire ; les nouveautés de la zone suivante arrivent dès le rare. Revente à 50 % du prix.</p>
         <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
         <div class="equip-corps">
           <div class="equip-col">
