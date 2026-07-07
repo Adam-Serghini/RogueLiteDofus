@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, TAVERNE_PCT, TRANCHES, zonesDeTranche, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, TAVERNE_PCT, TRANCHES, zonesDeTranche, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
 import { restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
@@ -134,8 +134,9 @@ async function resoudreType(
     case "combat_dur": {
       const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur", eliteModif);
       if (!gagne) return "wipe";
-      crediterKamas(run, gainKamas(type, zoneId ? toileDeZone(zoneId) : 1, Math.random));
-      await recompenserXP(run, xp);
+      const toile = zoneId ? toileDeZone(zoneId) : 1;
+      crediterKamas(run, gainKamas(type, toile, Math.random));
+      await recompenserXP(run, Math.round(xp * (1 + XP_PAR_TOILE * (toile - 1))));
       // combat dur modifié → butin au taux donjon (la prise de risque paie)
       await recompenserButin(run, zoneId, type === "combat_dur" ? "donjon" : type);
       return "continue";
