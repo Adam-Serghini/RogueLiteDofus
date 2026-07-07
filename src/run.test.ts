@@ -146,10 +146,10 @@ describe("modificateurs d'élite", () => {
     const { fabriquerEnnemis, appliquerModificateurElite } = await import("./run");
     const avant = fabriquerEnnemis("tai_elite");
     const apres = fabriquerEnnemis("tai_elite");
-    const m = appliquerModificateurElite(apres, () => 0); // index 0 → Enragés (+35 % stats off.)
+    const m = appliquerModificateurElite(apres, () => 0); // index 0 → Enragés (+20 % stats off.)
     expect(m.id).toBe("enrage");
     apres.forEach((e, i) => {
-      expect(e.stats.force).toBe(Math.round(avant[i].stats.force * 1.35));
+      expect(e.stats.force).toBe(Math.round(avant[i].stats.force * 1.2));
       expect(e.stats.vitalite).toBe(avant[i].stats.vitalite); // la vitalité ne bouge pas
       expect(e.pvMax).toBe(avant[i].pvMax);
     });
@@ -157,9 +157,13 @@ describe("modificateurs d'élite", () => {
     const m2 = appliquerModificateurElite(cuirasses, () => 0.4); // index 1 → Cuirassés
     expect(m2.id).toBe("cuirasse");
     cuirasses.forEach((e, i) => {
-      expect(e.pvMax).toBe(Math.round(avant[i].pvMax * 1.3));
-      expect(e.resistances.terre ?? 0).toBeCloseTo((avant[i].resistances.terre ?? 0) + 0.1);
+      expect(e.pvMax).toBe(Math.round(avant[i].pvMax * 1.2));
+      expect(e.resistances.terre ?? 0).toBeCloseTo((avant[i].resistances.terre ?? 0) + 0.05);
     });
+    // le modificateur du nœud (id explicite) prime sur le tirage
+    const veloces = fabriquerEnnemis("tai_elite");
+    expect(appliquerModificateurElite(veloces, () => 0, "veloce").id).toBe("veloce");
+    veloces.forEach((e, i) => expect(e.paMax).toBe(avant[i].paMax + 1));
   });
 });
 
