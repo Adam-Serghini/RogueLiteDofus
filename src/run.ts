@@ -558,6 +558,13 @@ export function chargerRunEnCours(): RunSauvee | null {
     // validation légère : version connue, persos existants dans CLASSES, zoneIdx sain
     if (s.version !== 1 || typeof s.zoneIdx !== "number" || !s.run?.persos?.length) return null;
     if (!s.run.persos.every((p) => CLASSES[p.classeId])) return null;
+    // refontes d'items : purger les exemplaires dont l'espèce n'existe plus
+    s.run.inventaire = (s.run.inventaire ?? []).filter((inst) => ITEMS[inst.id]);
+    for (const perso of s.run.persos) {
+      for (const slot of Object.keys(perso.equipement ?? {}) as EquipSlot[]) {
+        if (perso.equipement[slot] && !ITEMS[perso.equipement[slot]!.id]) delete perso.equipement[slot];
+      }
+    }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
     return s as RunSauvee;
@@ -681,8 +688,12 @@ export interface ArticleHDV {
 export function genererStockHDV(zoneId: string, rng: () => number): ArticleHDV[] {
   const t = toileDeZone(zoneId);
   const zones = TRANCHES[0].zones;
-  const poolCourante = butinToile(zones[t - 1])?.normales ?? [];
-  const poolSuivante = t < zones.length ? (butinToile(zones[t])?.normales ?? []) : [];
+  const tout = (z?: string) => {
+    const pools = z ? butinToile(z) : null;
+    return pools ? [...pools.normales, ...pools.elites, ...pools.boss] : [];
+  };
+  const poolCourante = tout(zones[t - 1]);
+  const poolSuivante = t < zones.length ? tout(zones[t]) : [];
   const stock: ArticleHDV[] = [];
   for (let i = 0; i < KAMAS.tailleStock; i++) {
     // ~40 % d'avant-première quand la toile suivante existe

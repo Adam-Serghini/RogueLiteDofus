@@ -137,17 +137,19 @@ describe("rareté (objets à toiles)", () => {
   });
 
   it("rollItem fige les stats du palier tiré (fixes, pas de roll)", () => {
-    const commun = rollItem("coiffe_boune", () => 0);
+    const commun = rollItem("chapeau_de_l_aventurier", () => 0);
     expect(commun.rarete).toBe("commun");
-    expect(commun.stats).toEqual({ force: 2, vitalite: 4 });
+    expect(commun.stats).toEqual({ vitalite: 4 });
+    expect(commun.adaptatif).toBe(2);
     expect(commun.resistances).toEqual({ terre: 0.01, feu: 0.01 });
-    const leg = rollItem("coiffe_boune", () => 0.99);
+    const leg = rollItem("chapeau_de_l_aventurier", () => 0.99);
     expect(leg.rarete).toBe("legendaire");
-    expect(leg.stats).toEqual({ force: 6, vitalite: 12, crit: 2 });
+    expect(leg.stats).toEqual({ vitalite: 12, crit: 2 });
+    expect(leg.adaptatif).toBe(6);
   });
 
   it("Incarnam droppe depuis son pool de toile (rareté), Tofus reste legacy", () => {
-    expect(butinToile("incarnam")!.normales).toContain("coiffe_boune");
+    expect(butinToile("incarnam")!.normales).toContain("chapeau_de_l_aventurier");
     expect(butinToile("tofus")).toBeNull(); // toile 4 : pas encore saisie
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun

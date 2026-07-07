@@ -5,13 +5,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 // id local → iconId DofusDB (cousins visuels choisis pour les noms inventés)
 const SURCHARGES = {
-  coiffe_boune: 18123, // Boune Charmant (une boune sur la tête, façon Toady)
-  cape_sloque: 17144, // Cape de la Ouassingue (vibe marécageuse)
-  coiffe_champ_champ: 15001, // Champignon (le Champ Champ est un champi)
-  cape_pandawashu: null, // Cape Pandawa déjà en place (pas d'écrasement)
   cape_champ_champ: 17076, // « Cape DU Champ Champ » (article)
   anneau_champ_champ: 9074, // « Anneau DU Champ Champ »
-  plantouze_des_champs: 4045, // « LA Plantouze des Champs »
+  coiffe_champ_champ: 15001, // Champignon (le Champ Champ est un champi)
   coiffe_bouftou: 16041, // « Coiffe DU Bouftou »
   marteau_bouftou: 7023, // « Marteau DU Bouftou »
   cape_du_bouftou: 17044, // Cape Bouffante (laine de bouftou)

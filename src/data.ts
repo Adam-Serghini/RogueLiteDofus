@@ -611,7 +611,7 @@ export const MONSTRES: Record<string, Monstre> = {
 
   // ===== Champs d'Astrub — fleurs (tier 2) =====
   tournesol_sauvage: {
-    id: "tournesol_sauvage", nom: "Tournesol Sauvage", pv: 44,
+    id: "tournesol_sauvage", nom: "Tournesol Sauvage", pv: 37,
     stats: { force: 12, intelligence: 34, agilite: 14, vitalite: 36 },
     pa: 5, initiative: 10,
     resistances: { eau: 0.1, terre: 0.05, feu: -0.1, air: -0.15 },
@@ -620,7 +620,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tournesol_sauvage.png",
   },
   rose_demoniaque: {
-    id: "rose_demoniaque", nom: "Rose Démoniaque", pv: 46,
+    id: "rose_demoniaque", nom: "Rose Démoniaque", pv: 39,
     stats: { force: 14, intelligence: 36, agilite: 16, vitalite: 34 },
     pa: 5, initiative: 11,
     resistances: { feu: 0.3, air: 0.05, terre: -0.2, eau: -0.1 },
@@ -629,7 +629,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/rose_demoniaque.png",
   },
   pissenlit_diabolique: {
-    id: "pissenlit_diabolique", nom: "Pissenlit Diabolique", pv: 47,
+    id: "pissenlit_diabolique", nom: "Pissenlit Diabolique", pv: 40,
     stats: { force: 12, intelligence: 32, agilite: 18, vitalite: 38 },
     pa: 5, initiative: 10,
     resistances: { terre: 0.15, air: 0.1, feu: -0.1 },
@@ -638,7 +638,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/pissenlit_diabolique.png",
   },
   epouvanteur: {
-    id: "epouvanteur", nom: "Épouvanteur", pv: 62,
+    id: "epouvanteur", nom: "Épouvanteur", pv: 53,
     stats: { force: 34, intelligence: 8, agilite: 12, vitalite: 46 },
     pa: 5, initiative: 8,
     resistances: { eau: 0.1, air: 0.05, feu: -0.1 },
@@ -646,7 +646,7 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/epouvanteur.png",
   },
   gardienne_champetre: {
-    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 88,
+    id: "gardienne_champetre", nom: "Gardienne Champêtre", pv: 75,
     stats: { force: 18, intelligence: 20, agilite: 28, vitalite: 50 },
     pa: 6, initiative: 11,
     resistances: { air: 0.2, eau: 0.15, terre: -0.1, feu: -0.15 },
@@ -654,8 +654,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gardienne_champetre.png",
   },
   tournesol_affame: {
-    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 228,
-    stats: { force: 12, intelligence: 30, agilite: 11, vitalite: 75 },
+    id: "tournesol_affame", nom: "Tournesol Affamé", pv: 194,
+    stats: { force: 10, intelligence: 26, agilite: 9, vitalite: 75 },
     pa: 10, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
     sorts: ["racines_voraces", "ecrasement", "charge", "picotement"], ia: "agressif",

@@ -310,7 +310,7 @@ describe("vendre tout (HDV)", () => {
   it("vide l'inventaire et crédite la somme des prix de revente", async () => {
     const { vendreTout, prixVente, rollItem } = await import("./run");
     const run = nouvelleRun(["iop"]);
-    run.inventaire.push(rollItem("coiffe_boune", () => 0), rollItem("le_plussain", () => 0.99));
+    run.inventaire.push(rollItem("chapeau_de_l_aventurier", () => 0), rollItem("anneau_de_l_aventurier", () => 0.99));
     const attendu = run.inventaire.reduce((t, i) => t + prixVente(i), 0);
     expect(vendreTout(run)).toBe(attendu);
     expect(run.kamas).toBe(attendu);
