@@ -63,6 +63,7 @@ import {
   importerSauvegarde,
   prixVente,
   vendreItem,
+  vendreTout,
   acheterArticle,
   type ArticleHDV,
   type RunState as RunStateT,
@@ -2138,7 +2139,9 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[]): Promise<void> {
             <div class="equip-inv">${rayon}</div>
           </div>
           <div class="equip-col">
-            <h3>Ton inventaire (${run.inventaire.length})</h3>
+            <h3>Ton inventaire (${run.inventaire.length})
+              ${run.inventaire.length ? `<button id="hdv-vendre-tout" class="secondaire hdv-tout" title="Vendre tout l'inventaire (l'équipement porté n'est pas concerné)">Vendre tout · ${kamasHtml(run.inventaire.reduce((t, i) => t + prixVente(i), 0))}</button>` : ""}
+            </h3>
             <div class="equip-inv">${vente}</div>
           </div>
         </div>
@@ -2154,6 +2157,9 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[]): Promise<void> {
           if (vendreItem(run, Number(btn.dataset.vente))) draw();
         }),
       );
+      document.getElementById("hdv-vendre-tout")?.addEventListener("click", () => {
+        if (vendreTout(run) > 0) draw();
+      });
       document.getElementById("hdv-retour")?.addEventListener("click", () => res());
     };
     draw();

@@ -671,6 +671,15 @@ export function acheterArticle(run: RunState, stock: ArticleHDV[], index: number
   return true;
 }
 
+/** Vend TOUT l'inventaire (au taux de revente). Renvoie le total encaissé. */
+export function vendreTout(run: RunState): number {
+  let total = 0;
+  for (const inst of run.inventaire) total += prixVente(inst);
+  run.inventaire.length = 0;
+  if (total) crediterKamas(run, total);
+  return total;
+}
+
 /** Vend l'exemplaire `index` de l'inventaire (au taux de revente). */
 export function vendreItem(run: RunState, index: number): boolean {
   const inst = run.inventaire[index];
