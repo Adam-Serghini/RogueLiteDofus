@@ -1633,9 +1633,10 @@ export const TAVERNE_PCT = 0.5;
 
 /** Paramètres de génération de la carte (tunable). */
 export const GEN_CARTE = {
-  lignesMin: 7, // bornes du nombre de rangées (donjon inclus)
-  lignesMax: 9,
-  largeurMax: 4, // largeur du losange au plateau (nb de colonnes) — style Pokelike
+  // bornes du nombre de rangées, donjon inclus (arrondi au PAIR : l'alternance
+  // Pokelike 2/3 doit finir sur une rangée de 2 qui converge vers le donjon)
+  lignesMin: 10,
+  lignesMax: 12,
   // poids des types pour les rangées intermédiaires
   poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8, hdv: 8 } as Record<string, number>,
 };

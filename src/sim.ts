@@ -42,7 +42,7 @@ const TEAM: Array<{ classe: string; stat: keyof Stats }> = [
 const IDS = TEAM.map((t) => t.classe);
 const ELEM_DE_STAT: Record<string, string> = { force: "terre", intelligence: "feu", agilite: "air", chance: "eau" };
 const N = 200; // combats par (rencontre × scénario de stuff)
-const NORMAUX_PAR_ZONE = 5; // path moyen supposé pour la courbe d'XP
+const NORMAUX_PAR_ZONE = 6; // path moyen supposé pour la courbe d'XP (plateau Pokelike ~10 nœuds)
 const ELITES_PAR_ZONE = 1;
 
 // --- PRNG reproductible (mulberry32, pur, sans dépendance) -------------------
