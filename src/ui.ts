@@ -59,6 +59,8 @@ import {
   type RunState,
   type Succes,
   SUCCES,
+  exporterSauvegarde,
+  importerSauvegarde,
 } from "./run";
 import type {
   Action,
@@ -1601,6 +1603,15 @@ export function showSettings(): Promise<void> {
             <span class="setting-lbl">Passer le tour automatiquement<br><small class="muet">quand aucune action n'est possible</small></span>
             <button id="set-auto" class="secondaire ${config.autoFinTour ? "on" : ""}">${config.autoFinTour ? "Activé" : "Désactivé"}</button>
           </div>
+          <div class="setting-ligne">
+            <span class="setting-lbl">Sauvegarde<br><small class="muet">Dofus, succès, réglages et run en cours — pour changer de PC</small></span>
+            <span class="setting-actions">
+              <button id="set-export" class="secondaire">Exporter</button>
+              <button id="set-import" class="secondaire">Importer…</button>
+              <input id="set-import-file" type="file" accept=".json,application/json" style="display:none" />
+            </span>
+          </div>
+          <p id="set-import-msg" class="muet settings-sous" style="display:none"></p>
         </div>
         <h2 class="settings-titre">Préréglages des héros</h2>
         <p class="muet settings-sous">Élément de frappe &amp; position par défaut, appliqués au début de chaque run. « Libre » = allocation manuelle.</p>
@@ -1659,6 +1670,31 @@ export function showSettings(): Promise<void> {
         config.autoFinTour = !config.autoFinTour;
         sauverConfig(config);
         draw();
+      });
+      // export : télécharge un fichier JSON daté
+      document.getElementById("set-export")?.addEventListener("click", () => {
+        const blob = new Blob([exporterSauvegarde()], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `roguefus-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+      // import : lit le fichier, remplace les données locales puis recharge le jeu
+      const fichierImport = document.getElementById("set-import-file") as HTMLInputElement | null;
+      document.getElementById("set-import")?.addEventListener("click", () => fichierImport?.click());
+      fichierImport?.addEventListener("change", async () => {
+        const f = fichierImport.files?.[0];
+        if (!f) return;
+        const msg = document.getElementById("set-import-msg");
+        const ok = importerSauvegarde(await f.text());
+        if (ok) {
+          if (msg) { msg.textContent = "✓ Sauvegarde importée — rechargement…"; msg.style.display = ""; }
+          setTimeout(() => location.reload(), 600); // ré-initialise Meta/config/run proprement
+        } else if (msg) {
+          msg.textContent = "✗ Fichier invalide : ce n'est pas une sauvegarde Roguefus Lite.";
+          msg.style.display = "";
+        }
       });
       document
         .getElementById("set-retour")

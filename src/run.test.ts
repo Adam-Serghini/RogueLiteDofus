@@ -186,3 +186,31 @@ describe("succès", () => {
     expect(verifierSucces(meta).map((s) => s.id)).toContain("collectionneur");
   });
 });
+
+describe("export / import de sauvegarde", () => {
+  it("round-trip : exporter puis importer restitue meta, réglages et run", async () => {
+    const { exporterSauvegarde, importerSauvegarde } = await import("./run");
+    localStorage.setItem("rld_meta_v0", JSON.stringify({ dofus: ["dofawa"], archis: ["tofu"], runs: 5, victoires: 2, succes: ["veteran"] }));
+    localStorage.setItem("rld_settings_v0", JSON.stringify({ autoFinTour: false }));
+    sauverRunEnCours(2, nouvelleRun(["iop", "cra"]));
+    const fichier = exporterSauvegarde();
+
+    // « nouveau PC » : stockage vide
+    localStorage.removeItem("rld_meta_v0");
+    localStorage.removeItem("rld_settings_v0");
+    effacerRunEnCours();
+    expect(importerSauvegarde(fichier)).toBe(true);
+    expect(JSON.parse(localStorage.getItem("rld_meta_v0")!)).toMatchObject({ dofus: ["dofawa"], runs: 5 });
+    expect(JSON.parse(localStorage.getItem("rld_settings_v0")!)).toMatchObject({ autoFinTour: false });
+    expect(chargerRunEnCours()?.zoneIdx).toBe(2);
+  });
+
+  it("rejette les fichiers invalides sans toucher aux données", async () => {
+    const { importerSauvegarde } = await import("./run");
+    localStorage.setItem("rld_meta_v0", JSON.stringify({ dofus: [], archis: [], runs: 1, victoires: 0 }));
+    expect(importerSauvegarde("{pas du json")).toBe(false);
+    expect(importerSauvegarde(JSON.stringify({ jeu: "autre-jeu", donnees: {} }))).toBe(false);
+    expect(importerSauvegarde(JSON.stringify({ jeu: "roguefus-lite", donnees: {} }))).toBe(false); // pas de Meta
+    expect(JSON.parse(localStorage.getItem("rld_meta_v0")!).runs).toBe(1); // intact
+  });
+});

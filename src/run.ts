@@ -561,6 +561,40 @@ export function verifierSucces(meta: Meta, run?: RunState, victoire?: boolean): 
   return nouveaux;
 }
 
+// --- Export / import de sauvegarde (changement de PC) ---------------------------
+const CLES_SAUVEGARDE = ["rld_meta_v0", "rld_settings_v0", "rld_run_v0"] as const;
+
+/** Toutes les données persistées, en un JSON portable (fichier téléchargeable). */
+export function exporterSauvegarde(): string {
+  const donnees: Record<string, unknown> = {};
+  for (const cle of CLES_SAUVEGARDE) {
+    try {
+      const raw = localStorage.getItem(cle);
+      if (raw) donnees[cle] = JSON.parse(raw);
+    } catch {
+      /* clé illisible : ignorée */
+    }
+  }
+  return JSON.stringify({ jeu: "roguefus-lite", version: 1, date: new Date().toISOString(), donnees }, null, 2);
+}
+
+/** Restaure une sauvegarde exportée. Renvoie false si le fichier est invalide.
+ *  Les validations fines (rétro-compat…) sont faites par les loaders au reload. */
+export function importerSauvegarde(json: string): boolean {
+  try {
+    const s = JSON.parse(json) as { jeu?: string; version?: number; donnees?: Record<string, unknown> };
+    if (s.jeu !== "roguefus-lite" || typeof s.donnees !== "object" || !s.donnees) return false;
+    if (!s.donnees["rld_meta_v0"]) return false; // une sauvegarde sans Meta n'en est pas une
+    for (const cle of CLES_SAUVEGARDE) {
+      if (s.donnees[cle] !== undefined) localStorage.setItem(cle, JSON.stringify(s.donnees[cle]));
+      else localStorage.removeItem(cle); // ex. pas de run en cours dans l'export
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // --- Meta (persistance) ------------------------------------------------------
 const STORAGE_KEY = "rld_meta_v0";
 

@@ -245,6 +245,11 @@ button:focus-visible {
   text-shadow: 0 1px 2px #fff8;
 }
 
+.setting-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
 /* Modificateur d'élite affiché sous le nœud « combat dur » */
 .mn-modif {
   display: block;
