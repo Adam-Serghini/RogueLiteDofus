@@ -36,13 +36,14 @@ interface ResultatCombat {
   combatants: Combatant[];
 }
 
-async function resoudreCombat(run: RunState, combatId: string, elite = false): Promise<ResultatCombat> {
+async function resoudreCombat(run: RunState, combatId: string, elite = false, eliteModif?: string): Promise<ResultatCombat> {
   let titre = COMBATS[combatId]?.nom ?? "Combat";
   const equipe = equipeCombattante(run);
   const ennemis = fabriquerEnnemis(combatId);
   if (elite) {
-    // combat dur : toute la meute reçoit un modificateur tiré au sort
-    const modif = appliquerModificateurElite(ennemis, Math.random);
+    // combat dur : le modificateur vient du nœud (affiché au survol sur la carte) ;
+    // absent (zaap, vieille save) → tirage aléatoire
+    const modif = appliquerModificateurElite(ennemis, Math.random, eliteModif);
     titre = `${titre} · ${modif.nom} (${modif.desc})`;
   }
   appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
@@ -125,12 +126,12 @@ const LABEL_FR: Record<NodeType, string> = {
 };
 
 async function resoudreType(
-  run: RunState, type: NodeType, combatId: string | undefined, xp: number, zoneId?: string,
+  run: RunState, type: NodeType, combatId: string | undefined, xp: number, zoneId?: string, eliteModif?: string,
 ): Promise<Issue> {
   switch (type) {
     case "combat":
     case "combat_dur": {
-      const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur");
+      const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur", eliteModif);
       if (!gagne) return "wipe";
       await recompenserXP(run, xp);
       // combat dur modifié → butin au taux donjon (la prise de risque paie)
@@ -206,7 +207,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
     let xp = node.xp ?? 0;
     if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools));
 
-    const issue = await resoudreType(run, type, combatId, xp, zone.id);
+    const issue = await resoudreType(run, type, combatId, xp, zone.id, node.eliteModif);
 
     node.visite = true;
     run.carte!.courant = node.id;

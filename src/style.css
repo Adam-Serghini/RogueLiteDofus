@@ -245,6 +245,16 @@ button:focus-visible {
   text-shadow: 0 1px 2px #fff8;
 }
 
+/* Modificateur d'élite affiché sous le nœud « combat dur » */
+.mn-modif {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* Rareté d'équipement : halos vert / bleu / violet / doré */
 :root {
   --r-commun: #58c15e;

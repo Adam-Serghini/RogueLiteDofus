@@ -14,6 +14,7 @@ import {
   ZONES,
   TRANCHES,
   RARETE_INFO,
+  MODIFICATEURS_ELITE,
   monstresDeZone,
   OCRE_PALIERS,
   SORT_DOSSIER,
@@ -2158,12 +2159,16 @@ export function showCarte(
           ]
             .filter(Boolean)
             .join(" ");
-          return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px">
+          const modif = n.type === "combat_dur" ? MODIFICATEURS_ELITE.find((m) => m.id === n.eliteModif) : undefined;
+          const tip = modif ? ` data-tip="${escapeHtml(`Combat dur — ${modif.nom}
+${modif.desc}
+Butin au taux donjon.`)}"` : "";
+          return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px"${tip}>
             <span class="case-art">
               <img class="case-img" src="${caseAsset(n)}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
               <span class="mn-icon" style="display:none">${NODE_ICON[n.type]}</span>
             </span>
-            <span class="mn-lbl">${NODE_LABEL[n.type]}</span>
+            <span class="mn-lbl">${NODE_LABEL[n.type]}${modif ? `<small class="mn-modif">${escapeHtml(modif.nom)}</small>` : ""}</span>
           </button>`;
         })
         .join("");

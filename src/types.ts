@@ -325,6 +325,7 @@ export interface MapNode {
   visite?: boolean;
   combatId?: string; // pour les nœuds de combat : quel encounter
   xp?: number; // récompense XP (combats)
+  eliteModif?: string; // combat_dur : id du modificateur (tiré à la génération, affiché au survol)
 }
 
 export interface GameMap {

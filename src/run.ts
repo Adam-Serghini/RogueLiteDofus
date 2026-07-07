@@ -415,9 +415,12 @@ export function fabriquerEnnemis(combatKey: string): Combatant[] {
   return def.ennemis.map((e, i) => depuisMonstre(MONSTRES[e.monstre], `e${i}_${e.monstre}`, e.position));
 }
 
-/** Applique un modificateur d'élite tiré au sort à TOUTE la meute (combat dur). */
-export function appliquerModificateurElite(enemies: Combatant[], rng: () => number): ModificateurElite {
-  const m = MODIFICATEURS_ELITE[Math.floor(rng() * MODIFICATEURS_ELITE.length)];
+/** Applique un modificateur d'élite à TOUTE la meute (combat dur). `modifId`
+ *  vient du nœud (tiré à la génération, affiché au survol) ; absent (zaap,
+ *  vieille save) → tirage aléatoire. */
+export function appliquerModificateurElite(enemies: Combatant[], rng: () => number, modifId?: string): ModificateurElite {
+  const m = MODIFICATEURS_ELITE.find((x) => x.id === modifId)
+    ?? MODIFICATEURS_ELITE[Math.floor(rng() * MODIFICATEURS_ELITE.length)];
   for (const e of enemies) {
     if (m.statMult) {
       const st = e.stats;

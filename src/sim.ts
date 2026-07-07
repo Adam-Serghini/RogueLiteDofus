@@ -21,7 +21,7 @@ import {
 import { runCombat, controllerIA } from "./combat";
 import { progressionInitiale, gagnerXP, investirN } from "./progression";
 import {
-  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso,
+  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateurElite,
   type RunState,
 } from "./run";
 import type { ItemInstance, Stats } from "./types";
@@ -143,14 +143,16 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
 // --- Simulation d'une rencontre ----------------------------------------------
 interface Bilan { win: number; turns: number; hpWin: number; maxTurns: number; }
 
-async function simuler(run: RunState, combatId: string, seed0: number): Promise<Bilan> {
+async function simuler(run: RunState, combatId: string, seed0: number, elite = false): Promise<Bilan> {
   let wins = 0, turnsTot = 0, hpWinTot = 0, maxTurns = 0;
   for (let i = 0; i < N; i++) {
     const equipe = equipeCombattante(run);
     run.persos.forEach((p, j) => { if (estSoutien(p.classeId)) equipe[j].ia = "soutien"; });
-    const cs = [...equipe, ...fabriquerEnnemis(combatId)];
-    let turns = 0;
     const rng = mulberry32((seed0 + i * 0x9e3779b9) >>> 0);
+    const ennemis = fabriquerEnnemis(combatId);
+    if (elite) appliquerModificateurElite(ennemis, rng); // comme en jeu : la meute est modifiée
+    const cs = [...equipe, ...ennemis];
+    let turns = 0;
     const win = await runCombat(cs, {
       controllers: { joueur: controllerIA, ennemi: controllerIA },
       rng,
@@ -217,9 +219,10 @@ describe("équilibrage — simulation par rencontre", () => {
       for (const { id, type } of lignes) {
         const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
         const boss = type === "boss";
-        const nu = await simuler(boss ? runNuBoss : runNu, id, seed);
-        const mi = await simuler(boss ? runMiBoss : runMi, id, seed);
-        const set = await simuler(boss ? runSetBoss : runSet, id, seed);
+        const elite = type === "élite";
+        const nu = await simuler(boss ? runNuBoss : runNu, id, seed, elite);
+        const mi = await simuler(boss ? runMiBoss : runMi, id, seed, elite);
+        const set = await simuler(boss ? runSetBoss : runSet, id, seed, elite);
         const dr = drapeaux(type === "élite" ? "elite" : type, nu, mi, set);
         out.push(
           `  ${type.padEnd(7)} ${id.padEnd(10)} ` +

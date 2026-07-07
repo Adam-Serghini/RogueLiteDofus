@@ -1,7 +1,7 @@
 // =============================================================================
 //  carte.ts — Génération et navigation du plateau (pur, rng injecté).
 // =============================================================================
-import { GEN_CARTE, XP_PAR_TYPE } from "./data";
+import { GEN_CARTE, XP_PAR_TYPE, MODIFICATEURS_ELITE } from "./data";
 import type { ZonePools } from "./data";
 import type { GameMap, MapNode, NodeType } from "./types";
 
@@ -33,6 +33,7 @@ function enrichir(rng: Rng, node: MapNode, pools: ZonePools): void {
     case "combat_dur":
       node.combatId = pick(rng, pools.elite);
       node.xp = XP_PAR_TYPE.combat_dur;
+      node.eliteModif = pick(rng, MODIFICATEURS_ELITE).id; // connu d'avance → affiché au survol
       break;
     case "donjon":
       node.combatId = pools.boss;

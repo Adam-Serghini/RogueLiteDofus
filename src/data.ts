@@ -593,8 +593,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/sergent_chafer.png",
   },
   kardorim: {
-    id: "kardorim", nom: "Kardorim", pv: 165,
-    stats: { force: 18, intelligence: 27, agilite: 12, vitalite: 55 },
+    id: "kardorim", nom: "Kardorim", pv: 145,
+    stats: { force: 18, intelligence: 24, agilite: 12, vitalite: 55 },
     pa: 10, initiative: 9,
     resistances: { feu: 0.25, air: 0.1, terre: -0.2, eau: -0.15 },
     sorts: ["etreinte_glaciale", "ecrasement", "charge", "morsure"], ia: "agressif",
@@ -1349,7 +1349,6 @@ export const COMBATS: Record<string, CombatDef> = {
   ] },
   inc_boss: { nom: "Donjon — Kardorim", ennemis: [
     { monstre: "kardorim", position: 0 }, { monstre: "sergent_chafer", position: 1 }, // boss + miniboss devant
-    { monstre: "chafer_piquier", position: 2 }, // garde rapprochée (4v3 : 1er boss)
   ] },
 
   // ===== Champs d'Astrub — fleurs (ids historiques, conservés) =====
@@ -1877,9 +1876,9 @@ export interface ModificateurElite {
   paBonus?: number;
 }
 export const MODIFICATEURS_ELITE: ModificateurElite[] = [
-  { id: "enrage", nom: "Enragés", desc: "+35 % aux caractéristiques offensives", statMult: 1.35 },
-  { id: "cuirasse", nom: "Cuirassés", desc: "+30 % de PV et +10 % de résistances", pvMult: 1.3, resAll: 0.1 },
-  { id: "veloce", nom: "Véloces", desc: "+6 d'initiative et +1 PA", initBonus: 6, paBonus: 1 },
+  { id: "enrage", nom: "Enragés", desc: "+20 % aux caractéristiques offensives", statMult: 1.2 },
+  { id: "cuirasse", nom: "Cuirassés", desc: "+20 % de PV et +5 % de résistances", pvMult: 1.2, resAll: 0.05 },
+  { id: "veloce", nom: "Véloces", desc: "+4 d'initiative et +1 PA", initBonus: 4, paBonus: 1 },
 ];
 
 // --- Archimonstres & Dofus Ocre ----------------------------------------------
