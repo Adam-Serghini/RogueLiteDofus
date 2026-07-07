@@ -1573,7 +1573,7 @@ export interface ZoneDef {
 export const ZONES: ZoneDef[] = [
   { id: "incarnam", nom: "Incarnam",
     pools: { normales: ["inc_1", "inc_2", "inc_3"], elite: ["inc_elite"], boss: "inc_boss" },
-    sansNoeuds: ["otomai", "hdv"] }, // pas de restat ni d'HDV en zone de départ (0 kama)
+    sansNoeuds: ["otomai"] }, // pas de restat en zone de départ (l'HDV, lui, sert à revendre)
   { id: "astrub", nom: "Champs d'Astrub",
     pools: { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: "boss" } },
   { id: "tainela", nom: "Tainéla",

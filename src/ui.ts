@@ -2210,7 +2210,7 @@ export function showCarte(
   zoneNom: string,
   inventaire: ItemInstance[] = [],
   kamas = 0,
-): Promise<MapNode | "accueil" | "recommencer"> {
+): Promise<MapNode | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   return new Promise((res) => {
     const draw = () => {
       const maxL = Math.max(...carte.noeuds.map((n) => n.ligne));
@@ -2313,7 +2313,8 @@ Butin au taux donjon.`)}"` : "";
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
               <span class="aside-sep"></span>
               <button id="carte-accueil" class="aside-icone aside-emoji" title="Retour à l'accueil (la run reste sauvegardée)">🏠</button>
-              <button id="carte-restart" class="aside-icone aside-emoji" title="Recommencer une run (abandonne celle-ci)">↻</button>
+              <button id="carte-restart" class="aside-icone aside-emoji" title="Recommencer avec les mêmes héros (abandonne la run en cours)">↻</button>
+              <button id="carte-restart-choix" class="aside-icone aside-emoji" title="Recommencer en choisissant d'autres héros (abandonne la run en cours)">👥</button>
             </div>
           </aside>
           <div class="map-main">
@@ -2376,26 +2377,12 @@ Butin au taux donjon.`)}"` : "";
         ?.addEventListener("click", () => res("accueil"));
       document
         .getElementById("carte-restart")
-        ?.addEventListener("click", () => res("recommencer"));
+        ?.addEventListener("click", () => res("recommencer-memes"));
+      document
+        .getElementById("carte-restart-choix")
+        ?.addEventListener("click", () => res("recommencer-choix"));
     };
     draw();
   });
 }
 
-/** Confirmation de redémarrage : mêmes héros, nouveau choix, ou annuler. */
-export function showRecommencer(): Promise<"memes" | "choix" | null> {
-  return new Promise((res) => {
-    ecran(`
-      <h1>↻ Recommencer une run ?</h1>
-      <p class="sous-titre">La run en cours est abandonnée (comptée comme échouée). Tes Dofus, captures et succès sont conservés.</p>
-      <div class="boutons-ecran boutons-colonne">
-        <button id="re-memes" class="secondaire">Recommencer avec les mêmes héros</button>
-        <button id="re-choix" class="secondaire">Choisir d'autres héros</button>
-        <button id="re-annule" class="btn-retour" title="Continuer la run"><img src="${BTN_RETOUR}" alt="Annuler" onerror="this.remove()" /></button>
-      </div>
-    `);
-    document.getElementById("re-memes")?.addEventListener("click", () => res("memes"));
-    document.getElementById("re-choix")?.addEventListener("click", () => res("choix"));
-    document.getElementById("re-annule")?.addEventListener("click", () => res(null));
-  });
-}

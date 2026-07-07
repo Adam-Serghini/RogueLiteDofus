@@ -208,12 +208,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
   for (;;) {
     const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas);
     if (node === "accueil") return "accueil"; // la run reste sauvegardée → « Reprendre »
-    if (node === "recommencer") {
-      const choix = await ui.showRecommencer();
-      if (choix === "memes") return "recommencer-memes";
-      if (choix === "choix") return "recommencer-choix";
-      continue; // annulé → retour au plateau
-    }
+    if (node === "recommencer-memes" || node === "recommencer-choix") return node;
 
     let { type } = node;
     let combatId = node.combatId;
