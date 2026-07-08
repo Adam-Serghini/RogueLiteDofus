@@ -138,12 +138,21 @@ export function init(el: HTMLElement): void {
   });
 }
 
+// Tous les tooltips flottants vivent HORS de #app : un re-render (clic sur un
+// nœud, action de combat…) détache l'élément survolé sans émettre de mouseout,
+// laissant l'infobulle orpheline à l'écran. On les cache donc centralement.
+const tipsFlottants: HTMLElement[] = [];
+function masquerTooltips(): void {
+  for (const t of tipsFlottants) t.style.display = "none";
+}
+
 /** Tooltip partagé pour la collection de Dofus (survol). */
 function initDofusTooltip(): void {
   const tip = document.createElement("div");
   tip.className = "dofus-tip";
   tip.style.display = "none";
   document.body.appendChild(tip);
+  tipsFlottants.push(tip);
 
   const placer = (slot: HTMLElement) => {
     const nom = slot.dataset.nom ?? "";
@@ -258,6 +267,7 @@ function initSortTooltip(): void {
   tip.className = "sort-tip";
   tip.style.display = "none";
   document.body.appendChild(tip);
+  tipsFlottants.push(tip);
 
   const placer = (btn: HTMLElement) => {
     const s = btn.dataset.arme ? activeActeur?.armeSort : btn.dataset.sort ? SORTS[btn.dataset.sort] : null;
@@ -296,6 +306,7 @@ function initAideTooltip(): void {
   tip.className = "aide-tip";
   tip.style.display = "none";
   document.body.appendChild(tip);
+  tipsFlottants.push(tip);
 
   const placer = (host: HTMLElement) => {
     const txt = host.dataset.tip;
@@ -741,6 +752,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
 
 function render(): void {
   if (!root) return;
+  masquerTooltips(); // le re-render détache l'élément survolé sans mouseout
 
   // cibles cliquables pour le sort sélectionné
   const ciblesActuelles =
@@ -959,6 +971,7 @@ function renderBarreSorts(): string {
 
 // --- Écrans ------------------------------------------------------------------
 function ecran(html: string): void {
+  masquerTooltips(); // l'élément survolé disparaît sans mouseout : pas d'infobulle orpheline
   root.innerHTML = `<div class="ecran">${html}</div>`;
 }
 
