@@ -439,7 +439,7 @@ export const SORTS: Record<string, Spell> = {
   },
   pique_fulgurant: {
     id: "pique_fulgurant", nom: "Piqué fulgurant", type: "degats", coutPA: 6,
-    cible: "ennemi_ligne", baseMin: 26, baseMax: 34, scaling: 0.6,
+    cible: "ennemi_ligne", baseMin: 15, baseMax: 21, scaling: 0.45,
     effetLanceur: { stat: "esquive", valeur: 0.25, duree: 2 }, cooldownTours: 3,
     desc: "Batofu — plonge sur sa proie puis vole en zigzag : +25 % d'esquive (2t).",
   },
@@ -723,8 +723,8 @@ export const MONSTRES: Record<string, Monstre> = {
   // Iconique : essaim volant, attaquants Air (agilité dominante) ;
   // le gros du groupe est faible au Feu (sauf le Tofu de base, weak Terre/Air).
   tofu: {
-    id: "tofu", nom: "Tofu", pv: 51,
-    stats: { force: 6, intelligence: 6, agilite: 32, vitalite: 42 },
+    id: "tofu", nom: "Tofu", pv: 36,
+    stats: { force: 4, intelligence: 4, agilite: 24, vitalite: 42 },
     pa: 4, initiative: 12,
     resistances: { feu: 0.15, eau: 0.1, terre: -0.1, air: -0.1 },
     sorts: ["coup_de_bec"], ia: "agressif",
@@ -732,32 +732,32 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofu.png",
   },
   tofu_noir: {
-    id: "tofu_noir", nom: "Tofu Noir", pv: 56,
-    stats: { force: 8, intelligence: 6, agilite: 34, vitalite: 46 },
+    id: "tofu_noir", nom: "Tofu Noir", pv: 39,
+    stats: { force: 6, intelligence: 4, agilite: 26, vitalite: 46 },
     pa: 4, initiative: 13,
     resistances: { eau: 0.15, air: 0.15, terre: 0.1, feu: -0.15 },
     sorts: ["coup_de_bec"], ia: "agressif",
     img: "/assets/monstres/tofu_noir.png",
   },
   tofukaz: {
-    id: "tofukaz", nom: "Tofukaz", pv: 49,
-    stats: { force: 6, intelligence: 6, agilite: 40, vitalite: 38 },
+    id: "tofukaz", nom: "Tofukaz", pv: 34,
+    stats: { force: 4, intelligence: 4, agilite: 30, vitalite: 38 },
     pa: 5, initiative: 16, // rapide et fragile
     resistances: { terre: 0.25, air: 0.1, eau: -0.1, feu: -0.15 },
     sorts: ["tir_courbe", "coup_de_bec"], ia: "agressif",
     img: "/assets/monstres/tofukaz.png",
   },
   tofoune: {
-    id: "tofoune", nom: "Tofoune", pv: 51,
-    stats: { force: 6, intelligence: 8, agilite: 12, chance: 30, vitalite: 42 }, // frappe Eau (piaillarde)
+    id: "tofoune", nom: "Tofoune", pv: 36,
+    stats: { force: 4, intelligence: 6, agilite: 9, chance: 22, vitalite: 42 }, // frappe Eau (piaillarde)
     pa: 4, initiative: 11,
     resistances: { eau: 0.15, air: 0.1, terre: -0.1 },
     sorts: ["coup_de_bec"], ia: "agressif",
     img: "/assets/monstres/tofoune.png",
   },
   tofu_mutant: {
-    id: "tofu_mutant", nom: "Tofu Mutant", pv: 90,
-    stats: { force: 12, intelligence: 8, agilite: 33, vitalite: 62 }, // élite du donjon
+    id: "tofu_mutant", nom: "Tofu Mutant", pv: 63,
+    stats: { force: 9, intelligence: 6, agilite: 25, vitalite: 62 }, // élite du donjon
     pa: 5, initiative: 12,
     resistances: { eau: 0.2, terre: 0.15, air: -0.15, feu: -0.2 },
     sorts: ["morsure"], ia: "agressif",
@@ -773,16 +773,16 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/tofu_malefique.png",
   },
   tofu_ventripotent: {
-    id: "tofu_ventripotent", nom: "Tofu Ventripotent", pv: 178,
-    stats: { force: 14, intelligence: 10, agilite: 30, vitalite: 96 },
+    id: "tofu_ventripotent", nom: "Tofu Ventripotent", pv: 125,
+    stats: { force: 10, intelligence: 8, agilite: 22, vitalite: 96 },
     pa: 5, initiative: 6, // miniboss encaisseur
     resistances: { air: 0.2, feu: 0.15, eau: 0.1, terre: -0.2 },
     sorts: ["morsure", "charge"], ia: "agressif",
     img: "/assets/monstres/tofu_ventripotent.png",
   },
   batofu: {
-    id: "batofu", nom: "Batofu", pv: 490,
-    stats: { force: 5, intelligence: 6, agilite: 49, vitalite: 110 },
+    id: "batofu", nom: "Batofu", pv: 343,
+    stats: { force: 2, intelligence: 3, agilite: 22, vitalite: 110 },
     pa: 10, initiative: 11,
     resistances: { air: 0.25, terre: 0.1, eau: -0.05, feu: -0.15 },
     sorts: ["pique_fulgurant", "ecrasement", "charge", "morsure"], ia: "agressif",

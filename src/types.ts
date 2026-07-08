@@ -51,6 +51,8 @@ export interface Item {
   rolls?: StatRolls; // fourchettes de stats tirées au drop (legacy)
   tiers?: Partial<Record<Rarete, TierItem>>; // objets à rareté (stats fixes par palier)
   source?: "boss" | "elite"; // drop exclusif : donjon uniquement / combat dur uniquement
+  paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip : pari de PA à chaque tour
+  ligneAvant?: boolean; // équipable UNIQUEMENT sur un perso de la ligne avant (Cape Edepee)
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
@@ -282,6 +284,7 @@ export interface Combatant {
   effets: EffetActif[];
   img?: string; // chemin du portrait/sprite
   mueElementaire?: number; // signature du Kwakwa (cf. Monstre.mueElementaire)
+  paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip portée
   bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)
   invoquePar?: string; // ref de l'invocateur (monstres invoqués en combat)
   elementChoisi?: Element; // élément de frappe choisi (parmi les 2 plus forts) ; sinon = le plus fort

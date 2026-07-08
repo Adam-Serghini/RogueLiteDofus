@@ -949,6 +949,348 @@ export const ITEMS_TOILES: Record<string, Item> = {
       }
     },
     "source": "elite"
+  },
+  "coiffe_du_tofu": {
+    "id": "coiffe_du_tofu",
+    "nom": "Coiffe du Tofu",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {},
+        "adaptatif": 6,
+        "resistances": {
+          "air": 0.02
+        }
+      },
+      "rare": {
+        "stats": {},
+        "adaptatif": 8,
+        "resistances": {
+          "air": 0.04
+        }
+      },
+      "epique": {
+        "stats": {},
+        "adaptatif": 10,
+        "resistances": {
+          "air": 0.06
+        }
+      },
+      "legendaire": {
+        "stats": {},
+        "adaptatif": 16,
+        "resistances": {
+          "air": 0.08
+        }
+      }
+    }
+  },
+  "cape_du_tofu": {
+    "id": "cape_du_tofu",
+    "nom": "Cape du Tofu",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {},
+        "adaptatif": 4,
+        "resistances": {
+          "air": 0.02
+        }
+      },
+      "rare": {
+        "stats": {},
+        "adaptatif": 6,
+        "resistances": {
+          "air": 0.04
+        }
+      },
+      "epique": {
+        "stats": {},
+        "adaptatif": 8,
+        "resistances": {
+          "air": 0.06
+        }
+      },
+      "legendaire": {
+        "stats": {},
+        "adaptatif": 12,
+        "resistances": {
+          "air": 0.08
+        }
+      }
+    }
+  },
+  "anneau_du_tofu": {
+    "id": "anneau_du_tofu",
+    "nom": "Anneau du Tofu",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 2
+      },
+      "rare": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 3
+      },
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 3
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 5
+        },
+        "adaptatif": 4
+      }
+    }
+  },
+  "baguette_du_tofu": {
+    "id": "baguette_du_tofu",
+    "nom": "Baguette du Tofu",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 2,
+          "crit": 1
+        },
+        "adaptatif": 3,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 13,
+          "baseMax": 18,
+          "scaling": 0.4
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 4,
+          "crit": 1
+        },
+        "adaptatif": 4,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 13,
+          "baseMax": 18,
+          "scaling": 0.4
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 6,
+          "crit": 1
+        },
+        "adaptatif": 5,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 14,
+          "baseMax": 19,
+          "scaling": 0.4
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 2
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 15,
+          "baseMax": 21,
+          "scaling": 0.42
+        }
+      }
+    }
+  },
+  "le_houde": {
+    "id": "le_houde",
+    "nom": "Le Houde",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 16
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 20
+        },
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 30
+        },
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 45
+        },
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04,
+          "eau": 0.04
+        }
+      }
+    }
+  },
+  "baton_du_maitre_des_tabis": {
+    "id": "baton_du_maitre_des_tabis",
+    "nom": "Bâton du Maître des Tabis",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 1
+        },
+        "resistances": {
+          "terre": 0.01,
+          "eau": 0.02,
+          "air": 0.02
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 12,
+          "baseMax": 16,
+          "scaling": 0.38
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14,
+          "crit": 1
+        },
+        "resistances": {
+          "terre": 0.01,
+          "eau": 0.03,
+          "air": 0.04
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 12,
+          "baseMax": 16,
+          "scaling": 0.38
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 18,
+          "crit": 2
+        },
+        "resistances": {
+          "terre": 0.02,
+          "eau": 0.05,
+          "air": 0.06
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 13,
+          "baseMax": 17,
+          "scaling": 0.38
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 25,
+          "crit": 3
+        },
+        "resistances": {
+          "terre": 0.03,
+          "eau": 0.06,
+          "air": 0.08
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 14,
+          "baseMax": 19,
+          "scaling": 0.4
+        }
+      }
+    }
+  },
+  "chance_d_ecaflip": {
+    "id": "chance_d_ecaflip",
+    "nom": "Chance d'Ecaflip",
+    "slot": "anneau",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 7
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 10
+      }
+    },
+    "source": "boss",
+    "paGamble": {
+      "pPlus": 0.3333333333333333,
+      "plus": 1,
+      "moins": 1
+    }
+  },
+  "cape_edepee": {
+    "id": "cape_edepee",
+    "nom": "Cape Edepee",
+    "slot": "cape",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 14,
+          "crit": 3
+        },
+        "adaptatif": 12,
+        "resistances": {
+          "terre": -0.06,
+          "feu": -0.06,
+          "eau": -0.06,
+          "air": -0.06
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 20,
+          "crit": 5
+        },
+        "adaptatif": 20,
+        "resistances": {
+          "terre": -0.04,
+          "feu": -0.04,
+          "eau": -0.04,
+          "air": -0.04
+        }
+      }
+    },
+    "source": "boss",
+    "ligneAvant": true
   }
 };
 
@@ -993,6 +1335,21 @@ export const BUTIN_TOILES: Record<number, PoolsToile> = {
     "boss": [
       "boufcoiffe_royale",
       "boufcape_royale"
+    ]
+  },
+  "4": {
+    "normales": [
+      "coiffe_du_tofu",
+      "cape_du_tofu",
+      "anneau_du_tofu",
+      "baguette_du_tofu",
+      "le_houde",
+      "baton_du_maitre_des_tabis"
+    ],
+    "elites": [],
+    "boss": [
+      "chance_d_ecaflip",
+      "cape_edepee"
     ]
   }
 };

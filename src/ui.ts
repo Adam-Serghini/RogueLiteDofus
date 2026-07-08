@@ -64,6 +64,7 @@ import {
   prixVente,
   vendreItem,
   vendreTout,
+  peutEquiper,
   acheterArticle,
   type ArticleHDV,
   type RunState as RunStateT,
@@ -1242,11 +1243,20 @@ export function showFormation(persos: PersoState[]): Promise<void> {
     };
     const rangee = (cells: number[]) => cells.map(cellule).join("");
 
+    // un perso portant un objet « ligne avant uniquement » ne peut pas passer derrière
+    const bloqueArriere = (p: PersoState | undefined, dst: number): boolean =>
+      !!p && dst >= 4 && Object.values(p.equipement).some((i) => i && ITEMS[i.id]?.ligneAvant);
+
     // déplace/échange l'occupant de `src` vers `dst`
     const deplacer = (src: number, dst: number) => {
       if (src === dst) return;
       const a = occupant(src);
       const b = occupant(dst);
+      if (bloqueArriere(a, dst) || bloqueArriere(b, src)) {
+        const msg = document.getElementById("form-msg");
+        if (msg) { msg.textContent = "⛔ La Cape Edepee exige la ligne avant : dépose-la avant de reculer."; msg.style.display = ""; }
+        return;
+      }
       if (a) a.position = dst;
       if (b) b.position = src; // échange si la case d'arrivée est occupée
       selCell = -1;
@@ -1258,6 +1268,7 @@ export function showFormation(persos: PersoState[]): Promise<void> {
       ecran(`
         <h1>Formation</h1>
         <p class="sous-titre">Glisse-dépose un perso sur une case pour le déplacer (ou l'échanger) — ou clique-le puis clique la case. La <b>ligne avant</b> encaisse les sorts de ligne ennemis ; la <b>ligne arrière</b> est protégée. Effet dès le prochain combat.</p>
+        <p id="form-msg" class="muet settings-sous" style="display:none"></p>
         <div class="formation-grille">
           <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
@@ -1412,7 +1423,9 @@ function itemStatsHtml(inst: ItemInstance): string {
   }
   // attaque d'arme (palier prioritaire)
   const att = (inst.rarete ? it?.tiers?.[inst.rarete]?.attaque : undefined) ?? it?.attaque;
-  if (att) chip("ichip-arme", `⚔ ${att.baseMin}–${att.baseMax} (${att.coutPA} PA)`);
+  if (att) chip("ichip-arme", `⚔ ${att.baseMin}–${att.baseMax} (${att.coutPA} PA)${att.cible === "ennemi_tous" ? " · ligne arrière" : ""}${att.vampirisme ? ` · vol ${Math.round(att.vampirisme * 100)} %` : ""}`);
+  if (it?.paGamble) chips.push(`<span class="ichip ichip-pa" title="À chaque tour : ${Math.round(it.paGamble.pPlus * 100)} % de gagner +${it.paGamble.plus} PA, sinon −${it.paGamble.moins} PA">🎲 ${Math.round(it.paGamble.pPlus * 100)} % +${it.paGamble.plus} PA / −${it.paGamble.moins}</span>`);
+  if (it?.ligneAvant) chips.push(`<span class="ichip malus" title="Équipable uniquement sur un personnage de la ligne avant">Ligne avant uniqt</span>`);
   return `<span class="ichips">${chips.join("")}</span>`;
 }
 
@@ -1467,7 +1480,8 @@ export function showInventaire(
         ? inventaire
             .map((inst, i) => {
               const it = ITEMS[inst.id];
-              return `<button class="item-carte${rareteCls(inst)}" data-index="${i}" draggable="true">
+              const equipable = peutEquiper(perso, inst.id);
+              return `<button class="item-carte${rareteCls(inst)}${equipable ? "" : " inequipable"}" data-index="${i}" draggable="true" ${equipable ? "" : `title="Équipable uniquement sur un personnage de la ligne avant"`}>
               <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
               <span class="item-nom">${itemNomHtml(inst)}<small>${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
             </button>`;

@@ -148,9 +148,9 @@ describe("rareté (objets à toiles)", () => {
     expect(leg.adaptatif).toBe(6);
   });
 
-  it("Incarnam droppe depuis son pool de toile (rareté), Tofus reste legacy", () => {
+  it("Incarnam droppe depuis son pool de toile (rareté), l'Akadémie reste legacy", () => {
     expect(butinToile("incarnam")!.normales).toContain("chapeau_de_l_aventurier");
-    expect(butinToile("tofus")).toBeNull(); // toile 4 : pas encore saisie
+    expect(butinToile("akademie")).toBeNull(); // toile 5 : pas encore saisie
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
     expect(drops.length).toBe(4);
@@ -190,5 +190,46 @@ describe("toile 3 — stat adaptative & sources de drop", () => {
     expect(combattantDepuisPerso(run.persos[0]).armeSort?.cible).toBe("ennemi_tous");
     run.persos[0].equipement.arme = rollItemRarete("ergot_mina", () => 0)!;
     expect(combattantDepuisPerso(run.persos[0]).armeSort?.vampirismeRatio).toBe(0.5);
+  });
+});
+
+describe("toile 4 — mécaniques spéciales", () => {
+  it("Chance d'Ecaflip : le porteur parie ses PA à chaque tour (33 % +1 / 66 % −1)", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const { appliquerChanceEcaflip } = await import("./combat");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.anneau = rollItemRarete("chance_d_ecaflip", () => 0)!; // épique
+    const c = combattantDepuisPerso(run.persos[0]);
+    expect(c.paGamble).toEqual({ pPlus: 1 / 3, plus: 1, moins: 1 });
+    const ctx = { rng: () => 0.1, log: () => {}, playerDamageBonus: 1 }; // 0.1 < 1/3 → gain
+    c.paActuels = 6;
+    appliquerChanceEcaflip(c, ctx as never);
+    expect(c.paActuels).toBe(7);
+    (ctx as { rng: () => number }).rng = () => 0.9; // perte
+    appliquerChanceEcaflip(c, ctx as never);
+    expect(c.paActuels).toBe(6);
+  });
+
+  it("Cape Edepee : équipable uniquement en ligne avant", async () => {
+    const { nouvelleRun, equiper, peutEquiper, rollItemRarete } = await import("./run");
+    const run = nouvelleRun(["iop", "cra"]); // iop devant (0), cra derrière (4)
+    const cape = rollItemRarete("cape_edepee", () => 0)!;
+    run.inventaire.push(cape);
+    const cra = run.persos.find((p) => p.classeId === "cra")!;
+    expect(peutEquiper(cra, "cape_edepee")).toBe(false);
+    equiper(run.inventaire, cra, 0); // refusé
+    expect(cra.equipement.cape).toBeUndefined();
+    expect(run.inventaire.length).toBe(1);
+    const iop = run.persos.find((p) => p.classeId === "iop")!;
+    expect(peutEquiper(iop, "cape_edepee")).toBe(true);
+    equiper(run.inventaire, iop, 0);
+    expect(iop.equipement.cape?.id).toBe("cape_edepee");
+  });
+
+  it("les exclusifs boss de la toile 4 n'existent qu'en épique/légendaire", async () => {
+    const { rollItemRarete } = await import("./run");
+    const inst = rollItemRarete("chance_d_ecaflip", () => 0)!;
+    expect(inst.rarete).toBe("epique"); // renormalisé sur les paliers existants
+    expect(rollItemRarete("cape_edepee", () => 0.99)!.rarete).toBe("legendaire");
   });
 });

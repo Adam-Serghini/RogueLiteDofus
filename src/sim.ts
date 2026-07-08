@@ -86,7 +86,8 @@ function meilleurItemToile(pool: string[], slot: string, stat: keyof Stats): str
   if (!candidats.length) return null;
   const score = (id: string) => {
     const t = ITEMS[id].tiers!.commun!;
-    return ((t.stats[stat] ?? 0) + (t.adaptatif ?? 0)) * 10 + (t.stats.vitalite ?? 0);
+    // la vitalité pèse : un vrai joueur prend la coiffe tank face aux boss burst
+    return ((t.stats[stat] ?? 0) + (t.adaptatif ?? 0)) * 10 + (t.stats.vitalite ?? 0) * 4;
   };
   return candidats.sort((a, b) => score(b) - score(a))[0];
 }
@@ -120,6 +121,10 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
     const p = progressionInitiale();
     p.niveau = niveau;
     p.pointsDispo = POINTS_PAR_NIVEAU * (niveau - 1);
+    // build de référence RÉALISTE : ~25 % des points en vitalité, le reste
+    // dans la stat offensive (un full glass cannon rendait les boss 10 PA
+    // « injouables » à la sim alors qu'ils ne le sont pas en vrai jeu)
+    investirN(p, "vitalite", Math.floor(p.pointsDispo * 0.25));
     investirN(p, TEAM[i].stat, Infinity);
     perso.progression = p;
     if (pool) {

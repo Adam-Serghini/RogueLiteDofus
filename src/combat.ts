@@ -1014,6 +1014,19 @@ export function appliquerMueElementaire(acteur: Combatant, ctx: CombatCtx): void
   ctx.log(`${acteur.nom} mue : son plumage ne protège plus contre l'élément ${faible.toUpperCase()} !`);
 }
 
+/** Chance d'Ecaflip : au début du tour du porteur, pari de PA (33 % : +1 / 66 % : −1). */
+export function appliquerChanceEcaflip(acteur: Combatant, ctx: CombatCtx): void {
+  if (!acteur.paGamble) return;
+  const g = acteur.paGamble;
+  if (ctx.rng() < g.pPlus) {
+    acteur.paActuels += g.plus;
+    ctx.log(`😼 La Chance d'Ecaflip sourit à ${acteur.nom} : +${g.plus} PA !`);
+  } else {
+    acteur.paActuels = Math.max(0, acteur.paActuels - g.moins);
+    ctx.log(`🙀 La Chance d'Ecaflip grimace : ${acteur.nom} perd ${g.moins} PA.`);
+  }
+}
+
 // --- Fin de combat -----------------------------------------------------------
 const campMort = (cs: Combatant[], camp: Camp): boolean => vivants(cs).every((c) => c.camp !== camp);
 export const combatTermine = (cs: Combatant[]): boolean => campMort(cs, "joueur") || campMort(cs, "ennemi");
@@ -1047,6 +1060,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       aJoue.add(acteur.ref);
 
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
+      appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)
       if (effetsDebutTour(acteur, combatants, ctx)) {
         await hooks.onUpdate?.();
         continue;

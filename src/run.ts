@@ -275,8 +275,11 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
           : "Attaque d'arme.",
     }
     : undefined;
+  // Chance d'Ecaflip : le pari de PA du premier objet porteur (non cumulable)
+  const paGamble = (Object.values(state.equipement).map((i) => i && ITEMS[i.id]?.paGamble).find(Boolean)) ?? undefined;
   return {
     armeSort,
+    paGamble,
     ref: `j_${state.classeId}`,
     nom: classe.nom,
     pvBase: pvMax, // base de référence pour les buffs de vitalité en %
@@ -414,11 +417,20 @@ export function tenterButin(run: RunState, zoneId: string, type: string, rng: ()
   return drops;
 }
 
+/** L'objet est-il équipable par ce perso ? (contrainte « ligne avant uniquement »). */
+export function peutEquiper(perso: PersoState, itemId: string): boolean {
+  const item = ITEMS[itemId];
+  if (!item) return false;
+  if (item.ligneAvant && perso.position >= 4) return false;
+  return true;
+}
+
 /** Équipe l'exemplaire d'inventaire `index` sur son perso (l'ancien du slot y retourne). */
 export function equiper(inventaire: ItemInstance[], perso: PersoState, index: number): void {
   const inst = inventaire[index];
   const item = inst ? ITEMS[inst.id] : undefined;
   if (!inst || !item) return;
+  if (!peutEquiper(perso, inst.id)) return; // ex. Cape Edepee sur un perso arrière
   inventaire.splice(index, 1);
   const ancien = perso.equipement[item.slot];
   if (ancien) inventaire.push(ancien);

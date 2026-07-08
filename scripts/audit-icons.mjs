@@ -13,6 +13,10 @@ const SURCHARGES = {
   cape_du_bouftou: 17044, // Cape Bouffante (laine de bouftou)
   boufcape_royale: 17046, // Cape Bouffante Royale
   ergot_mina: 5014, // « L'Ergot Mina » (article)
+  epee_de_l_aventurier: 6007, // Épée de Boisaille (pas d'épée Aventurier officielle)
+  le_houde: 16014, // « Houde » (sans article)
+  coiffe_du_tofu: 61685, // Peluche du Tofu (un tofu sur la tête)
+  cape_edepee: 17646, // Cape du Chevalier du Ciel (panache de cape et d'épée)
   anneau_bouftou: null, // copie du legacy bouftou_anneau (déjà en place)
 };
 

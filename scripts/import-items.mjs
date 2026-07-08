@@ -59,6 +59,9 @@ for (const ligne of lignes.slice(1)) {
   it.tiers[rarete] = tier;
   const source = col(row, "source").toLowerCase();
   if (source === "boss" || source === "elite") it.source = source;
+  const special = col(row, "special").toLowerCase();
+  if (special === "pa_gamble") it.paGamble = { pPlus: 1 / 3, plus: 1, moins: 1 };
+  if (special === "ligne_avant") it.ligneAvant = true;
 
   // attaque d'arme : lue sur la ligne (identique ou progressive par palier)
   const attPA = num(row, "att_pa");
@@ -95,6 +98,7 @@ import type { Item } from "./types";
 export const ITEMS_TOILES: Record<string, Item> = ${JSON.stringify(
   Object.fromEntries([...items].map(([id, it]) => [id, {
     id, nom: it.nom, slot: it.slot, tiers: it.tiers, ...(it.source ? { source: it.source } : {}),
+    ...(it.paGamble ? { paGamble: it.paGamble } : {}), ...(it.ligneAvant ? { ligneAvant: true } : {}),
   }])), null, 2)};
 
 /** Pools par toile et par source de drop (normales / élites / boss). */

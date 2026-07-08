@@ -323,6 +323,9 @@ button:focus-visible {
 .hdv-prix.vente .kamas {
   color: #3d8a42; /* ce qu'on encaisse */
 }
+.item-carte.inequipable {
+  opacity: 0.55;
+}
 button.item-carte:disabled {
   opacity: 0.5;
   cursor: not-allowed;
