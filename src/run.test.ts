@@ -77,7 +77,8 @@ describe("classes désactivées", () => {
   it("le sadida n'est ni sélectionnable ni recrutable (mais sa data existe encore)", () => {
     const dispo = classesDisponibles();
     expect(dispo).not.toContain("sadida");
-    expect(dispo.length).toBe(6);
+    expect(dispo).toContain("ouginak");
+    expect(dispo.length).toBe(7);
     // le recrutement passe par classesDisponibles → jamais proposé
     const run = nouvelleRun(["iop", "cra"]);
     expect(classesHorsEquipe(run)).not.toContain("sadida");

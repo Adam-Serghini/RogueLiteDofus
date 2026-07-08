@@ -700,7 +700,10 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
       badges.push(`⏳ init ${e.valeur} (${e.toursRestants})`);
     else if (e.stat === "contre")
       badges.push(`⚔️ Contre ${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
+    else if (e.stat === "proie") badges.push(`🎯 Proie (vol ${Math.round(e.valeur * 100)} %)`);
+    else if (e.stat === "tetanise") badges.push(`🦴 Tétanisé (${e.toursRestants})`);
   }
+  if ((c.rage ?? 0) > 0) badges.push(`🐺 Rage ×${c.rage}`);
   if (c.provoque) badges.push(`🛡 Provoque`);
   if (c.bonusOffensifProchain > 0)
     badges.push(`+${Math.round(c.bonusOffensifProchain * 100)} % prochain`);
@@ -922,7 +925,7 @@ function renderBarreSorts(): string {
         }>
         <span class="sort-touche">${i + 2}</span>
         <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${s.coutPA}</b></span>
-        <span class="sort-icon-wrap"><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
+        <span class="sort-icon-wrap"><span class="sort-nom-fallback">${escapeHtml(s.nom)}</span><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.classList.add('noicon'); this.remove()" /></span>
         ${cd > 0 ? `<span class="sort-cd" title="Rechargement : ${cd} tour(s)">${cd}</span>` : ""}
       </button>`;
       })
@@ -1105,6 +1108,7 @@ const ROLE_CLASSE: Record<string, string> = {
   sram: "Assassin — DPT monocible & poisons",
   feca: "Protecteur — boucliers, glyphes, réduction de dégâts",
   ecaflip: "Joueur — mixte, hasard (dés & cartes)",
+  ouginak: "Chasseur — marque sa Proie, Rage croissante, contrôle de ligne",
 };
 
 /** Carte de classe (portrait + rôle) pour le choix d'équipe / recrutement. */

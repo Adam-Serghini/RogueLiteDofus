@@ -23,8 +23,8 @@ const ALLOCS_VALIDES = new Set<AllocationPref>(["terre", "feu", "eau", "air", "v
 const DEFAUT: Settings = {
   toucheFinTour: " ",
   autoFinTour: true,
-  formation: { iop: "avant", feca: "avant", sram: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere" },
-  elements: { iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau" },
+  formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere" },
+  elements: { iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau", ouginak: "terre" },
 };
 
 /** Valide la formation en MIGRANT l'ancien format (case 0..7) vers avant/arrière. */

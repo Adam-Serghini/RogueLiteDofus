@@ -1552,6 +1552,23 @@ kbd {
 .archi-mon.simple small {
   font-style: normal;
 }
+/* Fallback texte des boutons de sort (icône absente : le nom s'affiche) */
+.sort-icon-wrap .sort-nom-fallback {
+  display: none;
+}
+.sort-icon-wrap.noicon .sort-nom-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.05;
+  padding: 2px;
+}
+
 /* Tri de l'inventaire (Toile / Type) */
 .equip-tri {
   font-size: 0.68rem;

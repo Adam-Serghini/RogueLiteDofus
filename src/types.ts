@@ -114,6 +114,8 @@ export type EffetStat =
   | "resAll" // ± résistance à tous les éléments
   | "contre" // posture de contre (Duel) : valeur = probabilité de riposte quand frappé
   | "friction" // bloque soins ET boucliers du porteur (flag : valeur ignorée)
+  | "proie" // marque de l'Ouginak : valeur = vol de vie d'ÉQUIPE contre le porteur (unique)
+  | "tetanise" // Tétanisation : le porteur ne peut pas viser la ligne arrière (flag)
   // buffs/debuffs temporaires de caractéristique (sommés dans statsEffectives) :
   | "force"
   | "intelligence"
@@ -187,6 +189,11 @@ export interface Spell {
   donneBonusDe?: { min: number; max: number; duree: number }; // Bonne pioche
   paGainAdjacents?: number; // Tactique féline : +PA aux alliés des cases adjacentes
   procAleatoire?: ProcAleatoire[]; // Langue râpeuse : 1 effet tiré au hasard sur la cible
+  // --- mécaniques de l'Ouginak ---
+  marqueProie?: number; // Proie : marque UNIQUE sur un ennemi — l'équipe vole cette fraction des dégâts qu'elle lui inflige
+  rage?: boolean; // le sort confère 1 état de Rage au lanceur (cap RAGE_MAX)
+  consommeRage?: boolean; // Apaisement : consomme TOUTE la Rage, soigne baseMin-baseMax PAR charge
+  bonusParEnnemiLigneCible?: number; // Dépouille : +% de dégâts par AUTRE ennemi sur la ligne de la cible
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
@@ -288,6 +295,7 @@ export interface Combatant {
   img?: string; // chemin du portrait/sprite
   mueElementaire?: number; // signature du Kwakwa (cf. Monstre.mueElementaire)
   paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip portée
+  rage?: number; // états de Rage (Ouginak) : +RAGE_BONUS de dégâts par charge, consommés par Apaisement
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant
   esquiveArriere?: number; // esquive d'équipement (Baguette Rikiki), active si ligne arrière
   soinDegatsRecus?: number; // récupération d'équipement (Goyave) : % des dégâts subis rendus en PV

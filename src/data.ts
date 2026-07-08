@@ -377,6 +377,44 @@ export const SORTS: Record<string, Spell> = {
     desc: "Applique un effet aléatoire à chaque unité du combat (alliés bénéfiques, ennemis néfastes).",
   },
 
+  // ---- Ouginak (chasseur : Proie, Rage croissante, contrôle de ligne) ----
+  proie: {
+    id: "proie", nom: "Proie", type: "debuff", coutPA: 1,
+    cible: "ennemi_tous", baseMin: 0, baseMax: 0, scaling: 0,
+    marqueProie: 0.1,
+    desc: "Marque un ennemi comme Proie (unique, permanente) : toute l'équipe vole 10 % des dégâts qu'elle lui inflige.",
+  },
+  molosse: {
+    id: "molosse", nom: "Molosse", type: "degats", coutPA: 3,
+    cible: "ennemi_ligne", baseMin: 8, baseMax: 12, scaling: 0.35,
+    effetLanceur: { stat: "reductionDegats", valeur: 0.1, duree: 2 }, rage: true,
+    desc: "Dégâts + le lanceur subit −10 % de dégâts jusqu'à son prochain tour. Confère 1 Rage.",
+  },
+  depouille: {
+    id: "depouille", nom: "Dépouille", type: "degats", coutPA: 4,
+    cible: "ennemi_ligne", baseMin: 9, baseMax: 13, scaling: 0.38,
+    bonusParEnnemiLigneCible: 0.5, cooldownTours: 1, rage: true,
+    desc: "Dégâts +50 % par autre ennemi vivant sur la ligne de la cible. Confère 1 Rage.",
+  },
+  tetanisation: {
+    id: "tetanisation", nom: "Tétanisation", type: "degats", coutPA: 4,
+    cible: "ennemi_ligne", baseMin: 10, baseMax: 14, scaling: 0.4,
+    effet: { stat: "tetanise", valeur: 1, duree: 1 }, cooldownTours: 2, rage: true,
+    desc: "Dégâts ; pendant son prochain tour, la cible ne peut pas viser la ligne arrière. Confère 1 Rage.",
+  },
+  tibias: {
+    id: "tibias", nom: "Tibias", type: "degats", coutPA: 4,
+    cible: "ennemi_ligne", baseMin: 7, baseMax: 10, scaling: 0.3,
+    zoneLigne: true, effet: { stat: "degatsInfliges", valeur: -0.1, duree: 1 }, cooldownTours: 2, rage: true,
+    desc: "Dégâts sur TOUTE la ligne la plus proche ; tibias brisés : les cibles infligent −10 % de dégâts pendant 1 tour. Confère 1 Rage.",
+  },
+  apaisement: {
+    id: "apaisement", nom: "Apaisement", type: "soin", coutPA: 3,
+    cible: "soi", baseMin: 8, baseMax: 12, scaling: 0,
+    consommeRage: true,
+    desc: "Consomme TOUTE la Rage accumulée et soigne le lanceur de 8-12 PV par charge (nécessite au moins 1 Rage).",
+  },
+
   // ---- Sorts de monstres (re-tunés pour les PV joueur V1) ----
   morsure: {
     id: "morsure", nom: "Morsure", type: "degats", coutPA: 4,
@@ -550,6 +588,13 @@ export const CLASSES: Record<string, Classe> = {
     ],
     img: "/assets/classes/ecaflip.png",
   }, // élément de frappe = Terre (Force) ; mixte / hasard
+  ouginak: {
+    id: "ouginak", nom: "Ouginak", pvBase: 62,
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0, prospection: 100 },
+    pa: 6, initiative: 9,
+    sorts: ["proie", "molosse", "depouille", "tetanisation", "tibias", "apaisement"],
+    img: "/assets/classes/ouginak.png",
+  }, // chasseur : marque sa Proie, Rage croissante (+5 %/charge), contrôle de ligne
 };
 
 // --- Monstres ----------------------------------------------------------------

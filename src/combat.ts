@@ -153,6 +153,15 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
     if (prov.length) base = prov;
   }
 
+  // Tétanisation (Ouginak) : le porteur ne peut pas viser la ligne arrière adverse
+  if ((sort.cible === "ennemi_tous" || sort.cible === "ennemi_ligne" || sort.cible === "mixte") &&
+      sommeEffet(acteur, "tetanise") > 0) {
+    base = base.filter((c) => c.camp === acteur.camp || estAvant(c));
+  }
+
+  // Apaisement (Ouginak) : ne se lance qu'avec au moins 1 état de Rage
+  if (sort.consommeRage && !(acteur.rage ?? 0)) return [];
+
   // cooldown par sort (côté lanceur) : sort entièrement indisponible pendant Nt
   if (enCooldownSort(acteur, sort)) return [];
   // un sort à cooldown n'est plus ciblable sur une cible en attente de recharge
@@ -215,6 +224,16 @@ interface BaseDegats {
   ignoreResistances?: boolean;
 }
 
+// --- Rage (Ouginak) -----------------------------------------------------------
+export const RAGE_MAX = 3; // charges maximum
+export const RAGE_BONUS = 0.05; // +5 % de dégâts infligés par charge
+
+function gagnerRage(lanceur: Combatant, ctx: CombatCtx): void {
+  const avant = lanceur.rage ?? 0;
+  lanceur.rage = Math.min(RAGE_MAX, avant + 1);
+  if (lanceur.rage > avant) ctx.log(`🐺 ${lanceur.nom} entre en Rage (×${lanceur.rage}).`);
+}
+
 /** Chance de coup critique : Force (+ crit plat d'équipement), plafonnée à 50 %.
  *  SOURCE UNIQUE de la formule — l'UI l'affiche via cette fonction. */
 export function chanceCrit(se: Stats): number {
@@ -267,6 +286,9 @@ function degatsAvec(
 
   // malus/bonus de dégâts infligés par le lanceur (= « dégâts finaux »)
   dmg *= 1 + sommeEffet(lanceur, "degatsInfliges");
+
+  // Rage (Ouginak) : +RAGE_BONUS par charge accumulée
+  if (lanceur.rage) dmg *= 1 + RAGE_BONUS * Math.min(lanceur.rage, RAGE_MAX);
 
   // bonus de rebond (saut)
   dmg *= opts.mult;
@@ -362,6 +384,17 @@ function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ct
     if (soin > 0) {
       cible.pvActuels = Math.min(cible.pvMax, cible.pvActuels + soin);
       ctx?.log(`${cible.nom} récupère ${soin} PV (Goyave).`);
+    }
+  }
+  // Proie (Ouginak) : quiconque frappe la proie vole une fraction des dégâts
+  if (attaquant && ctx && dmg > 0 && attaquant.camp !== cible.camp && attaquant.pvActuels > 0) {
+    const ratio = sommeEffet(cible, "proie");
+    if (ratio > 0) {
+      const vol = Math.round(dmg * ratio);
+      if (vol > 0) {
+        attaquant.pvActuels = Math.min(attaquant.pvMax, attaquant.pvActuels + vol);
+        ctx.log(`${attaquant.nom} dévore sa proie : +${vol} PV.`);
+      }
     }
   }
   // riposte : posture de contre (Duel) + équipement « ligne avant » (Sabre Shodanwa)
@@ -833,6 +866,18 @@ export function lancerSort(
     return;
   }
 
+  // --- APAISEMENT (Ouginak) : consomme TOUTE la Rage, soigne par charge ---
+  if (sort.consommeRage) {
+    const charges = lanceur.rage ?? 0;
+    if (charges <= 0) return; // gardé aussi par ciblesValides
+    lanceur.rage = 0;
+    const soin = Math.round(jet(sort.baseMin, sort.baseMax, ctx.rng) * charges * multSoin(lanceur.stats));
+    ctx.log(`${lanceur.nom} lance ${sort.nom} : ${charges} Rage consommée${charges > 1 ? "s" : ""}.`);
+    soigner(lanceur, soin, ctx);
+    poseCooldown(lanceur);
+    return;
+  }
+
   // --- SOIN ---
   if (sort.type === "soin") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
@@ -844,6 +889,15 @@ export function lancerSort(
       soigner(t, montant, ctx);
       poseCooldown(t);
     }
+    return;
+  }
+
+  // --- PROIE (Ouginak) : marque UNIQUE — l'équipe vole des PV en frappant la proie ---
+  if (sort.marqueProie && cible) {
+    for (const c of cs) c.effets = c.effets.filter((e) => e.stat !== "proie"); // une seule proie
+    cible.effets.push({ stat: "proie", valeur: sort.marqueProie, toursRestants: 99 });
+    ctx.log(`🎯 ${lanceur.nom} désigne ${cible.nom} comme Proie : l'équipe vole ${Math.round(sort.marqueProie * 100)} % des dégâts qu'elle lui inflige.`);
+    poseCooldown(cible);
     return;
   }
 
@@ -891,8 +945,13 @@ export function lancerSort(
   const doubleDuree = !!lanceur.doubleEffetProchain;
   lanceur.doubleEffetProchain = false;
   // Signature de Grunob (« Travail d'équipe ») : +X % par allié vivant dans sa rangée
-  const multLigne = 1 + (lanceur.bonusParAllieLigne ?? 0) *
+  let multLigne = 1 + (lanceur.bonusParAllieLigne ?? 0) *
     allies(lanceur, cs).filter((a) => a.ref !== lanceur.ref && estAvant(a) === estAvant(lanceur)).length;
+  // Dépouille (Ouginak) : +X % par AUTRE ennemi vivant sur la ligne de la cible
+  if (sort.bonusParEnnemiLigneCible) {
+    multLigne *= 1 + sort.bonusParEnnemiLigneCible *
+      adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && estAvant(e) === estAvant(cible)).length;
+  }
   let totalDmg = 0;
 
   // Mise à mort : échoue si la cible survivrait au coup (projection au max roll)
@@ -1031,6 +1090,9 @@ export function lancerSort(
     lanceur.paActuels += sort.coutPA;
     ctx.log(`${lanceur.nom} récupère ${sort.coutPA} PA (Flèche magique).`);
   }
+
+  // Rage (Ouginak) : la charge se gagne APRÈS la résolution (ne boost pas ce lancer)
+  if (sort.rage) gagnerRage(lanceur, ctx);
 
   poseCooldown(cible);
 }
