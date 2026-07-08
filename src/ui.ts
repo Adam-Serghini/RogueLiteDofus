@@ -391,6 +391,8 @@ const MENU_PARAM = A("/assets/menu/parametres.png");
 const MENU_SUCCES = A("/assets/menu/succes.png");
 const MENU_ACCUEIL = A("/assets/menu/Menu.png");
 const MENU_RESTART = A("/assets/menu/Recommencer.png");
+const MENU_TERMINER = A("/assets/menu/Terminer.png");
+const CASE_DEPART = A("/assets/menu/Depart.png");
 const MENU_RESTART_PERSO = A("/assets/menu/Recommencer_avec_perso.png");
 const MENU_DOFUS = A("/assets/menu/dofus.png");
 const ICON_KAMAS = A("/assets/divers/kamas.png");
@@ -946,7 +948,7 @@ function renderBarreSorts(): string {
   return `
     <div class="sorts-rangee">
       <div class="sorts-zone">${selecteur}<div class="sorts-liste">${boutons}</div></div>
-      <div class="barre-actions-fin"><button id="fin-tour" class="fin-tour primaire">Terminer le tour <kbd>${escapeHtml(libelleTouche(config.toucheFinTour))}</kbd></button></div>
+      <div class="barre-actions-fin"><button id="fin-tour" class="fin-tour primaire" title="Terminer le tour"><img src="${MENU_TERMINER}" alt="Terminer le tour" onerror="this.replaceWith('Terminer le tour')" /> <kbd>${escapeHtml(libelleTouche(config.toucheFinTour))}</kbd></button></div>
     </div>
     ${aide}`;
 }
@@ -2339,7 +2341,10 @@ Butin au taux donjon.`)}"` : "";
             <svg class="map-svg" width="${W}" height="${HAUTEUR_CARTE}">${departSvg}${lignesSvg}</svg>
             ${boutons}
             <div class="map-depart" style="left:${departPos.x}px;top:${departPos.y}px">
-              <span class="case-art depart-art">🚩</span>
+              <span class="case-art">
+                <img class="case-img" src="${CASE_DEPART}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
+                <span class="depart-art" style="display:none">🚩</span>
+              </span>
               <span class="mn-lbl">Départ</span>
             </div>
           </div></div>

@@ -256,6 +256,13 @@ button:focus-visible {
   object-fit: contain;
 }
 
+.fin-tour img {
+  height: 30px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* Kamas & Hôtel de vente */
 .kamas {
   display: inline-flex;
