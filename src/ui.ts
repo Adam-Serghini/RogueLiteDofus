@@ -16,6 +16,7 @@ import {
   RARETE_INFO,
   BUTIN_ZONE,
   butinToile,
+  zonesDeTranche,
   MODIFICATEURS_ELITE,
   monstresDeZone,
   OCRE_PALIERS,
@@ -2045,6 +2046,16 @@ function ocreEffetTxt(paBonus: number, degats: number): string {
   return parts.join(" · ");
 }
 
+/** Bloc « monde » des écrans de collection (Bestiaire, Armurerie) : les zones
+ *  d'une tranche dans l'ORDRE DE JEU, sous un bandeau titré ; les tranches
+ *  encore vides s'affichent verrouillées. */
+function mondeBloc(t: (typeof TRANCHES)[number], zoneHtml: (z: (typeof ZONES)[number]) => string): string {
+  const corps = t.zones.length
+    ? zonesDeTranche(t).map(zoneHtml).join("")
+    : `<p class="muet monde-verrouille">🔒 Verrouillé — à venir</p>`;
+  return `<div class="monde-bloc"><h2 class="monde-titre">${escapeHtml(t.nom)} <small>Niv. ${t.niveaux[0]}${t.niveaux[1] !== t.niveaux[0] ? `–${t.niveaux[1]}` : ""}</small></h2>${corps}</div>`;
+}
+
 /** Bestiaire par zone : toutes les espèces (boss & miniboss inclus) ;
  *  les espèces à Archimonstre (archiNom) suivent la capture (Dofus Ocre). */
 export function showBestiaire(meta: Meta): Promise<void> {
@@ -2056,7 +2067,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
     const captures = meta.archis.length;
     const ocre = paliersOcre(meta);
     const prochain = OCRE_PALIERS.find((p) => captures < p.seuil);
-    const zonesHtml = ZONES.map((z) => {
+    const zoneHtml = (z: (typeof ZONES)[number]): string => {
       const ids = monstresDeZone(z); // toutes les espèces de la zone (boss/miniboss inclus)
       const capturablesIds = ids.filter((id) => MONSTRES[id]?.archiNom);
       // ordre d'affichage : le boss en dernier (les autres gardent l'ordre des rencontres)
@@ -2088,7 +2099,8 @@ export function showBestiaire(meta: Meta): Promise<void> {
         ? `<span class="archi-zone-compte">${capturablesIds.filter((id) => meta.archis.includes(id)).length}/${capturablesIds.length} archis</span>`
         : `<span class="archi-zone-compte">aucun archi</span>`;
       return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} ${compte}</h3><div class="archi-grid">${cards}</div></div>`;
-    }).join("");
+    };
+    const zonesHtml = TRANCHES.map((t) => mondeBloc(t, zoneHtml)).join("");
     ecran(`
       <h1>📖 Bestiaire — Archimonstres</h1>
       <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
@@ -2122,7 +2134,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
       return (PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? []).map((id) => ({ id }));
     };
     let total = 0, possedes = 0;
-    const zonesHtml = ZONES.map((z) => {
+    const zoneHtml = (z: (typeof ZONES)[number]): string => {
       const entrees = itemsDeZone(z.id).filter((e) => ITEMS[e.id]);
       if (!entrees.length) return "";
       const nb = entrees.filter((e) => coll[e.id]).length;
@@ -2146,7 +2158,8 @@ export function showArmurerie(meta: Meta): Promise<void> {
         })
         .join("");
       return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} <span class="archi-zone-compte">${nb}/${entrees.length} objets</span></h3><div class="archi-grid">${cards}</div></div>`;
-    }).join("");
+    };
+    const zonesHtml = TRANCHES.map((t) => mondeBloc(t, zoneHtml)).join("");
     ecran(`
       <h1>🛡️ Armurerie</h1>
       <p class="sous-titre">Chaque objet obtenu (butin ou Hôtel de vente) rejoint la collection pour toujours — le halo montre la meilleure rareté jamais obtenue.</p>

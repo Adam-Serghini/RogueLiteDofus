@@ -1552,6 +1552,30 @@ kbd {
 .archi-mon.simple small {
   font-style: normal;
 }
+/* Blocs « monde » (Bestiaire & Armurerie groupés par tranche, zones dans l'ordre de jeu) */
+.monde-bloc {
+  margin-top: 18px;
+}
+.monde-titre {
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--or);
+  border-bottom: 1px solid var(--bord);
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+}
+.monde-titre small {
+  font-size: 0.72rem;
+  color: var(--muet);
+  letter-spacing: 0.05em;
+  margin-left: 8px;
+}
+.monde-verrouille {
+  font-style: italic;
+  padding: 4px 0 8px;
+}
+
 /* Armurerie : la collection d'équipement (jamais obtenu = fantôme, obtenu = halo de rareté) */
 .armu-item.manquant {
   opacity: 0.55;
