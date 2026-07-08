@@ -394,8 +394,10 @@ export function prospectionEquipe(run: RunState): number {
  * pioche un objet au hasard dans le pool de la zone. Zone legacy : chaque pièce de
  * la panoplie a sa chance. Doublons autorisés.
  */
-export function tenterButin(run: RunState, zoneId: string, type: string, rng: () => number): ItemInstance[] {
-  const taux = DROP.taux[type] ?? 0;
+export function tenterButin(run: RunState, zoneId: string, type: string, rng: () => number, tauxType: string = type): ItemInstance[] {
+  // tauxType découple le TAUX de drop du POOL : un combat dur modifié paie au taux
+  // donjon (tauxType="donjon") mais pioche toujours ses exclusifs ÉLITE (type)
+  const taux = DROP.taux[tauxType] ?? 0;
   if (taux <= 0) return [];
   const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
   const p = taux * mult;

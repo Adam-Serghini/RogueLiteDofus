@@ -254,3 +254,14 @@ describe("Armurerie (collection persistante)", () => {
     expect(meta.collection?.bouftou_coiffe).toBe("base");
   });
 });
+
+describe("découplage taux / pool (combat dur au taux donjon)", () => {
+  it("un combat dur payé au taux donjon pioche ses exclusifs ÉLITE, pas boss", async () => {
+    const { nouvelleRun, tenterButin } = await import("./run");
+    const pools = butinToile("tainela")!;
+    // type=combat_dur (pool), tauxType=donjon (taux) : le 1er tirage doit venir des élites
+    const drops = tenterButin(nouvelleRun(["iop"]), "tainela", "combat_dur", () => 0, "donjon");
+    expect(pools.elites).toContain(drops[0].id);
+    expect(pools.boss).not.toContain(drops[0].id);
+  });
+});

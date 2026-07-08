@@ -112,9 +112,9 @@ async function capturerArchis(combatants: Combatant[]): Promise<number> {
 }
 
 /** Tire le butin d'équipement de la zone après une victoire et l'annonce. */
-async function recompenserButin(run: RunState, zoneId: string | undefined, type: NodeType): Promise<void> {
+async function recompenserButin(run: RunState, zoneId: string | undefined, type: NodeType, tauxType?: string): Promise<void> {
   if (!zoneId) return;
-  const drops = tenterButin(run, zoneId, type, Math.random);
+  const drops = tenterButin(run, zoneId, type, Math.random, tauxType);
   enregistrerCollection(meta, drops); // Armurerie : la collection persiste au-delà de la run
   run.stats.objets += drops.length;
   if (drops.length) await ui.showDrop(drops);
@@ -138,8 +138,9 @@ async function resoudreType(
       const toile = zoneId ? toileDeZone(zoneId) : 1;
       crediterKamas(run, gainKamas(type, toile, Math.random));
       await recompenserXP(run, Math.round(xp * (1 + XP_PAR_TOILE * (toile - 1))));
-      // combat dur modifié → butin au taux donjon (la prise de risque paie)
-      await recompenserButin(run, zoneId, type === "combat_dur" ? "donjon" : type);
+      // combat dur → butin au TAUX donjon (la prise de risque paie), mais le pool
+      // exclusif reste celui des élites (les objets boss ne tombent qu'au donjon)
+      await recompenserButin(run, zoneId, type, type === "combat_dur" ? "donjon" : undefined);
       return "continue";
     }
     case "taverne": {
