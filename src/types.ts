@@ -324,6 +324,7 @@ export interface Meta {
   runs: number; // nombre total de runs terminées (victoire ou mort)
   victoires: number; // sous-ensemble : runs achevées (les 6 zones vaincues)
   succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
+  collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue ("base" pour un objet legacy sans rareté)
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

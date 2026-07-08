@@ -790,12 +790,12 @@ export function chargerMeta(): Meta {
     if (raw) {
       const m = JSON.parse(raw) as Partial<Meta>;
       // rétro-compat : les vieux saves n'ont ni compteurs ni archis
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [] };
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {} };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
   }
-  return { dofus: [], archis: [], runs: 0, victoires: 0, succes: [] };
+  return { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
 }
 
 export function sauverMeta(meta: Meta): void {
@@ -831,6 +831,26 @@ export function bonusDegatsDofus(meta: Meta): number {
     if (d) bonus += d.bonusDegatsParCopie;
   }
   return bonus;
+}
+
+// Armurerie : rang des paliers de collection (« base » = objet legacy sans rareté)
+const RANG_COLLECTION = ["base", "commun", "rare", "epique", "legendaire"];
+
+/** Enregistre des exemplaires obtenus dans la collection persistante (Armurerie) :
+ *  on retient, par objet, la meilleure rareté jamais obtenue. */
+export function enregistrerCollection(meta: Meta, insts: ItemInstance[]): void {
+  if (!insts.length) return;
+  const coll = (meta.collection ??= {});
+  let modifie = false;
+  for (const inst of insts) {
+    const palier = inst.rarete ?? "base";
+    const actuel = coll[inst.id];
+    if (!actuel || RANG_COLLECTION.indexOf(palier) > RANG_COLLECTION.indexOf(actuel)) {
+      coll[inst.id] = palier;
+      modifie = true;
+    }
+  }
+  if (modifie) sauverMeta(meta);
 }
 
 /** Capture l'âme d'une espèce d'Archimonstre (unique). Renvoie true si nouvelle. */

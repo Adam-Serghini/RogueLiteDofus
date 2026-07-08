@@ -14,6 +14,8 @@ import {
   ZONES,
   TRANCHES,
   RARETE_INFO,
+  BUTIN_ZONE,
+  butinToile,
   MODIFICATEURS_ELITE,
   monstresDeZone,
   OCRE_PALIERS,
@@ -66,6 +68,7 @@ import {
   vendreTout,
   peutEquiper,
   acheterArticle,
+  enregistrerCollection,
   type ArticleHDV,
   type RunState as RunStateT,
 } from "./run";
@@ -388,6 +391,7 @@ const MENU_PERSOS = A("/assets/menu/Caracteristiques.png");
 const MENU_FORMATION = A("/assets/menu/Formation.png");
 const MENU_INVENTAIRE = A("/assets/menu/Inventaire.png");
 const MENU_BESTIAIRE = A("/assets/menu/bestiaires.png");
+const MENU_ARMURERIE = A("/assets/menu/armurerie.png"); // absent : fallback 🛡️ dans le bouton
 const MENU_PARAM = A("/assets/menu/parametres.png");
 const MENU_SUCCES = A("/assets/menu/succes.png");
 const MENU_ACCUEIL = A("/assets/menu/Menu.png");
@@ -1010,6 +1014,7 @@ export function showStart(
       <div class="coin-menu">
         <button id="btn-dofus" class="coin-param" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
         <button id="btn-bestiaire" class="coin-param" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
+        <button id="btn-armurerie" class="coin-param" title="Armurerie"><img src="${MENU_ARMURERIE}" alt="Armurerie" onerror="this.parentElement.textContent='🛡️'" /></button>
         <button id="btn-succes" class="coin-param" title="Succès"><img src="${MENU_SUCCES}" alt="Succès" onerror="this.remove()" /></button>
         <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
       </div>
@@ -1047,6 +1052,12 @@ export function showStart(
       .getElementById("btn-bestiaire")
       ?.addEventListener("click", async () => {
         await showBestiaire(meta);
+        showStart(meta, onReset, reprise).then(res);
+      });
+    document
+      .getElementById("btn-armurerie")
+      ?.addEventListener("click", async () => {
+        await showArmurerie(meta);
         showStart(meta, onReset, reprise).then(res);
       });
     document
@@ -2076,6 +2087,59 @@ export function showBestiaire(meta: Meta): Promise<void> {
   });
 }
 
+/** Armurerie : la collection persistante d'équipement, zone par zone.
+ *  Jamais obtenu = grisé/transparent ; obtenu = en couleurs, avec le halo de la
+ *  MEILLEURE rareté jamais obtenue (les objets legacy sans rareté n'ont pas de halo). */
+export function showArmurerie(meta: Meta): Promise<void> {
+  return new Promise((res) => {
+    const coll = meta.collection ?? {};
+    // catalogue d'une zone : pools à rareté (normales + exclusifs élite/boss) ou pano legacy
+    const itemsDeZone = (zoneId: string): { id: string; badge?: "boss" | "elite" }[] => {
+      const pools = butinToile(zoneId);
+      if (pools) {
+        return [
+          ...pools.normales.map((id) => ({ id })),
+          ...pools.elites.map((id) => ({ id, badge: "elite" as const })),
+          ...pools.boss.map((id) => ({ id, badge: "boss" as const })),
+        ];
+      }
+      return (PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? []).map((id) => ({ id }));
+    };
+    let total = 0, possedes = 0;
+    const zonesHtml = ZONES.map((z) => {
+      const entrees = itemsDeZone(z.id).filter((e) => ITEMS[e.id]);
+      if (!entrees.length) return "";
+      const nb = entrees.filter((e) => coll[e.id]).length;
+      total += entrees.length;
+      possedes += nb;
+      const cards = entrees
+        .map(({ id, badge }) => {
+          const it = ITEMS[id]!;
+          const palier = coll[id]; // undefined = jamais obtenu
+          const aHalo = palier && palier !== "base";
+          const rareteTxt = aHalo ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : palier ? "obtenu" : "jamais obtenu";
+          const badgeHtml = badge ? `<span class="bestiaire-badge armu-badge-${badge}">${badge === "boss" ? "Boss" : "Élite"}</span>` : "";
+          return `<div class="archi-mon armu-item ${palier ? "capt" : "manquant"}${aHalo ? ` rarete-${palier}` : ""}" title="${escapeHtml(it.nom)} — ${SLOT_NOM[it.slot]}${badge ? ` (exclusif ${badge === "boss" ? "donjon" : "combat dur"})` : ""} · ${rareteTxt}">
+            <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
+            ${badgeHtml}
+            <span${aHalo ? ` class="inom-${palier}"` : ""}>${escapeHtml(it.nom)}</span>
+            <small>${aHalo ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : SLOT_NOM[it.slot]}</small>
+          </div>`;
+        })
+        .join("");
+      return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} <span class="archi-zone-compte">${nb}/${entrees.length} objets</span></h3><div class="archi-grid">${cards}</div></div>`;
+    }).join("");
+    ecran(`
+      <h1>🛡️ Armurerie</h1>
+      <p class="sous-titre">Chaque objet obtenu (butin ou Hôtel de vente) rejoint la collection pour toujours — le halo montre la meilleure rareté jamais obtenue.</p>
+      <p class="archi-resume"><b>${possedes}</b> / ${total} objets collectionnés</p>
+      ${zonesHtml}
+      <div class="boutons-ecran"><button id="armu-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+    `);
+    document.getElementById("armu-retour")?.addEventListener("click", () => res());
+  });
+}
+
 /** Petit écran de feedback quand on capture une ou plusieurs âmes d'Archimonstre. */
 export function showCapture(especes: string[]): Promise<void> {
   return new Promise((res) => {
@@ -2123,7 +2187,7 @@ export function showSucces(meta: Meta): Promise<void> {
 }
 
 /** Hôtel de vente : achat (stock de la zone + toiles traversées) et revente. */
-export function showHDV(run: RunStateT, stock: ArticleHDV[]): Promise<void> {
+export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promise<void> {
   return new Promise((res) => {
     const draw = () => {
       const rayon = stock.length
@@ -2167,7 +2231,12 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[]): Promise<void> {
       `);
       root.querySelectorAll<HTMLButtonElement>("[data-achat]").forEach((btn) =>
         btn.addEventListener("click", () => {
-          if (acheterArticle(run, stock, Number(btn.dataset.achat))) draw();
+          const idx = Number(btn.dataset.achat);
+          const inst = stock[idx]?.inst;
+          if (acheterArticle(run, stock, idx)) {
+            if (meta && inst) enregistrerCollection(meta, [inst]); // l'achat compte pour l'Armurerie
+            draw();
+          }
         }),
       );
       root.querySelectorAll<HTMLButtonElement>("[data-vente]").forEach((btn) =>
@@ -2344,6 +2413,7 @@ Butin au taux donjon.`)}"` : "";
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>
               <button id="carte-equip" class="aside-icone" title="Équipement${inventaire.length ? ` · ${inventaire.length} objet(s)` : ""}"><img src="${MENU_INVENTAIRE}" alt="Équipement" onerror="this.remove()" />${inventaire.length ? `<span class="aside-compte">${inventaire.length}</span>` : ""}</button>
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
+              <button id="carte-armurerie" class="aside-icone" title="Armurerie"><img src="${MENU_ARMURERIE}" alt="Armurerie" onerror="this.parentElement.textContent='🛡️'" /></button>
               <button id="carte-dofus" class="aside-icone" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
               <span class="topbar-sep"></span>
               <button id="carte-accueil" class="aside-icone" title="Retour à l'accueil (la run reste sauvegardée)"><img src="${MENU_ACCUEIL}" alt="Accueil" onerror="this.remove()" /></button>
@@ -2398,6 +2468,12 @@ Butin au taux donjon.`)}"` : "";
         .getElementById("carte-bestiaire")
         ?.addEventListener("click", async () => {
           await showBestiaire(meta);
+          draw();
+        });
+      document
+        .getElementById("carte-armurerie")
+        ?.addEventListener("click", async () => {
+          await showArmurerie(meta);
           draw();
         });
       document

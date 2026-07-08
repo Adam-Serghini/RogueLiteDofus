@@ -1552,6 +1552,16 @@ kbd {
 .archi-mon.simple small {
   font-style: normal;
 }
+/* Armurerie : la collection d'équipement (jamais obtenu = fantôme, obtenu = halo de rareté) */
+.armu-item.manquant {
+  opacity: 0.55;
+}
+.armu-item.manquant img:first-child {
+  filter: grayscale(1) brightness(0.7) opacity(0.6);
+}
+.armu-badge-elite {
+  background: #6b4fa0 !important;
+}
 .bestiaire-badge {
   position: absolute;
   top: -7px;

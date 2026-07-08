@@ -7,6 +7,7 @@ import {
   equiper, desequiper, tenterButin, rollItem, tirerRarete,
 } from "./run";
 import { PANOPLIES, butinToile } from "./data";
+import type { Meta } from "./types";
 
 const MIN = () => 0;     // jet au minimum de la fourchette (déterministe)
 const MAX = () => 0.999; // jet au maximum
@@ -231,5 +232,25 @@ describe("toile 4 — mécaniques spéciales", () => {
     const inst = rollItemRarete("chance_d_ecaflip", () => 0)!;
     expect(inst.rarete).toBe("epique"); // renormalisé sur les paliers existants
     expect(rollItemRarete("cape_edepee", () => 0.99)!.rarete).toBe("legendaire");
+  });
+});
+
+describe("Armurerie (collection persistante)", () => {
+  it("retient par objet la meilleure rareté jamais obtenue", async () => {
+    const { enregistrerCollection } = await import("./run");
+    const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
+    enregistrerCollection(meta, [{ id: "coiffe_du_tofu", rarete: "rare", stats: {} }]);
+    expect(meta.collection?.coiffe_du_tofu).toBe("rare");
+    enregistrerCollection(meta, [{ id: "coiffe_du_tofu", rarete: "legendaire", stats: {} }]);
+    expect(meta.collection?.coiffe_du_tofu).toBe("legendaire");
+    enregistrerCollection(meta, [{ id: "coiffe_du_tofu", rarete: "commun", stats: {} }]); // régression ignorée
+    expect(meta.collection?.coiffe_du_tofu).toBe("legendaire");
+  });
+
+  it("un objet legacy sans rareté est marqué « base »", async () => {
+    const { enregistrerCollection } = await import("./run");
+    const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
+    enregistrerCollection(meta, [rollItem("bouftou_coiffe", MIN)]);
+    expect(meta.collection?.bouftou_coiffe).toBe("base");
   });
 });

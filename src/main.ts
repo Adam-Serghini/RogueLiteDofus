@@ -10,7 +10,7 @@ import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   appliquerModificateurElite,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
-  propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso,
+  propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
   appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
@@ -115,6 +115,7 @@ async function capturerArchis(combatants: Combatant[]): Promise<number> {
 async function recompenserButin(run: RunState, zoneId: string | undefined, type: NodeType): Promise<void> {
   if (!zoneId) return;
   const drops = tenterButin(run, zoneId, type, Math.random);
+  enregistrerCollection(meta, drops); // Armurerie : la collection persiste au-delà de la run
   run.stats.objets += drops.length;
   if (drops.length) await ui.showDrop(drops);
 }
@@ -154,7 +155,7 @@ async function resoudreType(
       return "continue";
     }
     case "hdv": {
-      await ui.showHDV(run, genererStockHDV(zoneId ?? "", Math.random));
+      await ui.showHDV(run, genererStockHDV(zoneId ?? "", Math.random), meta);
       return "continue";
     }
     case "otomai": {
