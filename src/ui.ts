@@ -1463,6 +1463,11 @@ function itemStatsHtml(inst: ItemInstance): string {
   if (it?.riposteAvant) chips.push(`<span class="ichip ichip-force" title="Quand le porteur est frappé en ligne avant : ${Math.round(it.riposteAvant * 100)} % de chance de contre-attaquer">↩ ${Math.round(it.riposteAvant * 100)} % riposte (avant)</span>`);
   if (it?.esquiveArriere) chips.push(`<span class="ichip ichip-agilite" title="Quand le porteur est en ligne arrière : +${Math.round(it.esquiveArriere * 100)} % d'esquive">💨 +${Math.round(it.esquiveArriere * 100)} % esquive (arrière)</span>`);
   if (it?.soinDegatsRecus) chips.push(`<span class="ichip ichip-soin" title="À chaque coup encaissé, le porteur récupère ${Math.round(it.soinDegatsRecus * 100)} % des dégâts subis">♥ récup. ${Math.round(it.soinDegatsRecus * 100)} % des dégâts subis</span>`);
+  if (it?.changeLigne) chips.push(`<span class="ichip ichip-pa" title="Confère le sort « Changer de ligne » : bascule avant ↔ arrière en combat pour ${it.changeLigne} PA">↕ change de ligne (${it.changeLigne} PA)</span>`);
+  if (it?.perceResistances) chips.push(`<span class="ichip ichip-force" title="L'attaque de cette arme ignore ${Math.round(it.perceResistances * 100)} % des résistances de la cible">⚡ perce ${Math.round(it.perceResistances * 100)} % des rés.</span>`);
+  if (it?.frappeDerriere) chips.push(`<span class="ichip ichip-force" title="L'attaque touche aussi l'ennemi juste derrière la cible">⤈ frappe aussi derrière</span>`);
+  if (it?.prospParPvManquant) chips.push(`<span class="ichip ichip-prospection" title="Au moment du butin : +${it.prospParPvManquant} prospection par PV manquant du porteur">📦 +${it.prospParPvManquant} PP / PV manquant</span>`);
+  if (it?.multKamas) chips.push(`<span class="ichip ichip-adapt" title="Les kamas gagnés en combat sont multipliés par ${it.multKamas}">🪙 kamas ×${it.multKamas}</span>`);
   return `<span class="ichips">${chips.join("")}</span>`;
 }
 

@@ -415,6 +415,14 @@ export const SORTS: Record<string, Spell> = {
     desc: "Consomme TOUTE la Rage accumulée et soigne le lanceur de 8-12 PV par charge (nécessite au moins 1 Rage).",
   },
 
+  // ---- Sorts d'équipement (conférés par un objet porté) ----
+  changer_ligne: {
+    id: "changer_ligne", nom: "Changer de ligne", type: "buff", coutPA: 1,
+    cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
+    changeLigne: true,
+    desc: "Se déplace dans la rangée opposée (avant ↔ arrière), même colonne si possible. Conféré par les Dagues Eurfolles.",
+  },
+
   // ---- Sorts de monstres (re-tunés pour les PV joueur V1) ----
   morsure: {
     id: "morsure", nom: "Morsure", type: "degats", coutPA: 4,
@@ -484,12 +492,12 @@ export const SORTS: Record<string, Spell> = {
   carapace_doree: {
     id: "carapace_doree", nom: "Carapace dorée", type: "degats", coutPA: 6,
     cible: "ennemi_ligne", baseMin: 16, baseMax: 22, scaling: 0.45,
-    bouclierRatioDegats: 1.0, cooldownTours: 3,
-    desc: "Scarabosse Doré — charge cornée : gagne un bouclier de 100 % des dégâts infligés.",
+    bouclierRatioDegats: 0.4, cooldownTours: 3, // retuné toile 8
+    desc: "Scarabosse Doré — charge cornée : gagne un bouclier de 40 % des dégâts infligés.",
   },
   machoire_du_coffre: {
     id: "machoire_du_coffre", nom: "Mâchoire du coffre", type: "degats", coutPA: 6,
-    cible: "ennemi_ligne", baseMin: 26, baseMax: 34, scaling: 0.6,
+    cible: "ennemi_ligne", baseMin: 18, baseMax: 24, scaling: 0.48, // retuné toile 9
     effetLanceur: { stat: "resAll", valeur: 0.3, duree: 1 }, cooldownTours: 2,
     desc: "Coffre des Forgerons — happe violemment puis se referme : +30 % de résistances (1t).",
   },
@@ -509,9 +517,9 @@ export const SORTS: Record<string, Spell> = {
   enfer_des_zombies: {
     id: "enfer_des_zombies", nom: "L'Enfer des Zombies", type: "invocation", coutPA: 6,
     cible: "soi", baseMin: 0, baseMax: 0, scaling: 0,
-    ressuscite: { pvPct: 0.5 },
-    cooldownTours: 3,
-    desc: "Boostache — réinvoque un monstre vaincu à 50 % de ses PV.",
+    ressuscite: { pvPct: 0.35 },
+    cooldownTours: 4, // retuné toile 7 : la boucle de rez étouffait tout DPS commun
+    desc: "Boostache — réinvoque un monstre vaincu à 35 % de ses PV.",
   },
   ponte_larvaire: {
     id: "ponte_larvaire", nom: "Ponte larvaire", type: "invocation", coutPA: 2, // laisse 4 PA pour frapper le même tour
@@ -884,18 +892,18 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/scarafeuille_immature.png",
   },
   scarafeuille_noir: {
-    id: "scarafeuille_noir", nom: "Scarafeuille Noir", pv: 105,
-    stats: { force: 30, intelligence: 12, agilite: 12, vitalite: 60 }, // encaisseur équilibré (élite/miniboss)
+    id: "scarafeuille_noir", nom: "Scarafeuille Noir", pv: 95, // retuné toile 8
+    stats: { force: 27, intelligence: 12, agilite: 12, vitalite: 60 }, // encaisseur équilibré (élite/miniboss)
     pa: 5, initiative: 9,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
     sorts: ["morsure", "charge"], ia: "agressif",
     img: "/assets/monstres/scarafeuille_noir.png",
   },
   scarabosse_dore: {
-    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 746,
-    stats: { force: 41, intelligence: 11, agilite: 12, chance: 11, vitalite: 132 },
+    id: "scarabosse_dore", nom: "Scarabosse Doré", pv: 600, // retuné toile 8
+    stats: { force: 30, intelligence: 11, agilite: 12, chance: 11, vitalite: 132 },
     pa: 10, initiative: 10,
-    resistances: { terre: 0.2, feu: 0.2, eau: 0.2, air: 0.2 }, // résiste tout : il faut le user
+    resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 }, // résiste tout : il faut le user (retuné toile 8)
     sorts: ["carapace_doree", "ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
     img: "/assets/monstres/scarabosse_dore.png",
@@ -913,8 +921,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/mineur_sombre.png",
   },
   boulanger_sombre: {
-    id: "boulanger_sombre", nom: "Boulanger Sombre", pv: 67,
-    stats: { force: 8, intelligence: 34, agilite: 8, vitalite: 48 }, // frappe Feu (four)
+    id: "boulanger_sombre", nom: "Boulanger Sombre", pv: 60, // retuné toile 9
+    stats: { force: 8, intelligence: 28, agilite: 8, vitalite: 48 }, // frappe Feu (four)
     pa: 5, initiative: 9,
     resistances: { feu: 0.2 },
     sorts: ["tir_courbe", "morsure"], ia: "agressif",
@@ -931,8 +939,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/bandit_roublard.png",
   },
   forgeron_sombre: {
-    id: "forgeron_sombre", nom: "Forgeron Sombre", pv: 129,
-    stats: { force: 36, intelligence: 10, agilite: 14, vitalite: 66 }, // frappe Terre (marteau) — élite/miniboss
+    id: "forgeron_sombre", nom: "Forgeron Sombre", pv: 110, // retuné toile 9
+    stats: { force: 31, intelligence: 10, agilite: 14, vitalite: 66 }, // frappe Terre (marteau) — élite/miniboss
     pa: 5, initiative: 8,
     resistances: { terre: 0.1, feu: 0.1, eau: -0.1, air: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
@@ -940,8 +948,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/forgeron_sombre.png",
   },
   coffre_forgerons: {
-    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 786,
-    stats: { force: 46, intelligence: 18, agilite: 13, chance: 12, vitalite: 164 },
+    id: "coffre_forgerons", nom: "Coffre des Forgerons", pv: 430, // retuné toile 9
+    stats: { force: 23, intelligence: 12, agilite: 13, chance: 12, vitalite: 164 },
     pa: 10, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
     resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
     sorts: ["machoire_du_coffre", "ecrasement", "charge", "morsure"], ia: "agressif",
@@ -1082,8 +1090,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwoan.png",
   },
   gargrouille: {
-    id: "gargrouille", nom: "Gargrouille", pv: 76,
-    stats: { force: 34, intelligence: 10, agilite: 12, vitalite: 54 }, // frappe Terre (pierre animée)
+    id: "gargrouille", nom: "Gargrouille", pv: 65, // retuné toile 7
+    stats: { force: 28, intelligence: 10, agilite: 12, vitalite: 54 }, // frappe Terre (pierre animée)
     pa: 4, initiative: 9,
     resistances: { terre: 0.2, eau: 0.1, feu: -0.1 },
     sorts: ["morsure"], ia: "agressif",
@@ -1091,16 +1099,16 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gargrouille.png",
   },
   boostache_prepubere: {
-    id: "boostache_prepubere", nom: "Boostache Prépubère", pv: 129,
-    stats: { force: 12, intelligence: 16, agilite: 33, vitalite: 68 }, // miniboss (rejeton du boss)
+    id: "boostache_prepubere", nom: "Boostache Prépubère", pv: 85, // retuné toile 7
+    stats: { force: 12, intelligence: 13, agilite: 22, vitalite: 68 }, // miniboss (rejeton du boss)
     pa: 5, initiative: 13,
     resistances: { air: 0.2, feu: 0.1, terre: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
     img: "/assets/monstres/boostache_prepubere.png",
   },
   boostache: {
-    id: "boostache", nom: "Boostache", pv: 599,
-    stats: { force: 8, intelligence: 12, agilite: 29, vitalite: 122 },
+    id: "boostache", nom: "Boostache", pv: 330, // retuné toile 7 (stuff commun sans vita)
+    stats: { force: 8, intelligence: 9, agilite: 16, vitalite: 122 },
     pa: 10, initiative: 12,
     resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
     sorts: ["enfer_des_zombies", "ecrasement", "charge", "morsure"], ia: "agressif",

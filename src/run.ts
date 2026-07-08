@@ -272,6 +272,8 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
       coutPA: attaque.coutPA, baseMin: attaque.baseMin,
       baseMax: attaque.baseMax, scaling: attaque.scaling,
       ...(attaque.vampirisme ? { vampirismeRatio: attaque.vampirisme } : {}),
+      ...(armeItem.perceResistances ? { perceResistances: armeItem.perceResistances } : {}),
+      ...(armeItem.frappeDerriere ? { toucheDerriere: true } : {}),
       img: `/assets/items/${armeItem.id}.png`,
       desc: attaque.cible === "ennemi_tous"
         ? "Attaque d'arme — atteint la ligne arrière."
@@ -281,8 +283,10 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     }
     : undefined;
   // Effets spéciaux d'équipement (premier objet porteur, non cumulables)
-  const special = <K extends "paGamble" | "riposteAvant" | "esquiveArriere" | "soinDegatsRecus">(k: K) =>
+  const special = <K extends "paGamble" | "riposteAvant" | "esquiveArriere" | "soinDegatsRecus" | "changeLigne">(k: K) =>
     (Object.values(state.equipement).map((i) => i && ITEMS[i.id]?.[k]).find(Boolean)) ?? undefined;
+  // Dagues Eurfolles : l'objet confère le sort « Changer de ligne »
+  const sortsEquipement = special("changeLigne") ? ["changer_ligne"] : [];
   return {
     armeSort,
     paGamble: special("paGamble"),
@@ -299,7 +303,7 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     paActuels: classe.pa + bonus.paBonus,
     initiative: classe.initiative,
     resistances: bonus.resistances, // résistances issues de l'équipement
-    sorts: [...classe.sorts],
+    sorts: [...classe.sorts, ...sortsEquipement],
     camp: "joueur",
     position: state.position,
     niveau: state.progression.niveau,
@@ -383,12 +387,29 @@ export function rollItem(itemId: string, rng: () => number): ItemInstance {
   return { id: itemId, stats };
 }
 
-/** Prospection cumulée de l'équipe (stat de classe + équipement). */
+/** Prospection cumulée de l'équipe (stat de classe + équipement).
+ *  Caskoffre : +X par PV manquant du porteur — évaluée au moment du butin,
+ *  donc plus l'équipe a saigné, plus le coffre paie. */
 export function prospectionEquipe(run: RunState): number {
   return run.persos.reduce((s, p) => {
     const base = statsFinales(CLASSES[p.classeId], p.progression).prospection ?? 0;
-    return s + base + (bonusEquipement(p).stats.prospection ?? 0);
+    const parPvManquant = Object.values(p.equipement)
+      .map((i) => i && ITEMS[i.id]?.prospParPvManquant)
+      .find(Boolean);
+    const bonusCoffre = parPvManquant ? Math.round(parPvManquant * Math.max(0, pvMaxPerso(p) - p.pvActuels)) : 0;
+    return s + base + (bonusEquipement(p).stats.prospection ?? 0) + bonusCoffre;
   }, 0);
+}
+
+/** Multiplicateur de kamas de combat de l'équipe (Ann'or, multiplicatif si plusieurs). */
+export function multKamasEquipe(run: RunState): number {
+  return run.persos.reduce((m, p) => {
+    for (const inst of Object.values(p.equipement)) {
+      const mult = inst && ITEMS[inst.id]?.multKamas;
+      if (mult) m *= mult;
+    }
+    return m;
+  }, 1);
 }
 
 /**

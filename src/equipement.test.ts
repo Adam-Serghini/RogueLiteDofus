@@ -149,9 +149,9 @@ describe("rareté (objets à toiles)", () => {
     expect(leg.adaptatif).toBe(6);
   });
 
-  it("Incarnam droppe depuis son pool de toile (rareté), la Maison Fantôme reste legacy", () => {
+  it("Incarnam droppe depuis son pool de toile (rareté), les Larves restent legacy", () => {
     expect(butinToile("incarnam")!.normales).toContain("chapeau_de_l_aventurier");
-    expect(butinToile("maison_fantome")).toBeNull(); // toile 7 : pas encore saisie
+    expect(butinToile("larves")).toBeNull(); // toile 10 : pas encore saisie
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
     expect(drops.length).toBe(4);
@@ -342,5 +342,80 @@ describe("toiles 5-6 : mécaniques spéciales & source mixte", () => {
     const dmg = degatsCible(ennemi, SORTS.morsure, { ...iop, effets: [] }, { useMax: true, mult: 1, ctx }).dmg;
     lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx);
     expect(iop.pvActuels).toBe(500 - dmg + Math.round(dmg * 0.02));
+  });
+});
+
+describe("toiles 7-9 : mécaniques spéciales", () => {
+  it("Dagues Eurfolles : « Changer de ligne » bascule avant ↔ arrière pour 1 PA", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const { lancerSort, ciblesValides } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].position = 0;
+    run.persos[0].equipement.arme = rollItemRarete("dagues_eurfolles", () => 0)!;
+    const iop = combattantDepuisPerso(run.persos[0]);
+    expect(iop.sorts).toContain("changer_ligne"); // conféré par l'objet
+    const ctx = { rng: () => 0.5, log: () => {}, playerDamageBonus: 1 };
+    expect(ciblesValides(iop, SORTS.changer_ligne, [iop])).toEqual([iop]);
+    lancerSort(iop, SORTS.changer_ligne, iop.ref, [iop], ctx);
+    expect(iop.position).toBe(4); // même colonne, rangée arrière
+    lancerSort(iop, SORTS.changer_ligne, iop.ref, [iop], ctx);
+    expect(iop.position).toBe(0); // retour devant
+    // sans les dagues : le sort n'est pas dans la barre
+    const sans = combattantDepuisPerso(nouvelleRun(["iop"]).persos[0]);
+    expect(sans.sorts).not.toContain("changer_ligne");
+  });
+
+  it("Dagues Aj'Deh'La : l'attaque ne compte que 50 % des résistances", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete, fabriquerEnnemis } = await import("./run");
+    const { degatsCible } = await import("./combat");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.arme = rollItemRarete("dagues_aj_deh_la", () => 0)!;
+    const iop = combattantDepuisPerso(run.persos[0]);
+    expect(iop.armeSort?.perceResistances).toBeCloseTo(0.5);
+    const cible = fabriquerEnnemis("combat_1")[0];
+    cible.stats = { ...cible.stats, agilite: 0 };
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    const sansRes = degatsCible(iop, iop.armeSort!, { ...cible, resistances: {} }, { useMax: true, mult: 1, ctx }).dmg;
+    cible.resistances = { ...cible.resistances, [Object.keys(cible.resistances)[0] ?? "terre"]: 0 };
+    const resistances = { terre: 0.4, feu: 0.4, eau: 0.4, air: 0.4 };
+    const avecRes = degatsCible(iop, iop.armeSort!, { ...cible, resistances }, { useMax: true, mult: 1, ctx }).dmg;
+    // 40 % de résistance percée à 50 % → seulement −20 % subis
+    expect(Math.abs(avecRes - sansRes * 0.8)).toBeLessThanOrEqual(1);
+  });
+
+  it("Masse Aj Taye : frappe la cible ET l'ennemi derrière elle", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete, fabriquerEnnemis } = await import("./run");
+    const { lancerSort } = await import("./combat");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.arme = rollItemRarete("masse_aj_taye", () => 0)!;
+    const iop = combattantDepuisPerso(run.persos[0]);
+    // salle avec ligne arrière : gob_elite a un Gobaliste derrière (position 4)
+    const pack = fabriquerEnnemis("gob_elite").map((e) => { e.pvActuels = 500; e.pvMax = 500; e.stats = { ...e.stats, agilite: 0 }; return e; });
+    const devant = pack.find((e) => e.position === 0)!;
+    const derriere = pack.find((e) => e.position >= 4)!;
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    lancerSort(iop, iop.armeSort!, devant.ref, [iop, ...pack], ctx);
+    expect(devant.pvActuels).toBeLessThan(500);
+    expect(derriere.pvActuels).toBeLessThan(500); // touché par la traversée
+  });
+
+  it("Caskoffre : la prospection d'équipe monte avec les PV manquants du porteur", async () => {
+    const { nouvelleRun, rollItemRarete, prospectionEquipe, pvMaxPerso } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    p.equipement.coiffe = rollItemRarete("caskoffre", () => 0)!;
+    p.pvActuels = pvMaxPerso(p); // pleins PV (la coiffe ajoute de la vita)
+    const pleinePV = prospectionEquipe(run);
+    p.pvActuels = pvMaxPerso(p) - 50; // 50 PV manquants → +10 prospection (0,2/PV)
+    expect(prospectionEquipe(run)).toBe(pleinePV + 10);
+  });
+
+  it("Ann'or : les kamas de combat sont multipliés par 1,2", async () => {
+    const { nouvelleRun, rollItemRarete, multKamasEquipe } = await import("./run");
+    const run = nouvelleRun(["iop", "cra"]);
+    expect(multKamasEquipe(run)).toBe(1);
+    run.persos[0].equipement.anneau = rollItemRarete("ann_or", () => 0)!;
+    expect(multKamasEquipe(run)).toBeCloseTo(1.2);
   });
 });

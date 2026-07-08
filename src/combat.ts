@@ -162,6 +162,9 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   // Apaisement (Ouginak) : ne se lance qu'avec au moins 1 état de Rage
   if (sort.consommeRage && !(acteur.rage ?? 0)) return [];
 
+  // Changer de ligne (Dagues Eurfolles) : il faut une case libre dans la rangée opposée
+  if (sort.changeLigne && caseLibreRangeeOpposee(acteur, cs) === null) return [];
+
   // cooldown par sort (côté lanceur) : sort entièrement indisponible pendant Nt
   if (enCooldownSort(acteur, sort)) return [];
   // un sort à cooldown n'est plus ciblable sur une cible en attente de recharge
@@ -222,6 +225,7 @@ interface BaseDegats {
   baseMax: number;
   scaling: number;
   ignoreResistances?: boolean;
+  perceResistances?: number; // fraction des résistances ignorée (Dagues Aj'Deh'La)
 }
 
 // --- Rage (Ouginak) -----------------------------------------------------------
@@ -293,9 +297,11 @@ function degatsAvec(
   // bonus de rebond (saut)
   dmg *= opts.mult;
 
-  // résistance de l'élément (+ resAll), sauf ignoreResistances
+  // résistance de l'élément (+ resAll), sauf ignoreResistances ;
+  // perceResistances (arme) : seule une fraction de la résistance compte
   if (!base.ignoreResistances) {
-    dmg *= 1 - ((cible.resistances[el] ?? 0) + sommeEffet(cible, "resAll"));
+    const res = (cible.resistances[el] ?? 0) + sommeEffet(cible, "resAll");
+    dmg *= 1 - res * (1 - (base.perceResistances ?? 0));
   }
 
   // réduction de dégâts subis (Bâton du berger), plafonnée à 80 %
@@ -412,6 +418,27 @@ function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ct
     infligerDegats(attaquant, r.dmg); // pas d'attaquant → pas de contre-riposte
     ctx.log(`${cible.nom} riposte : ${r.dmg} dégâts à ${attaquant.nom}.`);
   }
+}
+
+/** Première case libre (0-3 ou 4-7) de la rangée OPPOSÉE à celle de `c`, dans son camp. */
+function caseLibreRangeeOpposee(c: Combatant, cs: Combatant[]): number | null {
+  const prises = new Set(vivants(cs).filter((x) => x.camp === c.camp).map((x) => x.position));
+  const [debut, fin] = estAvant(c) ? [4, 7] : [0, 3];
+  // on privilégie la case de la même colonne (±4), sinon la première libre
+  const memeColonne = estAvant(c) ? c.position + 4 : c.position - 4;
+  if (!prises.has(memeColonne)) return memeColonne;
+  for (let p = debut; p <= fin; p++) if (!prises.has(p)) return p;
+  return null;
+}
+
+/** Ennemi vivant de la ligne ARRIÈRE le plus proche de la colonne de `cible`
+ *  (la « victime derrière » de la Masse Aj Taye). null si cible déjà derrière. */
+function derriereEnLigne(cible: Combatant, cs: Combatant[]): Combatant | null {
+  if (!estAvant(cible)) return null;
+  const arrieres = vivants(cs).filter((x) => x.camp === cible.camp && !estAvant(x));
+  if (!arrieres.length) return null;
+  return arrieres.sort((a, b) =>
+    Math.abs(a.position - 4 - cible.position) - Math.abs(b.position - 4 - cible.position))[0];
 }
 
 /** Combattant vivant juste derrière `c` dans sa ligne (position supérieure). */
@@ -878,6 +905,16 @@ export function lancerSort(
     return;
   }
 
+  // --- CHANGER DE LIGNE (Dagues Eurfolles) : bascule avant ↔ arrière ---
+  if (sort.changeLigne) {
+    const dest = caseLibreRangeeOpposee(lanceur, cs);
+    if (dest === null) return; // gardé aussi par ciblesValides
+    lanceur.position = dest;
+    ctx.log(`${lanceur.nom} se glisse en ligne ${dest < 4 ? "AVANT" : "ARRIÈRE"} (Dagues Eurfolles).`);
+    poseCooldown(lanceur);
+    return;
+  }
+
   // --- SOIN ---
   if (sort.type === "soin") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
@@ -1032,6 +1069,14 @@ export function lancerSort(
     }
     if (i === 0 && t.pvActuels <= 0) primaireMorte = true;
   });
+
+  // Masse Aj Taye : l'attaque traverse et touche l'ennemi derrière la cible
+  if (sort.toucheDerriere) {
+    const t = derriereEnLigne(cible, cs);
+    if (t && t.pvActuels > 0) {
+      totalDmg += frappe(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
+    }
+  }
 
   // Épée hostile : rebond x2 si la cible primaire meurt
   if (sort.siCibleMeurt && primaireMorte) {

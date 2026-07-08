@@ -44,14 +44,14 @@ describe("signatures des boss", () => {
     expect(boss.stats.force).toBe(forceAvant); // la base ne bouge pas : c'est un effet temporaire
   });
 
-  it("Carapace dorée : le Scarabosse gagne un bouclier de 100 % des dégâts", () => {
+  it("Carapace dorée : le Scarabosse gagne un bouclier de 40 % des dégâts", () => {
     const boss = bossDe("scr_boss");
     const [iop] = fabriquerEquipe();
     iop.pvMax = 500; iop.pvActuels = 500;
     lancerSort(boss, SORTS.carapace_doree, iop.ref, [boss, iop], ctx());
     const degats = 500 - iop.pvActuels;
     expect(degats).toBeGreaterThan(0);
-    expect(boss.bouclier).toBe(Math.round(degats * 1.0));
+    expect(boss.bouclier).toBe(Math.round(degats * 0.4));
   });
 
   it("Racines voraces : le Tournesol soigne tout son camp des dégâts infligés", () => {
@@ -102,13 +102,13 @@ describe("signatures des boss", () => {
     expect(cs.length).toBe(5); // cap à 2 vivantes
   });
 
-  it("L'Enfer des Zombies : Boostache réinvoque un allié vaincu à 50 % de ses PV", () => {
+  it("L'Enfer des Zombies : Boostache réinvoque un allié vaincu à 35 % de ses PV", () => {
     const cs = fabriquerEnnemis("fan_boss");
     const boss = cs.find((c) => c.monstreId === "boostache")!;
     const mini = cs.find((c) => c.monstreId === "boostache_prepubere")!;
     mini.pvActuels = 0; // vaincu
     lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
-    expect(mini.pvActuels).toBe(Math.round(mini.pvMax * 0.5));
+    expect(mini.pvActuels).toBe(Math.round(mini.pvMax * 0.35));
     // personne de mort → le sort ne fait rien (aucun combattant ajouté)
     lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
     expect(cs.length).toBe(3);

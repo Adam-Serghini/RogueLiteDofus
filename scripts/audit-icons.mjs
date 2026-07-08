@@ -18,6 +18,16 @@ const SURCHARGES = {
   coiffe_du_tofu: 61685, // Peluche du Tofu (un tofu sur la tête)
   cape_edepee: 17646, // Cape du Chevalier du Ciel (panache de cape et d'épée)
   anneau_bouftou: null, // copie du legacy bouftou_anneau (déjà en place)
+  pelle_du_bois_dormant: 8020, // « Pelle DE Bois Dormant »
+  anneau_forrain: 9050, // « Anneau Forain » (un seul r)
+  masque_traumatisant: 16011, // « Masque TROmatisant » (vrai nom Dofus)
+  baguette_scafeuille: 3059, // vrai nom : Baguette du Scarabosse Doré
+  anneau_poupayahn: 9101, // Anneau du Scarabosse Doré (cousin de zone)
+  vegacoiffe: 16753, // Heaume Erik (cousin métal, niv 40)
+  veganneau: 9085, // vrai nom : Anneau Ha
+  vegaton: 4041, // Racine Sauvageonne (la Racine Hécouane n'est pas sur DofusDB)
+  dagues_aj_deh_la: 5019, // « Dagues Aj'Deh'Là » (accent)
+  ann_or: 9043, // vrai nom : Kwakanneau (variante de Flammes, la dorée)
 };
 
 const gen = readFileSync("src/items_gen.ts", "utf-8");

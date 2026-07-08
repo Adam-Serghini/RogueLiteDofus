@@ -65,6 +65,11 @@ for (const ligne of lignes.slice(1)) {
   if (special === "riposte_avant") it.riposteAvant = 0.33; // riposte quand frappé, si ligne avant
   if (special === "esquive_arriere") it.esquiveArriere = 0.10; // esquive bonus, si ligne arrière
   if (special === "soin_recus") it.soinDegatsRecus = 0.02; // récupère X % des dégâts subis
+  if (special === "change_ligne") it.changeLigne = 1; // action « Changer de ligne » à N PA (Dagues Eurfolles)
+  if (special === "perce_res") it.perceResistances = 0.5; // l'attaque d'arme ignore cette fraction des résistances
+  if (special === "frappe_derriere") it.frappeDerriere = true; // l'attaque touche aussi l'ennemi derrière la cible
+  if (special === "prosp_pv_manquant") it.prospParPvManquant = 0.2; // +prospection par PV manquant au moment du butin
+  if (special === "mult_kamas") it.multKamas = 1.2; // multiplie les kamas gagnés en combat
 
   // attaque d'arme : lue sur la ligne (identique ou progressive par palier)
   const attPA = num(row, "att_pa");
@@ -106,6 +111,11 @@ export const ITEMS_TOILES: Record<string, Item> = ${JSON.stringify(
     ...(it.riposteAvant ? { riposteAvant: it.riposteAvant } : {}),
     ...(it.esquiveArriere ? { esquiveArriere: it.esquiveArriere } : {}),
     ...(it.soinDegatsRecus ? { soinDegatsRecus: it.soinDegatsRecus } : {}),
+    ...(it.changeLigne ? { changeLigne: it.changeLigne } : {}),
+    ...(it.perceResistances ? { perceResistances: it.perceResistances } : {}),
+    ...(it.frappeDerriere ? { frappeDerriere: true } : {}),
+    ...(it.prospParPvManquant ? { prospParPvManquant: it.prospParPvManquant } : {}),
+    ...(it.multKamas ? { multKamas: it.multKamas } : {}),
   }])), null, 2)};
 
 /** Pools par toile et par source de drop (normales / élites / boss). */

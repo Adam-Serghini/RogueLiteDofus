@@ -56,6 +56,11 @@ export interface Item {
   riposteAvant?: number; // Sabre Shodanwa : chance de riposte quand frappé, si ligne avant
   esquiveArriere?: number; // Baguette Rikiki : esquive bonus, si ligne arrière
   soinDegatsRecus?: number; // Goyave : fraction des dégâts subis récupérée en PV
+  changeLigne?: number; // Dagues Eurfolles : action « Changer de ligne » à N PA en combat
+  perceResistances?: number; // Dagues Aj'Deh'La : l'attaque d'arme ignore cette fraction des résistances
+  frappeDerriere?: boolean; // Masse Aj Taye : l'attaque touche aussi l'ennemi derrière la cible
+  prospParPvManquant?: number; // Caskoffre : +prospection par PV manquant du porteur au moment du butin
+  multKamas?: number; // Ann'or : multiplie les kamas gagnés en combat
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
@@ -189,6 +194,9 @@ export interface Spell {
   donneBonusDe?: { min: number; max: number; duree: number }; // Bonne pioche
   paGainAdjacents?: number; // Tactique féline : +PA aux alliés des cases adjacentes
   procAleatoire?: ProcAleatoire[]; // Langue râpeuse : 1 effet tiré au hasard sur la cible
+  changeLigne?: boolean; // « Changer de ligne » (Dagues Eurfolles) : déplace le lanceur dans la rangée opposée
+  perceResistances?: number; // fraction des résistances ignorée par ce sort (attaque d'arme)
+  toucheDerriere?: boolean; // l'attaque touche aussi l'ennemi juste derrière la cible (Masse Aj Taye)
   // --- mécaniques de l'Ouginak ---
   marqueProie?: number; // Proie : marque UNIQUE sur un ennemi — l'équipe vole cette fraction des dégâts qu'elle lui inflige
   rage?: boolean; // le sort confère 1 état de Rage au lanceur (cap RAGE_MAX)

@@ -12,7 +12,7 @@ import {
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
   appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
-  gainKamas, crediterKamas, genererStockHDV, toileDeZone,
+  gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
 } from "./run";
 import * as ui from "./ui";
@@ -136,7 +136,7 @@ async function resoudreType(
       const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur", eliteModif);
       if (!gagne) return "wipe";
       const toile = zoneId ? toileDeZone(zoneId) : 1;
-      crediterKamas(run, gainKamas(type, toile, Math.random));
+      crediterKamas(run, Math.round(gainKamas(type, toile, Math.random) * multKamasEquipe(run)));
       await recompenserXP(run, Math.round(xp * (1 + XP_PAR_TOILE * (toile - 1))));
       // combat dur → butin au TAUX donjon (la prise de risque paie), mais le pool
       // exclusif reste celui des élites (les objets boss ne tombent qu'au donjon)
@@ -225,7 +225,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
 
     if (issue === "wipe") return "wipe";
     if (issue === "victoire") {
-      crediterKamas(run, gainKamas("donjon", toileDeZone(zone.id), Math.random));
+      crediterKamas(run, Math.round(gainKamas("donjon", toileDeZone(zone.id), Math.random) * multKamasEquipe(run)));
       return "clear"; // donjon de la zone vaincu (+ Dofus)
     }
     sauverRunEnCours(zoneIdx, run); // étape franchie → point de reprise

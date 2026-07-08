@@ -155,3 +155,85 @@ id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;r
 58;Grosse Bagouze du Parrain;anneau;6;rare;;;;;;2;;;;;;;;;;;6;;elite;;;
 58;Grosse Bagouze du Parrain;anneau;6;epique;;;;;;3;;;;;;;;;;;10;;elite;;;
 58;Grosse Bagouze du Parrain;anneau;6;legendaire;;;;;;4;;;;;;;;;;;12;;elite;;;
+59;Shako;coiffe;7;commun;;;;;;2;;;;;;;;;;;8;;;;;
+59;Shako;coiffe;7;rare;;;;;;2;;;;;;;;;;;10;;;;;
+59;Shako;coiffe;7;epique;;;;;;3;;;;;;;;;;;12;;;;;
+59;Shako;coiffe;7;legendaire;;;;;;5;;;;;;;;;;;20;;;;;
+60;Cape du Boostache;cape;7;commun;;;;;;2;;;;;;;;;;;6;;;;;
+60;Cape du Boostache;cape;7;rare;;;;;;2;;;;;;;;;;;8;;;;;
+60;Cape du Boostache;cape;7;epique;;;;;;3;;;;;;;;;;;10;;;;;
+60;Cape du Boostache;cape;7;legendaire;;;;;;5;;;;;;;;;;;14;;;;;
+61;Anneau du Boostache;anneau;7;commun;;;;;;1;;;;;;;;;;;3;;;;;
+61;Anneau du Boostache;anneau;7;rare;;;;;;1;;;;;;;;;;;4;;;;;
+61;Anneau du Boostache;anneau;7;epique;;;;;;2;;;;;;;;;;;6;;;;;
+61;Anneau du Boostache;anneau;7;legendaire;;;;;;3;;;;;;;;;;;8;;;;;
+62;Pelle du Bois Dormant;arme;7;commun;;;;;;2;;;;;;;4;16;21;0.44;4;;;;;
+62;Pelle du Bois Dormant;arme;7;rare;;;;;;2;;;;;;;4;16;21;0.44;6;;;;;
+62;Pelle du Bois Dormant;arme;7;epique;;;;;;3;;;;;;;4;17;22;0.44;8;;;;;
+62;Pelle du Bois Dormant;arme;7;legendaire;;;;;;4;;;;;;;4;18;24;0.46;12;;;;;
+63;Dagues Eurfolles;arme;7;epique;;;;;14;;;;;;8;;3;11;14;0.34;7;;boss;;;change_ligne
+63;Dagues Eurfolles;arme;7;legendaire;;;;;20;;;;;;19;;3;12;16;0.36;10;;boss;;;change_ligne
+64;Cape du Vampyre;cape;7;epique;;;;;-16;1;;;;;;;;;;;14;;boss;;;
+64;Cape du Vampyre;cape;7;legendaire;;;;;-10;2;;;;;;;;;;;22;;boss;;;
+65;Anneau Forrain;anneau;7;commun;;;;;;;;;;;8;;;;;;2;;elite;;;
+65;Anneau Forrain;anneau;7;rare;;;;;;;;;;;10;;;;;;3;;elite;;;
+65;Anneau Forrain;anneau;7;epique;;;;;;;;;;;12;;;;;;4;;elite;;;
+65;Anneau Forrain;anneau;7;legendaire;;;;;;;;;;;16;;;;;;6;;elite;;;
+66;Masque Traumatisant;coiffe;7;commun;;;;;10;;4;4;;-4;2;;;;;;4;;elite;;;
+66;Masque Traumatisant;coiffe;7;rare;;;;;14;;5;5;;-4;4;;;;;;6;;elite;;;
+66;Masque Traumatisant;coiffe;7;epique;;;;;18;;6;6;;-3;6;;;;;;8;;elite;;;
+66;Masque Traumatisant;coiffe;7;legendaire;;;;;22;;8;8;;-2;8;;;;;;12;;elite;;;
+67;Scaracoiffe Noire;coiffe;8;commun;;;;;14;2;1;1;1;1;4;;;;;;6;;;;;
+67;Scaracoiffe Noire;coiffe;8;rare;;;;;16;2;1;1;1;1;6;;;;;;8;;;;;
+67;Scaracoiffe Noire;coiffe;8;epique;;;;;20;3;1;1;1;1;8;;;;;;10;;;;;
+67;Scaracoiffe Noire;coiffe;8;legendaire;;;;;30;4;2;2;2;2;10;;;;;;14;;;;;
+68;Scaracape Noire;cape;8;commun;;;;;12;2;1;1;1;1;2;;;;;;6;;;;;
+68;Scaracape Noire;cape;8;rare;;;;;14;2;1;1;1;1;4;;;;;;8;;;;;
+68;Scaracape Noire;cape;8;epique;;;;;20;3;1;1;1;1;6;;;;;;10;;;;;
+68;Scaracape Noire;cape;8;legendaire;;;;;30;4;2;2;2;2;8;;;;;;12;;;;;
+69;Scaranneau Noir;anneau;8;commun;;;;;6;1;1;1;1;1;;;;;;;4;;;;;
+69;Scaranneau Noir;anneau;8;rare;;;;;8;1;1;1;1;1;;;;;;;6;;;;;
+69;Scaranneau Noir;anneau;8;epique;;;;;12;2;1;1;1;1;;;;;;;8;;;;;
+69;Scaranneau Noir;anneau;8;legendaire;;;;;20;3;2;2;2;2;;;;;;;10;;;;;
+70;Baguette Scafeuille;arme;8;commun;;;;;10;1;1;1;1;1;;;4;17;22;0.44;6;;;;;
+70;Baguette Scafeuille;arme;8;rare;;;;;12;2;1;1;1;1;;;4;17;22;0.44;7;;;;;
+70;Baguette Scafeuille;arme;8;epique;;;;;14;2;1;1;1;1;;;4;18;23;0.44;9;;;;;
+70;Baguette Scafeuille;arme;8;legendaire;;;;;20;3;2;2;2;2;;;4;19;25;0.46;11;;;;;
+71;Baguette Ni'ninnin;arme;8;epique;;;;;-30;1;;;;;;1;3;8;11;0.3;2;;boss;;;
+71;Baguette Ni'ninnin;arme;8;legendaire;;;;;-15;3;;;;;;1;3;9;12;0.3;6;;boss;;;
+72;Palmano;anneau;8;epique;;;;;15;;4;-14;4;4;4;;;;;;;;boss;;;
+72;Palmano;anneau;8;legendaire;;;;;25;;6;-10;6;6;8;;;;;;;;boss;;;
+73;Anneau Poupayahn;anneau;8;commun;;;;;10;2;;;;;;;;;;;2;;elite;;;
+73;Anneau Poupayahn;anneau;8;rare;;;;;14;2;;;;;;;;;;;3;;elite;;;
+73;Anneau Poupayahn;anneau;8;epique;;;;;18;3;;;;;;;;;;;4;;elite;;;
+73;Anneau Poupayahn;anneau;8;legendaire;;;;;25;5;;;;;;;;;;;6;;elite;;;
+74;La Guenille;cape;8;commun;;;;;;4;;;;;2;;;;;;2;;elite;;;
+74;La Guenille;cape;8;rare;;;;;;6;;;;;4;;;;;;3;;elite;;;
+74;La Guenille;cape;8;epique;;;;;;8;;;;;6;;;;;;4;;elite;;;
+74;La Guenille;cape;8;legendaire;;;;;;12;;;;;8;;;;;;6;;elite;;;
+75;Vegacoiffe;coiffe;9;commun;;;;;;;;;;;6;;;;;;3;;;;;
+75;Vegacoiffe;coiffe;9;rare;;;;;;;;;;;8;;;;;;5;;;;;
+75;Vegacoiffe;coiffe;9;epique;;;;;;;;;;;10;;;;;;7;;;;;
+75;Vegacoiffe;coiffe;9;legendaire;;;;;;;;;;;14;;;;;;10;;;;;
+76;Vegacape;cape;9;commun;;;;;;;;;;;6;;;;;;2;;;;;
+76;Vegacape;cape;9;rare;;;;;;;;;;;8;;;;;;4;;;;;
+76;Vegacape;cape;9;epique;;;;;;;;;;;10;;;;;;6;;;;;
+76;Vegacape;cape;9;legendaire;;;;;;;;;;;14;;;;;;8;;;;;
+77;Veganneau;anneau;9;commun;;;;;;;;;;;2;;;;;;2;;;;;
+77;Veganneau;anneau;9;rare;;;;;;;;;;;4;;;;;;4;;;;;
+77;Veganneau;anneau;9;epique;;;;;;;;;;;6;;;;;;6;;;;;
+77;Veganneau;anneau;9;legendaire;;;;;;;;;;;8;;;;;;8;;;;;
+78;Vegaton;arme;9;commun;;;;;;;;;;;2;;4;18;23;0.46;2;;;;;
+78;Vegaton;arme;9;rare;;;;;;;;;;;4;;4;18;23;0.46;4;;;;;
+78;Vegaton;arme;9;epique;;;;;;;;;;;6;;4;19;24;0.46;6;;;;;
+78;Vegaton;arme;9;legendaire;;;;;;;;;;;8;;4;20;26;0.48;8;;;;;
+79;Dagues Aj'Deh'La;arme;9;rare;;;;;4;2;;1;;1;;;4;15;20;0.42;6;;elite;;;perce_res
+79;Dagues Aj'Deh'La;arme;9;epique;;;;;6;3;;2;;2;;;4;16;21;0.42;10;;elite;;;perce_res
+79;Dagues Aj'Deh'La;arme;9;legendaire;;;;;10;4;;4;;4;;;4;17;23;0.44;14;;elite;;;perce_res
+80;Masse Aj Taye;arme;9;rare;;;;;12;;1;;1;;;;4;14;19;0.4;6;;elite;;;frappe_derriere
+80;Masse Aj Taye;arme;9;epique;;;;;16;;2;;2;;;;4;15;20;0.4;8;;elite;;;frappe_derriere
+80;Masse Aj Taye;arme;9;legendaire;;;;;24;;4;;4;;;;4;16;22;0.42;12;;elite;;;frappe_derriere
+81;Caskoffre;coiffe;9;epique;;;;;15;;-6;-6;-6;-6;;;;;;;6;;boss;;;prosp_pv_manquant
+81;Caskoffre;coiffe;9;legendaire;;;;;20;;-4;-4;-4;-4;;;;;;;10;;boss;;;prosp_pv_manquant
+82;Ann'or;anneau;9;epique;;;;;10;1;-4;-4;-4;-4;;;;;;;6;;boss;;;mult_kamas
+82;Ann'or;anneau;9;legendaire;;;;;18;2;-2;-2;-2;-2;;;;;;;8;;boss;;;mult_kamas
