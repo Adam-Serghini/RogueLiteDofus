@@ -35,11 +35,12 @@
   --cyan: #ef7d1a; /* accent de sélection/halo (repointé sur l'orange Dofus) */
 
   --txt: #3a2c1a;
-  --muet: #7c6444;
+  --muet: #61492a; /* 6.5:1 sur --panel, 5.7:1 sur --panel-2 (AA texte secondaire) */
 
   --pa: #2f7fc0;
   --pv: #5f8a37;
-  --or: #eaa12a;
+  --or: #eaa12a; /* or VIF : bordures, halos, jauges — jamais du texte sur fond clair */
+  --or-texte: #7d550d; /* or LISIBLE (5.1:1 sur --panel) : compteurs, titres, niveaux */
   --or-clair: #f7c44f;
   --danger: #b23b2e;
 
@@ -270,7 +271,7 @@ button:focus-visible {
   gap: 4px;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
-  color: #b87b12;
+  color: var(--or-texte);
 }
 .kamas img {
   width: 16px;
@@ -360,7 +361,7 @@ button.item-carte:disabled {
 .inom-commun { color: #3d8a42; font-weight: 800; }
 .inom-rare { color: #2565b3; font-weight: 800; }
 .inom-epique { color: #8a3bb5; font-weight: 800; }
-.inom-legendaire { color: #b87b12; font-weight: 800; }
+.inom-legendaire { color: var(--or-texte); font-weight: 800; }
 .drop-rarete {
   display: block;
   font-size: 0.66rem;
@@ -394,7 +395,7 @@ button.item-carte:disabled {
 .ichip.ichip-crit { color: #b23b2e; }
 .ichip.ichip-prospection { color: #8a6d42; }
 .ichip.ichip-pa { color: var(--pa); border-color: var(--pa); }
-.ichip.ichip-adapt { color: #b87b12; border-color: var(--or); font-weight: 900; }
+.ichip.ichip-adapt { color: var(--or-texte); border-color: var(--or); font-weight: 900; }
 .ichip.ichip-arme { color: var(--txt); border-color: var(--bord); }
 .ichip.malus { color: var(--danger) !important; border-color: #b23b2e88; }
 .ichip.ichip-res.elem-terre { color: var(--terre); }
@@ -869,7 +870,7 @@ button.item-carte:disabled {
   margin-top: 6px;
 }
 .accueil-dofus-compte b {
-  color: var(--or);
+  color: var(--or-texte);
 }
 .accueil-runs-compte {
   color: var(--muet);
@@ -877,7 +878,7 @@ button.item-carte:disabled {
   margin-top: 2px;
 }
 .accueil-runs-compte b {
-  color: var(--or);
+  color: var(--or-texte);
 }
 .coin-param {
   position: absolute;
@@ -958,7 +959,7 @@ button.item-carte:disabled {
 }
 .choix-compte {
   font-weight: 900;
-  color: var(--or);
+  color: var(--or-texte);
   font-size: 1.05rem;
   align-self: center;
 }
@@ -1169,7 +1170,7 @@ kbd {
 }
 .equip-pano {
   font-weight: 800;
-  color: var(--or);
+  color: var(--or-texte);
   margin-top: 8px;
 }
 .equip-total {
@@ -1461,7 +1462,7 @@ kbd {
     0 0 16px #e8b54e66;
 }
 .carte.archi .carte-nom {
-  color: var(--or);
+  color: var(--or-texte);
 }
 /* indicateur de collection (haut-droit) : translucide = non capturé, opaque = capturé */
 .archi-badge {
@@ -1533,7 +1534,7 @@ kbd {
   font-style: italic;
 }
 .archi-zone-compte {
-  color: var(--or);
+  color: var(--or-texte);
   font-weight: 800;
 }
 .archi-mon.manquant img:first-child {
@@ -1587,7 +1588,7 @@ kbd {
   cursor: pointer;
 }
 .tri-btn.actif {
-  color: var(--or);
+  color: var(--or-texte);
   border-color: var(--or);
   font-weight: 700;
 }
@@ -1600,7 +1601,7 @@ kbd {
   font-size: 1.05rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--or);
+  color: var(--or-texte);
   border-bottom: 1px solid var(--bord);
   padding-bottom: 4px;
   margin-bottom: 10px;
@@ -2231,8 +2232,10 @@ kbd {
 }
 .barre-pv-rempli {
   height: 100%;
+  width: 100%;
   background: linear-gradient(180deg, #76e07e, var(--pv));
-  transition: width 0.25s ease;
+  transform-origin: left;
+  transition: transform 0.25s ease;
 }
 .barre-bouclier {
   position: absolute;
@@ -2575,7 +2578,7 @@ kbd {
   font-size: 1.15rem;
 }
 .prog-niv {
-  color: var(--or);
+  color: var(--or-texte);
   font-weight: 900;
 }
 .barre-xp {
@@ -2895,7 +2898,7 @@ kbd {
   margin-bottom: 3px;
 }
 .aside-niv {
-  color: var(--or);
+  color: var(--or-texte);
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -3142,8 +3145,9 @@ kbd {
 .log-tour {
   font-weight: 800;
   color: var(--txt);
-  background: #8a6d4222;
-  border-left: 3px solid var(--or);
+  background: #8a6d4238;
+  border-radius: 4px;
+  padding: 1px 6px;
   margin-top: 6px !important;
 }
 .log-degats {

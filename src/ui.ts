@@ -392,7 +392,7 @@ export const A = (p: string): string =>
 
 /**
  * Icône d'un sort, rangée par classe propriétaire : `/assets/spells/<classe>/<id>.png`
- * (sorts de monstres → `/monstres/`). Absente → l'`onerror` de l'<img> la retire.
+ * (sorts de monstres → `/monstres/`). Absente → l'`onerror` de la balise image la retire.
  */
 const sortIcon = (id: string): string =>
   A(`/assets/spells/${SORT_DOSSIER[id] ?? "monstres"}/${id}.png`);
@@ -658,7 +658,7 @@ function elemRond(
     : switchable
       ? `Frapper en ${elNom[el]} (cliquer)`
       : `Élément ${rang === 1 ? "principal" : "secondaire"} — ${elNom[el]}`;
-  return `<span class="${cls}" ${switchable ? `data-switch="${el}"` : ""} data-tip="${escapeHtml(titre)}">
+  return `<span class="${cls}" ${switchable ? `data-switch="${el}" role="button" tabindex="0" aria-pressed="${actif}"` : ""} data-tip="${escapeHtml(titre)}" aria-label="${escapeHtml(titre)}">
     <img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><i>${rang}</i>${actif ? `<b class="frappe-pic">⚔</b>` : ""}</span>`;
 }
 
@@ -808,7 +808,7 @@ function render(): void {
           </div>
         </div>
         <div class="zone-bas">
-          <div id="journal" class="journal"></div>
+          <div id="journal" class="journal" role="log" aria-live="polite" aria-label="Journal de combat"></div>
           <div id="cb-barre" class="barre-sorts"></div>
         </div>
       </div>`;
@@ -850,12 +850,17 @@ function render(): void {
   root
     .querySelectorAll<HTMLElement>(".elem-select .elem-rond.switch")
     .forEach((rond) => {
-      rond.addEventListener("click", () => {
+      const basculer = () => {
         const el = rond.dataset.switch as Element | undefined;
         if (activeActeur && el) {
           activeActeur.elementChoisi = el;
           render();
         }
+      };
+      rond.addEventListener("click", basculer);
+      rond.addEventListener("keydown", (e) => {
+        // rond = rôle bouton : Entrée/Espace au clavier
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); basculer(); }
       });
     });
 }
@@ -995,7 +1000,7 @@ export function renderDofusRack(meta: Meta, compact = false): string {
         : d.id === "dofus_ocre" ? `data-ocre="1"` : "";
       return `
         <div class="dofus-slot ${possede ? "" : "locked"}" data-nom="${escapeHtml(d.nom)}" data-effet="${escapeHtml(d.desc)}" ${bossAttr}>
-          <img src="${d.img ? A(d.img) : ""}" alt="${escapeHtml(d.nom)}" onerror="this.remove()" />
+          ${d.img ? `<img src="${A(d.img)}" alt="${escapeHtml(d.nom)}" loading="lazy" onerror="this.remove()" />` : ""}
           ${n > 1 ? `<span class="dofus-count">×${n}</span>` : ""}
         </div>`;
     })
@@ -1532,7 +1537,7 @@ export function showInventaire(
               const it = ITEMS[inst.id];
               const equipable = peutEquiper(perso, inst.id);
               return `<button class="item-carte${rareteCls(inst)}${equipable ? "" : " inequipable"}" data-index="${i}" draggable="true" ${equipable ? "" : `title="Équipable uniquement sur un personnage de la ligne avant"`}>
-              <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
+              <img src="${itemImg(inst.id)}" alt="" loading="lazy" onerror="this.remove()" />
               <span class="item-nom">${itemNomHtml(inst)}<small>T${toileDeItem(inst.id)} · ${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
             </button>`;
             })
@@ -1555,8 +1560,8 @@ export function showInventaire(
           <div class="equip-col">
             <h3>Inventaire (${inventaire.length})
               <span class="equip-tri">Tri :
-                <button id="tri-toile" class="tri-btn${triInventaire === "toile" ? " actif" : ""}" title="Trier par toile d'obtention">Toile</button>
-                <button id="tri-type" class="tri-btn${triInventaire === "type" ? " actif" : ""}" title="Trier par type d'objet">Type</button>
+                <button id="tri-toile" class="tri-btn${triInventaire === "toile" ? " actif" : ""}" aria-pressed="${triInventaire === "toile"}" title="Trier par toile d'obtention">Toile</button>
+                <button id="tri-type" class="tri-btn${triInventaire === "type" ? " actif" : ""}" aria-pressed="${triInventaire === "type"}" title="Trier par type d'objet">Type</button>
               </span>
             </h3>
             <div class="equip-inv">${inv}</div>
@@ -1665,7 +1670,7 @@ export function showDrop(drops: ItemInstance[]): Promise<void> {
       .map((inst) => {
         const it = ITEMS[inst.id];
         return `<div class="drop-item${rareteCls(inst)}">
-        <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
+        <img src="${itemImg(inst.id)}" alt="" loading="lazy" onerror="this.remove()" />
         <span class="drop-nom">${itemNomHtml(inst)}${inst.rarete ? `<span class="drop-rarete inom-${inst.rarete}">${RARETE_INFO[inst.rarete].nom}</span>` : ""}<small>${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
       </div>`;
       })
@@ -2110,7 +2115,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
           if (!m.archiNom) {
             // espèce sans Archimonstre : simple entrée d'encyclopédie
             return `<div class="archi-mon simple" title="${escapeHtml(m.nom)}${m.boss ? " — Boss de donjon" : ""} (pas d'Archimonstre connu)">
-            <img src="${A(m.img ?? "")}" alt="" onerror="this.remove()" />
+            ${m.img ? `<img src="${A(m.img)}" alt="" loading="lazy" onerror="this.remove()" />` : ""}
             ${badge}
             <span>${escapeHtml(m.nom)}</span>
             <small>${m.boss ? "Boss" : "—"}</small>
@@ -2118,7 +2123,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
           }
           const capt = meta.archis.includes(id);
           return `<div class="archi-mon ${capt ? "capt" : "manquant"}" title="${escapeHtml(m.archiNom)} — Archimonstre de ${escapeHtml(m.nom)}${capt ? " (capturé)" : " (non capturé)"}">
-          <img src="${A(m.img ?? "")}" alt="" onerror="this.remove()" />
+          ${m.img ? `<img src="${A(m.img)}" alt="" loading="lazy" onerror="this.remove()" />` : ""}
           ${capt ? `<img class="archi-mark" src="${A("/assets/divers/Archmonster.webp")}" alt="" onerror="this.remove()" />` : ""}
           ${badge}
           <span>${escapeHtml(m.archiNom)}</span>
@@ -2181,7 +2186,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
           const badgeSource = { boss: "donjon", elite: "combat dur", elite_boss: "combat dur & donjon" } as const;
           const badgeHtml = badge ? `<span class="bestiaire-badge armu-badge-${badge}">${badgeNom[badge]}</span>` : "";
           return `<div class="archi-mon armu-item ${palier ? "capt" : "manquant"}${aHalo ? ` rarete-${palier}` : ""}" title="${escapeHtml(it.nom)} — ${SLOT_NOM[it.slot]}${badge ? ` (exclusif ${badgeSource[badge]})` : ""} · ${rareteTxt}">
-            <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
+            <img src="${itemImg(id)}" alt="" loading="lazy" onerror="this.remove()" />
             ${badgeHtml}
             <span${aHalo ? ` class="inom-${palier}"` : ""}>${escapeHtml(it.nom)}</span>
             <small>${aHalo ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : SLOT_NOM[it.slot]}</small>
@@ -2257,7 +2262,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
           .map((art, i) => {
             const abordable = run.kamas >= art.prix;
             return `<button class="item-carte hdv-achat${rareteCls(art.inst)}" data-achat="${i}" ${abordable ? "" : "disabled"}>
-              <img src="${itemImg(art.inst.id)}" alt="" onerror="this.remove()" />
+              <img src="${itemImg(art.inst.id)}" alt="" loading="lazy" onerror="this.remove()" />
               <span class="item-nom">${itemNomHtml(art.inst)}<small>${SLOT_NOM[ITEMS[art.inst.id].slot]} ${itemStatsHtml(art.inst)}</small></span>
               <span class="hdv-prix">${kamasHtml(art.prix)}</span>
             </button>`;
@@ -2267,7 +2272,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
       const vente = run.inventaire.length
         ? run.inventaire
           .map((inst, i) => `<button class="item-carte hdv-vente${rareteCls(inst)}" data-vente="${i}">
-              <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
+              <img src="${itemImg(inst.id)}" alt="" loading="lazy" onerror="this.remove()" />
               <span class="item-nom">${itemNomHtml(inst)}<small>${SLOT_NOM[ITEMS[inst.id].slot]} ${itemStatsHtml(inst)}</small></span>
               <span class="hdv-prix vente">${kamasHtml(prixVente(inst))}</span>
             </button>`)
@@ -2457,7 +2462,7 @@ Butin au taux donjon.`)}"` : "";
               <div class="aside-info">
                 <div class="aside-nom">${escapeHtml(classe.nom)}<span class="aside-niv">Niv.${p.progression.niveau}</span>${pastillesElements(p)}</div>
                 <div class="barre-pv mini">
-                  <div class="barre-pv-rempli" style="width:${pct}%"></div>
+                  <div class="barre-pv-rempli" style="transform:scaleX(${pct / 100})"></div>
                   <span class="pv-txt">${Math.max(0, Math.round(p.pvActuels))} / ${pvMax}</span>
                 </div>
               </div>
