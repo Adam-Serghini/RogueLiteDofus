@@ -101,3 +101,57 @@ id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;r
 41;Chance d'Ecaflip;anneau;4;legendaire;;;;;;4;;;;;;;;;;;10;;boss;;;pa_gamble
 42;Cape Edepee;cape;4;epique;;;;;14;3;-6;-6;-6;-6;;;;;;;12;;boss;;;ligne_avant
 42;Cape Edepee;cape;4;legendaire;;;;;20;5;-4;-4;-4;-4;;;;;;;20;;boss;;;ligne_avant
+43;Chapeau du Directeur Grunob;coiffe;5;commun;;;;;4;;;;2;2;2;;;;;;6;;;;;
+43;Chapeau du Directeur Grunob;coiffe;5;rare;;;;;8;;;;2;2;4;;;;;;8;;;;;
+43;Chapeau du Directeur Grunob;coiffe;5;epique;;;;;12;;;;3;3;6;;;;;;10;;;;;
+43;Chapeau du Directeur Grunob;coiffe;5;legendaire;;;;;16;;;;5;5;8;;;;;;16;;;;;
+44;Faux du Directeur Grunob;arme;5;commun;;;;;6;1;;;;;;;4;14;19;0.42;3;;;;;
+44;Faux du Directeur Grunob;arme;5;rare;;;;;8;2;;;;;;;4;14;19;0.42;4;;;;;
+44;Faux du Directeur Grunob;arme;5;epique;;;;;10;2;;;;;;;4;15;20;0.42;5;;;;;
+44;Faux du Directeur Grunob;arme;5;legendaire;;;;;16;3;;;;;;;4;16;22;0.44;6;;;;;
+45;Bague Rafe;anneau;5;commun;;;;;10;2;;;;;;;;;;;;;;;;
+45;Bague Rafe;anneau;5;rare;;;;;14;2;;;;;;;;;;;;;;;;
+45;Bague Rafe;anneau;5;epique;;;;;18;3;;;;;;;;;;;;;;;;
+45;Bague Rafe;anneau;5;legendaire;;;;;25;5;;;;;;;;;;;;;;;;
+46;Cape Ricéfini;cape;5;commun;;;;;6;1;;;;;2;;;;;;4;;;;;
+46;Cape Ricéfini;cape;5;rare;;;;;8;1;;;;;4;;;;;;6;;;;;
+46;Cape Ricéfini;cape;5;epique;;;;;10;1;;;;;6;;;;;;8;;;;;
+46;Cape Ricéfini;cape;5;legendaire;;;;;15;2;;;;;8;;;;;;10;;;;;
+47;Abracape;cape;5;epique;;;;;10;;;;;;;1;;;;;-14;;boss;;;
+47;Abracape;cape;5;legendaire;;;;;16;;;;;;;1;;;;;-10;;boss;;;
+48;Dora;coiffe;5;epique;;;;;20;;2;2;2;2;6;;;;;;8;;elite_boss;;;
+48;Dora;coiffe;5;legendaire;;;;;30;;4;4;4;4;8;;;;;;12;;elite_boss;;;
+49;Bâton Tont'Ata;arme;5;commun;;;;;12;;1;1;1;1;;;4;17;23;0.45;-10;;elite_boss;;;
+49;Bâton Tont'Ata;arme;5;rare;;;;;14;;1;1;1;1;;;4;17;23;0.45;-8;;elite_boss;;;
+49;Bâton Tont'Ata;arme;5;epique;;;;;18;;2;2;2;2;;;4;18;25;0.46;-6;;elite_boss;;;
+49;Bâton Tont'Ata;arme;5;legendaire;;;;;26;;3;3;3;3;;;4;20;27;0.48;-4;;elite_boss;;;
+50;Sabre Shodanwa;arme;5;epique;;;;;6;4;;;;;;;4;15;21;0.44;10;;boss;;;riposte_avant
+50;Sabre Shodanwa;arme;5;legendaire;;;;;10;6;;;;;;;4;16;23;0.46;18;;boss;;;riposte_avant
+51;Casque Noix;coiffe;6;commun;;;;;10;;4;4;-4;-4;2;;;;;;4;;;;;
+51;Casque Noix;coiffe;6;rare;;;;;12;;4;4;-4;-4;4;;;;;;6;;;;;
+51;Casque Noix;coiffe;6;epique;;;;;20;;5;5;-3;-3;6;;;;;;8;;;;;
+51;Casque Noix;coiffe;6;legendaire;;;;;30;;6;6;-2;-2;8;;;;;;12;;;;;
+52;Cape Lumette;cape;6;commun;;;;;10;;4;4;;;2;;;;;;4;;;;;
+52;Cape Lumette;cape;6;rare;;;;;12;;4;4;;;4;;;;;;6;;;;;
+52;Cape Lumette;cape;6;epique;;;;;16;;5;5;;;6;;;;;;8;;;;;
+52;Cape Lumette;cape;6;legendaire;;;;;22;;6;6;;;8;;;;;;10;;;;;
+53;Anneau Bille;anneau;6;commun;;;;;6;;;;1;1;;;;;;;3;;;;;
+53;Anneau Bille;anneau;6;rare;;;;;8;;;;1;1;;;;;;;5;;;;;
+53;Anneau Bille;anneau;6;epique;;;;;10;;;;2;2;;;;;;;7;;;;;
+53;Anneau Bille;anneau;6;legendaire;;;;;14;;;;3;3;;;;;;;8;;;;;
+54;Baguette Cetera;arme;6;commun;;;;;10;;-4;-4;4;4;;;4;15;20;0.42;;;;;;
+54;Baguette Cetera;arme;6;rare;;;;;12;;-4;-4;4;4;;;4;15;20;0.42;;;;;;
+54;Baguette Cetera;arme;6;epique;;;;;16;;-3;-3;5;5;;;4;16;21;0.44;;;;;;
+54;Baguette Cetera;arme;6;legendaire;;;;;30;;-2;-2;6;6;;;4;17;23;0.44;;;;;;
+55;Baguette Rikiki;arme;6;epique;;;;;8;2;;;;;;;3;10;13;0.32;10;;boss;;;esquive_arriere
+55;Baguette Rikiki;arme;6;legendaire;;;;;12;4;;;;;;;3;11;15;0.34;14;;boss;;;esquive_arriere
+56;Goyave;coiffe;6;epique;;;;;20;;;;;;6;;;;;;8;;boss;;;soin_recus
+56;Goyave;coiffe;6;legendaire;;;;;40;;;;;;8;;;;;;12;;boss;;;soin_recus
+57;Couteau à Stek;arme;6;commun;;;;;8;1;;;;;;;3;9;12;0.3;4;;elite;;;
+57;Couteau à Stek;arme;6;rare;;;;;10;2;;;;;;;3;9;12;0.3;5;;elite;;;
+57;Couteau à Stek;arme;6;epique;;;;;12;2;;;;;;;3;10;13;0.32;6;;elite;;;
+57;Couteau à Stek;arme;6;legendaire;;;;;18;3;;;;;;;3;11;15;0.34;10;;elite;;;
+58;Grosse Bagouze du Parrain;anneau;6;commun;;;;;;2;;;;;;;;;;;4;;elite;;;
+58;Grosse Bagouze du Parrain;anneau;6;rare;;;;;;2;;;;;;;;;;;6;;elite;;;
+58;Grosse Bagouze du Parrain;anneau;6;epique;;;;;;3;;;;;;;;;;;10;;elite;;;
+58;Grosse Bagouze du Parrain;anneau;6;legendaire;;;;;;4;;;;;;;;;;;12;;elite;;;

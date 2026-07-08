@@ -58,10 +58,13 @@ for (const ligne of lignes.slice(1)) {
   if (pa) tier.pa = pa;
   it.tiers[rarete] = tier;
   const source = col(row, "source").toLowerCase();
-  if (source === "boss" || source === "elite") it.source = source;
+  if (source === "boss" || source === "elite" || source === "elite_boss") it.source = source;
   const special = col(row, "special").toLowerCase();
   if (special === "pa_gamble") it.paGamble = { pPlus: 1 / 3, plus: 1, moins: 1 };
   if (special === "ligne_avant") it.ligneAvant = true;
+  if (special === "riposte_avant") it.riposteAvant = 0.33; // riposte quand frappé, si ligne avant
+  if (special === "esquive_arriere") it.esquiveArriere = 0.10; // esquive bonus, si ligne arrière
+  if (special === "soin_recus") it.soinDegatsRecus = 0.02; // récupère X % des dégâts subis
 
   // attaque d'arme : lue sur la ligne (identique ou progressive par palier)
   const attPA = num(row, "att_pa");
@@ -85,7 +88,8 @@ for (const [id, it] of items) {
 const parToile = {};
 for (const [id, it] of items) {
   const t = (parToile[it.toile] ??= { normales: [], elites: [], boss: [] });
-  (it.source === "boss" ? t.boss : it.source === "elite" ? t.elites : t.normales).push(id);
+  if (it.source === "elite_boss") { t.elites.push(id); t.boss.push(id); } // les deux pools exclusifs
+  else (it.source === "boss" ? t.boss : it.source === "elite" ? t.elites : t.normales).push(id);
 }
 
 const out = `// =============================================================================
@@ -99,6 +103,9 @@ export const ITEMS_TOILES: Record<string, Item> = ${JSON.stringify(
   Object.fromEntries([...items].map(([id, it]) => [id, {
     id, nom: it.nom, slot: it.slot, tiers: it.tiers, ...(it.source ? { source: it.source } : {}),
     ...(it.paGamble ? { paGamble: it.paGamble } : {}), ...(it.ligneAvant ? { ligneAvant: true } : {}),
+    ...(it.riposteAvant ? { riposteAvant: it.riposteAvant } : {}),
+    ...(it.esquiveArriere ? { esquiveArriere: it.esquiveArriere } : {}),
+    ...(it.soinDegatsRecus ? { soinDegatsRecus: it.soinDegatsRecus } : {}),
   }])), null, 2)};
 
 /** Pools par toile et par source de drop (normales / élites / boss). */

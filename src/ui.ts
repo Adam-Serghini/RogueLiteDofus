@@ -1436,6 +1436,9 @@ function itemStatsHtml(inst: ItemInstance): string {
   if (att) chip("ichip-arme", `⚔ ${att.baseMin}–${att.baseMax} (${att.coutPA} PA)${att.cible === "ennemi_tous" ? " · ligne arrière" : ""}${att.vampirisme ? ` · vol ${Math.round(att.vampirisme * 100)} %` : ""}`);
   if (it?.paGamble) chips.push(`<span class="ichip ichip-pa" title="À chaque tour : ${Math.round(it.paGamble.pPlus * 100)} % de gagner +${it.paGamble.plus} PA, sinon −${it.paGamble.moins} PA">🎲 ${Math.round(it.paGamble.pPlus * 100)} % +${it.paGamble.plus} PA / −${it.paGamble.moins}</span>`);
   if (it?.ligneAvant) chips.push(`<span class="ichip malus" title="Équipable uniquement sur un personnage de la ligne avant">Ligne avant uniqt</span>`);
+  if (it?.riposteAvant) chips.push(`<span class="ichip ichip-force" title="Quand le porteur est frappé en ligne avant : ${Math.round(it.riposteAvant * 100)} % de chance de contre-attaquer">↩ ${Math.round(it.riposteAvant * 100)} % riposte (avant)</span>`);
+  if (it?.esquiveArriere) chips.push(`<span class="ichip ichip-agilite" title="Quand le porteur est en ligne arrière : +${Math.round(it.esquiveArriere * 100)} % d'esquive">💨 +${Math.round(it.esquiveArriere * 100)} % esquive (arrière)</span>`);
+  if (it?.soinDegatsRecus) chips.push(`<span class="ichip ichip-soin" title="À chaque coup encaissé, le porteur récupère ${Math.round(it.soinDegatsRecus * 100)} % des dégâts subis">♥ récup. ${Math.round(it.soinDegatsRecus * 100)} % des dégâts subis</span>`);
   return `<span class="ichips">${chips.join("")}</span>`;
 }
 
@@ -2092,15 +2095,16 @@ export function showBestiaire(meta: Meta): Promise<void> {
 export function showArmurerie(meta: Meta): Promise<void> {
   return new Promise((res) => {
     const coll = meta.collection ?? {};
-    // catalogue d'une zone : pools à rareté (normales + exclusifs élite/boss) ou pano legacy
-    const itemsDeZone = (zoneId: string): { id: string; badge?: "boss" | "elite" }[] => {
+    // catalogue d'une zone : pools à rareté (normales + exclusifs élite/boss/les-deux) ou pano legacy
+    const itemsDeZone = (zoneId: string): { id: string; badge?: "boss" | "elite" | "elite_boss" }[] => {
       const pools = butinToile(zoneId);
       if (pools) {
-        return [
-          ...pools.normales.map((id) => ({ id })),
-          ...pools.elites.map((id) => ({ id, badge: "elite" as const })),
-          ...pools.boss.map((id) => ({ id, badge: "boss" as const })),
-        ];
+        // un objet « elite_boss » figure dans les DEUX pools : une seule carte, badge combiné
+        const entrees = new Map<string, { id: string; badge?: "boss" | "elite" | "elite_boss" }>();
+        for (const id of pools.normales) entrees.set(id, { id });
+        for (const id of pools.elites) entrees.set(id, { id, badge: "elite" });
+        for (const id of pools.boss) entrees.set(id, { id, badge: entrees.get(id)?.badge === "elite" ? "elite_boss" : "boss" });
+        return [...entrees.values()];
       }
       return (PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? []).map((id) => ({ id }));
     };
@@ -2117,8 +2121,10 @@ export function showArmurerie(meta: Meta): Promise<void> {
           const palier = coll[id]; // undefined = jamais obtenu
           const aHalo = palier && palier !== "base";
           const rareteTxt = aHalo ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : palier ? "obtenu" : "jamais obtenu";
-          const badgeHtml = badge ? `<span class="bestiaire-badge armu-badge-${badge}">${badge === "boss" ? "Boss" : "Élite"}</span>` : "";
-          return `<div class="archi-mon armu-item ${palier ? "capt" : "manquant"}${aHalo ? ` rarete-${palier}` : ""}" title="${escapeHtml(it.nom)} — ${SLOT_NOM[it.slot]}${badge ? ` (exclusif ${badge === "boss" ? "donjon" : "combat dur"})` : ""} · ${rareteTxt}">
+          const badgeNom = { boss: "Boss", elite: "Élite", elite_boss: "Élite/Boss" } as const;
+          const badgeSource = { boss: "donjon", elite: "combat dur", elite_boss: "combat dur & donjon" } as const;
+          const badgeHtml = badge ? `<span class="bestiaire-badge armu-badge-${badge}">${badgeNom[badge]}</span>` : "";
+          return `<div class="archi-mon armu-item ${palier ? "capt" : "manquant"}${aHalo ? ` rarete-${palier}` : ""}" title="${escapeHtml(it.nom)} — ${SLOT_NOM[it.slot]}${badge ? ` (exclusif ${badgeSource[badge]})` : ""} · ${rareteTxt}">
             <img src="${itemImg(id)}" alt="" onerror="this.remove()" />
             ${badgeHtml}
             <span${aHalo ? ` class="inom-${palier}"` : ""}>${escapeHtml(it.nom)}</span>

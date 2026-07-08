@@ -942,19 +942,20 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/gob_trotteur.png",
   },
   gobaladee: {
-    id: "gobaladee", nom: "Gobaladée", pv: 102,
-    stats: { force: 38, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss de l'Akadémie
+    id: "gobaladee", nom: "Gobaladée", pv: 88,
+    stats: { force: 31, intelligence: 8, agilite: 16, vitalite: 70 }, // élite/miniboss de l'Akadémie (retunée toile 5)
     pa: 5, initiative: 9,
     resistances: { terre: 0.15, feu: 0.1, eau: -0.1 },
     sorts: ["morsure", "charge"], ia: "agressif",
     img: "/assets/monstres/gobaladee.png",
   },
   directeur_grunob: {
-    id: "directeur_grunob", nom: "Directeur Grunob", pv: 482,
-    stats: { force: 31, intelligence: 8, agilite: 12, vitalite: 118 },
+    // retuné pour la toile 5 (stuff commun adaptatif, plus sobre que la pano Gladiateur legacy)
+    id: "directeur_grunob", nom: "Directeur Grunob", pv: 410,
+    stats: { force: 18, intelligence: 6, agilite: 12, vitalite: 118 },
     pa: 10, initiative: 10,
     resistances: { terre: 0.2, feu: 0.15, air: 0.1, eau: -0.05 },
-    bonusParAllieLigne: 0.1, // « Travail d'équipe » : +10 % de dégâts par allié vivant dans sa rangée
+    bonusParAllieLigne: 0.06, // « Travail d'équipe » : +6 % de dégâts par allié vivant dans sa rangée (retuné toile 5)
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/directeur_grunob.png",

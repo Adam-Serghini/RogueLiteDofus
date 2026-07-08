@@ -149,9 +149,9 @@ describe("rareté (objets à toiles)", () => {
     expect(leg.adaptatif).toBe(6);
   });
 
-  it("Incarnam droppe depuis son pool de toile (rareté), l'Akadémie reste legacy", () => {
+  it("Incarnam droppe depuis son pool de toile (rareté), la Maison Fantôme reste legacy", () => {
     expect(butinToile("incarnam")!.normales).toContain("chapeau_de_l_aventurier");
-    expect(butinToile("akademie")).toBeNull(); // toile 5 : pas encore saisie
+    expect(butinToile("maison_fantome")).toBeNull(); // toile 7 : pas encore saisie
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
     expect(drops.length).toBe(4);
@@ -263,5 +263,84 @@ describe("découplage taux / pool (combat dur au taux donjon)", () => {
     const drops = tenterButin(nouvelleRun(["iop"]), "tainela", "combat_dur", () => 0, "donjon");
     expect(pools.elites).toContain(drops[0].id);
     expect(pools.boss).not.toContain(drops[0].id);
+  });
+});
+
+describe("toiles 5-6 : mécaniques spéciales & source mixte", () => {
+  it("Dora (elite_boss) figure dans les DEUX pools exclusifs de l'Akadémie", () => {
+    const pools = butinToile("akademie")!;
+    expect(pools.elites).toContain("dora");
+    expect(pools.boss).toContain("dora");
+    expect(pools.boss).toContain("abracape"); // boss pur
+    expect(butinToile("kankreblath")!.elites).toContain("couteau_a_stek");
+  });
+
+  it("Sabre Shodanwa : riposte 33 % quand frappé, seulement en ligne avant", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const { lancerSort } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const arme = () => rollItemRarete("sabre_shodanwa", () => 0)!;
+    const monte = (position: number) => {
+      const run = nouvelleRun(["iop"]);
+      run.persos[0].position = position;
+      run.persos[0].equipement.arme = arme();
+      const c = combattantDepuisPerso(run.persos[0]);
+      c.stats = { ...c.stats, agilite: 0 }; // pas d'esquive parasite
+      c.pvActuels = 500; c.pvMax = 500;
+      return c;
+    };
+    const ctx = { rng: () => 0.1, log: () => {}, playerDamageBonus: 1 };
+    // ligne avant : 0.1 < 0.33 → riposte
+    const avant = monte(0);
+    let ennemi = (await import("./run")).fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    const pvAvantRiposte = ennemi.pvActuels;
+    lancerSort(ennemi, SORTS.morsure, avant.ref, [avant, ennemi], ctx);
+    expect(ennemi.pvActuels).toBeLessThan(pvAvantRiposte); // l'attaquant a pris la riposte
+    // ligne arrière : la riposte du Sabre ne s'applique pas
+    const arriere = monte(5);
+    ennemi = (await import("./run")).fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    const pvSansRiposte = ennemi.pvActuels;
+    lancerSort(ennemi, SORTS.morsure, arriere.ref, [arriere, ennemi], ctx);
+    expect(ennemi.pvActuels).toBe(pvSansRiposte);
+  });
+
+  it("Baguette Rikiki : +10 % d'esquive, seulement en ligne arrière", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete, fabriquerEnnemis } = await import("./run");
+    const { degatsCible } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const monte = (position: number) => {
+      const run = nouvelleRun(["iop"]);
+      run.persos[0].position = position;
+      run.persos[0].equipement.arme = rollItemRarete("baguette_rikiki", () => 0)!;
+      const c = combattantDepuisPerso(run.persos[0]);
+      c.stats = { ...c.stats, agilite: 0 }; // seule l'esquive d'équipement joue
+      return c;
+    };
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    const ctx = { rng: () => 0.05, log: () => {}, playerDamageBonus: 1 };
+    // arrière : 0.05 < 0.10 → esquive ; avant : aucune esquive (0.05 > 0)
+    expect(degatsCible(ennemi, SORTS.morsure, monte(5), { useMax: true, mult: 1, ctx }).esquive).toBe(true);
+    expect(degatsCible(ennemi, SORTS.morsure, monte(0), { useMax: true, mult: 1, ctx }).esquive).toBe(false);
+  });
+
+  it("Goyave : le porteur récupère une fraction des dégâts subis", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete, fabriquerEnnemis } = await import("./run");
+    const { lancerSort, degatsCible } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.coiffe = rollItemRarete("goyave", () => 0.999)!; // légendaire
+    const iop = combattantDepuisPerso(run.persos[0]);
+    expect(iop.soinDegatsRecus).toBeCloseTo(0.02);
+    iop.stats = { ...iop.stats, agilite: 0 };
+    iop.pvActuels = 500; iop.pvMax = 500;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, force: 999 }; // gros coup → la récup arrondit à ≥ 1
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    // même rng constant → mêmes jets : on pré-calcule les dégâts attendus sur un clone
+    const dmg = degatsCible(ennemi, SORTS.morsure, { ...iop, effets: [] }, { useMax: true, mult: 1, ctx }).dmg;
+    lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx);
+    expect(iop.pvActuels).toBe(500 - dmg + Math.round(dmg * 0.02));
   });
 });

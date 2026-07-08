@@ -245,8 +245,9 @@ function degatsAvec(
   const se = statsEffectives(lanceur);
   const seCible = statsEffectives(cible);
 
-  // esquive (Agilité de la cible + buffs d'esquive, plafonnée à 50 %)
-  if (ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive"))) {
+  // esquive (Agilité de la cible + buffs + équipement « ligne arrière », plafonnée à 50 %)
+  const esquiveEquip = !estAvant(cible) ? (cible.esquiveArriere ?? 0) : 0; // Baguette Rikiki
+  if (ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
     return { dmg: 0, esquive: true, crit: false };
   }
 
@@ -355,13 +356,24 @@ function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ct
     reste -= absorbe;
   }
   cible.pvActuels = Math.max(0, cible.pvActuels - reste);
-  // riposte (Duel) : la cible survivante contre-attaque l'attaquant adverse
+  // récupération (Goyave) : le porteur survivant régénère une fraction des dégâts subis
+  if (cible.soinDegatsRecus && dmg > 0 && cible.pvActuels > 0) {
+    const soin = Math.round(dmg * cible.soinDegatsRecus);
+    if (soin > 0) {
+      cible.pvActuels = Math.min(cible.pvMax, cible.pvActuels + soin);
+      ctx?.log(`${cible.nom} récupère ${soin} PV (Goyave).`);
+    }
+  }
+  // riposte : posture de contre (Duel) + équipement « ligne avant » (Sabre Shodanwa)
+  const pRiposte = attaquant && ctx
+    ? sommeEffet(cible, "contre") + (estAvant(cible) ? (cible.riposteAvant ?? 0) : 0)
+    : 0;
   if (
     attaquant && ctx && dmg > 0 &&
     cible.pvActuels > 0 && attaquant.pvActuels > 0 &&
     attaquant.camp !== cible.camp &&
-    sommeEffet(cible, "contre") > 0 && // ne consomme le RNG que si une posture est active
-    ctx.rng() < sommeEffet(cible, "contre")
+    pRiposte > 0 && // ne consomme le RNG que si une riposte est possible
+    ctx.rng() < pRiposte
   ) {
     const r = degatsAvec(cible, { baseMin: 8, baseMax: 12, scaling: 0.3 }, attaquant, { useMax: false, mult: 1, ctx });
     infligerDegats(attaquant, r.dmg); // pas d'attaquant → pas de contre-riposte

@@ -280,11 +280,15 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
           : "Attaque d'arme.",
     }
     : undefined;
-  // Chance d'Ecaflip : le pari de PA du premier objet porteur (non cumulable)
-  const paGamble = (Object.values(state.equipement).map((i) => i && ITEMS[i.id]?.paGamble).find(Boolean)) ?? undefined;
+  // Effets spéciaux d'équipement (premier objet porteur, non cumulables)
+  const special = <K extends "paGamble" | "riposteAvant" | "esquiveArriere" | "soinDegatsRecus">(k: K) =>
+    (Object.values(state.equipement).map((i) => i && ITEMS[i.id]?.[k]).find(Boolean)) ?? undefined;
   return {
     armeSort,
-    paGamble,
+    paGamble: special("paGamble"),
+    riposteAvant: special("riposteAvant"),
+    esquiveArriere: special("esquiveArriere"),
+    soinDegatsRecus: special("soinDegatsRecus"),
     ref: `j_${state.classeId}`,
     nom: classe.nom,
     pvBase: pvMax, // base de référence pour les buffs de vitalité en %

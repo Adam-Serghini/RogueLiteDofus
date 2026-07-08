@@ -23,7 +23,7 @@ describe("signatures des boss", () => {
       const boss = bossDe(zone.pools.boss);
       const m = MONSTRES[boss.monstreId!];
       const aSignatureSort = !["kwakwa", "directeur_grunob"].includes(m.id); // mue moteur / passif de ligne
-      if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.1);
+      if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.06);
       if (aSignatureSort) {
         const premier = SORTS[m.sorts[0]];
         expect(premier.desc, `${m.nom} : signature en tête de kit`).toContain(m.nom.split(" ")[0]);
@@ -114,18 +114,18 @@ describe("signatures des boss", () => {
     expect(cs.length).toBe(3);
   });
 
-  it("Travail d'équipe : Grunob inflige +10 % par allié vivant dans sa rangée", () => {
+  it("Travail d'équipe : Grunob inflige +6 % par allié vivant dans sa rangée", () => {
     const cs = fabriquerEnnemis("gob_boss"); // Grunob + Gobaladée + Gobichon (avant) + Gobaliste (arrière)
     const boss = cs.find((c) => c.monstreId === "directeur_grunob")!;
     const [iop] = fabriquerEquipe();
     iop.pvMax = 5000; iop.pvActuels = 5000;
     lancerSort(boss, SORTS.morsure, iop.ref, [...cs, iop], ctx());
-    const deuxAllies = 5000 - iop.pvActuels; // Gobaladée + Gobichon en ligne avant → ×1.20
+    const deuxAllies = 5000 - iop.pvActuels; // Gobaladée + Gobichon en ligne avant → ×1.12
     iop.pvActuels = 5000;
     for (const c of cs) if (c.ref !== boss.ref && c.position < 4) c.pvActuels = 0; // la ligne avant tombe
     lancerSort(boss, SORTS.morsure, iop.ref, [...cs, iop], ctx());
     const seul = 5000 - iop.pvActuels; // plus d'allié dans sa rangée → ×1.0
-    expect(Math.abs(deuxAllies - seul * 1.2)).toBeLessThanOrEqual(1); // ±1 d'arrondi interne
+    expect(Math.abs(deuxAllies - seul * 1.12)).toBeLessThanOrEqual(1); // ±1 d'arrondi interne
   });
 
   it("l'IA agressive joue l'invocation signature en priorité quand elle est utile", async () => {

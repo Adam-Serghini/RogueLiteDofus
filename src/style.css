@@ -1562,6 +1562,9 @@ kbd {
 .armu-badge-elite {
   background: #6b4fa0 !important;
 }
+.armu-badge-elite_boss {
+  background: linear-gradient(90deg, #6b4fa0, var(--danger)) !important;
+}
 .bestiaire-badge {
   position: absolute;
   top: -7px;

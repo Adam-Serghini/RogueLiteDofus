@@ -1291,6 +1291,739 @@ export const ITEMS_TOILES: Record<string, Item> = {
     },
     "source": "boss",
     "ligneAvant": true
+  },
+  "chapeau_du_directeur_grunob": {
+    "id": "chapeau_du_directeur_grunob",
+    "nom": "Chapeau du Directeur Grunob",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 4,
+          "prospection": 2
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 8,
+          "prospection": 4
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 12,
+          "prospection": 6
+        },
+        "adaptatif": 10,
+        "resistances": {
+          "eau": 0.03,
+          "air": 0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 16,
+          "prospection": 8
+        },
+        "adaptatif": 16,
+        "resistances": {
+          "eau": 0.05,
+          "air": 0.05
+        }
+      }
+    }
+  },
+  "faux_du_directeur_grunob": {
+    "id": "faux_du_directeur_grunob",
+    "nom": "Faux du Directeur Grunob",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 6,
+          "crit": 1
+        },
+        "adaptatif": 3,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 14,
+          "baseMax": 19,
+          "scaling": 0.42
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 8,
+          "crit": 2
+        },
+        "adaptatif": 4,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 14,
+          "baseMax": 19,
+          "scaling": 0.42
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 2
+        },
+        "adaptatif": 5,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 15,
+          "baseMax": 20,
+          "scaling": 0.42
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 16,
+          "crit": 3
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 16,
+          "baseMax": 22,
+          "scaling": 0.44
+        }
+      }
+    }
+  },
+  "bague_rafe": {
+    "id": "bague_rafe",
+    "nom": "Bague Rafe",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 2
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14,
+          "crit": 2
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 18,
+          "crit": 3
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 25,
+          "crit": 5
+        }
+      }
+    }
+  },
+  "cape_ricefini": {
+    "id": "cape_ricefini",
+    "nom": "Cape Ricéfini",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 6,
+          "crit": 1,
+          "prospection": 2
+        },
+        "adaptatif": 4
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 8,
+          "crit": 1,
+          "prospection": 4
+        },
+        "adaptatif": 6
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 1,
+          "prospection": 6
+        },
+        "adaptatif": 8
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 15,
+          "crit": 2,
+          "prospection": 8
+        },
+        "adaptatif": 10
+      }
+    }
+  },
+  "abracape": {
+    "id": "abracape",
+    "nom": "Abracape",
+    "slot": "cape",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 10
+        },
+        "adaptatif": -14,
+        "pa": 1
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": -10,
+        "pa": 1
+      }
+    },
+    "source": "boss"
+  },
+  "dora": {
+    "id": "dora",
+    "nom": "Dora",
+    "slot": "coiffe",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 20,
+          "prospection": 6
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30,
+          "prospection": 8
+        },
+        "adaptatif": 12,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04,
+          "eau": 0.04,
+          "air": 0.04
+        }
+      }
+    },
+    "source": "elite_boss"
+  },
+  "baton_tont_ata": {
+    "id": "baton_tont_ata",
+    "nom": "Bâton Tont'Ata",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 12
+        },
+        "adaptatif": -10,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 17,
+          "baseMax": 23,
+          "scaling": 0.45
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14
+        },
+        "adaptatif": -8,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 17,
+          "baseMax": 23,
+          "scaling": 0.45
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 18
+        },
+        "adaptatif": -6,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 18,
+          "baseMax": 25,
+          "scaling": 0.46
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 26
+        },
+        "adaptatif": -4,
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03,
+          "eau": 0.03,
+          "air": 0.03
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 20,
+          "baseMax": 27,
+          "scaling": 0.48
+        }
+      }
+    },
+    "source": "elite_boss"
+  },
+  "sabre_shodanwa": {
+    "id": "sabre_shodanwa",
+    "nom": "Sabre Shodanwa",
+    "slot": "arme",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 6,
+          "crit": 4
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 15,
+          "baseMax": 21,
+          "scaling": 0.44
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 6
+        },
+        "adaptatif": 18,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 16,
+          "baseMax": 23,
+          "scaling": 0.46
+        }
+      }
+    },
+    "source": "boss",
+    "riposteAvant": 0.33
+  },
+  "casque_noix": {
+    "id": "casque_noix",
+    "nom": "Casque Noix",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10,
+          "prospection": 2
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04,
+          "eau": -0.04,
+          "air": -0.04
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 12,
+          "prospection": 4
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04,
+          "eau": -0.04,
+          "air": -0.04
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 20,
+          "prospection": 6
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.05,
+          "feu": 0.05,
+          "eau": -0.03,
+          "air": -0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30,
+          "prospection": 8
+        },
+        "adaptatif": 12,
+        "resistances": {
+          "terre": 0.06,
+          "feu": 0.06,
+          "eau": -0.02,
+          "air": -0.02
+        }
+      }
+    }
+  },
+  "cape_lumette": {
+    "id": "cape_lumette",
+    "nom": "Cape Lumette",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10,
+          "prospection": 2
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 12,
+          "prospection": 4
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.04,
+          "feu": 0.04
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 16,
+          "prospection": 6
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.05,
+          "feu": 0.05
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 22,
+          "prospection": 8
+        },
+        "adaptatif": 10,
+        "resistances": {
+          "terre": 0.06,
+          "feu": 0.06
+        }
+      }
+    }
+  },
+  "anneau_bille": {
+    "id": "anneau_bille",
+    "nom": "Anneau Bille",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 6
+        },
+        "adaptatif": 3,
+        "resistances": {
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 8
+        },
+        "adaptatif": 5,
+        "resistances": {
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 10
+        },
+        "adaptatif": 7,
+        "resistances": {
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 14
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "eau": 0.03,
+          "air": 0.03
+        }
+      }
+    }
+  },
+  "baguette_cetera": {
+    "id": "baguette_cetera",
+    "nom": "Baguette Cetera",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10
+        },
+        "resistances": {
+          "terre": -0.04,
+          "feu": -0.04,
+          "eau": 0.04,
+          "air": 0.04
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 15,
+          "baseMax": 20,
+          "scaling": 0.42
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 12
+        },
+        "resistances": {
+          "terre": -0.04,
+          "feu": -0.04,
+          "eau": 0.04,
+          "air": 0.04
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 15,
+          "baseMax": 20,
+          "scaling": 0.42
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 16
+        },
+        "resistances": {
+          "terre": -0.03,
+          "feu": -0.03,
+          "eau": 0.05,
+          "air": 0.05
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 16,
+          "baseMax": 21,
+          "scaling": 0.44
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30
+        },
+        "resistances": {
+          "terre": -0.02,
+          "feu": -0.02,
+          "eau": 0.06,
+          "air": 0.06
+        },
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 17,
+          "baseMax": 23,
+          "scaling": 0.44
+        }
+      }
+    }
+  },
+  "baguette_rikiki": {
+    "id": "baguette_rikiki",
+    "nom": "Baguette Rikiki",
+    "slot": "arme",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 8,
+          "crit": 2
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 10,
+          "baseMax": 13,
+          "scaling": 0.32
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 12,
+          "crit": 4
+        },
+        "adaptatif": 14,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 11,
+          "baseMax": 15,
+          "scaling": 0.34
+        }
+      }
+    },
+    "source": "boss",
+    "esquiveArriere": 0.1
+  },
+  "goyave": {
+    "id": "goyave",
+    "nom": "Goyave",
+    "slot": "coiffe",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 20,
+          "prospection": 6
+        },
+        "adaptatif": 8
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 40,
+          "prospection": 8
+        },
+        "adaptatif": 12
+      }
+    },
+    "source": "boss",
+    "soinDegatsRecus": 0.02
+  },
+  "couteau_a_stek": {
+    "id": "couteau_a_stek",
+    "nom": "Couteau à Stek",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 8,
+          "crit": 1
+        },
+        "adaptatif": 4,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 9,
+          "baseMax": 12,
+          "scaling": 0.3
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 10,
+          "crit": 2
+        },
+        "adaptatif": 5,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 9,
+          "baseMax": 12,
+          "scaling": 0.3
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 12,
+          "crit": 2
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 10,
+          "baseMax": 13,
+          "scaling": 0.32
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 18,
+          "crit": 3
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 3,
+          "baseMin": 11,
+          "baseMax": 15,
+          "scaling": 0.34
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "grosse_bagouze_du_parrain": {
+    "id": "grosse_bagouze_du_parrain",
+    "nom": "Grosse Bagouze du Parrain",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 4
+      },
+      "rare": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 6
+      },
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 10
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 12
+      }
+    },
+    "source": "elite"
   }
 };
 
@@ -1350,6 +2083,40 @@ export const BUTIN_TOILES: Record<number, PoolsToile> = {
     "boss": [
       "chance_d_ecaflip",
       "cape_edepee"
+    ]
+  },
+  "5": {
+    "normales": [
+      "chapeau_du_directeur_grunob",
+      "faux_du_directeur_grunob",
+      "bague_rafe",
+      "cape_ricefini"
+    ],
+    "elites": [
+      "dora",
+      "baton_tont_ata"
+    ],
+    "boss": [
+      "abracape",
+      "dora",
+      "baton_tont_ata",
+      "sabre_shodanwa"
+    ]
+  },
+  "6": {
+    "normales": [
+      "casque_noix",
+      "cape_lumette",
+      "anneau_bille",
+      "baguette_cetera"
+    ],
+    "elites": [
+      "couteau_a_stek",
+      "grosse_bagouze_du_parrain"
+    ],
+    "boss": [
+      "baguette_rikiki",
+      "goyave"
     ]
   }
 };
