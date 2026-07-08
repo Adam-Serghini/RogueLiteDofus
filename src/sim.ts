@@ -33,12 +33,23 @@ const ZONES_SIM = zonesDeTranche(TRANCHES.find((t) => t.active)!);
 // Les classes ont 0 stat offensive de base → l'élément vient des points investis.
 // On répartit donc un élément par membre (couverture multi-élément = jeu attendu,
 // nécessaire pour juger honnêtement les zones à puzzle élémentaire).
-const TEAM: Array<{ classe: string; stat: keyof Stats }> = [
-  { classe: "iop", stat: "force" }, // terre
-  { classe: "cra", stat: "agilite" }, // air
-  { classe: "eniripsa", stat: "intelligence" }, // feu (+ soin de classe)
-  { classe: "ecaflip", stat: "chance" }, // eau (le sadida est désactivé)
-];
+// SIM_TANK=1 → config « tortue » : Feca FULL VITA seul en ligne avant, le reste
+// à l'arrière (teste l'exploit tank+heal : les sorts ennemi_ligne ne touchent
+// que la ligne avant, l'Eni régénère le tank).
+const TANK = !!process.env.SIM_TANK;
+const TEAM: Array<{ classe: string; stat: keyof Stats; pos?: number; fullVita?: boolean }> = TANK
+  ? [
+    { classe: "feca", stat: "vitalite", pos: 0, fullVita: true }, // mur
+    { classe: "iop", stat: "force", pos: 4 },
+    { classe: "cra", stat: "agilite", pos: 5 },
+    { classe: "eniripsa", stat: "intelligence", pos: 6 }, // soigneur
+  ]
+  : [
+    { classe: "iop", stat: "force" }, // terre
+    { classe: "cra", stat: "agilite" }, // air
+    { classe: "eniripsa", stat: "intelligence" }, // feu (+ soin de classe)
+    { classe: "ecaflip", stat: "chance" }, // eau (le sadida est désactivé)
+  ];
 const IDS = TEAM.map((t) => t.classe);
 const ELEM_DE_STAT: Record<string, string> = { force: "terre", intelligence: "feu", agilite: "air", chance: "eau" };
 const N = 200; // combats par (rencontre × scénario de stuff)
@@ -123,10 +134,12 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
     p.pointsDispo = POINTS_PAR_NIVEAU * (niveau - 1);
     // build de référence RÉALISTE : ~25 % des points en vitalité, le reste
     // dans la stat offensive (un full glass cannon rendait les boss 10 PA
-    // « injouables » à la sim alors qu'ils ne le sont pas en vrai jeu)
-    investirN(p, "vitalite", Math.floor(p.pointsDispo * 0.25));
-    investirN(p, TEAM[i].stat, Infinity);
+    // « injouables » à la sim alors qu'ils ne le sont pas en vrai jeu).
+    // Config tortue (SIM_TANK) : le tank met TOUT en vitalité.
+    if (TEAM[i].fullVita) investirN(p, "vitalite", Infinity);
+    else { investirN(p, "vitalite", Math.floor(p.pointsDispo * 0.25)); investirN(p, TEAM[i].stat, Infinity); }
     perso.progression = p;
+    if (TEAM[i].pos !== undefined) perso.position = TEAM[i].pos!;
     if (pool) {
       // zone à toile : chaque membre porte le meilleur objet COMMUN de sa stat
       // par slot (arme et coiffe d'abord pour le mi-set) — plancher réaliste,
