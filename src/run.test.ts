@@ -318,3 +318,17 @@ describe("vendre tout (HDV)", () => {
     expect(vendreTout(run)).toBe(0); // inventaire vide → rien
   });
 });
+
+describe("recrutement — équipement du partant", () => {
+  it("le remplacé rend son stuff à l'inventaire de la run", async () => {
+    const { nouvelleRun, recruter, equiper, rollItem } = await import("./run");
+    const run = nouvelleRun(["iop", "cra"]);
+    run.inventaire.push(rollItem("bouftou_coiffe", () => 0));
+    equiper(run.inventaire, run.persos[0], 0); // le Iop porte la coiffe
+    expect(run.inventaire.length).toBe(0);
+    recruter(run, "sram", "iop"); // le Sram remplace le Iop
+    expect(run.persos.some((p) => p.classeId === "iop")).toBe(false);
+    expect(run.inventaire.length).toBe(1); // la coiffe est revenue
+    expect(run.inventaire[0].id).toBe("bouftou_coiffe");
+  });
+});

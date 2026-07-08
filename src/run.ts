@@ -176,6 +176,10 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
   if (remplaceClasseId) {
     const idx = run.persos.findIndex((p) => p.classeId === remplaceClasseId);
     if (idx >= 0) {
+      // le partant rend son équipement à l'inventaire de la run
+      for (const inst of Object.values(run.persos[idx].equipement)) {
+        if (inst) run.inventaire.push(inst);
+      }
       run.persos[idx] = nouveauPerso(run, classeId, run.persos[idx].position);
       return;
     }
