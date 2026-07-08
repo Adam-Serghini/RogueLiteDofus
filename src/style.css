@@ -1552,6 +1552,29 @@ kbd {
 .archi-mon.simple small {
   font-style: normal;
 }
+/* Tri de l'inventaire (Toile / Type) */
+.equip-tri {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--muet);
+  margin-left: 10px;
+}
+.tri-btn {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  margin-left: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 7px;
+  color: var(--muet);
+  cursor: pointer;
+}
+.tri-btn.actif {
+  color: var(--or);
+  border-color: var(--or);
+  font-weight: 700;
+}
+
 /* Blocs « monde » (Bestiaire & Armurerie groupés par tranche, zones dans l'ordre de jeu) */
 .monde-bloc {
   margin-top: 18px;

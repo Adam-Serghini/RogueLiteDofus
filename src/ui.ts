@@ -73,6 +73,7 @@ import {
   peutEquiper,
   acheterArticle,
   enregistrerCollection,
+  toileDeItem,
   type ArticleHDV,
   type RunState as RunStateT,
 } from "./run";
@@ -1456,6 +1457,24 @@ function itemStatsHtml(inst: ItemInstance): string {
   return `<span class="ichips">${chips.join("")}</span>`;
 }
 
+// Tri de l'inventaire (persistant sur la session) : par toile d'obtention ou par type d'objet.
+let triInventaire: "toile" | "type" = "toile";
+
+/** Ordre d'affichage de l'inventaire selon le tri actif ; chaque entrée garde
+ *  son index RÉEL dans `inventaire` (le clic/drag référence data-index). */
+function ordonnerInventaire(inventaire: ItemInstance[]): { inst: ItemInstance; i: number }[] {
+  const nomDe = (inst: ItemInstance) => ITEMS[inst.id]?.nom ?? inst.id;
+  const slotRang = (inst: ItemInstance) => SLOTS.indexOf(ITEMS[inst.id]?.slot ?? "arme");
+  return inventaire
+    .map((inst, i) => ({ inst, i }))
+    .sort((a, b) => {
+      const cles = triInventaire === "toile"
+        ? [toileDeItem(a.inst.id) - toileDeItem(b.inst.id), slotRang(a.inst) - slotRang(b.inst)]
+        : [slotRang(a.inst) - slotRang(b.inst), toileDeItem(a.inst.id) - toileDeItem(b.inst.id)];
+      return cles.find((c) => c !== 0) ?? nomDe(a.inst).localeCompare(nomDe(b.inst));
+    });
+}
+
 /** Écran Équipement : équiper/déséquiper les pièces trouvées, par personnage. */
 export function showInventaire(
   persos: PersoState[],
@@ -1504,13 +1523,13 @@ export function showInventaire(
         .join(" · ");
 
       const inv = inventaire.length
-        ? inventaire
-            .map((inst, i) => {
+        ? ordonnerInventaire(inventaire)
+            .map(({ inst, i }) => {
               const it = ITEMS[inst.id];
               const equipable = peutEquiper(perso, inst.id);
               return `<button class="item-carte${rareteCls(inst)}${equipable ? "" : " inequipable"}" data-index="${i}" draggable="true" ${equipable ? "" : `title="Équipable uniquement sur un personnage de la ligne avant"`}>
               <img src="${itemImg(inst.id)}" alt="" onerror="this.remove()" />
-              <span class="item-nom">${itemNomHtml(inst)}<small>${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
+              <span class="item-nom">${itemNomHtml(inst)}<small>T${toileDeItem(inst.id)} · ${SLOT_NOM[it.slot]} ${itemStatsHtml(inst)}</small></span>
             </button>`;
             })
             .join("")
@@ -1530,7 +1549,12 @@ export function showInventaire(
             <p class="equip-total muet">Bonus total : ${totalTxt}</p>
           </div>
           <div class="equip-col">
-            <h3>Inventaire (${inventaire.length})</h3>
+            <h3>Inventaire (${inventaire.length})
+              <span class="equip-tri">Tri :
+                <button id="tri-toile" class="tri-btn${triInventaire === "toile" ? " actif" : ""}" title="Trier par toile d'obtention">Toile</button>
+                <button id="tri-type" class="tri-btn${triInventaire === "type" ? " actif" : ""}" title="Trier par type d'objet">Type</button>
+              </span>
+            </h3>
             <div class="equip-inv">${inv}</div>
           </div>
         </div>
@@ -1554,6 +1578,9 @@ export function showInventaire(
           draw();
         }),
       );
+
+      document.getElementById("tri-toile")?.addEventListener("click", () => { triInventaire = "toile"; draw(); });
+      document.getElementById("tri-type")?.addEventListener("click", () => { triInventaire = "type"; draw(); });
 
       root.querySelectorAll<HTMLButtonElement>(".item-carte").forEach((btn) => {
         const index = Number(btn.dataset.index);
