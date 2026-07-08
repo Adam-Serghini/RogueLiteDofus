@@ -3,8 +3,9 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile, KAMAS, TRANCHES } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile, itemsDeToile, KAMAS, TRANCHES } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
+import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
@@ -299,17 +300,8 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     position: state.position,
     niveau: state.progression.niveau,
     elementChoisi: state.elementChoisi,
-    effets: [],
     img: classe.img,
-    maxRollCharges: 0,
-    passeProchainTour: false,
-    bouclier: 0,
-    paBonusNextTurn: 0,
-    cooldowns: {},
-    bonusOffensifProchain: 0,
-    poisonAmpliTours: 0,
-    bonusDe: 0,
-    bonusDeTours: 0,
+    ...etatCombatInitial(),
   };
 }
 
@@ -355,6 +347,14 @@ export function tirerRarete(rng: () => number, disponibles: readonly Rarete[] = 
   return disponibles[0];
 }
 
+/** Fige les stats d'un palier de rareté en exemplaire concret. SOURCE UNIQUE de
+ *  la conversion palier → ItemInstance (jeu ET sim). null si le palier n'existe pas. */
+export function instanceDuTier(itemId: string, rarete: Rarete): ItemInstance | null {
+  const tier = ITEMS[itemId]?.tiers?.[rarete];
+  if (!tier) return null;
+  return { id: itemId, rarete, stats: { ...tier.stats }, adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
+}
+
 /** Exemplaire d'un objet à rareté, tirage restreint aux paliers `autorisees`
  *  (∩ paliers réellement définis sur l'objet). null si aucun palier ne convient. */
 export function rollItemRarete(itemId: string, rng: () => number, autorisees: readonly Rarete[] = RARETES): ItemInstance | null {
@@ -362,9 +362,7 @@ export function rollItemRarete(itemId: string, rng: () => number, autorisees: re
   if (!tiers) return null;
   const disponibles = autorisees.filter((r) => tiers[r]);
   if (!disponibles.length) return null;
-  const rarete = tirerRarete(rng, disponibles);
-  const tier = tiers[rarete]!;
-  return { id: itemId, rarete, stats: { ...tier.stats }, adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
+  return instanceDuTier(itemId, tirerRarete(rng, disponibles));
 }
 
 /** Crée un exemplaire d'item. Objet à rareté : palier tiré, stats fixes figées.
@@ -474,17 +472,8 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
     ia: m.ia,
     mueElementaire: m.mueElementaire,
     bonusParAllieLigne: m.bonusParAllieLigne,
-    effets: [],
     img: m.img,
-    maxRollCharges: 0,
-    passeProchainTour: false,
-    bouclier: 0,
-    paBonusNextTurn: 0,
-    cooldowns: {},
-    bonusOffensifProchain: 0,
-    poisonAmpliTours: 0,
-    bonusDe: 0,
-    bonusDeTours: 0,
+    ...etatCombatInitial(),
     dofusLache: m.dofus,
   };
 }
@@ -658,8 +647,7 @@ export function toileDeZone(zoneId: string): number {
 /** Toile d'origine d'un objet (pool de toile, sinon zone de sa panoplie legacy). */
 export function toileDeItem(itemId: string): number {
   for (let t = 1; t <= TRANCHES[0].zones.length; t++) {
-    const pools = butinToile(TRANCHES[0].zones[t - 1]);
-    if (pools && [...pools.normales, ...pools.elites, ...pools.boss].includes(itemId)) return t;
+    if (itemsDeToile(butinToile(TRANCHES[0].zones[t - 1])).includes(itemId)) return t;
   }
   const panoId = ITEMS[itemId]?.panoplie;
   if (panoId) {
@@ -706,10 +694,7 @@ export interface ArticleHDV {
 export function genererStockHDV(zoneId: string, rng: () => number): ArticleHDV[] {
   const t = toileDeZone(zoneId);
   const zones = TRANCHES[0].zones;
-  const tout = (z?: string) => {
-    const pools = z ? butinToile(z) : null;
-    return pools ? [...pools.normales, ...pools.elites, ...pools.boss] : [];
-  };
+  const tout = (z?: string) => itemsDeToile(z ? butinToile(z) : null);
   const poolCourante = tout(zones[t - 1]);
   const poolSuivante = t < zones.length ? tout(zones[t]) : [];
   const stock: ArticleHDV[] = [];
@@ -839,8 +824,9 @@ export function bonusDegatsDofus(meta: Meta): number {
   return bonus;
 }
 
-// Armurerie : rang des paliers de collection (« base » = objet legacy sans rareté)
-const RANG_COLLECTION = ["base", "commun", "rare", "epique", "legendaire"];
+// Armurerie : rang des paliers de collection, dérivé de l'ordre canonique RARETES
+// (« base » = objet legacy sans rareté, sous le commun)
+const RANG_COLLECTION: string[] = ["base", ...RARETES];
 
 /** Enregistre des exemplaires obtenus dans la collection persistante (Armurerie) :
  *  on retient, par objet, la meilleure rareté jamais obtenue. */

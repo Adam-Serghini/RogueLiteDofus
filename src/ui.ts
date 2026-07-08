@@ -29,6 +29,8 @@ import {
   elementDeFrappe,
   statElement,
   statsEffectives,
+  chanceCrit,
+  bonusDegatsCrit,
   type FxEvent,
 } from "./combat";
 import {
@@ -39,6 +41,7 @@ import {
   investirN,
   multOffensif,
   multSoin,
+  pctRembPA as rembPA,
 } from "./progression";
 import { atteignables, noeud } from "./carte";
 import {
@@ -611,17 +614,13 @@ function choisirSort(s: Spell): void {
   }
 }
 
-// Stats secondaires affichées sur la carte (mêmes formules que le moteur).
-const pctCrit = (s: Stats): number =>
-  Math.round(Math.min(0.5, s.force * 0.005 + (s.crit ?? 0) / 100) * 100);
-const pctDmgCrit = (s: Stats): number =>
-  Math.round(Math.min(0.6, 0.25 + s.agilite * 0.004) * 100);
-const pctSoin = (s: Stats): number =>
-  Math.round(Math.min(0.5, ((s.soin ?? 0) + s.intelligence) * 0.005) * 100);
-const pctDgtsFinaux = (s: Stats): number =>
-  Math.round(Math.min(0.5, s.intelligence * 0.005) * 100);
-const pctRembPA = (s: Stats): number =>
-  Math.round(Math.min(0.5, 0.05 + (s.chance ?? 0) * 0.005) * 100);
+// Stats secondaires affichées sur la carte — DÉLÉGUÉES au moteur (source unique
+// des formules : combat.ts / progression.ts), ici on ne fait que formater en %.
+const pctCrit = (s: Stats): number => Math.round(chanceCrit(s) * 100);
+const pctDmgCrit = (s: Stats): number => Math.round(bonusDegatsCrit(s) * 100);
+const pctSoin = (s: Stats): number => Math.round((multSoin(s) - 1) * 100);
+const pctDgtsFinaux = (s: Stats): number => Math.round((multOffensif(s) - 1) * 100);
+const pctRembPA = (s: Stats): number => Math.round(rembPA(s) * 100);
 
 /**
  * Rond d'élément. `rang` = 1 (plus fort) / 2 (second). `actif` = élément de frappe courant.

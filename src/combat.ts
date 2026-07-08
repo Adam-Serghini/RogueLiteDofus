@@ -179,6 +179,27 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
   return touchees;
 }
 
+// --- Fabrique de combattants ---------------------------------------------------
+/** Champs d'ÉTAT DE COMBAT initialisés à zéro, communs à toute création de
+ *  Combatant (héros, monstre, invocation). SOURCE UNIQUE : un nouveau champ
+ *  d'état s'ajoute ici, pas dans chacune des quatre fabriques. */
+export function etatCombatInitial(): Pick<Combatant,
+  "effets" | "maxRollCharges" | "passeProchainTour" | "bouclier" | "paBonusNextTurn" |
+  "cooldowns" | "bonusOffensifProchain" | "poisonAmpliTours" | "bonusDe" | "bonusDeTours"> {
+  return {
+    effets: [],
+    maxRollCharges: 0,
+    passeProchainTour: false,
+    bouclier: 0,
+    paBonusNextTurn: 0,
+    cooldowns: {},
+    bonusOffensifProchain: 0,
+    poisonAmpliTours: 0,
+    bonusDe: 0,
+    bonusDeTours: 0,
+  };
+}
+
 // --- Calcul de dégâts sur une cible ------------------------------------------
 export interface ResultatDegats {
   dmg: number;
@@ -192,6 +213,17 @@ interface BaseDegats {
   baseMax: number;
   scaling: number;
   ignoreResistances?: boolean;
+}
+
+/** Chance de coup critique : Force (+ crit plat d'équipement), plafonnée à 50 %.
+ *  SOURCE UNIQUE de la formule — l'UI l'affiche via cette fonction. */
+export function chanceCrit(se: Stats): number {
+  return Math.min(0.5, se.force * 0.005 + (se.crit ?? 0) / 100);
+}
+
+/** Bonus de dégâts d'un critique : +25 % de base + Agilité, plafonné à +60 %. */
+export function bonusDegatsCrit(se: Stats): number {
+  return Math.min(0.6, 0.25 + se.agilite * 0.004);
 }
 
 export function degatsCible(
@@ -227,8 +259,8 @@ function degatsAvec(
 
   // critique : chance via Force (≤ 50 %), bonus de dégâts via Agilité (+25 % à +60 %)
   let crit = false;
-  if (ctx.rng() < Math.min(0.5, se.force * 0.005 + (se.crit ?? 0) / 100)) { // + crit plat d'équipement
-    dmg *= 1 + Math.min(0.6, 0.25 + se.agilite * 0.004);
+  if (ctx.rng() < chanceCrit(se)) {
+    dmg *= 1 + bonusDegatsCrit(se);
     crit = true;
   }
 
@@ -532,17 +564,8 @@ function invoquerPoupee(
     camp: "joueur",
     position: 0, // devant l'équipe (mur)
     niveau: 1,
-    effets: [],
     img: "/assets/divers/poupee.png",
-    maxRollCharges: 0,
-    passeProchainTour: false,
-    bouclier: 0,
-    paBonusNextTurn: 0,
-    cooldowns: {},
-    bonusOffensifProchain: 0,
-    poisonAmpliTours: 0,
-    bonusDe: 0,
-    bonusDeTours: 0,
+    ...etatCombatInitial(),
     estInvocation: true,
     joueTour: false,
     provoque: invo.provoque,
@@ -565,10 +588,8 @@ function combattantInvoque(m: Monstre, ref: string, position: number, camp: Camp
     ref, nom: m.nom, pvBase: m.pv, pvMax: m.pv, pvActuels: m.pv,
     stats: { ...m.stats }, paMax: m.pa, paActuels: m.pa, initiative: m.initiative,
     resistances: { ...m.resistances }, sorts: [...m.sorts], camp, position,
-    niveau: 1, monstreId: m.id, ia: m.ia, effets: [], img: m.img,
-    maxRollCharges: 0, passeProchainTour: false,
-    bouclier: 0, paBonusNextTurn: 0, cooldowns: {}, bonusOffensifProchain: 0,
-    poisonAmpliTours: 0, bonusDe: 0, bonusDeTours: 0, invoquePar,
+    niveau: 1, monstreId: m.id, ia: m.ia, img: m.img,
+    ...etatCombatInitial(), invoquePar,
   };
 }
 

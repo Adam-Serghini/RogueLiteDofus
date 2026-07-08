@@ -1746,6 +1746,11 @@ export function butinToile(zoneId: string): PoolsToile | null {
   return BUTIN_TOILES[idx + 1] ?? null;
 }
 
+/** Tous les objets d'un pool de toile, sources confondues (normales + élite + boss). */
+export function itemsDeToile(pools: PoolsToile | null): string[] {
+  return pools ? [...pools.normales, ...pools.elites, ...pools.boss] : [];
+}
+
 // Sets de 4 pièces : bonus à 2/4 (moitié / complet).
 export const PANOPLIES: Record<string, Panoplie> = {
   aventurier: {

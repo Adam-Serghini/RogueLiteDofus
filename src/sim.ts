@@ -21,10 +21,10 @@ import {
 import { runCombat, controllerIA } from "./combat";
 import { progressionInitiale, gagnerXP, investirN, POINTS_PAR_NIVEAU } from "./progression";
 import {
-  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateurElite,
+  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateurElite, instanceDuTier,
   type RunState,
 } from "./run";
-import type { ItemInstance, Stats } from "./types";
+import type { ItemInstance, Rarete, Stats } from "./types";
 
 // Zones de la tranche active, dans l'ORDRE DE JEU (la courbe d'XP en dépend).
 const ZONES_SIM = zonesDeTranche(TRANCHES.find((t) => t.active)!);
@@ -72,11 +72,11 @@ function itemMoyen(id: string): ItemInstance {
 
 const SLOTS_SIM = ["arme", "coiffe", "cape", "anneau"] as const;
 
-/** Exemplaire d'un objet à rareté au palier demandé (stats fixes). */
+/** Exemplaire d'un objet à rareté au palier demandé (repli : premier palier défini). */
 function itemPalier(id: string, rarete: "commun" | "rare"): ItemInstance {
   const tiers = ITEMS[id].tiers!;
-  const tier = tiers[rarete] ?? tiers[Object.keys(tiers)[0] as keyof typeof tiers]!;
-  return { id, rarete, stats: { ...tier.stats }, adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
+  const r = tiers[rarete] ? rarete : (Object.keys(tiers)[0] as Rarete);
+  return instanceDuTier(id, r)!;
 }
 
 /** Meilleur objet du pool de toile pour un slot et une stat (celui qui maximise
