@@ -58,3 +58,16 @@ describe("intégrité des tranches", () => {
     expect(new Set(actives[0].zones)).toEqual(new Set(ZONES.map((z) => z.id)));
   });
 });
+
+describe("distribution des Dofus (un par groupe de zones)", () => {
+  it("chaque boss de la t1 lâche un Dofus : Dofawa zones 1-6, Argenté zones 7-12", () => {
+    const zones = TRANCHES[0].zones;
+    zones.forEach((zoneId, i) => {
+      const zone = ZONES.find((z) => z.id === zoneId)!;
+      const boss = COMBATS[zone.pools.boss].ennemis
+        .map((e) => MONSTRES[e.monstre])
+        .find((m) => m.boss)!;
+      expect(boss.dofus, `${zone.nom} : son boss doit lâcher un Dofus`).toBe(i < 6 ? "dofawa" : "dofus_argente");
+    });
+  });
+});

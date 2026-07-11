@@ -712,7 +712,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 9,
     resistances: { terre: 0.25, feu: 0.25, eau: -0.1, air: -0.15 },
     sorts: ["racines_voraces", "ecrasement", "charge", "picotement"], ia: "agressif",
-    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    boss: true, dofus: "dofawa",
     img: "/assets/monstres/tournesol_affame.png",
   },
 
@@ -768,7 +768,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 8,
     resistances: { eau: 0.25, terre: 0.2, feu: 0.2, air: 0.05 },
     sorts: ["colere_royale", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, dofus: "dofus_argente",
+    boss: true, dofus: "dofawa",
     img: "/assets/monstres/bouftou_royal.png",
   },
 
@@ -839,7 +839,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 11,
     resistances: { air: 0.25, terre: 0.1, eau: -0.05, feu: -0.15 },
     sorts: ["pique_fulgurant", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    boss: true, dofus: "dofawa",
     img: "/assets/monstres/batofu.png",
   },
 
@@ -905,7 +905,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 10,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 }, // résiste tout : il faut le user (retuné toile 8)
     sorts: ["carapace_doree", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/scarabosse_dore.png",
   },
 
@@ -953,7 +953,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 6, // mimic lourd et lent, mais énorme sac de PV
     resistances: { terre: 0.15, feu: 0.15, eau: 0.1, air: 0.1 },
     sorts: ["machoire_du_coffre", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus pour l'instant (réservé pour plus tard)
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/coffre_forgerons.png",
   },
 
@@ -1010,7 +1010,7 @@ export const MONSTRES: Record<string, Monstre> = {
     resistances: { terre: 0.2, feu: 0.15, air: 0.1, eau: -0.05 },
     bonusParAllieLigne: 0.06, // « Travail d'équipe » : +6 % de dégâts par allié vivant dans sa rangée (retuné toile 5)
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus (réservé)
+    boss: true, dofus: "dofawa",
     img: "/assets/monstres/directeur_grunob.png",
   },
 
@@ -1063,7 +1063,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 11,
     resistances: { terre: 0.25, eau: 0.2, feu: 0.15, air: -0.05 }, // résist. réelles DofusDB (terre/eau)
     sorts: ["sfvc", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus (réservé)
+    boss: true, dofus: "dofawa",
     img: "/assets/monstres/kankreblath.png",
   },
 
@@ -1112,7 +1112,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 12,
     resistances: { air: 0.25, terre: 0.15, eau: 0.1, feu: -0.1 },
     sorts: ["enfer_des_zombies", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus (réservé)
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/boostache.png",
   },
 
@@ -1183,7 +1183,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 9,
     resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
     sorts: ["ponte_larvaire", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus (réservé)
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/shin_larve.png",
   },
 
@@ -1251,7 +1251,7 @@ export const MONSTRES: Record<string, Monstre> = {
     pa: 10, initiative: 8,
     resistances: { eau: 0.3, terre: 0.2, feu: -0.05 },
     sorts: ["rostre_broyeur", "ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus (réservé)
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/corailleur_magistral.png",
   },
 
@@ -1310,7 +1310,7 @@ export const MONSTRES: Record<string, Monstre> = {
     resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // avant son 1er tour ; ensuite la mue prend le relais
     mueElementaire: 0.5, // signature : 50 % de résist partout sauf 1 élément (aléatoire) à 0, retiré chaque tour (retuné toile 12)
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
-    boss: true, // pas de Dofus (réservé)
+    boss: true, dofus: "dofus_argente",
     img: "/assets/monstres/kwakwa.png",
   },
 };
