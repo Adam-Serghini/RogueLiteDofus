@@ -36,7 +36,7 @@ const ZONES_SIM = zonesDeTranche(TRANCHES.find((t) => t.active)!);
 // SIM_TANK=1 → config « tortue » : Feca FULL VITA seul en ligne avant, le reste
 // à l'arrière (teste l'exploit tank+heal : les sorts ennemi_ligne ne touchent
 // que la ligne avant, l'Eni régénère le tank).
-const TANK = !!process.env.SIM_TANK;
+const TANK = !!(globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.SIM_TANK;
 const TEAM: Array<{ classe: string; stat: keyof Stats; pos?: number; fullVita?: boolean }> = TANK
   ? [
     { classe: "feca", stat: "vitalite", pos: 0, fullVita: true }, // mur

@@ -1154,8 +1154,8 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_saphir.png",
   },
   larve_emeraude: {
-    id: "larve_emeraude", nom: "Larve Émeraude", pv: 101,
-    stats: { force: 44, intelligence: 8, agilite: 10, vitalite: 60 }, // frappe Terre
+    id: "larve_emeraude", nom: "Larve Émeraude", pv: 88, // retunée toile 10
+    stats: { force: 37, intelligence: 8, agilite: 10, vitalite: 60 }, // frappe Terre
     pa: 5, initiative: 9,
     resistances: { terre: 0.4, air: -0.3 },
     sorts: ["morsure"], ia: "agressif",
@@ -1170,16 +1170,16 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/larve_rubis.png",
   },
   larve_doree: {
-    id: "larve_doree", nom: "Larve Dorée", pv: 194,
-    stats: { force: 46, intelligence: 18, agilite: 14, vitalite: 88 }, // élite/miniboss luisant
+    id: "larve_doree", nom: "Larve Dorée", pv: 155, // retunée toile 10
+    stats: { force: 38, intelligence: 15, agilite: 14, vitalite: 88 }, // élite/miniboss luisant
     pa: 5, initiative: 8,
     resistances: { terre: 0.15, feu: 0.15, eau: 0.15, air: 0.15 },
     sorts: ["morsure", "charge"], ia: "agressif",
     img: "/assets/monstres/larve_doree.png",
   },
   shin_larve: {
-    id: "shin_larve", nom: "Shin Larve", pv: 1059,
-    stats: { force: 14, intelligence: 14, agilite: 11, chance: 46, vitalite: 176 },
+    id: "shin_larve", nom: "Shin Larve", pv: 760, // retuné toile 10
+    stats: { force: 14, intelligence: 14, agilite: 11, chance: 34, vitalite: 176 },
     pa: 10, initiative: 9,
     resistances: { eau: 0.3, terre: 0.15, feu: -0.1 },
     sorts: ["ponte_larvaire", "ecrasement", "charge", "morsure"], ia: "agressif",
@@ -1304,11 +1304,11 @@ export const MONSTRES: Record<string, Monstre> = {
     img: "/assets/monstres/kwakere_de_terre.png",
   },
   kwakwa: {
-    id: "kwakwa", nom: "Kwakwa", pv: 1023,
-    stats: { force: 23, intelligence: 23, agilite: 16, chance: 23, vitalite: 180 },
+    id: "kwakwa", nom: "Kwakwa", pv: 780, // retuné toile 12
+    stats: { force: 20, intelligence: 20, agilite: 14, chance: 20, vitalite: 180 },
     pa: 10, initiative: 12,
     resistances: { terre: 0.25, feu: 0.25, eau: 0.25, air: 0.25 }, // avant son 1er tour ; ensuite la mue prend le relais
-    mueElementaire: 0.55, // signature : 55 % de résist partout sauf 1 élément (aléatoire) à 0, retiré chaque tour
+    mueElementaire: 0.5, // signature : 50 % de résist partout sauf 1 élément (aléatoire) à 0, retiré chaque tour (retuné toile 12)
     sorts: ["ecrasement", "charge", "morsure"], ia: "agressif",
     boss: true, // pas de Dofus (réservé)
     img: "/assets/monstres/kwakwa.png",

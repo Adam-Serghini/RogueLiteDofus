@@ -149,9 +149,10 @@ describe("rareté (objets à toiles)", () => {
     expect(leg.adaptatif).toBe(6);
   });
 
-  it("Incarnam droppe depuis son pool de toile (rareté), les Larves restent legacy", () => {
+  it("Incarnam droppe depuis son pool de toile ; les 12 zones de la t1 sont toutes à toile", () => {
     expect(butinToile("incarnam")!.normales).toContain("chapeau_de_l_aventurier");
-    expect(butinToile("larves")).toBeNull(); // toile 10 : pas encore saisie
+    for (const z of ["larves", "grotte_hesque", "kwakwa"]) expect(butinToile(z)).not.toBeNull();
+    expect(butinToile("zone_inconnue")).toBeNull(); // le repli legacy reste couvert
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
     expect(drops.length).toBe(4);
@@ -417,5 +418,69 @@ describe("toiles 7-9 : mécaniques spéciales", () => {
     expect(multKamasEquipe(run)).toBe(1);
     run.persos[0].equipement.anneau = rollItemRarete("ann_or", () => 0)!;
     expect(multKamasEquipe(run)).toBeCloseTo(1.2);
+  });
+});
+
+describe("toiles 10-12 : mécaniques spéciales", () => {
+  it("Bonnet Spairance : bouclier de départ = 15 % des PV max", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.coiffe = rollItemRarete("bonnet_spairance", () => 0)!;
+    const c = combattantDepuisPerso(run.persos[0]);
+    expect(c.bouclier).toBe(Math.round(c.pvMax * 0.15));
+    expect(combattantDepuisPerso(nouvelleRun(["iop"]).persos[0]).bouclier).toBe(0);
+  });
+
+  it("Scalpel de Bworknroll : l'attaque empoisonne ; Arc des Rivages : retrait de PA", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.arme = rollItemRarete("scalpel_de_bworknroll", () => 0)!;
+    expect(combattantDepuisPerso(run.persos[0]).armeSort?.poison).toEqual({ degats: 5, duree: 2 });
+    run.persos[0].equipement.arme = rollItemRarete("arc_des_rivages", () => 0)!;
+    expect(combattantDepuisPerso(run.persos[0]).armeSort?.retraitPA).toBe(1);
+  });
+
+  it("Masse du Corailleur : l'attaque soigne l'allié le plus blessé", async () => {
+    const { nouvelleRun, equipeCombattante, rollItemRarete, fabriquerEnnemis } = await import("./run");
+    const { lancerSort } = await import("./combat");
+    const run = nouvelleRun(["iop", "cra"]);
+    run.persos[0].equipement.arme = rollItemRarete("masse_du_corailleur", () => 0)!;
+    const [iop, cra] = equipeCombattante(run);
+    cra.pvActuels = Math.round(cra.pvMax * 0.3); // le plus blessé
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.pvActuels = 500; ennemi.pvMax = 500; ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    const pvAvant = cra.pvActuels;
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    lancerSort(iop, iop.armeSort!, ennemi.ref, [iop, cra, ennemi], ctx);
+    const dmg = 500 - ennemi.pvActuels;
+    expect(dmg).toBeGreaterThan(0);
+    expect(cra.pvActuels).toBe(pvAvant + Math.round(dmg * 0.2)); // multSoin(iop) = 1
+  });
+
+  it("Kwakwaffe : l'élément de frappe n'est plus limité au top 2 (élément libre)", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.coiffe = rollItemRarete("kwakwaffe", () => 0)!;
+    const c = combattantDepuisPerso(run.persos[0]);
+    expect(c.elementLibre).toBe(true);
+  });
+
+  it("Kwakwanneau : renaît UNE seule fois par combat à 30 % des PV (coups et poison)", async () => {
+    const { nouvelleRun, combattantDepuisPerso, rollItemRarete, fabriquerEnnemis } = await import("./run");
+    const { lancerSort } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].equipement.anneau = rollItemRarete("kwakwanneau", () => 0)!;
+    const iop = combattantDepuisPerso(run.persos[0]);
+    iop.stats = { ...iop.stats, agilite: 0 };
+    iop.pvMax = 100; iop.pvActuels = 5; iop.bouclier = 0;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, force: 999, agilite: 0 }; // coup fatal garanti
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx);
+    expect(iop.pvActuels).toBe(30); // renaît à 30 % de 100
+    iop.pvActuels = 5;
+    lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx);
+    expect(iop.pvActuels).toBe(0); // une seule renaissance par combat
   });
 });

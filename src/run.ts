@@ -274,6 +274,9 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
       ...(attaque.vampirisme ? { vampirismeRatio: attaque.vampirisme } : {}),
       ...(armeItem.perceResistances ? { perceResistances: armeItem.perceResistances } : {}),
       ...(armeItem.frappeDerriere ? { toucheDerriere: true } : {}),
+      ...(armeItem.poisonArme ? { poison: armeItem.poisonArme } : {}),
+      ...(armeItem.soinAllieBlesse ? { soinAllieBlesseRatio: armeItem.soinAllieBlesse } : {}),
+      ...(armeItem.retraitPA ? { retraitPA: armeItem.retraitPA } : {}),
       img: `/assets/items/${armeItem.id}.png`,
       desc: attaque.cible === "ennemi_tous"
         ? "Attaque d'arme — atteint la ligne arrière."
@@ -283,16 +286,20 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     }
     : undefined;
   // Effets spéciaux d'équipement (premier objet porteur, non cumulables)
-  const special = <K extends "paGamble" | "riposteAvant" | "esquiveArriere" | "soinDegatsRecus" | "changeLigne">(k: K) =>
+  const special = <K extends "paGamble" | "riposteAvant" | "esquiveArriere" | "soinDegatsRecus" | "changeLigne" | "bouclierDebut" | "elementLibre" | "renaissance">(k: K) =>
     (Object.values(state.equipement).map((i) => i && ITEMS[i.id]?.[k]).find(Boolean)) ?? undefined;
   // Dagues Eurfolles : l'objet confère le sort « Changer de ligne »
   const sortsEquipement = special("changeLigne") ? ["changer_ligne"] : [];
+  const renaissance = special("renaissance");
   return {
     armeSort,
     paGamble: special("paGamble"),
     riposteAvant: special("riposteAvant"),
     esquiveArriere: special("esquiveArriere"),
     soinDegatsRecus: special("soinDegatsRecus"),
+    elementLibre: special("elementLibre"),
+    renaissance,
+    renaissancesRestantes: renaissance ? 1 : 0,
     ref: `j_${state.classeId}`,
     nom: classe.nom,
     pvBase: pvMax, // base de référence pour les buffs de vitalité en %
@@ -310,6 +317,8 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     elementChoisi: state.elementChoisi,
     img: classe.img,
     ...etatCombatInitial(),
+    // Bonnet Spairance : chaque combat démarre avec un bouclier (fraction des PV max)
+    bouclier: Math.round(pvMax * (special("bouclierDebut") ?? 0)),
   };
 }
 

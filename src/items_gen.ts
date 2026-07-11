@@ -3058,6 +3058,1027 @@ export const ITEMS_TOILES: Record<string, Item> = {
     },
     "source": "boss",
     "multKamas": 1.2
+  },
+  "chapeau_lithique": {
+    "id": "chapeau_lithique",
+    "nom": "Chapeau Lithique",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 20
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 26
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 36
+        },
+        "adaptatif": 10,
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03,
+          "eau": 0.03,
+          "air": 0.03
+        }
+      }
+    }
+  },
+  "la_mokette": {
+    "id": "la_mokette",
+    "nom": "La Mokette",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 12
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 5,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 22
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03,
+          "eau": 0.03,
+          "air": 0.03
+        }
+      }
+    }
+  },
+  "bague_cristalline": {
+    "id": "bague_cristalline",
+    "nom": "Bague Cristalline",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 8
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 12,
+          "crit": 1
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 16,
+          "crit": 1
+        },
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 22,
+          "crit": 2
+        },
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      }
+    }
+  },
+  "baguette_larvesque": {
+    "id": "baguette_larvesque",
+    "nom": "Baguette Larvesque",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 8
+        },
+        "adaptatif": 5,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 19,
+          "baseMax": 24,
+          "scaling": 0.46
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 10
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 19,
+          "baseMax": 24,
+          "scaling": 0.46
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 14
+        },
+        "adaptatif": 8,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 20,
+          "baseMax": 25,
+          "scaling": 0.46
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 20
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 21,
+          "baseMax": 27,
+          "scaling": 0.48
+        }
+      }
+    }
+  },
+  "bonnet_spairance": {
+    "id": "bonnet_spairance",
+    "nom": "Bonnet Spairance",
+    "slot": "coiffe",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 25
+        },
+        "adaptatif": 8
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 40
+        },
+        "adaptatif": 12
+      }
+    },
+    "source": "boss",
+    "bouclierDebut": 0.15
+  },
+  "scalpel_de_bworknroll": {
+    "id": "scalpel_de_bworknroll",
+    "nom": "Scalpel de Bworknroll",
+    "slot": "arme",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 18,
+          "baseMax": 23,
+          "scaling": 0.46
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 14,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 20,
+          "baseMax": 26,
+          "scaling": 0.48
+        }
+      }
+    },
+    "source": "boss",
+    "poisonArme": {
+      "degats": 5,
+      "duree": 2
+    }
+  },
+  "cape_sanguine": {
+    "id": "cape_sanguine",
+    "nom": "Cape Sanguine",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 1,
+          "prospection": 2
+        },
+        "adaptatif": 3,
+        "resistances": {
+          "feu": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "crit": 2,
+          "prospection": 4
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "feu": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "crit": 2,
+          "prospection": 6
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "feu": 0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 3,
+          "prospection": 8
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "feu": 0.04
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "anneau_de_grouillot": {
+    "id": "anneau_de_grouillot",
+    "nom": "Anneau de Grouillot",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10
+        },
+        "adaptatif": 3,
+        "resistances": {
+          "terre": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "terre": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 18
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "terre": 0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 26
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.04
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "chapeau_akwadala": {
+    "id": "chapeau_akwadala",
+    "nom": "Chapeau Akwadala",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "feu": -0.02,
+          "eau": 0.03
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "feu": -0.02,
+          "eau": 0.03
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 18
+        },
+        "adaptatif": 10,
+        "resistances": {
+          "feu": -0.01,
+          "eau": 0.04
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 26
+        },
+        "adaptatif": 14,
+        "resistances": {
+          "eau": 0.06
+        }
+      }
+    }
+  },
+  "cape_akwadala": {
+    "id": "cape_akwadala",
+    "nom": "Cape Akwadala",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 8,
+          "soin": 4
+        },
+        "adaptatif": 4
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 12,
+          "soin": 6
+        },
+        "adaptatif": 6
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 16,
+          "soin": 8
+        },
+        "adaptatif": 8
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 22,
+          "soin": 12
+        },
+        "adaptatif": 10
+      }
+    }
+  },
+  "alliance_akwadala": {
+    "id": "alliance_akwadala",
+    "nom": "Alliance Akwadala",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 4
+      },
+      "rare": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 5
+      },
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 7
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 9
+      }
+    }
+  },
+  "baton_akwadala": {
+    "id": "baton_akwadala",
+    "nom": "Bâton Akwadala",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 6
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 20,
+          "baseMax": 25,
+          "scaling": 0.48
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 8
+        },
+        "adaptatif": 7,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 20,
+          "baseMax": 25,
+          "scaling": 0.48
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 12
+        },
+        "adaptatif": 9,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 21,
+          "baseMax": 26,
+          "scaling": 0.48
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 11,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 22,
+          "baseMax": 28,
+          "scaling": 0.5
+        }
+      }
+    }
+  },
+  "masse_du_corailleur": {
+    "id": "masse_du_corailleur",
+    "nom": "Masse du Corailleur",
+    "slot": "arme",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 12,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 19,
+          "baseMax": 24,
+          "scaling": 0.48
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 5
+        },
+        "adaptatif": 16,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 21,
+          "baseMax": 27,
+          "scaling": 0.5
+        }
+      }
+    },
+    "source": "boss",
+    "soinAllieBlesse": 0.2
+  },
+  "alliance_de_corail": {
+    "id": "alliance_de_corail",
+    "nom": "Alliance de Corail",
+    "slot": "anneau",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 15,
+          "soin": 10
+        },
+        "resistances": {
+          "terre": -0.03,
+          "feu": -0.03,
+          "eau": -0.03,
+          "air": -0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 25,
+          "soin": 16
+        },
+        "resistances": {
+          "terre": -0.02,
+          "feu": -0.02,
+          "eau": -0.02,
+          "air": -0.02
+        }
+      }
+    },
+    "source": "boss"
+  },
+  "arc_des_rivages": {
+    "id": "arc_des_rivages",
+    "nom": "Arc des Rivages",
+    "slot": "arme",
+    "tiers": {
+      "rare": {
+        "stats": {
+          "vitalite": 8
+        },
+        "adaptatif": 6,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 17,
+          "baseMax": 22,
+          "scaling": 0.44
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 12
+        },
+        "adaptatif": 8,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 18,
+          "baseMax": 23,
+          "scaling": 0.44
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 12,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 19,
+          "baseMax": 25,
+          "scaling": 0.46
+        }
+      }
+    },
+    "source": "elite",
+    "retraitPA": 1
+  },
+  "scaphandre_ojine": {
+    "id": "scaphandre_ojine",
+    "nom": "Scaphandre Ojine",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 12
+        },
+        "adaptatif": 3,
+        "resistances": {
+          "eau": 0.03,
+          "air": 0.02
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 4,
+        "resistances": {
+          "eau": 0.03,
+          "air": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 20
+        },
+        "adaptatif": 6,
+        "resistances": {
+          "eau": 0.04,
+          "air": 0.03
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 28
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "eau": 0.05,
+          "air": 0.04
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "kwakoiffe_de_flammes": {
+    "id": "kwakoiffe_de_flammes",
+    "nom": "Kwakoiffe de Flammes",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 12
+        },
+        "adaptatif": 8,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 10,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 22
+        },
+        "adaptatif": 14,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30
+        },
+        "adaptatif": 18,
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03,
+          "eau": 0.03,
+          "air": 0.03
+        }
+      }
+    }
+  },
+  "kwape_de_glace": {
+    "id": "kwape_de_glace",
+    "nom": "Kwape de Glace",
+    "slot": "cape",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10
+        },
+        "adaptatif": 7,
+        "resistances": {
+          "terre": 0.01,
+          "feu": 0.01,
+          "eau": 0.01,
+          "air": 0.01
+        }
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14
+        },
+        "adaptatif": 9,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 20
+        },
+        "adaptatif": 12,
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 28
+        },
+        "adaptatif": 16,
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03,
+          "eau": 0.03,
+          "air": 0.03
+        }
+      }
+    }
+  },
+  "kwakanneau_de_terre": {
+    "id": "kwakanneau_de_terre",
+    "nom": "Kwakanneau de Terre",
+    "slot": "anneau",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 1
+        },
+        "adaptatif": 6
+      },
+      "rare": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 8
+      },
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 10
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 13
+      }
+    }
+  },
+  "kwaklame_de_vent": {
+    "id": "kwaklame_de_vent",
+    "nom": "Kwaklame de Vent",
+    "slot": "arme",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 8,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 21,
+          "baseMax": 26,
+          "scaling": 0.5
+        }
+      },
+      "rare": {
+        "stats": {
+          "crit": 2
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 21,
+          "baseMax": 26,
+          "scaling": 0.5
+        }
+      },
+      "epique": {
+        "stats": {
+          "crit": 3
+        },
+        "adaptatif": 12,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 22,
+          "baseMax": 27,
+          "scaling": 0.5
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 15,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 24,
+          "baseMax": 30,
+          "scaling": 0.52
+        }
+      }
+    }
+  },
+  "kwakwaffe": {
+    "id": "kwakwaffe",
+    "nom": "Kwakwaffe",
+    "slot": "coiffe",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 16
+        },
+        "adaptatif": 14
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 26
+        },
+        "adaptatif": 20
+      }
+    },
+    "source": "boss",
+    "elementLibre": true
+  },
+  "kwakwanneau": {
+    "id": "kwakwanneau",
+    "nom": "Kwakwanneau",
+    "slot": "anneau",
+    "tiers": {
+      "epique": {
+        "stats": {
+          "vitalite": 20
+        },
+        "resistances": {
+          "terre": 0.02,
+          "feu": 0.02,
+          "eau": 0.02,
+          "air": 0.02
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 30
+        },
+        "resistances": {
+          "terre": 0.03,
+          "feu": 0.03,
+          "eau": 0.03,
+          "air": 0.03
+        }
+      }
+    },
+    "source": "boss",
+    "renaissance": 0.3
+  },
+  "kwakwalame": {
+    "id": "kwakwalame",
+    "nom": "Kwakwalame",
+    "slot": "arme",
+    "tiers": {
+      "rare": {
+        "stats": {
+          "crit": 4
+        },
+        "adaptatif": 8,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 19,
+          "baseMax": 24,
+          "scaling": 0.48
+        }
+      },
+      "epique": {
+        "stats": {
+          "crit": 6
+        },
+        "adaptatif": 10,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 20,
+          "baseMax": 25,
+          "scaling": 0.48
+        }
+      },
+      "legendaire": {
+        "stats": {
+          "crit": 8
+        },
+        "adaptatif": 14,
+        "attaque": {
+          "coutPA": 4,
+          "baseMin": 21,
+          "baseMax": 27,
+          "scaling": 0.5
+        }
+      }
+    },
+    "source": "elite"
+  },
+  "bandeau_rokwa": {
+    "id": "bandeau_rokwa",
+    "nom": "Bandeau Rokwa",
+    "slot": "coiffe",
+    "tiers": {
+      "commun": {
+        "stats": {
+          "vitalite": 10,
+          "prospection": 4
+        },
+        "adaptatif": 6
+      },
+      "rare": {
+        "stats": {
+          "vitalite": 14,
+          "prospection": 6
+        },
+        "adaptatif": 8
+      },
+      "epique": {
+        "stats": {
+          "vitalite": 18,
+          "prospection": 8
+        },
+        "adaptatif": 10
+      },
+      "legendaire": {
+        "stats": {
+          "vitalite": 24,
+          "prospection": 10
+        },
+        "adaptatif": 13
+      }
+    },
+    "source": "elite"
   }
 };
 
@@ -3199,6 +4220,54 @@ export const BUTIN_TOILES: Record<number, PoolsToile> = {
     "boss": [
       "caskoffre",
       "ann_or"
+    ]
+  },
+  "10": {
+    "normales": [
+      "chapeau_lithique",
+      "la_mokette",
+      "bague_cristalline",
+      "baguette_larvesque"
+    ],
+    "elites": [
+      "cape_sanguine",
+      "anneau_de_grouillot"
+    ],
+    "boss": [
+      "bonnet_spairance",
+      "scalpel_de_bworknroll"
+    ]
+  },
+  "11": {
+    "normales": [
+      "chapeau_akwadala",
+      "cape_akwadala",
+      "alliance_akwadala",
+      "baton_akwadala"
+    ],
+    "elites": [
+      "arc_des_rivages",
+      "scaphandre_ojine"
+    ],
+    "boss": [
+      "masse_du_corailleur",
+      "alliance_de_corail"
+    ]
+  },
+  "12": {
+    "normales": [
+      "kwakoiffe_de_flammes",
+      "kwape_de_glace",
+      "kwakanneau_de_terre",
+      "kwaklame_de_vent"
+    ],
+    "elites": [
+      "kwakwalame",
+      "bandeau_rokwa"
+    ],
+    "boss": [
+      "kwakwaffe",
+      "kwakwanneau"
     ]
   }
 };

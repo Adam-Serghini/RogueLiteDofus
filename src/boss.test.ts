@@ -29,7 +29,7 @@ describe("signatures des boss", () => {
         expect(premier.desc, `${m.nom} : signature en tête de kit`).toContain(m.nom.split(" ")[0]);
         expect(premier.cooldownTours, `${m.nom} : signature sous cooldown`).toBeGreaterThan(0);
       }
-      if (m.id === "kwakwa") expect(m.mueElementaire).toBe(0.55);
+      if (m.id === "kwakwa") expect(m.mueElementaire).toBe(0.5);
     }
   });
 
@@ -77,13 +77,13 @@ describe("signatures des boss", () => {
     expect(iop.effets.some((e) => e.stat === "degatsInfliges" && e.valeur === -0.15 && e.toursRestants === 1)).toBe(true);
   });
 
-  it("mue élémentaire : 55 % partout sauf UN élément à 0, retiré via le rng", () => {
+  it("mue élémentaire : 50 % partout sauf UN élément à 0, retiré via le rng", () => {
     const kwakwa = bossDe("kwa_boss");
-    expect(kwakwa.mueElementaire).toBe(0.55);
+    expect(kwakwa.mueElementaire).toBe(0.5);
     appliquerMueElementaire(kwakwa, ctx({ rng: () => 0 })); // index 0 → terre
-    expect(kwakwa.resistances).toEqual({ terre: 0, feu: 0.55, eau: 0.55, air: 0.55 });
+    expect(kwakwa.resistances).toEqual({ terre: 0, feu: 0.5, eau: 0.5, air: 0.5 });
     appliquerMueElementaire(kwakwa, ctx({ rng: () => 0.6 })); // index 2 → eau
-    expect(kwakwa.resistances).toEqual({ terre: 0.55, feu: 0.55, eau: 0, air: 0.55 });
+    expect(kwakwa.resistances).toEqual({ terre: 0.5, feu: 0.5, eau: 0, air: 0.5 });
   });
 
   it("Sfvc%$*R ?! : Kankreblath invoque un monstre de la zone (2 max en vie)", () => {

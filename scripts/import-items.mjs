@@ -70,6 +70,12 @@ for (const ligne of lignes.slice(1)) {
   if (special === "frappe_derriere") it.frappeDerriere = true; // l'attaque touche aussi l'ennemi derrière la cible
   if (special === "prosp_pv_manquant") it.prospParPvManquant = 0.2; // +prospection par PV manquant au moment du butin
   if (special === "mult_kamas") it.multKamas = 1.2; // multiplie les kamas gagnés en combat
+  if (special === "bouclier_debut") it.bouclierDebut = 0.15; // commence chaque combat avec un bouclier = X % PV max
+  if (special === "poison_arme") it.poisonArme = { degats: 5, duree: 2 }; // l'attaque d'arme empoisonne
+  if (special === "soin_allie") it.soinAllieBlesse = 0.2; // l'attaque soigne l'allié le plus blessé de X % des dégâts
+  if (special === "retrait_pa") it.retraitPA = 1; // 30 % de chance de retirer N PA (champ Fracas)
+  if (special === "element_libre") it.elementLibre = true; // frappe dans n'importe quel élément
+  if (special === "renaissance") it.renaissance = 0.3; // renaît une fois par combat à X % PV
 
   // attaque d'arme : lue sur la ligne (identique ou progressive par palier)
   const attPA = num(row, "att_pa");
@@ -116,6 +122,12 @@ export const ITEMS_TOILES: Record<string, Item> = ${JSON.stringify(
     ...(it.frappeDerriere ? { frappeDerriere: true } : {}),
     ...(it.prospParPvManquant ? { prospParPvManquant: it.prospParPvManquant } : {}),
     ...(it.multKamas ? { multKamas: it.multKamas } : {}),
+    ...(it.bouclierDebut ? { bouclierDebut: it.bouclierDebut } : {}),
+    ...(it.poisonArme ? { poisonArme: it.poisonArme } : {}),
+    ...(it.soinAllieBlesse ? { soinAllieBlesse: it.soinAllieBlesse } : {}),
+    ...(it.retraitPA ? { retraitPA: it.retraitPA } : {}),
+    ...(it.elementLibre ? { elementLibre: true } : {}),
+    ...(it.renaissance ? { renaissance: it.renaissance } : {}),
   }])), null, 2)};
 
 /** Pools par toile et par source de drop (normales / élites / boss). */

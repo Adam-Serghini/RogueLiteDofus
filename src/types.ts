@@ -61,6 +61,12 @@ export interface Item {
   frappeDerriere?: boolean; // Masse Aj Taye : l'attaque touche aussi l'ennemi derrière la cible
   prospParPvManquant?: number; // Caskoffre : +prospection par PV manquant du porteur au moment du butin
   multKamas?: number; // Ann'or : multiplie les kamas gagnés en combat
+  bouclierDebut?: number; // Bonnet Spairance : bouclier de départ = fraction des PV max
+  poisonArme?: { degats: number; duree: number }; // Scalpel de Bworknroll : l'attaque empoisonne
+  soinAllieBlesse?: number; // Masse du Corailleur : l'attaque soigne l'allié le plus blessé (fraction des dégâts)
+  retraitPA?: number; // Arc des Rivages : 30 % de chance de retirer N PA (mécanique Fracas)
+  elementLibre?: boolean; // Kwakwaffe : frappe dans N'IMPORTE quel élément (plus limité au top 2)
+  renaissance?: number; // Kwakwanneau : renaît une fois par combat à cette fraction des PV max
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
@@ -197,6 +203,7 @@ export interface Spell {
   changeLigne?: boolean; // « Changer de ligne » (Dagues Eurfolles) : déplace le lanceur dans la rangée opposée
   perceResistances?: number; // fraction des résistances ignorée par ce sort (attaque d'arme)
   toucheDerriere?: boolean; // l'attaque touche aussi l'ennemi juste derrière la cible (Masse Aj Taye)
+  soinAllieBlesseRatio?: number; // soigne l'allié le plus blessé d'une fraction des dégâts infligés (Masse du Corailleur)
   // --- mécaniques de l'Ouginak ---
   marqueProie?: number; // Proie : marque UNIQUE sur un ennemi — l'équipe vole cette fraction des dégâts qu'elle lui inflige
   rage?: boolean; // le sort confère 1 état de Rage au lanceur (cap RAGE_MAX)
@@ -304,6 +311,9 @@ export interface Combatant {
   mueElementaire?: number; // signature du Kwakwa (cf. Monstre.mueElementaire)
   paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip portée
   rage?: number; // états de Rage (Ouginak) : +RAGE_BONUS de dégâts par charge, consommés par Apaisement
+  elementLibre?: boolean; // Kwakwaffe portée : l'élément choisi n'est plus limité au top 2
+  renaissance?: number; // Kwakwanneau : fraction de PV de la renaissance (une par combat)
+  renaissancesRestantes?: number; // compteur de renaissances disponibles ce combat
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant
   esquiveArriere?: number; // esquive d'équipement (Baguette Rikiki), active si ligne arrière
   soinDegatsRecus?: number; // récupération d'équipement (Goyave) : % des dégâts subis rendus en PV

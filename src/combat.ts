@@ -384,6 +384,7 @@ function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ct
     reste -= absorbe;
   }
   cible.pvActuels = Math.max(0, cible.pvActuels - reste);
+  verifierRenaissance(cible, ctx); // Kwakwanneau : renaît une fois par combat
   // récupération (Goyave) : le porteur survivant régénère une fraction des dégâts subis
   if (cible.soinDegatsRecus && dmg > 0 && cible.pvActuels > 0) {
     const soin = Math.round(dmg * cible.soinDegatsRecus);
@@ -441,6 +442,15 @@ function derriereEnLigne(cible: Combatant, cs: Combatant[]): Combatant | null {
     Math.abs(a.position - 4 - cible.position) - Math.abs(b.position - 4 - cible.position))[0];
 }
 
+/** Renaissance (Kwakwanneau) : si le porteur vient de tomber et qu'il lui reste
+ *  une renaissance, il se relève aussitôt à la fraction de PV de l'anneau. */
+function verifierRenaissance(c: Combatant, ctx?: CombatCtx): void {
+  if (c.pvActuels > 0 || !c.renaissance || !(c.renaissancesRestantes ?? 0)) return;
+  c.renaissancesRestantes = (c.renaissancesRestantes ?? 1) - 1;
+  c.pvActuels = Math.max(1, Math.round(c.pvMax * c.renaissance));
+  ctx?.log(`🥚 ${c.nom} renaît de son Kwakwanneau à ${c.pvActuels} PV !`);
+}
+
 /** Combattant vivant juste derrière `c` dans sa ligne (position supérieure). */
 function derriere(c: Combatant, cs: Combatant[]): Combatant | undefined {
   return vivants(cs)
@@ -471,6 +481,7 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
     acteur.pvActuels = Math.max(0, acteur.pvActuels - e.valeur);
     ctx.log(`${acteur.nom} subit ${e.valeur} dégâts de poison.`);
   }
+  verifierRenaissance(acteur, ctx); // le Kwakwanneau sauve aussi d'une mort au poison
   if (acteur.pvActuels <= 0) {
     ctx.log(`${acteur.nom} succombe au poison !`);
     const suivant = derriere(acteur, cs);
@@ -1097,6 +1108,15 @@ export function lancerSort(
             (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
         );
       }
+    }
+  }
+
+  // Masse du Corailleur : soigne l'allié le plus blessé d'une fraction des dégâts
+  if (sort.soinAllieBlesseRatio && totalDmg > 0) {
+    const blesse = allies(lanceur, cs)
+      .sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
+    if (blesse && blesse.pvActuels < blesse.pvMax) {
+      soigner(blesse, Math.round(totalDmg * sort.soinAllieBlesseRatio * multSoin(lanceur.stats)), ctx);
     }
   }
 

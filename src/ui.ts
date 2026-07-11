@@ -965,9 +965,10 @@ function renderBarreSorts(): string {
   const selecteur =
     acteur.camp === "joueur"
       ? `<div class="elem-select">
-         <span class="elem-info" data-tip="${escapeHtml(ELEMENT_AIDE)}">i</span>
-         ${elemRond(principal, 1, principal === actif, true)}
-         ${elemRond(secondaire, 2, secondaire === actif, true)}
+         <span class="elem-info" data-tip="${escapeHtml(acteur.elementLibre ? "Kwakwaffe : frappe dans N'IMPORTE quel élément — clique un rond pour choisir." : ELEMENT_AIDE)}">i</span>
+         ${acteur.elementLibre
+    ? ELEMENTS.map((el, i) => elemRond(el, i + 1, el === actif, true)).join("") // Kwakwaffe : les 4 éléments
+    : elemRond(principal, 1, principal === actif, true) + elemRond(secondaire, 2, secondaire === actif, true)}
        </div>`
       : "";
 
@@ -1468,6 +1469,12 @@ function itemStatsHtml(inst: ItemInstance): string {
   if (it?.frappeDerriere) chips.push(`<span class="ichip ichip-force" title="L'attaque touche aussi l'ennemi juste derrière la cible">⤈ frappe aussi derrière</span>`);
   if (it?.prospParPvManquant) chips.push(`<span class="ichip ichip-prospection" title="Au moment du butin : +${it.prospParPvManquant} prospection par PV manquant du porteur">📦 +${it.prospParPvManquant} PP / PV manquant</span>`);
   if (it?.multKamas) chips.push(`<span class="ichip ichip-adapt" title="Les kamas gagnés en combat sont multipliés par ${it.multKamas}">🪙 kamas ×${it.multKamas}</span>`);
+  if (it?.bouclierDebut) chips.push(`<span class="ichip ichip-vitalite" title="Commence chaque combat avec un bouclier de ${Math.round(it.bouclierDebut * 100)} % des PV max">🛡 bouclier de départ ${Math.round(it.bouclierDebut * 100)} %</span>`);
+  if (it?.poisonArme) chips.push(`<span class="ichip malus" title="L'attaque de cette arme empoisonne la cible (${it.poisonArme.degats} dégâts pendant ${it.poisonArme.duree} tours)">☠ empoisonne (${it.poisonArme.degats}/t · ${it.poisonArme.duree} t)</span>`);
+  if (it?.soinAllieBlesse) chips.push(`<span class="ichip ichip-soin" title="L'attaque soigne l'allié le plus blessé de ${Math.round(it.soinAllieBlesse * 100)} % des dégâts infligés">♥ soigne l'allié blessé (${Math.round(it.soinAllieBlesse * 100)} %)</span>`);
+  if (it?.retraitPA) chips.push(`<span class="ichip ichip-pa" title="L'attaque a 30 % de chance de retirer ${it.retraitPA} PA à la cible">⛓ retrait ${it.retraitPA} PA (30 %)</span>`);
+  if (it?.elementLibre) chips.push(`<span class="ichip ichip-adapt" title="Le porteur peut frapper dans N'IMPORTE quel élément (plus limité à ses 2 plus forts)">🌈 élément libre</span>`);
+  if (it?.renaissance) chips.push(`<span class="ichip ichip-adapt" title="À la mort du porteur : renaît UNE fois par combat à ${Math.round(it.renaissance * 100)} % de ses PV">🥚 renaissance (${Math.round(it.renaissance * 100)} % PV)</span>`);
   return `<span class="ichips">${chips.join("")}</span>`;
 }
 

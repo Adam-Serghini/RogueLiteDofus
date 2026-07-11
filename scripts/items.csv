@@ -237,3 +237,85 @@ id;objet;slot;toile;rarete;for;int;cha;agi;vita;crit;res_terre;res_feu;res_eau;r
 81;Caskoffre;coiffe;9;legendaire;;;;;20;;-4;-4;-4;-4;;;;;;;10;;boss;;;prosp_pv_manquant
 82;Ann'or;anneau;9;epique;;;;;10;1;-4;-4;-4;-4;;;;;;;6;;boss;;;mult_kamas
 82;Ann'or;anneau;9;legendaire;;;;;18;2;-2;-2;-2;-2;;;;;;;8;;boss;;;mult_kamas
+83;Chapeau Lithique;coiffe;10;commun;;;;;16;;1;1;1;1;;;;;;;4;;;;;
+83;Chapeau Lithique;coiffe;10;rare;;;;;20;;1;1;1;1;;;;;;;6;;;;;
+83;Chapeau Lithique;coiffe;10;epique;;;;;26;;2;2;2;2;;;;;;;8;;;;;
+83;Chapeau Lithique;coiffe;10;legendaire;;;;;36;;3;3;3;3;;;;;;;10;;;;;
+84;La Mokette;cape;10;commun;;;;;12;;1;1;1;1;;;;;;;4;;;;;
+84;La Mokette;cape;10;rare;;;;;16;;1;1;1;1;;;;;;;5;;;;;
+84;La Mokette;cape;10;epique;;;;;22;;2;2;2;2;;;;;;;6;;;;;
+84;La Mokette;cape;10;legendaire;;;;;30;;3;3;3;3;;;;;;;8;;;;;
+85;Bague Cristalline;anneau;10;commun;;;;;8;;1;1;1;1;;;;;;;;;;;;
+85;Bague Cristalline;anneau;10;rare;;;;;12;1;1;1;1;1;;;;;;;;;;;;
+85;Bague Cristalline;anneau;10;epique;;;;;16;1;1;1;1;1;;;;;;;;;;;;
+85;Bague Cristalline;anneau;10;legendaire;;;;;22;2;2;2;2;2;;;;;;;;;;;;
+86;Baguette Larvesque;arme;10;commun;;;;;8;;;;;;;;4;19;24;0.46;5;;;;;
+86;Baguette Larvesque;arme;10;rare;;;;;10;;;;;;;;4;19;24;0.46;6;;;;;
+86;Baguette Larvesque;arme;10;epique;;;;;14;;;;;;;;4;20;25;0.46;8;;;;;
+86;Baguette Larvesque;arme;10;legendaire;;;;;20;;;;;;;;4;21;27;0.48;10;;;;;
+87;Bonnet Spairance;coiffe;10;epique;;;;;25;;;;;;;;;;;;8;;boss;;;bouclier_debut
+87;Bonnet Spairance;coiffe;10;legendaire;;;;;40;;;;;;;;;;;;12;;boss;;;bouclier_debut
+88;Scalpel de Bworknroll;arme;10;epique;;;;;;3;;;;;;;4;18;23;0.46;10;;boss;;;poison_arme
+88;Scalpel de Bworknroll;arme;10;legendaire;;;;;;4;;;;;;;4;20;26;0.48;14;;boss;;;poison_arme
+89;Cape Sanguine;cape;10;commun;;;;;;1;;2;;;2;;;;;;3;;elite;;;
+89;Cape Sanguine;cape;10;rare;;;;;;2;;2;;;4;;;;;;4;;elite;;;
+89;Cape Sanguine;cape;10;epique;;;;;;2;;3;;;6;;;;;;6;;elite;;;
+89;Cape Sanguine;cape;10;legendaire;;;;;;3;;4;;;8;;;;;;8;;elite;;;
+90;Anneau de Grouillot;anneau;10;commun;;;;;10;;2;;;;;;;;;;3;;elite;;;
+90;Anneau de Grouillot;anneau;10;rare;;;;;14;;2;;;;;;;;;;4;;elite;;;
+90;Anneau de Grouillot;anneau;10;epique;;;;;18;;3;;;;;;;;;;6;;elite;;;
+90;Anneau de Grouillot;anneau;10;legendaire;;;;;26;;4;;;;;;;;;;8;;elite;;;
+91;Chapeau Akwadala;coiffe;11;commun;;;;;10;;;-2;3;;;;;;;;6;;;;;
+91;Chapeau Akwadala;coiffe;11;rare;;;;;14;;;-2;3;;;;;;;;8;;;;;
+91;Chapeau Akwadala;coiffe;11;epique;;;;;18;;;-1;4;;;;;;;;10;;;;;
+91;Chapeau Akwadala;coiffe;11;legendaire;;;;;26;;;;6;;;;;;;;14;;;;;
+92;Cape Akwadala;cape;11;commun;;;;;8;;;;;;;;;;;;4;4;;;;
+92;Cape Akwadala;cape;11;rare;;;;;12;;;;;;;;;;;;6;6;;;;
+92;Cape Akwadala;cape;11;epique;;;;;16;;;;;;;;;;;;8;8;;;;
+92;Cape Akwadala;cape;11;legendaire;;;;;22;;;;;;;;;;;;10;12;;;;
+93;Alliance Akwadala;anneau;11;commun;;;;;;2;;;;;;;;;;;4;;;;;
+93;Alliance Akwadala;anneau;11;rare;;;;;;2;;;;;;;;;;;5;;;;;
+93;Alliance Akwadala;anneau;11;epique;;;;;;3;;;;;;;;;;;7;;;;;
+93;Alliance Akwadala;anneau;11;legendaire;;;;;;4;;;;;;;;;;;9;;;;;
+94;Bâton Akwadala;arme;11;commun;;;;;6;;;;;;;;4;20;25;0.48;6;;;;;
+94;Bâton Akwadala;arme;11;rare;;;;;8;;;;;;;;4;20;25;0.48;7;;;;;
+94;Bâton Akwadala;arme;11;epique;;;;;12;;;;;;;;4;21;26;0.48;9;;;;;
+94;Bâton Akwadala;arme;11;legendaire;;;;;16;;;;;;;;4;22;28;0.5;11;;;;;
+95;Masse du Corailleur;arme;11;epique;;;;;;3;;;;;;;4;19;24;0.48;12;;boss;;;soin_allie
+95;Masse du Corailleur;arme;11;legendaire;;;;;;5;;;;;;;4;21;27;0.5;16;;boss;;;soin_allie
+96;Alliance de Corail;anneau;11;epique;;;;;15;;-3;-3;-3;-3;;;;;;;;10;boss;;;
+96;Alliance de Corail;anneau;11;legendaire;;;;;25;;-2;-2;-2;-2;;;;;;;;16;boss;;;
+97;Arc des Rivages;arme;11;rare;;;;;8;;;;;;;;4;17;22;0.44;6;;elite;;;retrait_pa
+97;Arc des Rivages;arme;11;epique;;;;;12;;;;;;;;4;18;23;0.44;8;;elite;;;retrait_pa
+97;Arc des Rivages;arme;11;legendaire;;;;;16;;;;;;;;4;19;25;0.46;12;;elite;;;retrait_pa
+98;Scaphandre Ojine;coiffe;11;commun;;;;;12;;;;3;2;;;;;;;3;;elite;;;
+98;Scaphandre Ojine;coiffe;11;rare;;;;;16;;;;3;2;;;;;;;4;;elite;;;
+98;Scaphandre Ojine;coiffe;11;epique;;;;;20;;;;4;3;;;;;;;6;;elite;;;
+98;Scaphandre Ojine;coiffe;11;legendaire;;;;;28;;;;5;4;;;;;;;8;;elite;;;
+99;Kwakoiffe de Flammes;coiffe;12;commun;;;;;12;;1;1;1;1;;;;;;;8;;;;;
+99;Kwakoiffe de Flammes;coiffe;12;rare;;;;;16;;2;2;2;2;;;;;;;10;;;;;
+99;Kwakoiffe de Flammes;coiffe;12;epique;;;;;22;;2;2;2;2;;;;;;;14;;;;;
+99;Kwakoiffe de Flammes;coiffe;12;legendaire;;;;;30;;3;3;3;3;;;;;;;18;;;;;
+100;Kwape de Glace;cape;12;commun;;;;;10;;1;1;1;1;;;;;;;7;;;;;
+100;Kwape de Glace;cape;12;rare;;;;;14;;2;2;2;2;;;;;;;9;;;;;
+100;Kwape de Glace;cape;12;epique;;;;;20;;2;2;2;2;;;;;;;12;;;;;
+100;Kwape de Glace;cape;12;legendaire;;;;;28;;3;3;3;3;;;;;;;16;;;;;
+101;Kwakanneau de Terre;anneau;12;commun;;;;;;1;;;;;;;;;;;6;;;;;
+101;Kwakanneau de Terre;anneau;12;rare;;;;;;2;;;;;;;;;;;8;;;;;
+101;Kwakanneau de Terre;anneau;12;epique;;;;;;3;;;;;;;;;;;10;;;;;
+101;Kwakanneau de Terre;anneau;12;legendaire;;;;;;4;;;;;;;;;;;13;;;;;
+102;Kwaklame de Vent;arme;12;commun;;;;;;2;;;;;;;4;21;26;0.5;8;;;;;
+102;Kwaklame de Vent;arme;12;rare;;;;;;2;;;;;;;4;21;26;0.5;10;;;;;
+102;Kwaklame de Vent;arme;12;epique;;;;;;3;;;;;;;4;22;27;0.5;12;;;;;
+102;Kwaklame de Vent;arme;12;legendaire;;;;;;4;;;;;;;4;24;30;0.52;15;;;;;
+103;Kwakwaffe;coiffe;12;epique;;;;;16;;;;;;;;;;;;14;;boss;;;element_libre
+103;Kwakwaffe;coiffe;12;legendaire;;;;;26;;;;;;;;;;;;20;;boss;;;element_libre
+104;Kwakwanneau;anneau;12;epique;;;;;20;;2;2;2;2;;;;;;;;;boss;;;renaissance
+104;Kwakwanneau;anneau;12;legendaire;;;;;30;;3;3;3;3;;;;;;;;;boss;;;renaissance
+105;Kwakwalame;arme;12;rare;;;;;;4;;;;;;;4;19;24;0.48;8;;elite;;;
+105;Kwakwalame;arme;12;epique;;;;;;6;;;;;;;4;20;25;0.48;10;;elite;;;
+105;Kwakwalame;arme;12;legendaire;;;;;;8;;;;;;;4;21;27;0.5;14;;elite;;;
+106;Bandeau Rokwa;coiffe;12;commun;;;;;10;;;;;;4;;;;;;6;;elite;;;
+106;Bandeau Rokwa;coiffe;12;rare;;;;;14;;;;;;6;;;;;;8;;elite;;;
+106;Bandeau Rokwa;coiffe;12;epique;;;;;18;;;;;;8;;;;;;10;;elite;;;
+106;Bandeau Rokwa;coiffe;12;legendaire;;;;;24;;;;;;10;;;;;;13;;elite;;;
