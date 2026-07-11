@@ -1634,7 +1634,7 @@ export interface ZoneDef {
 export const ZONES: ZoneDef[] = [
   { id: "incarnam", nom: "Incarnam",
     pools: { normales: ["inc_1", "inc_2", "inc_3"], elite: ["inc_elite"], boss: "inc_boss" },
-    sansNoeuds: ["otomai"] }, // pas de restat en zone de départ (l'HDV, lui, sert à revendre)
+    sansNoeuds: ["otomai", "forgemagie"] }, // pas de restat ni de forge en zone de départ (l'HDV, lui, sert à revendre)
   { id: "astrub", nom: "Champs d'Astrub",
     pools: { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: "boss" } },
   { id: "tainela", nom: "Tainéla",
@@ -1701,7 +1701,7 @@ export const GEN_CARTE = {
   lignesMin: 10,
   lignesMax: 12,
   // poids des types pour les rangées intermédiaires
-  poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8, hdv: 8 } as Record<string, number>,
+  poids: { combat: 60, combat_dur: 12, taverne: 12, otomai: 8, zaap: 8, hdv: 8, forgemagie: 6 } as Record<string, number>,
 };
 
 // --- Rareté d'équipement --------------------------------------------------------
@@ -1932,6 +1932,10 @@ export const KAMAS = {
   prixParToile: 0.3,
   tauxRevente: 0.5, // revente = 50 % du prix d'achat
   tailleStock: 5, // objets proposés par visite d'HDV
+  // Forgemagie : monter un objet au palier de rareté suivant.
+  // coût = prix HDV du palier CIBLE × coef (on possède déjà la base)
+  forgeCoef: 0.6,
+  forgeTemeraire: { coef: 0.3, pEchec: 0.3 }, // le Forgemage téméraire : moitié prix, 30 % d'échec (kamas perdus, objet intact)
 };
 
 /** Taux de drop par victoire et par pièce éligible (tunable). */

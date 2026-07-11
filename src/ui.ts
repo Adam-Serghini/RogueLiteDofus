@@ -14,6 +14,7 @@ import {
   ZONES,
   TRANCHES,
   RARETE_INFO,
+  KAMAS,
   BUTIN_ZONE,
   butinToile,
   zonesDeTranche,
@@ -74,6 +75,10 @@ import {
   acheterArticle,
   enregistrerCollection,
   toileDeItem,
+  rareteSuivante,
+  coutForge,
+  forgerInstance,
+  instanceDuTier,
   type ArticleHDV,
   type RunState as RunStateT,
 } from "./run";
@@ -2332,6 +2337,71 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
   });
 }
 
+/** Forgemagie : monter un objet (inventaire OU équipé) au palier de rareté
+ *  suivant, contre des kamas. Le Forgemage téméraire : moins cher, 30 % d'échec. */
+export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
+  return new Promise((res) => {
+    let message = ""; // résultat de la dernière forge (réussite / échec)
+    const draw = () => {
+      // tous les exemplaires forgeables : inventaire + équipement de chaque héros
+      const entrees: { inst: ItemInstance; ou: string }[] = [
+        ...run.inventaire.map((inst) => ({ inst, ou: "Inventaire" })),
+        ...run.persos.flatMap((p) =>
+          Object.values(p.equipement)
+            .filter((i): i is ItemInstance => !!i)
+            .map((inst) => ({ inst, ou: `Équipé — ${CLASSES[p.classeId].nom}` }))),
+      ];
+      const forgeables = entrees.filter((e) => rareteSuivante(e.inst));
+      const cartes = forgeables.length
+        ? forgeables
+          .map(({ inst, ou }, i) => {
+            const cible = rareteSuivante(inst)!;
+            const apercu = instanceDuTier(inst.id, cible)!;
+            const cout = coutForge(inst)!;
+            const coutTem = coutForge(inst, true)!;
+            return `<div class="item-carte forge-carte${rareteCls(inst)}">
+              <img src="${itemImg(inst.id)}" alt="" loading="lazy" onerror="this.remove()" />
+              <span class="item-nom">${itemNomHtml(inst)}<small>${ou} ${itemStatsHtml(inst)}</small>
+                <small class="forge-apercu">→ <span class="inom-${cible}">${RARETE_INFO[cible].nom}</span> ${itemStatsHtml(apercu)}</small>
+              </span>
+              <span class="forge-boutons">
+                <button class="secondaire" data-forge="${i}" ${run.kamas < cout ? "disabled" : ""} title="Forge garantie">${kamasHtml(cout)}</button>
+                <button class="secondaire forge-temeraire" data-temeraire="${i}" ${run.kamas < coutTem ? "disabled" : ""} title="Forgemage téméraire : ${Math.round(KAMAS.forgeTemeraire.pEchec * 100)} % d'échec (kamas perdus, objet intact)">🎲 ${kamasHtml(coutTem)}</button>
+              </span>
+            </div>`;
+          })
+          .join("")
+        : `<p class="muet">Rien à forger — tout ton équipement à rareté est déjà au maximum.</p>`;
+      ecran(`
+        <h1>🔨 Forgemagie</h1>
+        <p class="sous-titre">Le Forgemage monte un objet au palier de rareté supérieur — même équipé. Son apprenti téméraire fait moitié prix… mais rate ${Math.round(KAMAS.forgeTemeraire.pEchec * 100)} % de ses forges.</p>
+        <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
+        ${message ? `<p class="forge-message">${message}</p>` : ""}
+        <div class="equip-inv forge-liste">${cartes}</div>
+        <div class="boutons-ecran"><button id="forge-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      `);
+      const forger = (i: number, temeraire: boolean) => {
+        const inst = forgeables[i]?.inst;
+        if (!inst) return;
+        const resultat = forgerInstance(run, inst, temeraire, Math.random);
+        if (resultat === "forge") {
+          message = `✨ ${escapeHtml(ITEMS[inst.id]?.nom ?? inst.id)} forgé en <span class="inom-${inst.rarete}">${RARETE_INFO[inst.rarete!].nom}</span> !`;
+          if (meta) enregistrerCollection(meta, [inst]); // l'Armurerie enregistre le palier forgé
+        } else if (resultat === "echec") {
+          message = `💥 La forge téméraire échoue… l'objet est intact, les kamas sont perdus.`;
+        }
+        draw();
+      };
+      root.querySelectorAll<HTMLButtonElement>("[data-forge]").forEach((btn) =>
+        btn.addEventListener("click", () => forger(Number(btn.dataset.forge), false)));
+      root.querySelectorAll<HTMLButtonElement>("[data-temeraire]").forEach((btn) =>
+        btn.addEventListener("click", () => forger(Number(btn.dataset.temeraire), true)));
+      document.getElementById("forge-retour")?.addEventListener("click", () => res());
+    };
+    draw();
+  });
+}
+
 export function showZaap(typeRevele: string): Promise<void> {
   return showTransition("🌀 Zaap", `La rencontre se révèle : ${typeRevele}.`);
 }
@@ -2345,6 +2415,7 @@ const NODE_ICON: Record<NodeType, string> = {
   zaap: "🌀",
   donjon: "🐉",
   hdv: "🪙",
+  forgemagie: "🔨",
 };
 const NODE_LABEL: Record<NodeType, string> = {
   combat: "Combat",
@@ -2354,6 +2425,7 @@ const NODE_LABEL: Record<NodeType, string> = {
   zaap: "Zaap",
   donjon: "Donjon",
   hdv: "Hôtel de vente",
+  forgemagie: "Forgemage",
 };
 // fichier de tuile par type de nœud (le type "combat_dur" utilise l'asset "combat_elite")
 const CASE_FILE: Record<NodeType, string> = {
@@ -2364,6 +2436,7 @@ const CASE_FILE: Record<NodeType, string> = {
   zaap: "zaap",
   donjon: "donjon",
   hdv: "hdv",
+  forgemagie: "forgemagie",
 };
 /** Sprite du boss d'un nœud donjon (résolu depuis son combat → 1er ennemi « boss »). */
 function bossImg(n: MapNode): string | null {

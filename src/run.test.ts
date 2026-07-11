@@ -333,3 +333,49 @@ describe("recrutement — équipement du partant", () => {
     expect(run.inventaire[0].id).toBe("bouftou_coiffe");
   });
 });
+
+describe("forgemagie", () => {
+  it("coutForge = prix HDV du palier CIBLE × coef ; téméraire = moitié", async () => {
+    const { rollItemRarete, coutForge, prixAchat, rareteSuivante } = await import("./run");
+    const commun = rollItemRarete("chapeau_de_l_aventurier", () => 0)!; // toile 1, commun
+    expect(rareteSuivante(commun)).toBe("rare");
+    expect(coutForge(commun)).toBe(Math.round(prixAchat({ ...commun, rarete: "rare" }) * 0.6));
+    expect(coutForge(commun, true)).toBe(Math.round(prixAchat({ ...commun, rarete: "rare" }) * 0.3));
+  });
+
+  it("forge garantie : débite, monte le palier et remplace les stats en place", async () => {
+    const { nouvelleRun, rollItemRarete, forgerInstance, coutForge, equiper } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    run.inventaire.push(rollItemRarete("chapeau_de_l_aventurier", () => 0)!);
+    equiper(run.inventaire, run.persos[0], 0); // forge d'un objet ÉQUIPÉ (référence partagée)
+    const inst = run.persos[0].equipement.coiffe!;
+    const cout = coutForge(inst)!;
+    run.kamas = cout;
+    expect(forgerInstance(run, inst, false, () => 0.99)).toBe("forge");
+    expect(run.kamas).toBe(0);
+    expect(inst.rarete).toBe("rare");
+    expect(inst.stats).toEqual({ vitalite: 6 }); // stats du palier rare (fixes)
+    // kamas insuffisants → refus sans débit
+    expect(forgerInstance(run, inst, false, () => 0.99)).toBeNull();
+    expect(run.kamas).toBe(0);
+  });
+
+  it("téméraire : l'échec brûle les kamas mais laisse l'objet intact ; le légendaire est infogeable", async () => {
+    const { nouvelleRun, rollItemRarete, forgerInstance, coutForge, rareteSuivante } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    const inst = rollItemRarete("chapeau_de_l_aventurier", () => 0)!;
+    run.inventaire.push(inst);
+    const cout = coutForge(inst, true)!;
+    run.kamas = cout * 2;
+    expect(forgerInstance(run, inst, true, () => 0.1)).toBe("echec"); // 0.1 < 30 %
+    expect(run.kamas).toBe(cout); // kamas perdus...
+    expect(inst.rarete).toBe("commun"); // ...objet intact
+    expect(forgerInstance(run, inst, true, () => 0.9)).toBe("forge"); // 0.9 > 30 %
+    expect(inst.rarete).toBe("rare");
+    // un légendaire n'a plus de palier suivant
+    const leg = rollItemRarete("chapeau_de_l_aventurier", () => 0.99)!;
+    expect(rareteSuivante(leg)).toBeNull();
+    run.kamas = 99999;
+    expect(forgerInstance(run, leg, false, () => 0.5)).toBeNull();
+  });
+});

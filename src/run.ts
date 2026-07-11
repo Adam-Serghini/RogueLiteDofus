@@ -754,6 +754,44 @@ export function acheterArticle(run: RunState, stock: ArticleHDV[], index: number
   return true;
 }
 
+// --- Forgemagie ------------------------------------------------------------------
+/** Palier de rareté SUIVANT réellement défini sur l'objet (null si au max / non forgeable). */
+export function rareteSuivante(inst: ItemInstance): Rarete | null {
+  const tiers = ITEMS[inst.id]?.tiers;
+  if (!tiers || !inst.rarete) return null; // objets legacy (rolls) : non forgeables
+  for (let i = RARETES.indexOf(inst.rarete) + 1; i < RARETES.length; i++) {
+    if (tiers[RARETES[i]]) return RARETES[i];
+  }
+  return null;
+}
+
+/** Coût de la forge vers le palier suivant (prix HDV du palier CIBLE × coef). */
+export function coutForge(inst: ItemInstance, temeraire = false): number | null {
+  const cible = rareteSuivante(inst);
+  if (!cible) return null;
+  const coef = temeraire ? KAMAS.forgeTemeraire.coef : KAMAS.forgeCoef;
+  return Math.round(prixAchat({ ...inst, rarete: cible }) * coef);
+}
+
+/** Forge un exemplaire vers son palier suivant. Mutation EN PLACE : l'exemplaire
+ *  peut être dans l'inventaire OU équipé, la référence reste valide.
+ *  Renvoie "forge" (réussi), "echec" (téméraire raté : kamas perdus, objet intact)
+ *  ou null (non forgeable / kamas insuffisants — rien n'est débité). */
+export function forgerInstance(run: RunState, inst: ItemInstance, temeraire: boolean, rng: () => number): "forge" | "echec" | null {
+  const cible = rareteSuivante(inst);
+  const cout = coutForge(inst, temeraire);
+  if (!cible || cout === null || run.kamas < cout) return null;
+  run.kamas -= cout;
+  if (temeraire && rng() < KAMAS.forgeTemeraire.pEchec) return "echec";
+  const forge = instanceDuTier(inst.id, cible)!;
+  inst.rarete = forge.rarete;
+  inst.stats = forge.stats;
+  inst.adaptatif = forge.adaptatif;
+  inst.resistances = forge.resistances;
+  inst.pa = forge.pa;
+  return "forge";
+}
+
 /** Vend TOUT l'inventaire (au taux de revente). Renvoie le total encaissé. */
 export function vendreTout(run: RunState): number {
   let total = 0;

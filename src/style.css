@@ -1593,6 +1593,35 @@ kbd {
   font-weight: 700;
 }
 
+/* Forgemagie */
+.forge-liste {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.forge-carte {
+  cursor: default;
+}
+.forge-apercu {
+  display: block;
+  margin-top: 2px;
+}
+.forge-boutons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: auto;
+}
+.forge-boutons button {
+  white-space: nowrap;
+}
+.forge-temeraire {
+  border-color: var(--danger);
+}
+.forge-message {
+  font-weight: 800;
+  margin: 6px 0;
+}
+
 /* Blocs « monde » (Bestiaire & Armurerie groupés par tranche, zones dans l'ordre de jeu) */
 .monde-bloc {
   margin-top: 18px;

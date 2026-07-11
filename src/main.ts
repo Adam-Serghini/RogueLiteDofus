@@ -125,6 +125,7 @@ type Issue = "continue" | "wipe" | "victoire";
 const LABEL_FR: Record<NodeType, string> = {
   combat: "un combat", combat_dur: "un combat dur", taverne: "une taverne",
   otomai: "un Otomai", zaap: "un zaap", donjon: "le donjon", hdv: "un Hôtel de vente",
+  forgemagie: "un Forgemage",
 };
 
 async function resoudreType(
@@ -157,6 +158,10 @@ async function resoudreType(
     }
     case "hdv": {
       await ui.showHDV(run, genererStockHDV(zoneId ?? "", Math.random), meta);
+      return "continue";
+    }
+    case "forgemagie": {
+      await ui.showForgemagie(run, meta);
       return "continue";
     }
     case "otomai": {
