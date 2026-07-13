@@ -30,6 +30,12 @@ if (exporte.schemaVersion !== SCHEMA_VERSION) {
   process.exit(1);
 }
 
+// 1.5. Validation structurelle : assets
+if (exporte.assets !== undefined && !Array.isArray(exporte.assets)) {
+  console.error("✗ Le champ « assets » de l'export est invalide (liste attendue).");
+  process.exit(1);
+}
+
 // 2. Fraîcheur : l'export doit être basé sur le contenu ACTUEL du repo
 const base = lireBase();
 const hashActuel = hashContenu(base);
