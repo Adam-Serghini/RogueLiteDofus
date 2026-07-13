@@ -67,5 +67,3 @@ enregistrerCategorie("monstres", "Monstres", {
     ];
   },
 });
-
-E.categorie = "items"; restaurerBrouillon(); rendre();

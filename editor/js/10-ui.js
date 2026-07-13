@@ -50,7 +50,7 @@ function rendre() {
       oninput: (ev) => { E.recherche = ev.target.value; rendre(); } }),
     ...cat.liste());
   // --- fiche ---
-  const fiche = el("div", { id: "fiche" }, ...(E.selection != null ? cat.fiche(E.selection) : [el("p", { class: "note" }, "Sélectionner une entrée à gauche, ou en créer une nouvelle.")]));
+  const fiche = el("div", { id: "fiche" }, ...(E.selection != null || cat.sansSelection ? cat.fiche(E.selection) : [el("p", { class: "note" }, "Sélectionner une entrée à gauche, ou en créer une nouvelle.")]));
   app.append(nav, liste, fiche);
 }
 
