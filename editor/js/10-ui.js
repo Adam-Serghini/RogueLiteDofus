@@ -58,5 +58,3 @@ function ligneListe(id, contenuLigne) {
   return el("button", { class: "ligne" + (E.selection === id ? " actif" : ""), onclick: () => { E.selection = id; rendre(); } }, contenuLigne);
 }
 const filtre = (texte) => texte.toLowerCase().includes(E.recherche.toLowerCase());
-
-enregistrerCategorie("vide", "(chantier)", { liste: () => [], fiche: () => [] }); E.categorie = "vide"; restaurerBrouillon(); rendre();
