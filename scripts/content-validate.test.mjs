@@ -47,7 +47,7 @@ describe("passe 1 — schéma", () => {
   });
   it("refuse un item sans palier « commun »", () => {
     const err = validerContenu(modif((c) => { c.items.anneau_test.tiers = {}; }), base());
-    expect(err.some((e) => e.includes("[items: anneau_test]") && e.includes("commun"))).toBe(true);
+    expect(err.some((e) => e.includes("[items: anneau_test]") && e.includes("rareté"))).toBe(true);
   });
   it("refuse un sort à 0 PA", () => {
     const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = 0; }), base());

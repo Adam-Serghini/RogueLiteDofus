@@ -54,7 +54,7 @@ export function validerContenu(contenu, base) {
       if (!RARETES.includes(r)) E("items", id, `rareté inconnue : ${r}`);
     // rollItemRarete()! plante si tiers={} (aucun palier tiré possible) — au moins
     // un palier de rareté (commun de préférence) doit exister sur l'item.
-    if (Object.keys(tiers).length === 0 && !it.rolls) E("items", id, "le palier « commun » est obligatoire (aucun palier de rareté défini)");
+    if (Object.keys(tiers).length === 0 && !it.rolls) E("items", id, "au moins un palier de rareté est requis");
     // chaque stat présente dans plusieurs tiers doit être croissante avec la rareté
     const presentes = [...new Set(Object.values(tiers).flatMap((t) => Object.keys(t.stats ?? {})))];
     for (const stat of presentes) {
