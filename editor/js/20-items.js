@@ -44,7 +44,9 @@ function grilleRaretes(item) {
       lignes.push(ligne(lib, (t) => t.attaque?.[cle], (t, v) => { t.attaque ??= { coutPA: 3, baseMin: 1, baseMax: 2, scaling: 0.3 }; t.attaque[cle] = v; }));
   return el("table", { class: "raretes" },
     el("tr", {}, el("th", {}, "Stat"), ...RARETES_ED.map((r) =>
-      el("th", { class: `r-${r}` }, r, " ", el("input", { type: "checkbox", checked: !!item.tiers[r], title: "Ce palier existe",
+      el("th", { class: `r-${r}` }, r, " ", el("input", { type: "checkbox", checked: !!item.tiers[r],
+        disabled: r === "commun",
+        title: r === "commun" ? "Le palier « commun » est obligatoire" : "Ce palier existe",
         onchange: (ev) => { if (ev.target.checked) item.tiers[r] = structuredClone(item.tiers.commun ?? { stats: {} }); else delete item.tiers[r]; sauverBrouillon(); rendre(); } })))),
     ...lignes);
 }

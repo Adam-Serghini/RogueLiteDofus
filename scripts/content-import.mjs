@@ -35,6 +35,10 @@ if (exporte.assets !== undefined && !Array.isArray(exporte.assets)) {
   console.error("✗ Le champ « assets » de l'export est invalide (liste attendue).");
   process.exit(1);
 }
+if (!exporte.contenu || typeof exporte.contenu !== "object") {
+  console.error("✗ Le champ « contenu » de l'export est invalide.");
+  process.exit(1);
+}
 
 // 2. Fraîcheur : l'export doit être basé sur le contenu ACTUEL du repo
 const base = lireBase();

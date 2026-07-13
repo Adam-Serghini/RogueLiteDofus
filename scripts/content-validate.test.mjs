@@ -45,6 +45,14 @@ describe("passe 1 — schéma", () => {
     expect(Array.isArray(err)).toBe(true);
     expect(err.some((e) => e.includes("[zones_pools: tainela]") && e.includes("elite"))).toBe(true);
   });
+  it("refuse un item sans palier « commun »", () => {
+    const err = validerContenu(modif((c) => { c.items.anneau_test.tiers = {}; }), base());
+    expect(err.some((e) => e.includes("[items: anneau_test]") && e.includes("commun"))).toBe(true);
+  });
+  it("refuse un sort à 0 PA", () => {
+    const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = 0; }), base());
+    expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("coutPA"))).toBe(true);
+  });
 });
 
 describe("passe 2 — références croisées", () => {
@@ -78,5 +86,13 @@ describe("passe 3 — lecture seule / numérique", () => {
   it("refuse un changement non numérique sur un sort (flag de mécanique)", () => {
     const err = validerContenu(modif((c) => { c.sorts.morsure.ignoreResistances = true; }), base());
     expect(err.some((e) => e.includes("[sorts: morsure]"))).toBe(true);
+  });
+  it("refuse la suppression d'une zone de zones_pools", () => {
+    const err = validerContenu(modif((c) => { delete c.zones_pools.tainela; }), base());
+    expect(err.some((e) => e.includes("[zones_pools: tainela]") && e.includes("supprimée"))).toBe(true);
+  });
+  it("refuse l'ajout d'une zone à zones_pools", () => {
+    const err = validerContenu(modif((c) => { c.zones_pools.nouvelle_zone = { normales: ["c1"], boss: "c1" }; }), base());
+    expect(err.some((e) => e.includes("[zones_pools: nouvelle_zone]") && e.includes("ajoutée"))).toBe(true);
   });
 });

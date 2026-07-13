@@ -15,8 +15,13 @@ function champNombre(obj, cle, libelle, opts = {}) {
     type: "number", step: opts.step ?? "any", value: obj[cle] ?? "",
     oninput: (ev) => {
       const v = ev.target.value;
-      if (v === "" && opts.optionnel) delete obj[cle];
-      else obj[cle] = Number(v);
+      if (v === "") {
+        // champ non optionnel : on garde l'ancienne valeur (pas de 0 silencieux),
+        // l'input reste vide à l'écran jusqu'au prochain rendu.
+        if (opts.optionnel) { delete obj[cle]; sauverBrouillon(); }
+        return;
+      }
+      obj[cle] = Number(v);
       sauverBrouillon();
     },
   });
@@ -38,6 +43,10 @@ function enregistrerCategorie(id, libelle, api) { CATEGORIES.push({ id, libelle,
 
 function rendre() {
   const app = document.getElementById("app");
+  // La recherche perd le focus à chaque frappe car rendre() détruit tout le DOM :
+  // on mémorise le focus/curseur avant, on les restaure sur le nouvel input après.
+  const rechercheActive = document.activeElement?.id === "recherche-input";
+  const curseur = rechercheActive ? document.activeElement.selectionStart : null;
   app.replaceChildren();
   const cat = CATEGORIES.find((c) => c.id === E.categorie);
   // --- nav ---
@@ -46,12 +55,17 @@ function rendre() {
     el("div", { class: "etat" }, E.modifie ? "● Modifications non exportées" : "Aucune modification"));
   // --- liste (recherche + lignes fournies par la catégorie) ---
   const liste = el("div", { id: "liste" },
-    el("input", { type: "search", placeholder: "Filtrer…", value: E.recherche,
+    el("input", { type: "search", id: "recherche-input", placeholder: "Filtrer…", value: E.recherche,
       oninput: (ev) => { E.recherche = ev.target.value; rendre(); } }),
     ...cat.liste());
   // --- fiche ---
   const fiche = el("div", { id: "fiche" }, ...(E.selection != null || cat.sansSelection ? cat.fiche(E.selection) : [el("p", { class: "note" }, "Sélectionner une entrée à gauche, ou en créer une nouvelle.")]));
   app.append(nav, liste, fiche);
+  if (rechercheActive) {
+    const s = document.getElementById("recherche-input");
+    s.focus();
+    s.setSelectionRange(curseur, curseur);
+  }
 }
 
 function ligneListe(id, contenuLigne) {

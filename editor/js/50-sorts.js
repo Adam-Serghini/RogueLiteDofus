@@ -7,7 +7,12 @@ function champsNumeriquesRecursifs(obj, chemin = "") {
     const ch = chemin ? `${chemin}.${k}` : k;
     if (typeof v === "number") {
       noeuds.push(el("div", { class: "champ" }, el("label", {}, ch),
-        el("input", { type: "number", step: "any", value: v, oninput: (ev) => { obj[k] = Number(ev.target.value); sauverBrouillon(); } })));
+        el("input", { type: "number", step: "any", value: v, oninput: (ev) => {
+          const s = ev.target.value;
+          if (s === "") return; // ne jamais écrire 0 par accident (cf. Critical 2 : coutPA ≥ 1)
+          obj[k] = Number(s);
+          sauverBrouillon();
+        } })));
     } else if (v && typeof v === "object" && !Array.isArray(v)) {
       noeuds.push(...champsNumeriquesRecursifs(v, ch));
     } else {
