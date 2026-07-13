@@ -87,6 +87,8 @@ export function validerContenu(contenu, base) {
 
   for (const [id, z] of Object.entries(contenu.zones_pools)) {
     if (!Array.isArray(z.normales) || z.normales.length === 0) E("zones_pools", id, "normales doit être une liste non vide");
+    if (z.elite !== undefined && (!Array.isArray(z.elite) || !z.elite.every((e) => typeof e === "string")))
+      E("zones_pools", id, "elite doit être une liste d'identifiants de combats");
     if (typeof z.boss !== "string" || !z.boss) E("zones_pools", id, "boss manquant");
   }
 
@@ -113,8 +115,10 @@ export function validerContenu(contenu, base) {
 
   // ---- Passe 3 : lecture seule / numérique ---------------------------------
   const memeJson = (a, b) => JSON.stringify(a) === JSON.stringify(b); // ordre de clés identique : même source canonique
-  if (!memeJson(triCles(contenu.classes), triCles(base.classes)))
-    err.push("[classes] les classes sont en lecture seule — modification refusée");
+  for (const id of new Set([...Object.keys(base.classes), ...Object.keys(contenu.classes)])) {
+    if (!memeJson(triCles(base.classes[id]), triCles(contenu.classes[id])))
+      E("classes", id, "les classes sont en lecture seule — modification refusée");
+  }
 
   const anciens = Object.keys(base.sorts), nouveaux = Object.keys(contenu.sorts);
   for (const id of nouveaux) if (!base.sorts[id]) E("sorts", id, "création de sort interdite (nouveau sort détecté)");

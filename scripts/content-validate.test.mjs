@@ -34,6 +34,10 @@ describe("passe 1 — schéma", () => {
     const err = validerContenu(modif((c) => { c.combats.c1.ennemis = [{ monstre: "bouftou", position: 0 }, { monstre: "bouftou", position: 0 }]; }), base());
     expect(err.some((e) => e.includes("position"))).toBe(true);
   });
+  it("refuse elite non-array dans zones_pools", () => {
+    const err = validerContenu(modif((c) => { c.zones_pools.tainela.elite = "c1"; }), base());
+    expect(err.some((e) => e.includes("[zones_pools: tainela]") && e.includes("elite") && e.includes("liste"))).toBe(true);
+  });
 });
 
 describe("passe 2 — références croisées", () => {
@@ -55,7 +59,7 @@ describe("passe 2 — références croisées", () => {
 describe("passe 3 — lecture seule / numérique", () => {
   it("refuse toute modification des classes", () => {
     const err = validerContenu(modif((c) => { c.classes.iop.pvBase = 99; }), base());
-    expect(err.some((e) => e.includes("classes") && e.includes("lecture seule"))).toBe(true);
+    expect(err.some((e) => e.includes("[classes: iop]") && e.includes("lecture seule"))).toBe(true);
   });
   it("accepte un changement NUMÉRIQUE sur un sort", () => {
     expect(validerContenu(modif((c) => { c.sorts.morsure.baseMax = 9; }), base())).toEqual([]);
