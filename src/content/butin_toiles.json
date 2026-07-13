@@ -1,0 +1,187 @@
+{
+  "1": {
+    "boss": [],
+    "elites": [],
+    "normales": [
+      "chapeau_de_l_aventurier",
+      "cape_de_l_aventurier",
+      "anneau_de_l_aventurier",
+      "epee_de_l_aventurier"
+    ]
+  },
+  "2": {
+    "boss": [],
+    "elites": [
+      "anneau_du_bandit",
+      "arc_en_racine_d_abraknyde"
+    ],
+    "normales": [
+      "coiffe_champ_champ",
+      "cape_champ_champ",
+      "anneau_champ_champ",
+      "baton_carnivore"
+    ]
+  },
+  "3": {
+    "boss": [
+      "boufcoiffe_royale",
+      "boufcape_royale"
+    ],
+    "elites": [
+      "alliance_de_silimelle",
+      "arc_en_corne_de_bouftou",
+      "ergot_mina"
+    ],
+    "normales": [
+      "coiffe_bouftou",
+      "cape_du_bouftou",
+      "anneau_bouftou",
+      "marteau_bouftou"
+    ]
+  },
+  "4": {
+    "boss": [
+      "chance_d_ecaflip",
+      "cape_edepee"
+    ],
+    "elites": [],
+    "normales": [
+      "coiffe_du_tofu",
+      "cape_du_tofu",
+      "anneau_du_tofu",
+      "baguette_du_tofu",
+      "le_houde",
+      "baton_du_maitre_des_tabis"
+    ]
+  },
+  "5": {
+    "boss": [
+      "abracape",
+      "dora",
+      "baton_tont_ata",
+      "sabre_shodanwa"
+    ],
+    "elites": [
+      "dora",
+      "baton_tont_ata"
+    ],
+    "normales": [
+      "chapeau_du_directeur_grunob",
+      "faux_du_directeur_grunob",
+      "bague_rafe",
+      "cape_ricefini"
+    ]
+  },
+  "6": {
+    "boss": [
+      "baguette_rikiki",
+      "goyave"
+    ],
+    "elites": [
+      "couteau_a_stek",
+      "grosse_bagouze_du_parrain"
+    ],
+    "normales": [
+      "casque_noix",
+      "cape_lumette",
+      "anneau_bille",
+      "baguette_cetera"
+    ]
+  },
+  "7": {
+    "boss": [
+      "dagues_eurfolles",
+      "cape_du_vampyre"
+    ],
+    "elites": [
+      "anneau_forrain",
+      "masque_traumatisant"
+    ],
+    "normales": [
+      "shako",
+      "cape_du_boostache",
+      "anneau_du_boostache",
+      "pelle_du_bois_dormant"
+    ]
+  },
+  "8": {
+    "boss": [
+      "baguette_ni_ninnin",
+      "palmano"
+    ],
+    "elites": [
+      "anneau_poupayahn",
+      "la_guenille"
+    ],
+    "normales": [
+      "scaracoiffe_noire",
+      "scaracape_noire",
+      "scaranneau_noir",
+      "baguette_scafeuille"
+    ]
+  },
+  "9": {
+    "boss": [
+      "caskoffre",
+      "ann_or"
+    ],
+    "elites": [
+      "dagues_aj_deh_la",
+      "masse_aj_taye"
+    ],
+    "normales": [
+      "vegacoiffe",
+      "vegacape",
+      "veganneau",
+      "vegaton"
+    ]
+  },
+  "10": {
+    "boss": [
+      "bonnet_spairance",
+      "scalpel_de_bworknroll"
+    ],
+    "elites": [
+      "cape_sanguine",
+      "anneau_de_grouillot"
+    ],
+    "normales": [
+      "chapeau_lithique",
+      "la_mokette",
+      "bague_cristalline",
+      "baguette_larvesque"
+    ]
+  },
+  "11": {
+    "boss": [
+      "masse_du_corailleur",
+      "alliance_de_corail"
+    ],
+    "elites": [
+      "arc_des_rivages",
+      "scaphandre_ojine"
+    ],
+    "normales": [
+      "chapeau_akwadala",
+      "cape_akwadala",
+      "alliance_akwadala",
+      "baton_akwadala"
+    ]
+  },
+  "12": {
+    "boss": [
+      "kwakwaffe",
+      "kwakwanneau"
+    ],
+    "elites": [
+      "kwakwalame",
+      "bandeau_rokwa"
+    ],
+    "normales": [
+      "kwakoiffe_de_flammes",
+      "kwape_de_glace",
+      "kwakanneau_de_terre",
+      "kwaklame_de_vent"
+    ]
+  }
+}

@@ -1,0 +1,1030 @@
+{
+  "boss": {
+    "ennemis": [
+      {
+        "monstre": "tournesol_affame",
+        "position": 0
+      },
+      {
+        "monstre": "gardienne_champetre",
+        "position": 1
+      },
+      {
+        "monstre": "pissenlit_diabolique",
+        "position": 2
+      }
+    ],
+    "nom": "Donjon — Tournesol Affamé"
+  },
+  "combat_1": {
+    "ennemis": [
+      {
+        "monstre": "tournesol_sauvage",
+        "position": 0
+      },
+      {
+        "monstre": "pissenlit_diabolique",
+        "position": 1
+      }
+    ],
+    "nom": "Parterre hostile"
+  },
+  "combat_2": {
+    "ennemis": [
+      {
+        "monstre": "rose_demoniaque",
+        "position": 0
+      },
+      {
+        "monstre": "tournesol_sauvage",
+        "position": 1
+      },
+      {
+        "monstre": "pissenlit_diabolique",
+        "position": 4
+      }
+    ],
+    "nom": "Roseraie maudite"
+  },
+  "combat_3": {
+    "ennemis": [
+      {
+        "monstre": "epouvanteur",
+        "position": 0
+      },
+      {
+        "monstre": "pissenlit_diabolique",
+        "position": 1
+      },
+      {
+        "monstre": "rose_demoniaque",
+        "position": 2
+      }
+    ],
+    "nom": "Épouvante"
+  },
+  "combat_elite": {
+    "ennemis": [
+      {
+        "monstre": "epouvanteur",
+        "position": 0
+      },
+      {
+        "monstre": "rose_demoniaque",
+        "position": 1
+      },
+      {
+        "monstre": "tournesol_sauvage",
+        "position": 2
+      },
+      {
+        "monstre": "pissenlit_diabolique",
+        "position": 3
+      }
+    ],
+    "nom": "Jardin déchaîné (dur)"
+  },
+  "fan_1": {
+    "ennemis": [
+      {
+        "monstre": "gargrouille",
+        "position": 0
+      },
+      {
+        "monstre": "kwoan",
+        "position": 1
+      }
+    ],
+    "nom": "Couloir qui grince"
+  },
+  "fan_2": {
+    "ennemis": [
+      {
+        "monstre": "vampire",
+        "position": 0
+      },
+      {
+        "monstre": "gargrouille",
+        "position": 1
+      },
+      {
+        "monstre": "kwoan",
+        "position": 4
+      }
+    ],
+    "nom": "Chandelles bleues"
+  },
+  "fan_3": {
+    "ennemis": [
+      {
+        "monstre": "tofu_mutant",
+        "position": 0
+      },
+      {
+        "monstre": "vampire",
+        "position": 1
+      },
+      {
+        "monstre": "kwoan",
+        "position": 2
+      }
+    ],
+    "nom": "Sarabande spectrale"
+  },
+  "fan_boss": {
+    "ennemis": [
+      {
+        "monstre": "boostache",
+        "position": 0
+      },
+      {
+        "monstre": "boostache_prepubere",
+        "position": 1
+      },
+      {
+        "monstre": "gargrouille",
+        "position": 2
+      }
+    ],
+    "nom": "Donjon — Boostache"
+  },
+  "fan_elite": {
+    "ennemis": [
+      {
+        "monstre": "boostache_prepubere",
+        "position": 0
+      },
+      {
+        "monstre": "vampire",
+        "position": 1
+      },
+      {
+        "monstre": "gargrouille",
+        "position": 2
+      },
+      {
+        "monstre": "kwoan",
+        "position": 4
+      }
+    ],
+    "nom": "Nuit de poltergeists (dur)"
+  },
+  "frg_1": {
+    "ennemis": [
+      {
+        "monstre": "forgeron_sombre",
+        "position": 0
+      },
+      {
+        "monstre": "mineur_sombre",
+        "position": 1
+      }
+    ],
+    "nom": "Atelier maudit"
+  },
+  "frg_2": {
+    "ennemis": [
+      {
+        "monstre": "boulanger_sombre",
+        "position": 0
+      },
+      {
+        "monstre": "mineur_sombre",
+        "position": 1
+      },
+      {
+        "monstre": "bandit_roublard",
+        "position": 4
+      }
+    ],
+    "nom": "Fournée sombre"
+  },
+  "frg_3": {
+    "ennemis": [
+      {
+        "monstre": "bandit_roublard",
+        "position": 0
+      },
+      {
+        "monstre": "forgeron_sombre",
+        "position": 1
+      },
+      {
+        "monstre": "boulanger_sombre",
+        "position": 2
+      }
+    ],
+    "nom": "Embuscade de roublards"
+  },
+  "frg_boss": {
+    "ennemis": [
+      {
+        "monstre": "coffre_forgerons",
+        "position": 0
+      },
+      {
+        "monstre": "forgeron_sombre",
+        "position": 1
+      },
+      {
+        "monstre": "bandit_roublard",
+        "position": 2
+      },
+      {
+        "monstre": "boulanger_sombre",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Coffre des Forgerons"
+  },
+  "frg_elite": {
+    "ennemis": [
+      {
+        "monstre": "forgeron_sombre",
+        "position": 0
+      },
+      {
+        "monstre": "bandit_roublard",
+        "position": 1
+      },
+      {
+        "monstre": "boulanger_sombre",
+        "position": 2
+      },
+      {
+        "monstre": "mineur_sombre",
+        "position": 3
+      }
+    ],
+    "nom": "Forge en fusion (dur)"
+  },
+  "gob_1": {
+    "ennemis": [
+      {
+        "monstre": "gobichon",
+        "position": 0
+      },
+      {
+        "monstre": "gobet",
+        "position": 1
+      }
+    ],
+    "nom": "Cour de récré"
+  },
+  "gob_2": {
+    "ennemis": [
+      {
+        "monstre": "gobichon",
+        "position": 0
+      },
+      {
+        "monstre": "gobet",
+        "position": 1
+      },
+      {
+        "monstre": "gobaliste",
+        "position": 4
+      }
+    ],
+    "nom": "Leçon de bagarre"
+  },
+  "gob_3": {
+    "ennemis": [
+      {
+        "monstre": "gob_trotteur",
+        "position": 0
+      },
+      {
+        "monstre": "gobichon",
+        "position": 1
+      },
+      {
+        "monstre": "gobet",
+        "position": 2
+      }
+    ],
+    "nom": "Sprint des trotteurs"
+  },
+  "gob_boss": {
+    "ennemis": [
+      {
+        "monstre": "directeur_grunob",
+        "position": 0
+      },
+      {
+        "monstre": "gobaladee",
+        "position": 1
+      },
+      {
+        "monstre": "gobichon",
+        "position": 2
+      }
+    ],
+    "nom": "Donjon — Directeur Grunob"
+  },
+  "gob_elite": {
+    "ennemis": [
+      {
+        "monstre": "gobaladee",
+        "position": 0
+      },
+      {
+        "monstre": "gobichon",
+        "position": 1
+      },
+      {
+        "monstre": "gob_trotteur",
+        "position": 2
+      },
+      {
+        "monstre": "gobaliste",
+        "position": 4
+      }
+    ],
+    "nom": "Examen d'arène (dur)"
+  },
+  "hsk_1": {
+    "ennemis": [
+      {
+        "monstre": "corailleur",
+        "position": 0
+      },
+      {
+        "monstre": "crustorail_kouracao",
+        "position": 1
+      }
+    ],
+    "nom": "Marée montante"
+  },
+  "hsk_2": {
+    "ennemis": [
+      {
+        "monstre": "crustorail_morito",
+        "position": 0
+      },
+      {
+        "monstre": "palmifleur_passaoh",
+        "position": 1
+      },
+      {
+        "monstre": "corailleur",
+        "position": 4
+      }
+    ],
+    "nom": "Pinces au récif"
+  },
+  "hsk_3": {
+    "ennemis": [
+      {
+        "monstre": "palmifleur_malibout",
+        "position": 0
+      },
+      {
+        "monstre": "crustorail_kouracao",
+        "position": 1
+      },
+      {
+        "monstre": "palmifleur_passaoh",
+        "position": 4
+      }
+    ],
+    "nom": "Banc de coraux"
+  },
+  "hsk_boss": {
+    "ennemis": [
+      {
+        "monstre": "corailleur_magistral",
+        "position": 0
+      },
+      {
+        "monstre": "palmifleur_morito",
+        "position": 1
+      },
+      {
+        "monstre": "corailleur",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Corailleur Magistral"
+  },
+  "hsk_elite": {
+    "ennemis": [
+      {
+        "monstre": "palmifleur_morito",
+        "position": 0
+      },
+      {
+        "monstre": "crustorail_morito",
+        "position": 1
+      },
+      {
+        "monstre": "palmifleur_malibout",
+        "position": 2
+      },
+      {
+        "monstre": "corailleur",
+        "position": 4
+      }
+    ],
+    "nom": "Fond de la grotte (dur)"
+  },
+  "inc_1": {
+    "ennemis": [
+      {
+        "monstre": "chafer_debutant",
+        "position": 0
+      },
+      {
+        "monstre": "chafer_eclaireur",
+        "position": 4
+      }
+    ],
+    "nom": "Chafers égarés"
+  },
+  "inc_2": {
+    "ennemis": [
+      {
+        "monstre": "chafer_furtif",
+        "position": 0
+      },
+      {
+        "monstre": "chafer_debutant",
+        "position": 1
+      },
+      {
+        "monstre": "chafer_eclaireur",
+        "position": 4
+      }
+    ],
+    "nom": "Patrouille de la crypte"
+  },
+  "inc_3": {
+    "ennemis": [
+      {
+        "monstre": "chafer_piquier",
+        "position": 0
+      },
+      {
+        "monstre": "chafer_furtif",
+        "position": 1
+      },
+      {
+        "monstre": "chafer_debutant",
+        "position": 2
+      }
+    ],
+    "nom": "Embuscade morte-vivante"
+  },
+  "inc_boss": {
+    "ennemis": [
+      {
+        "monstre": "kardorim",
+        "position": 0
+      },
+      {
+        "monstre": "sergent_chafer",
+        "position": 1
+      }
+    ],
+    "nom": "Donjon — Kardorim"
+  },
+  "inc_elite": {
+    "ennemis": [
+      {
+        "monstre": "chafer_piquier",
+        "position": 0
+      },
+      {
+        "monstre": "chafer_furtif",
+        "position": 1
+      },
+      {
+        "monstre": "chafer_eclaireur",
+        "position": 2
+      },
+      {
+        "monstre": "sergent_chafer",
+        "position": 4
+      }
+    ],
+    "nom": "Garde de la crypte (dur)"
+  },
+  "kan_1": {
+    "ennemis": [
+      {
+        "monstre": "pyrasite",
+        "position": 0
+      },
+      {
+        "monstre": "mirgrillon",
+        "position": 1
+      }
+    ],
+    "nom": "Grenier infesté"
+  },
+  "kan_2": {
+    "ennemis": [
+      {
+        "monstre": "ceglumen",
+        "position": 0
+      },
+      {
+        "monstre": "mirgrillon",
+        "position": 1
+      },
+      {
+        "monstre": "cafarcher",
+        "position": 4
+      }
+    ],
+    "nom": "Lueurs malsaines"
+  },
+  "kan_3": {
+    "ennemis": [
+      {
+        "monstre": "pyrasite",
+        "position": 0
+      },
+      {
+        "monstre": "ceglumen",
+        "position": 1
+      },
+      {
+        "monstre": "cafarcher",
+        "position": 4
+      }
+    ],
+    "nom": "Vermine en embuscade"
+  },
+  "kan_boss": {
+    "ennemis": [
+      {
+        "monstre": "kankreblath",
+        "position": 0
+      },
+      {
+        "monstre": "sakarien",
+        "position": 1
+      },
+      {
+        "monstre": "cafarcher",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Kankreblath"
+  },
+  "kan_elite": {
+    "ennemis": [
+      {
+        "monstre": "sakarien",
+        "position": 0
+      },
+      {
+        "monstre": "pyrasite",
+        "position": 1
+      },
+      {
+        "monstre": "ceglumen",
+        "position": 2
+      },
+      {
+        "monstre": "cafarcher",
+        "position": 4
+      }
+    ],
+    "nom": "Nid de la vermine (dur)"
+  },
+  "kwa_1": {
+    "ennemis": [
+      {
+        "monstre": "kwak_de_terre",
+        "position": 0
+      },
+      {
+        "monstre": "kwak_de_feu",
+        "position": 1
+      }
+    ],
+    "nom": "Plumes élémentaires"
+  },
+  "kwa_2": {
+    "ennemis": [
+      {
+        "monstre": "kwak_d_eau",
+        "position": 0
+      },
+      {
+        "monstre": "kwak_de_vent",
+        "position": 1
+      },
+      {
+        "monstre": "kwak_de_feu",
+        "position": 4
+      }
+    ],
+    "nom": "Duo des extrêmes"
+  },
+  "kwa_3": {
+    "ennemis": [
+      {
+        "monstre": "kwak_de_vent",
+        "position": 0
+      },
+      {
+        "monstre": "kwak_de_terre",
+        "position": 1
+      },
+      {
+        "monstre": "kwak_d_eau",
+        "position": 2
+      }
+    ],
+    "nom": "Tempête au nid"
+  },
+  "kwa_boss": {
+    "ennemis": [
+      {
+        "monstre": "kwakwa",
+        "position": 0
+      },
+      {
+        "monstre": "kwakere_de_terre",
+        "position": 1
+      },
+      {
+        "monstre": "kwak_d_eau",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Kwakwa"
+  },
+  "kwa_elite": {
+    "ennemis": [
+      {
+        "monstre": "kwakere_de_terre",
+        "position": 0
+      },
+      {
+        "monstre": "kwak_de_terre",
+        "position": 1
+      },
+      {
+        "monstre": "kwak_de_feu",
+        "position": 2
+      },
+      {
+        "monstre": "kwak_d_eau",
+        "position": 4
+      }
+    ],
+    "nom": "Les quatre vents (dur)"
+  },
+  "lrv_1": {
+    "ennemis": [
+      {
+        "monstre": "larve_bleue",
+        "position": 0
+      },
+      {
+        "monstre": "larve_orange",
+        "position": 1
+      }
+    ],
+    "nom": "Reptation gluante"
+  },
+  "lrv_2": {
+    "ennemis": [
+      {
+        "monstre": "larve_verte",
+        "position": 0
+      },
+      {
+        "monstre": "larve_saphir",
+        "position": 1
+      },
+      {
+        "monstre": "larve_rubis",
+        "position": 2
+      }
+    ],
+    "nom": "Couvée multicolore"
+  },
+  "lrv_3": {
+    "ennemis": [
+      {
+        "monstre": "larve_rubis",
+        "position": 0
+      },
+      {
+        "monstre": "larve_emeraude",
+        "position": 1
+      },
+      {
+        "monstre": "larve_saphir",
+        "position": 2
+      }
+    ],
+    "nom": "Marée rampante"
+  },
+  "lrv_boss": {
+    "ennemis": [
+      {
+        "monstre": "shin_larve",
+        "position": 0
+      },
+      {
+        "monstre": "larve_doree",
+        "position": 1
+      },
+      {
+        "monstre": "larve_emeraude",
+        "position": 2
+      }
+    ],
+    "nom": "Donjon — Shin Larve"
+  },
+  "lrv_elite": {
+    "ennemis": [
+      {
+        "monstre": "larve_doree",
+        "position": 0
+      },
+      {
+        "monstre": "larve_emeraude",
+        "position": 1
+      },
+      {
+        "monstre": "larve_saphir",
+        "position": 2
+      },
+      {
+        "monstre": "larve_rubis",
+        "position": 3
+      }
+    ],
+    "nom": "Couvain doré (dur)"
+  },
+  "scr_1": {
+    "ennemis": [
+      {
+        "monstre": "scarafeuille_rouge",
+        "position": 0
+      },
+      {
+        "monstre": "scarafeuille_bleu",
+        "position": 1
+      }
+    ],
+    "nom": "Duo prismatique"
+  },
+  "scr_2": {
+    "ennemis": [
+      {
+        "monstre": "scarafeuille_vert",
+        "position": 0
+      },
+      {
+        "monstre": "scarafeuille_blanc",
+        "position": 1
+      },
+      {
+        "monstre": "scarafeuille_immature",
+        "position": 4
+      }
+    ],
+    "nom": "Carapaces terreuses"
+  },
+  "scr_3": {
+    "ennemis": [
+      {
+        "monstre": "scarafeuille_rouge",
+        "position": 0
+      },
+      {
+        "monstre": "scarafeuille_vert",
+        "position": 1
+      },
+      {
+        "monstre": "scarafeuille_bleu",
+        "position": 2
+      }
+    ],
+    "nom": "Arc-en-ciel hostile"
+  },
+  "scr_boss": {
+    "ennemis": [
+      {
+        "monstre": "scarabosse_dore",
+        "position": 0
+      },
+      {
+        "monstre": "scarafeuille_noir",
+        "position": 1
+      },
+      {
+        "monstre": "scarafeuille_rouge",
+        "position": 2
+      },
+      {
+        "monstre": "scarafeuille_blanc",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Scarabosse Doré"
+  },
+  "scr_elite": {
+    "ennemis": [
+      {
+        "monstre": "scarafeuille_noir",
+        "position": 0
+      },
+      {
+        "monstre": "scarafeuille_rouge",
+        "position": 1
+      },
+      {
+        "monstre": "scarafeuille_blanc",
+        "position": 2
+      },
+      {
+        "monstre": "scarafeuille_bleu",
+        "position": 3
+      }
+    ],
+    "nom": "Essaim chromatique (dur)"
+  },
+  "tai_1": {
+    "ennemis": [
+      {
+        "monstre": "bouftou",
+        "position": 0
+      },
+      {
+        "monstre": "boufton_blanc",
+        "position": 1
+      }
+    ],
+    "nom": "Troupeau de Bouftous"
+  },
+  "tai_2": {
+    "ennemis": [
+      {
+        "monstre": "bouftou_noir",
+        "position": 0
+      },
+      {
+        "monstre": "boufton_noir",
+        "position": 1
+      },
+      {
+        "monstre": "bouftou",
+        "position": 4
+      }
+    ],
+    "nom": "Harde noire"
+  },
+  "tai_3": {
+    "ennemis": [
+      {
+        "monstre": "bouftou",
+        "position": 0
+      },
+      {
+        "monstre": "bouftou_noir",
+        "position": 1
+      },
+      {
+        "monstre": "boufton_blanc",
+        "position": 2
+      }
+    ],
+    "nom": "Charge sauvage"
+  },
+  "tai_boss": {
+    "ennemis": [
+      {
+        "monstre": "bouftou_royal",
+        "position": 0
+      },
+      {
+        "monstre": "chef_de_guerre_bouftou",
+        "position": 1
+      },
+      {
+        "monstre": "bouftou",
+        "position": 2
+      }
+    ],
+    "nom": "Donjon — Bouftou Royal"
+  },
+  "tai_elite": {
+    "ennemis": [
+      {
+        "monstre": "bouftou_noir",
+        "position": 0
+      },
+      {
+        "monstre": "bouftou",
+        "position": 1
+      },
+      {
+        "monstre": "boufton_noir",
+        "position": 2
+      },
+      {
+        "monstre": "boufton_blanc",
+        "position": 3
+      }
+    ],
+    "nom": "Furie ovine (dur)"
+  },
+  "tof_1": {
+    "ennemis": [
+      {
+        "monstre": "tofu",
+        "position": 0
+      },
+      {
+        "monstre": "tofu_noir",
+        "position": 1
+      }
+    ],
+    "nom": "Volée de Tofus"
+  },
+  "tof_2": {
+    "ennemis": [
+      {
+        "monstre": "tofu_noir",
+        "position": 0
+      },
+      {
+        "monstre": "tofukaz",
+        "position": 1
+      },
+      {
+        "monstre": "tofoune",
+        "position": 4
+      }
+    ],
+    "nom": "Nuée noire"
+  },
+  "tof_3": {
+    "ennemis": [
+      {
+        "monstre": "tofukaz",
+        "position": 0
+      },
+      {
+        "monstre": "tofu",
+        "position": 1
+      },
+      {
+        "monstre": "tofu_noir",
+        "position": 2
+      }
+    ],
+    "nom": "Tourbillon de plumes"
+  },
+  "tof_boss": {
+    "ennemis": [
+      {
+        "monstre": "batofu",
+        "position": 0
+      },
+      {
+        "monstre": "tofu_ventripotent",
+        "position": 1
+      },
+      {
+        "monstre": "tofu_noir",
+        "position": 2
+      },
+      {
+        "monstre": "tofukaz",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Batofu"
+  },
+  "tof_elite": {
+    "ennemis": [
+      {
+        "monstre": "tofu_mutant",
+        "position": 0
+      },
+      {
+        "monstre": "tofukaz",
+        "position": 1
+      },
+      {
+        "monstre": "tofu_noir",
+        "position": 2
+      },
+      {
+        "monstre": "tofu",
+        "position": 3
+      }
+    ],
+    "nom": "Essaim maudit (dur)"
+  }
+}

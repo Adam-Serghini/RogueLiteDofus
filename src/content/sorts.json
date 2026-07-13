@@ -1,0 +1,1272 @@
+{
+  "all_in": {
+    "baseMax": 10,
+    "baseMin": 6,
+    "cible": "ennemi_ligne",
+    "coutPA": 2,
+    "de": {
+      "faces": 6,
+      "multMax": 2.5,
+      "multMin": 0.3
+    },
+    "desc": "Mise au dé : dégâts de très faibles à très élevés selon le tirage.",
+    "id": "all_in",
+    "nom": "All in",
+    "scaling": 0.3,
+    "type": "degats"
+  },
+  "apaisement": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "soi",
+    "consommeRage": true,
+    "coutPA": 3,
+    "desc": "Consomme TOUTE la Rage accumulée et soigne le lanceur de 8-12 PV par charge (nécessite au moins 1 Rage).",
+    "id": "apaisement",
+    "nom": "Apaisement",
+    "scaling": 0,
+    "type": "soin"
+  },
+  "armures": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie_tous",
+    "cooldownTours": 4,
+    "coutPA": 2,
+    "desc": "Réduit les dégâts subis de l'équipe (2 + 0,5/niv plats, 3t).",
+    "effetParNiveau": {
+      "base": 2,
+      "duree": 3,
+      "parNiveau": 0.5,
+      "stat": "armure"
+    },
+    "id": "armures",
+    "nom": "Armures",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "attaque_naturelle": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "bouclierRatioDegats": 0.2,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts modérés ; bouclier = 20 % des dégâts infligés.",
+    "id": "attaque_naturelle",
+    "nom": "Attaque Naturelle",
+    "scaling": 0.3,
+    "type": "degats"
+  },
+  "attaque_nuageuse": {
+    "baseMax": 15,
+    "baseMin": 10,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 1,
+    "coutPA": 4,
+    "desc": "3 ennemis : dégâts modérés + déstabilise (+5 % d'échec critique, 2t).",
+    "effet": {
+      "duree": 2,
+      "stat": "echecCritique",
+      "valeur": 0.05
+    },
+    "id": "attaque_nuageuse",
+    "nom": "Attaque nuageuse",
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 2
+    },
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "attaque_ombre": {
+    "baseMax": 20,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Dégâts élevés + poison (2t).",
+    "id": "attaque_ombre",
+    "nom": "Attaque d'ombre",
+    "poison": {
+      "degats": 6,
+      "duree": 2
+    },
+    "scaling": 0.5,
+    "type": "degats"
+  },
+  "baton_du_berger": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldownTours": 3,
+    "coutPA": 4,
+    "desc": "Un allié reçoit −50 % de dégâts pendant 1 tour.",
+    "effet": {
+      "duree": 1,
+      "stat": "reductionDegats",
+      "valeur": 0.5
+    },
+    "id": "baton_du_berger",
+    "nom": "Bâton du berger",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "bulle": {
+    "baseMax": 7,
+    "baseMin": 4,
+    "cible": "mixte",
+    "coutPA": 2,
+    "desc": "Ennemi : dégâts faibles. Allié : bouclier (3 % PV max).",
+    "id": "bulle",
+    "mixte": {
+      "surAllie": {
+        "bouclierPct": 0.03
+      }
+    },
+    "nom": "Bulle",
+    "scaling": 0.2,
+    "type": "degats"
+  },
+  "carapace_doree": {
+    "baseMax": 22,
+    "baseMin": 16,
+    "bouclierRatioDegats": 0.4,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Scarabosse Doré — charge cornée : gagne un bouclier de 40 % des dégâts infligés.",
+    "id": "carapace_doree",
+    "nom": "Carapace dorée",
+    "scaling": 0.45,
+    "type": "degats"
+  },
+  "changer_ligne": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "changeLigne": true,
+    "cible": "soi",
+    "coutPA": 1,
+    "desc": "Se déplace dans la rangée opposée (avant ↔ arrière), même colonne si possible. Conféré par les Dagues Eurfolles.",
+    "id": "changer_ligne",
+    "nom": "Changer de ligne",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "charge": {
+    "baseMax": 36,
+    "baseMin": 26,
+    "cible": "ennemi_ligne",
+    "coutPA": 6,
+    "desc": "Attaque dévastatrice du boss.",
+    "id": "charge",
+    "nom": "Charge",
+    "scaling": 0.72,
+    "type": "degats"
+  },
+  "colere": {
+    "baseMax": 24,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Très gros dégâts ; le Iop passe son prochain tour si la cible survit.",
+    "id": "colere",
+    "nom": "Colère de Iop",
+    "passeTourSiSurvie": true,
+    "scaling": 0.6,
+    "type": "degats"
+  },
+  "colere_royale": {
+    "baseMax": 20,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Bouftou Royal — frappe et entre en rage : +15 Force cumulable jusqu'à la fin du combat.",
+    "effetLanceur": {
+      "duree": 99,
+      "stat": "force",
+      "valeur": 15
+    },
+    "id": "colere_royale",
+    "nom": "Colère royale",
+    "scaling": 0.45,
+    "type": "degats"
+  },
+  "coup_de_bec": {
+    "baseMax": 12,
+    "baseMin": 7,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Piqûre rapide.",
+    "id": "coup_de_bec",
+    "nom": "Coup de bec",
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "coup_insidieux": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts modérés + poison (2t).",
+    "id": "coup_insidieux",
+    "nom": "Coup Insidieux",
+    "poison": {
+      "degats": 5,
+      "duree": 2
+    },
+    "scaling": 0.3,
+    "type": "degats"
+  },
+  "coup_sournois": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 1,
+    "coups": [
+      {
+        "baseMax": 12,
+        "baseMin": 8,
+        "proc": {
+          "p": 0.3,
+          "poison": {
+            "degats": 5,
+            "duree": 2
+          }
+        },
+        "scaling": 0.3
+      },
+      {
+        "baseMax": 7,
+        "baseMin": 4,
+        "proc": {
+          "friction": 2,
+          "p": 0.3
+        },
+        "scaling": 0.15
+      }
+    ],
+    "coutPA": 4,
+    "desc": "2 coups ; 30 % poison au 1er, 30 % friction (anti-soin/bouclier) au 2nd.",
+    "id": "coup_sournois",
+    "nom": "Coup sournois",
+    "scaling": 0,
+    "type": "degats"
+  },
+  "crachat_de_seve": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts simples + poison léger (2t).",
+    "id": "crachat_de_seve",
+    "nom": "Crachat de sève",
+    "poison": {
+      "degats": 4,
+      "duree": 2
+    },
+    "scaling": 0.3,
+    "type": "degats"
+  },
+  "deferlante": {
+    "baseMax": 8,
+    "baseMin": 5,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Touche les 2 premiers ennemis (dégâts faibles) + initiative réduite (1t).",
+    "effet": {
+      "duree": 1,
+      "stat": "initiative",
+      "valeur": -5
+    },
+    "id": "deferlante",
+    "nom": "Déferlante",
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 1
+    },
+    "scaling": 0.25,
+    "type": "degats"
+  },
+  "deluge_lames": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_tous",
+    "cooldownTours": 1,
+    "coutPA": 5,
+    "desc": "10 lames sur des ennemis au hasard ; 20 % de poison (1t) par lame.",
+    "id": "deluge_lames",
+    "nom": "Déluge de lames",
+    "projectiles": {
+      "baseMax": 3,
+      "baseMin": 1,
+      "nb": 10,
+      "pProc": 0.2,
+      "poison": {
+        "degats": 3,
+        "duree": 1
+      },
+      "scaling": 0.05
+    },
+    "scaling": 0,
+    "type": "degats"
+  },
+  "depouille": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "bonusParEnnemiLigneCible": 0.5,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 1,
+    "coutPA": 4,
+    "desc": "Dégâts +50 % par autre ennemi vivant sur la ligne de la cible. Confère 1 Rage.",
+    "id": "depouille",
+    "nom": "Dépouille",
+    "rage": true,
+    "scaling": 0.38,
+    "type": "degats"
+  },
+  "des_double": {
+    "baseMax": 9,
+    "baseMin": 5,
+    "cible": "mixte",
+    "coutPA": 3,
+    "desc": "Ennemi : rebondit sur 3 cibles. Allié : +5 % de dégâts finaux (non cumulable).",
+    "id": "des_double",
+    "mixte": {
+      "surAllie": {
+        "effet": {
+          "duree": 2,
+          "stat": "degatsInfliges",
+          "valeur": 0.05
+        },
+        "nonCumulable": true
+      }
+    },
+    "nom": "Dès double",
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 2
+    },
+    "scaling": 0.25,
+    "type": "degats"
+  },
+  "duel": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "contre": {
+      "chance": 0.2,
+      "duree": 2
+    },
+    "cooldownTours": 3,
+    "coutPA": 4,
+    "desc": "Provoque les ennemis (2t) et prend une posture de contre : 20 % de riposte quand frappé.",
+    "id": "duel",
+    "nom": "Duel",
+    "provoqueTours": 2,
+    "scaling": 0,
+    "type": "buff"
+  },
+  "ecrasement": {
+    "baseMax": 28,
+    "baseMin": 20,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Piétine toute la ligne avant adverse (le soin de zone ne suit plus).",
+    "id": "ecrasement",
+    "nom": "Écrasement",
+    "scaling": 0.55,
+    "type": "degats",
+    "zoneLigne": true
+  },
+  "enfer_des_zombies": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 4,
+    "coutPA": 6,
+    "desc": "Boostache — réinvoque un monstre vaincu à 35 % de ses PV.",
+    "id": "enfer_des_zombies",
+    "nom": "L'Enfer des Zombies",
+    "ressuscite": {
+      "pvPct": 0.35
+    },
+    "scaling": 0,
+    "type": "invocation"
+  },
+  "epee_celeste": {
+    "baseMax": 14,
+    "baseMin": 10,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 1,
+    "coutPA": 5,
+    "desc": "Si la cible meurt, rebondit sur un ennemi proche en infligeant le double.",
+    "id": "epee_celeste",
+    "nom": "Épée Céleste",
+    "scaling": 0.4,
+    "siCibleMeurt": {
+      "rebondDegatsX": 2
+    },
+    "type": "degats"
+  },
+  "epee_divine": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
+    "id": "epee_divine",
+    "nom": "Épée divine",
+    "scaling": 0.35,
+    "type": "degats",
+    "vampirismeRatio": 0.3
+  },
+  "epee_jugement": {
+    "baseMax": 16,
+    "baseMin": 12,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 4,
+    "desc": "Dégâts modérés à élevés ; +5 % de résistances au lanceur (2t).",
+    "effetLanceur": {
+      "duree": 2,
+      "stat": "resAll",
+      "valeur": 0.05
+    },
+    "id": "epee_jugement",
+    "nom": "Épée du Jugement",
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "esprit_felin": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 2,
+    "coutPA": 4,
+    "desc": "Applique un effet aléatoire à chaque unité du combat (alliés bénéfiques, ennemis néfastes).",
+    "espritFelin": true,
+    "id": "esprit_felin",
+    "nom": "Esprit félin",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "etreinte_glaciale": {
+    "baseMax": 24,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Kardorim — glace toute la ligne avant : dégâts + initiative réduite (2t).",
+    "effet": {
+      "duree": 2,
+      "stat": "initiative",
+      "valeur": -6
+    },
+    "id": "etreinte_glaciale",
+    "nom": "Étreinte glaciale",
+    "scaling": 0.5,
+    "type": "degats",
+    "zoneLigne": true
+  },
+  "etreinte_ronces": {
+    "baseMax": 14,
+    "baseMin": 10,
+    "cible": "ennemi_ligne",
+    "coutPA": 5,
+    "desc": "Dégâts modérés à la 1ʳᵉ ligne + initiative réduite (1t).",
+    "effet": {
+      "duree": 1,
+      "stat": "initiative",
+      "valeur": -5
+    },
+    "id": "etreinte_ronces",
+    "nom": "Étreinte des ronces",
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 1
+    },
+    "scaling": 0.35,
+    "type": "degats"
+  },
+  "expert_poisons": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 2,
+    "coutPA": 2,
+    "desc": "Double les dégâts des poisons appliqués pendant 2 tours.",
+    "id": "expert_poisons",
+    "nom": "Expert des poisons",
+    "poisonAmpli": 2,
+    "scaling": 0,
+    "type": "buff"
+  },
+  "flasque_empoisonnee": {
+    "baseMax": 6,
+    "baseMin": 3,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 3,
+    "desc": "Poison (3t) sur 3 cibles.",
+    "id": "flasque_empoisonnee",
+    "nom": "Flasque empoisonnée",
+    "poison": {
+      "degats": 5,
+      "duree": 3
+    },
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 2
+    },
+    "scaling": 0.15,
+    "type": "degats"
+  },
+  "fleche_corrosive": {
+    "baseMax": 9,
+    "baseMin": 6,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Touche 2 ennemis (faibles dégâts) + vulnérabilité : +10 % de dégâts subis (2t).",
+    "effet": {
+      "duree": 2,
+      "stat": "reductionDegats",
+      "valeur": -0.1
+    },
+    "id": "fleche_corrosive",
+    "nom": "Flèche corrosive",
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 1
+    },
+    "scaling": 0.25,
+    "type": "degats"
+  },
+  "fleche_explosive": {
+    "baseMax": 16,
+    "baseMin": 12,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 5,
+    "desc": "Gros dégâts de zone (3 max) + brûlure sur chaque cible (6/t, 2t).",
+    "id": "fleche_explosive",
+    "nom": "Flèche Explosive",
+    "poison": {
+      "degats": 6,
+      "duree": 2
+    },
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 2
+    },
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "fleche_intrusive": {
+    "baseMax": 7,
+    "baseMin": 5,
+    "cible": "ennemi_tous",
+    "coutPA": 3,
+    "desc": "Frappe n'importe quel ennemi (même l'arrière) ; ignore résistances et bouclier.",
+    "id": "fleche_intrusive",
+    "ignoreBouclier": true,
+    "ignoreResistances": true,
+    "nom": "Flèche intrusive",
+    "scaling": 0.2,
+    "type": "degats"
+  },
+  "fleche_magique": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts modérés ; faible chance (scale Chance) de rembourser le coût en PA.",
+    "id": "fleche_magique",
+    "nom": "Flèche magique",
+    "rembPA": true,
+    "scaling": 0.35,
+    "type": "degats"
+  },
+  "fleche_percante": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 5,
+    "desc": "Touche le 1er ennemi puis rebondit 2 fois, +20 % de dégâts par saut.",
+    "id": "fleche_percante",
+    "nom": "Flèche perçante",
+    "rebond": {
+      "bonusParSaut": 0.2,
+      "sauts": 2
+    },
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "fracas": {
+    "baseMax": 18,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "coutPA": 5,
+    "desc": "Gros dégâts ; 30 % de chance de retirer 3 PA à la cible au prochain tour.",
+    "id": "fracas",
+    "nom": "Fracas",
+    "retraitPA": 3,
+    "scaling": 0.5,
+    "type": "degats"
+  },
+  "glyphe_agressif": {
+    "baseMax": 7,
+    "baseMin": 4,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 3,
+    "desc": "3 ennemis : dégâts faibles + −10 % de dégâts infligés (2t).",
+    "effet": {
+      "duree": 2,
+      "stat": "degatsInfliges",
+      "valeur": -0.1
+    },
+    "id": "glyphe_agressif",
+    "nom": "Glyphe Agressif",
+    "rebond": {
+      "bonusParSaut": 0,
+      "sauts": 2
+    },
+    "scaling": 0.2,
+    "type": "degats"
+  },
+  "glyphe_stimulant": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldownTours": 2,
+    "coutPA": 3,
+    "desc": "+10 % de dégâts finaux (+0,01/niv) à 2 alliés (2t).",
+    "effetParNiveau": {
+      "base": 0.1,
+      "duree": 2,
+      "parNiveau": 0.01,
+      "stat": "degatsInfliges"
+    },
+    "id": "glyphe_stimulant",
+    "nbCibles": 2,
+    "nom": "Glyphe Stimulant",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "griffe_joueuse": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 3,
+    "desc": "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
+    "id": "griffe_joueuse",
+    "nom": "Griffe joueuse",
+    "scaling": 0.35,
+    "type": "degats",
+    "vampirismeRatio": 0.3
+  },
+  "invisibilite": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 3,
+    "desc": "+25 % d'esquive (3t) et boost d'Agilité (15 + 0,5/niv, 2t).",
+    "effetParNiveau": {
+      "base": 15,
+      "duree": 2,
+      "parNiveau": 0.5,
+      "stat": "agilite"
+    },
+    "effets": [
+      {
+        "duree": 3,
+        "stat": "esquive",
+        "valeur": 0.25
+      }
+    ],
+    "id": "invisibilite",
+    "nom": "Invisibilité",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "lame_liquide": {
+    "baseMax": 22,
+    "baseMin": 16,
+    "cible": "ennemi_ligne",
+    "coutPA": 5,
+    "desc": "Gros dégâts mono-cible.",
+    "id": "lame_liquide",
+    "nom": "Lame liquide",
+    "scaling": 0.5,
+    "type": "degats"
+  },
+  "langue_rapeuse": {
+    "baseMax": 14,
+    "baseMin": 10,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 1,
+    "coutPA": 4,
+    "desc": "Dégâts modérés + 1 effet aléatoire : désenvoûte / friction / +10 % d'échec critique.",
+    "id": "langue_rapeuse",
+    "nom": "Langue râpeuse",
+    "procAleatoire": [
+      {
+        "dissipePositifs": true
+      },
+      {
+        "effet": {
+          "duree": 2,
+          "stat": "friction",
+          "valeur": 1
+        }
+      },
+      {
+        "effet": {
+          "duree": 2,
+          "stat": "echecCritique",
+          "valeur": 0.1
+        }
+      }
+    ],
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "machoire_du_coffre": {
+    "baseMax": 24,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Coffre des Forgerons — happe violemment puis se referme : +30 % de résistances (1t).",
+    "effetLanceur": {
+      "duree": 1,
+      "stat": "resAll",
+      "valeur": 0.3
+    },
+    "id": "machoire_du_coffre",
+    "nom": "Mâchoire du coffre",
+    "scaling": 0.48,
+    "type": "degats"
+  },
+  "maitrise_arc": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 4,
+    "coutPA": 2,
+    "desc": "+10 à l'élément de frappe et +5 au 2ᵉ pendant 3 tours.",
+    "id": "maitrise_arc",
+    "maitriseArc": {
+      "duree": 3,
+      "principal": 10,
+      "secondaire": 5
+    },
+    "nom": "Maîtrise de l'arc",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "mise_a_mort": {
+    "baseMax": 46,
+    "baseMin": 32,
+    "cible": "ennemi_tous",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Très lourds dégâts — échoue si la cible n'en meurt pas.",
+    "executeSeulement": true,
+    "id": "mise_a_mort",
+    "nom": "Mise à mort",
+    "scaling": 0.7,
+    "type": "degats"
+  },
+  "molosse": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts + le lanceur subit −10 % de dégâts jusqu'à son prochain tour. Confère 1 Rage.",
+    "effetLanceur": {
+      "duree": 2,
+      "stat": "reductionDegats",
+      "valeur": 0.1
+    },
+    "id": "molosse",
+    "nom": "Molosse",
+    "rage": true,
+    "scaling": 0.35,
+    "type": "degats"
+  },
+  "morsure": {
+    "baseMax": 18,
+    "baseMin": 12,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Coup de mêlée.",
+    "id": "morsure",
+    "nom": "Morsure",
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "mot_alternatif": {
+    "baseMax": 9,
+    "baseMin": 6,
+    "cible": "mixte",
+    "coutPA": 3,
+    "desc": "Allié : soin modéré. Ennemi : dégâts faibles.",
+    "id": "mot_alternatif",
+    "mixte": {
+      "surAllie": {
+        "soin": {
+          "max": 20,
+          "min": 14
+        }
+      }
+    },
+    "nom": "Mot Alternatif",
+    "scaling": 0.25,
+    "type": "degats"
+  },
+  "mot_interdit": {
+    "baseMax": 18,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "coutPA": 5,
+    "desc": "Gros dégâts + poison (2t). Si la cible meurt du poison, il passe au monstre derrière.",
+    "id": "mot_interdit",
+    "nom": "Mot interdit",
+    "poison": {
+      "degats": 6,
+      "duree": 2,
+      "transmet": true
+    },
+    "scaling": 0.5,
+    "type": "degats"
+  },
+  "mot_jouvence": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "coutPA": 2,
+    "desc": "Dissipe les effets négatifs + soin sur la durée (5 % vita / 2t).",
+    "dissipe": true,
+    "hotDuree": 2,
+    "hotPct": 0.05,
+    "id": "mot_jouvence",
+    "nom": "Mot de jouvence",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "mot_prevention": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "bouclierPct": 0.15,
+    "cible": "allie",
+    "cooldownTours": 2,
+    "coutPA": 3,
+    "desc": "Bouclier (15 % PV) + soin sur la durée (5 % vita / 3t).",
+    "hotDuree": 3,
+    "hotPct": 0.05,
+    "id": "mot_prevention",
+    "nom": "Mot de prévention",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "mot_reconstitution": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldownTours": 4,
+    "coutPA": 6,
+    "desc": "Soigne entièrement un allié.",
+    "id": "mot_reconstitution",
+    "nom": "Mot de reconstitution",
+    "scaling": 0,
+    "soinComplet": true,
+    "type": "soin"
+  },
+  "mot_revitalisant": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "allie_tous",
+    "cooldownTours": 2,
+    "coutPA": 2,
+    "desc": "Soin faible sur toute l'équipe (un tour sur deux).",
+    "id": "mot_revitalisant",
+    "nom": "Mot revitalisant",
+    "scaling": 0,
+    "type": "soin"
+  },
+  "mot_stimulant": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldown": 3,
+    "coutPA": 2,
+    "desc": "Octroie 2 PA à un allié (prochain tour). Non relançable sur la même cible (3t).",
+    "id": "mot_stimulant",
+    "nom": "Mot stimulant",
+    "paGain": 2,
+    "scaling": 0,
+    "type": "buff"
+  },
+  "mot_vampirique": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Dégâts modérés ; soigne l'équipe de 25 % des dégâts infligés.",
+    "id": "mot_vampirique",
+    "nom": "Mot vampirique",
+    "scaling": 0.35,
+    "soinEquipeRatio": 0.25,
+    "type": "degats"
+  },
+  "odorat": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 4,
+    "desc": "+1 PA aux alliés des cases adjacentes (prochain tour).",
+    "id": "odorat",
+    "nom": "Odorat",
+    "paGainAdjacents": 1,
+    "scaling": 0,
+    "type": "buff"
+  },
+  "oeil_affute": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 2,
+    "desc": "Les 2 prochains sorts offensifs tapent au maximum de leur fourchette.",
+    "effet": {
+      "duree": 99,
+      "stat": "maxRoll",
+      "valeur": 2
+    },
+    "id": "oeil_affute",
+    "nom": "Œil affûté",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "perception": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 4,
+    "coutPA": 2,
+    "desc": "+5 à toutes les caractéristiques pendant 2 tours.",
+    "effets": [
+      {
+        "duree": 2,
+        "stat": "force",
+        "valeur": 5
+      },
+      {
+        "duree": 2,
+        "stat": "intelligence",
+        "valeur": 5
+      },
+      {
+        "duree": 2,
+        "stat": "agilite",
+        "valeur": 5
+      },
+      {
+        "duree": 2,
+        "stat": "chance",
+        "valeur": 5
+      }
+    ],
+    "id": "perception",
+    "nom": "Perception",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "picotement": {
+    "baseMax": 9,
+    "baseMin": 5,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts faibles.",
+    "id": "picotement",
+    "nom": "Picotement",
+    "scaling": 0.3,
+    "type": "degats"
+  },
+  "pique_fulgurant": {
+    "baseMax": 21,
+    "baseMin": 15,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Batofu — plonge sur sa proie puis vole en zigzag : +25 % d'esquive (2t).",
+    "effetLanceur": {
+      "duree": 2,
+      "stat": "esquive",
+      "valeur": 0.25
+    },
+    "id": "pique_fulgurant",
+    "nom": "Piqué fulgurant",
+    "scaling": 0.45,
+    "type": "degats"
+  },
+  "ponte_larvaire": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 2,
+    "desc": "Shin Larve — pond une larve (Bleue, Verte ou Orange, 1 à la fois).",
+    "id": "ponte_larvaire",
+    "invoqueMonstre": {
+      "max": 1,
+      "pool": [
+        "larve_bleue",
+        "larve_verte",
+        "larve_orange"
+      ]
+    },
+    "nom": "Ponte larvaire",
+    "scaling": 0,
+    "type": "invocation"
+  },
+  "poupee_garde": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "coutPA": 4,
+    "desc": "Invoque une poupée qui provoque les ennemis. Elle encaisse mais ne joue pas.",
+    "id": "poupee_garde",
+    "invocation": {
+      "nom": "Poupée",
+      "provoque": true,
+      "pv": 40
+    },
+    "nom": "Poupée de garde",
+    "scaling": 0,
+    "type": "invocation"
+  },
+  "proie": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_tous",
+    "coutPA": 1,
+    "desc": "Marque un ennemi comme Proie (unique, permanente) : toute l'équipe vole 10 % des dégâts qu'elle lui inflige.",
+    "id": "proie",
+    "marqueProie": 0.1,
+    "nom": "Proie",
+    "scaling": 0,
+    "type": "debuff"
+  },
+  "provocation": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 4,
+    "desc": "Le Feca provoque les ennemis pendant 1 tour.",
+    "id": "provocation",
+    "nom": "Provocation",
+    "provoqueTours": 1,
+    "scaling": 0,
+    "type": "buff"
+  },
+  "racines_voraces": {
+    "baseMax": 24,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Tournesol Affamé — draine la cible et rend 60 % des dégâts en PV à tout son camp.",
+    "id": "racines_voraces",
+    "nom": "Racines voraces",
+    "scaling": 0.5,
+    "soinEquipeRatio": 0.6,
+    "type": "degats"
+  },
+  "rosee_regenerante": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "coutPA": 3,
+    "desc": "Soin sur la durée sur un allié (5 % vita / 3t).",
+    "hotDuree": 3,
+    "hotPct": 0.05,
+    "id": "rosee_regenerante",
+    "nom": "Rosée régénérante",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "rostre_broyeur": {
+    "baseMax": 32,
+    "baseMin": 24,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Corailleur Magistral — broie la ligne avant : la cible inflige −15 % de dégâts (1t).",
+    "effet": {
+      "duree": 1,
+      "stat": "degatsInfliges",
+      "valeur": -0.15
+    },
+    "id": "rostre_broyeur",
+    "nom": "Rostre broyeur",
+    "scaling": 0.55,
+    "type": "degats"
+  },
+  "sfvc": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 6,
+    "desc": "Kankreblath — borborygme imprévisible : invoque un monstre aléatoire de la zone (2 max).",
+    "id": "sfvc",
+    "invoqueMonstre": {
+      "max": 2,
+      "pool": [
+        "pyrasite",
+        "ceglumen",
+        "cafarcher",
+        "mirgrillon"
+      ]
+    },
+    "nom": "Sfvc%$*R ?!",
+    "scaling": 0,
+    "type": "invocation"
+  },
+  "soin_noir": {
+    "baseMax": 18,
+    "baseMin": 12,
+    "cible": "allie",
+    "coutPA": 4,
+    "desc": "Rend des PV à un allié.",
+    "id": "soin_noir",
+    "nom": "Soin noir",
+    "scaling": 0,
+    "type": "soin"
+  },
+  "tarot": {
+    "baseMax": 20,
+    "baseMin": 12,
+    "cible": "mixte",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Tire une carte : effet variable selon la couleur (ennemi ou allié).",
+    "id": "tarot",
+    "nom": "Tarot",
+    "scaling": 0.5,
+    "tarot": true,
+    "type": "degats"
+  },
+  "tempete_lames": {
+    "baseMax": 10,
+    "baseMin": 6,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts de zone sur toute la ligne ciblée (avant ou arrière).",
+    "id": "tempete_lames",
+    "nom": "Tempête de lames",
+    "scaling": 0.25,
+    "type": "degats",
+    "zoneLigne": true
+  },
+  "tetanisation": {
+    "baseMax": 14,
+    "baseMin": 10,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 4,
+    "desc": "Dégâts ; pendant son prochain tour, la cible ne peut pas viser la ligne arrière. Confère 1 Rage.",
+    "effet": {
+      "duree": 1,
+      "stat": "tetanise",
+      "valeur": 1
+    },
+    "id": "tetanisation",
+    "nom": "Tétanisation",
+    "rage": true,
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "tibias": {
+    "baseMax": 10,
+    "baseMin": 7,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 4,
+    "desc": "Dégâts sur TOUTE la ligne la plus proche ; tibias brisés : les cibles infligent −10 % de dégâts pendant 1 tour. Confère 1 Rage.",
+    "effet": {
+      "duree": 1,
+      "stat": "degatsInfliges",
+      "valeur": -0.1
+    },
+    "id": "tibias",
+    "nom": "Tibias",
+    "rage": true,
+    "scaling": 0.3,
+    "type": "degats",
+    "zoneLigne": true
+  },
+  "tir_courbe": {
+    "baseMax": 14,
+    "baseMin": 9,
+    "cible": "ennemi_tous",
+    "cooldownTours": 2,
+    "coutPA": 4,
+    "desc": "Projectile en cloche : touche n'importe quel ennemi, même en ligne arrière.",
+    "id": "tir_courbe",
+    "nom": "Tir courbe",
+    "scaling": 0.35,
+    "type": "degats"
+  },
+  "tir_puissant": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 2,
+    "coutPA": 2,
+    "desc": "Double la durée de l'effet de la prochaine flèche.",
+    "doubleEffetProchain": true,
+    "id": "tir_puissant",
+    "nom": "Tir Puissant",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "vigueur_bois": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "bonusProchainSortPct": 0.3,
+    "cible": "soi",
+    "coutPA": 2,
+    "desc": "+30 % de dégâts au prochain sort offensif du lanceur.",
+    "id": "vigueur_bois",
+    "nom": "Vigueur des bois",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "vitalite": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 5,
+    "coutPA": 2,
+    "desc": "+20 % PV max au lanceur pendant 5 tours.",
+    "effet": {
+      "duree": 5,
+      "stat": "vitalite",
+      "valeur": 0.2
+    },
+    "id": "vitalite",
+    "nom": "Vitalité",
+    "scaling": 0,
+    "type": "buff"
+  }
+}

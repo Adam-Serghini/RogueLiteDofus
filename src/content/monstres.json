@@ -1,0 +1,1871 @@
+{
+  "bandit_roublard": {
+    "archiNom": "Bandson le Tonitruant",
+    "ia": "agressif",
+    "id": "bandit_roublard",
+    "img": "/assets/monstres/bandit_roublard.png",
+    "initiative": 11,
+    "nom": "Bandit du clan des Roublards",
+    "pa": 5,
+    "pv": 88,
+    "resistances": {
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 16,
+      "force": 36,
+      "intelligence": 8,
+      "vitalite": 56
+    }
+  },
+  "batofu": {
+    "boss": true,
+    "dofus": "dofawa",
+    "ia": "agressif",
+    "id": "batofu",
+    "img": "/assets/monstres/batofu.png",
+    "initiative": 11,
+    "nom": "Batofu",
+    "pa": 10,
+    "pv": 343,
+    "resistances": {
+      "air": 0.25,
+      "eau": -0.05,
+      "feu": -0.15,
+      "terre": 0.1
+    },
+    "sorts": [
+      "pique_fulgurant",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 22,
+      "force": 2,
+      "intelligence": 3,
+      "vitalite": 110
+    }
+  },
+  "boostache": {
+    "boss": true,
+    "dofus": "dofus_argente",
+    "ia": "agressif",
+    "id": "boostache",
+    "img": "/assets/monstres/boostache.png",
+    "initiative": 12,
+    "nom": "Boostache",
+    "pa": 10,
+    "pv": 330,
+    "resistances": {
+      "air": 0.25,
+      "eau": 0.1,
+      "feu": -0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "enfer_des_zombies",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "force": 8,
+      "intelligence": 9,
+      "vitalite": 122
+    }
+  },
+  "boostache_prepubere": {
+    "ia": "agressif",
+    "id": "boostache_prepubere",
+    "img": "/assets/monstres/boostache_prepubere.png",
+    "initiative": 13,
+    "nom": "Boostache Prépubère",
+    "pa": 5,
+    "pv": 85,
+    "resistances": {
+      "air": 0.2,
+      "feu": 0.1,
+      "terre": -0.1
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "force": 12,
+      "intelligence": 13,
+      "vitalite": 68
+    }
+  },
+  "boufton_blanc": {
+    "archiNom": "Boudalf le Blanc",
+    "ia": "agressif",
+    "id": "boufton_blanc",
+    "img": "/assets/monstres/boufton_blanc.png",
+    "initiative": 13,
+    "nom": "Boufton Blanc",
+    "pa": 4,
+    "pv": 27,
+    "resistances": {
+      "air": 0.1,
+      "eau": -0.15,
+      "feu": -0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 24,
+      "force": 24,
+      "intelligence": 8,
+      "vitalite": 30
+    }
+  },
+  "boufton_noir": {
+    "archiNom": "Boulgourvil le Lointain",
+    "ia": "agressif",
+    "id": "boufton_noir",
+    "img": "/assets/monstres/boufton_noir.png",
+    "initiative": 11,
+    "nom": "Boufton Noir",
+    "pa": 4,
+    "pv": 29,
+    "resistances": {
+      "air": -0.1,
+      "eau": 0.15,
+      "feu": 0.1,
+      "terre": -0.15
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 16,
+      "force": 30,
+      "intelligence": 8,
+      "vitalite": 30
+    }
+  },
+  "bouftou": {
+    "archiNom": "Boufdégou le Refoulant",
+    "ia": "agressif",
+    "id": "bouftou",
+    "img": "/assets/monstres/bouftou.png",
+    "initiative": 7,
+    "nom": "Bouftou",
+    "pa": 4,
+    "pv": 31,
+    "resistances": {
+      "air": -0.3,
+      "eau": 0.05,
+      "feu": -0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 32,
+      "intelligence": 6,
+      "vitalite": 36
+    }
+  },
+  "bouftou_noir": {
+    "ia": "agressif",
+    "id": "bouftou_noir",
+    "img": "/assets/monstres/bouftou_noir.png",
+    "initiative": 7,
+    "nom": "Bouftou Noir",
+    "pa": 5,
+    "pv": 41,
+    "resistances": {
+      "air": -0.15,
+      "eau": 0.1,
+      "feu": 0.15,
+      "terre": -0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 44,
+      "intelligence": 6,
+      "vitalite": 46
+    }
+  },
+  "bouftou_royal": {
+    "boss": true,
+    "dofus": "dofawa",
+    "ia": "agressif",
+    "id": "bouftou_royal",
+    "img": "/assets/monstres/bouftou_royal.png",
+    "initiative": 8,
+    "nom": "Bouftou Royal",
+    "pa": 10,
+    "pv": 233,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.25,
+      "feu": 0.2,
+      "terre": 0.2
+    },
+    "sorts": [
+      "colere_royale",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 9,
+      "force": 34,
+      "intelligence": 6,
+      "vitalite": 80
+    }
+  },
+  "boulanger_sombre": {
+    "archiNom": "Boudur le Raide",
+    "ia": "agressif",
+    "id": "boulanger_sombre",
+    "img": "/assets/monstres/boulanger_sombre.png",
+    "initiative": 9,
+    "nom": "Boulanger Sombre",
+    "pa": 5,
+    "pv": 60,
+    "resistances": {
+      "feu": 0.2
+    },
+    "sorts": [
+      "tir_courbe",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "force": 8,
+      "intelligence": 28,
+      "vitalite": 48
+    }
+  },
+  "cafarcher": {
+    "ia": "agressif",
+    "id": "cafarcher",
+    "img": "/assets/monstres/cafarcher.png",
+    "initiative": 13,
+    "nom": "Cafarcher",
+    "pa": 5,
+    "pv": 65,
+    "resistances": {
+      "air": 0.15,
+      "feu": -0.1
+    },
+    "sorts": [
+      "tir_courbe",
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 36,
+      "force": 8,
+      "intelligence": 10,
+      "vitalite": 46
+    }
+  },
+  "ceglumen": {
+    "ia": "agressif",
+    "id": "ceglumen",
+    "img": "/assets/monstres/ceglumen.png",
+    "initiative": 10,
+    "nom": "Céglumen",
+    "pa": 5,
+    "pv": 69,
+    "resistances": {
+      "air": 0.1,
+      "feu": 0.2,
+      "terre": -0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 8,
+      "intelligence": 34,
+      "vitalite": 52
+    }
+  },
+  "chafer_debutant": {
+    "ia": "agressif",
+    "id": "chafer_debutant",
+    "img": "/assets/monstres/chafer_debutant.png",
+    "initiative": 7,
+    "nom": "Chafer Débutant",
+    "pa": 4,
+    "pv": 16,
+    "resistances": {
+      "feu": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 6,
+      "force": 16,
+      "intelligence": 4,
+      "vitalite": 12
+    }
+  },
+  "chafer_eclaireur": {
+    "ia": "agressif",
+    "id": "chafer_eclaireur",
+    "img": "/assets/monstres/chafer_eclaireur.png",
+    "initiative": 11,
+    "nom": "Chafer Éclaireur",
+    "pa": 5,
+    "pv": 15,
+    "resistances": {
+      "feu": -0.15,
+      "terre": 0.1
+    },
+    "sorts": [
+      "tir_courbe",
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 4,
+      "intelligence": 18,
+      "vitalite": 11
+    }
+  },
+  "chafer_furtif": {
+    "ia": "agressif",
+    "id": "chafer_furtif",
+    "img": "/assets/monstres/chafer_furtif.png",
+    "initiative": 13,
+    "nom": "Chafer Furtif",
+    "pa": 5,
+    "pv": 17,
+    "resistances": {
+      "air": 0.1,
+      "feu": -0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 22,
+      "force": 8,
+      "intelligence": 4,
+      "vitalite": 12
+    }
+  },
+  "chafer_piquier": {
+    "ia": "agressif",
+    "id": "chafer_piquier",
+    "img": "/assets/monstres/chafer_piquier.png",
+    "initiative": 8,
+    "nom": "Chafer Piquier",
+    "pa": 5,
+    "pv": 22,
+    "resistances": {
+      "eau": 0.1,
+      "feu": -0.15
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 8,
+      "force": 20,
+      "intelligence": 5,
+      "vitalite": 16
+    }
+  },
+  "chef_de_guerre_bouftou": {
+    "archiNom": "Bouflet le Puéril",
+    "ia": "agressif",
+    "id": "chef_de_guerre_bouftou",
+    "img": "/assets/monstres/chef_de_guerre_bouftou.png",
+    "initiative": 8,
+    "nom": "Chef de Guerre Bouftou",
+    "pa": 6,
+    "pv": 103,
+    "resistances": {
+      "air": 0.1,
+      "eau": -0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 38,
+      "intelligence": 9,
+      "vitalite": 64
+    }
+  },
+  "coffre_forgerons": {
+    "boss": true,
+    "dofus": "dofus_argente",
+    "ia": "agressif",
+    "id": "coffre_forgerons",
+    "img": "/assets/monstres/coffre_forgerons.png",
+    "initiative": 6,
+    "nom": "Coffre des Forgerons",
+    "pa": 10,
+    "pv": 430,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "machoire_du_coffre",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 13,
+      "chance": 12,
+      "force": 23,
+      "intelligence": 12,
+      "vitalite": 164
+    }
+  },
+  "corailleur": {
+    "archiNom": "Corboyard l'Enigmatique",
+    "ia": "agressif",
+    "id": "corailleur",
+    "img": "/assets/monstres/corailleur.png",
+    "initiative": 9,
+    "nom": "Corailleur",
+    "pa": 5,
+    "pv": 110,
+    "resistances": {
+      "eau": 0.3,
+      "feu": -0.15,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 48,
+      "force": 12,
+      "intelligence": 10,
+      "vitalite": 66
+    }
+  },
+  "corailleur_magistral": {
+    "boss": true,
+    "dofus": "dofus_argente",
+    "ia": "agressif",
+    "id": "corailleur_magistral",
+    "img": "/assets/monstres/corailleur_magistral.png",
+    "initiative": 8,
+    "nom": "Corailleur Magistral",
+    "pa": 10,
+    "pv": 852,
+    "resistances": {
+      "eau": 0.3,
+      "feu": -0.05,
+      "terre": 0.2
+    },
+    "sorts": [
+      "rostre_broyeur",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 11,
+      "chance": 28,
+      "force": 13,
+      "intelligence": 10,
+      "vitalite": 175
+    }
+  },
+  "crustorail_kouracao": {
+    "archiNom": "Crustterus l'Organique",
+    "ia": "agressif",
+    "id": "crustorail_kouracao",
+    "img": "/assets/monstres/crustorail_kouracao.png",
+    "initiative": 8,
+    "nom": "Crustorail Kouraçao",
+    "pa": 5,
+    "pv": 116,
+    "resistances": {
+      "eau": 0.3,
+      "feu": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 46,
+      "force": 12,
+      "intelligence": 10,
+      "vitalite": 68
+    }
+  },
+  "crustorail_morito": {
+    "archiNom": "Cruskof le Rustre",
+    "ia": "agressif",
+    "id": "crustorail_morito",
+    "img": "/assets/monstres/crustorail_morito.png",
+    "initiative": 8,
+    "nom": "Crustorail Morito",
+    "pa": 5,
+    "pv": 123,
+    "resistances": {
+      "air": -0.2,
+      "terre": 0.3
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 48,
+      "intelligence": 10,
+      "vitalite": 72
+    }
+  },
+  "directeur_grunob": {
+    "bonusParAllieLigne": 0.06,
+    "boss": true,
+    "dofus": "dofawa",
+    "ia": "agressif",
+    "id": "directeur_grunob",
+    "img": "/assets/monstres/directeur_grunob.png",
+    "initiative": 10,
+    "nom": "Directeur Grunob",
+    "pa": 10,
+    "pv": 410,
+    "resistances": {
+      "air": 0.1,
+      "eau": -0.05,
+      "feu": 0.15,
+      "terre": 0.2
+    },
+    "sorts": [
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 18,
+      "intelligence": 6,
+      "vitalite": 118
+    }
+  },
+  "epouvanteur": {
+    "ia": "agressif",
+    "id": "epouvanteur",
+    "img": "/assets/monstres/epouvanteur.png",
+    "initiative": 8,
+    "nom": "Épouvanteur",
+    "pa": 5,
+    "pv": 53,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.1,
+      "feu": -0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 34,
+      "intelligence": 8,
+      "vitalite": 46
+    }
+  },
+  "forgeron_sombre": {
+    "archiNom": "Forboyar l'Enigmatique",
+    "ia": "agressif",
+    "id": "forgeron_sombre",
+    "img": "/assets/monstres/forgeron_sombre.png",
+    "initiative": 8,
+    "nom": "Forgeron Sombre",
+    "pa": 5,
+    "pv": 110,
+    "resistances": {
+      "air": -0.1,
+      "eau": -0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 31,
+      "intelligence": 10,
+      "vitalite": 66
+    }
+  },
+  "gardienne_champetre": {
+    "ia": "soutien",
+    "id": "gardienne_champetre",
+    "img": "/assets/monstres/gardienne_champetre.png",
+    "initiative": 11,
+    "nom": "Gardienne Champêtre",
+    "pa": 6,
+    "pv": 75,
+    "resistances": {
+      "air": 0.2,
+      "eau": 0.15,
+      "feu": -0.15,
+      "terre": -0.1
+    },
+    "sorts": [
+      "soin_noir",
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 28,
+      "force": 18,
+      "intelligence": 20,
+      "vitalite": 50
+    }
+  },
+  "gargrouille": {
+    "archiNom": "Garsim le Mort",
+    "ia": "agressif",
+    "id": "gargrouille",
+    "img": "/assets/monstres/gargrouille.png",
+    "initiative": 9,
+    "nom": "Gargrouille",
+    "pa": 4,
+    "pv": 65,
+    "resistances": {
+      "eau": 0.1,
+      "feu": -0.1,
+      "terre": 0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 28,
+      "intelligence": 10,
+      "vitalite": 54
+    }
+  },
+  "gob_trotteur": {
+    "archiNom": "Chevaustine le Reconstruit",
+    "ia": "agressif",
+    "id": "gob_trotteur",
+    "img": "/assets/monstres/gob_trotteur.png",
+    "initiative": 15,
+    "nom": "Gob-Trotteur",
+    "pa": 5,
+    "pv": 58,
+    "resistances": {
+      "air": 0.15,
+      "terre": -0.1
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 36,
+      "force": 8,
+      "intelligence": 6,
+      "vitalite": 44
+    }
+  },
+  "gobaladee": {
+    "ia": "agressif",
+    "id": "gobaladee",
+    "img": "/assets/monstres/gobaladee.png",
+    "initiative": 9,
+    "nom": "Gobaladée",
+    "pa": 5,
+    "pv": 88,
+    "resistances": {
+      "eau": -0.1,
+      "feu": 0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 16,
+      "force": 31,
+      "intelligence": 8,
+      "vitalite": 70
+    }
+  },
+  "gobaliste": {
+    "ia": "agressif",
+    "id": "gobaliste",
+    "img": "/assets/monstres/gobaliste.png",
+    "initiative": 12,
+    "nom": "Gobaliste",
+    "pa": 5,
+    "pv": 60,
+    "resistances": {
+      "eau": -0.1,
+      "feu": 0.15
+    },
+    "sorts": [
+      "tir_courbe",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 10,
+      "intelligence": 32,
+      "vitalite": 46
+    }
+  },
+  "gobet": {
+    "archiNom": "Gobstiniais le Têtu",
+    "ia": "agressif",
+    "id": "gobet",
+    "img": "/assets/monstres/gobet.png",
+    "initiative": 11,
+    "nom": "Gobet",
+    "pa": 4,
+    "pv": 56,
+    "resistances": {
+      "feu": -0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 30,
+      "intelligence": 6,
+      "vitalite": 44
+    }
+  },
+  "gobichon": {
+    "ia": "agressif",
+    "id": "gobichon",
+    "img": "/assets/monstres/gobichon.png",
+    "initiative": 10,
+    "nom": "Gobichon",
+    "pa": 5,
+    "pv": 66,
+    "resistances": {
+      "air": -0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 34,
+      "intelligence": 6,
+      "vitalite": 50
+    }
+  },
+  "kankreblath": {
+    "boss": true,
+    "dofus": "dofawa",
+    "ia": "agressif",
+    "id": "kankreblath",
+    "img": "/assets/monstres/kankreblath.png",
+    "initiative": 11,
+    "nom": "Kankreblath",
+    "pa": 10,
+    "pv": 628,
+    "resistances": {
+      "air": -0.05,
+      "eau": 0.2,
+      "feu": 0.15,
+      "terre": 0.25
+    },
+    "sorts": [
+      "sfvc",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 11,
+      "force": 10,
+      "intelligence": 30,
+      "vitalite": 126
+    }
+  },
+  "kardorim": {
+    "boss": true,
+    "dofus": "dofawa",
+    "ia": "agressif",
+    "id": "kardorim",
+    "img": "/assets/monstres/kardorim.png",
+    "initiative": 9,
+    "nom": "Kardorim",
+    "pa": 10,
+    "pv": 145,
+    "resistances": {
+      "air": 0.1,
+      "eau": -0.15,
+      "feu": 0.25,
+      "terre": -0.2
+    },
+    "sorts": [
+      "etreinte_glaciale",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 18,
+      "intelligence": 24,
+      "vitalite": 55
+    }
+  },
+  "kwak_d_eau": {
+    "archiNom": "Kwakwatique le Trempé",
+    "ia": "agressif",
+    "id": "kwak_d_eau",
+    "img": "/assets/monstres/kwak_d_eau.png",
+    "initiative": 10,
+    "nom": "Kwak de Glace",
+    "pa": 5,
+    "pv": 131,
+    "resistances": {
+      "eau": 0.5,
+      "feu": -0.3
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 54,
+      "force": 10,
+      "intelligence": 10,
+      "vitalite": 76
+    }
+  },
+  "kwak_de_feu": {
+    "archiNom": "Kwakolak le Chocolaté",
+    "ia": "agressif",
+    "id": "kwak_de_feu",
+    "img": "/assets/monstres/kwak_de_feu.png",
+    "initiative": 10,
+    "nom": "Kwak de Flamme",
+    "pa": 5,
+    "pv": 131,
+    "resistances": {
+      "eau": -0.3,
+      "feu": 0.5
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 10,
+      "intelligence": 54,
+      "vitalite": 76
+    }
+  },
+  "kwak_de_terre": {
+    "archiNom": "Kwakamole l'Appétissant",
+    "ia": "agressif",
+    "id": "kwak_de_terre",
+    "img": "/assets/monstres/kwak_de_terre.png",
+    "initiative": 10,
+    "nom": "Kwak de Terre",
+    "pa": 5,
+    "pv": 131,
+    "resistances": {
+      "air": -0.3,
+      "terre": 0.5
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 54,
+      "intelligence": 10,
+      "vitalite": 76
+    }
+  },
+  "kwak_de_vent": {
+    "archiNom": "Kwaké le Piraté",
+    "ia": "agressif",
+    "id": "kwak_de_vent",
+    "img": "/assets/monstres/kwak_de_vent.png",
+    "initiative": 12,
+    "nom": "Kwak de Vent",
+    "pa": 5,
+    "pv": 131,
+    "resistances": {
+      "air": 0.5,
+      "terre": -0.3
+    },
+    "sorts": [
+      "tir_courbe",
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 54,
+      "force": 10,
+      "intelligence": 10,
+      "vitalite": 76
+    }
+  },
+  "kwakere_de_terre": {
+    "ia": "agressif",
+    "id": "kwakere_de_terre",
+    "img": "/assets/monstres/kwakere_de_terre.png",
+    "initiative": 11,
+    "nom": "Kwakere de Terre",
+    "pa": 5,
+    "pv": 249,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 30,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 104
+    }
+  },
+  "kwakwa": {
+    "boss": true,
+    "dofus": "dofus_argente",
+    "ia": "agressif",
+    "id": "kwakwa",
+    "img": "/assets/monstres/kwakwa.png",
+    "initiative": 12,
+    "mueElementaire": 0.5,
+    "nom": "Kwakwa",
+    "pa": 10,
+    "pv": 780,
+    "resistances": {
+      "air": 0.25,
+      "eau": 0.25,
+      "feu": 0.25,
+      "terre": 0.25
+    },
+    "sorts": [
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 14,
+      "chance": 20,
+      "force": 20,
+      "intelligence": 20,
+      "vitalite": 180
+    }
+  },
+  "kwoan": {
+    "archiNom": "Kwoanneur le Frimeur",
+    "ia": "agressif",
+    "id": "kwoan",
+    "img": "/assets/monstres/kwoan.png",
+    "initiative": 14,
+    "nom": "Kwoan",
+    "pa": 5,
+    "pv": 65,
+    "resistances": {
+      "air": 0.2,
+      "terre": -0.15
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 35,
+      "force": 8,
+      "intelligence": 10,
+      "vitalite": 46
+    }
+  },
+  "larve_bleue": {
+    "archiNom": "Larvonika l'Instrument",
+    "ia": "agressif",
+    "id": "larve_bleue",
+    "img": "/assets/monstres/larve_bleue.png",
+    "initiative": 8,
+    "nom": "Larve Bleue",
+    "pa": 5,
+    "pv": 91,
+    "resistances": {
+      "eau": 0.3,
+      "feu": -0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "chance": 40,
+      "force": 8,
+      "intelligence": 8,
+      "vitalite": 54
+    }
+  },
+  "larve_doree": {
+    "ia": "agressif",
+    "id": "larve_doree",
+    "img": "/assets/monstres/larve_doree.png",
+    "initiative": 8,
+    "nom": "Larve Dorée",
+    "pa": 5,
+    "pv": 155,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 38,
+      "intelligence": 15,
+      "vitalite": 88
+    }
+  },
+  "larve_emeraude": {
+    "ia": "agressif",
+    "id": "larve_emeraude",
+    "img": "/assets/monstres/larve_emeraude.png",
+    "initiative": 9,
+    "nom": "Larve Émeraude",
+    "pa": 5,
+    "pv": 88,
+    "resistances": {
+      "air": -0.3,
+      "terre": 0.4
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 37,
+      "intelligence": 8,
+      "vitalite": 60
+    }
+  },
+  "larve_orange": {
+    "archiNom": "Larvapstrè le Subjectif",
+    "ia": "agressif",
+    "id": "larve_orange",
+    "img": "/assets/monstres/larve_orange.png",
+    "initiative": 8,
+    "nom": "Larve Orange",
+    "pa": 5,
+    "pv": 91,
+    "resistances": {
+      "eau": -0.25,
+      "feu": 0.3
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 8,
+      "intelligence": 40,
+      "vitalite": 54
+    }
+  },
+  "larve_rubis": {
+    "ia": "agressif",
+    "id": "larve_rubis",
+    "img": "/assets/monstres/larve_rubis.png",
+    "initiative": 9,
+    "nom": "Larve Rubis",
+    "pa": 5,
+    "pv": 101,
+    "resistances": {
+      "eau": -0.3,
+      "feu": 0.4
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 8,
+      "intelligence": 44,
+      "vitalite": 60
+    }
+  },
+  "larve_saphir": {
+    "ia": "agressif",
+    "id": "larve_saphir",
+    "img": "/assets/monstres/larve_saphir.png",
+    "initiative": 9,
+    "nom": "Larve Saphir",
+    "pa": 5,
+    "pv": 101,
+    "resistances": {
+      "eau": 0.4,
+      "feu": -0.3
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "chance": 44,
+      "force": 8,
+      "intelligence": 8,
+      "vitalite": 60
+    }
+  },
+  "larve_verte": {
+    "archiNom": "Larchimaide la Poussée",
+    "ia": "agressif",
+    "id": "larve_verte",
+    "img": "/assets/monstres/larve_verte.png",
+    "initiative": 8,
+    "nom": "Larve Verte",
+    "pa": 5,
+    "pv": 91,
+    "resistances": {
+      "air": -0.25,
+      "terre": 0.3
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 40,
+      "intelligence": 8,
+      "vitalite": 54
+    }
+  },
+  "mineur_sombre": {
+    "archiNom": "Minsinistre l'Elu",
+    "ia": "agressif",
+    "id": "mineur_sombre",
+    "img": "/assets/monstres/mineur_sombre.png",
+    "initiative": 10,
+    "nom": "Mineur Sombre",
+    "pa": 5,
+    "pv": 74,
+    "resistances": {
+      "air": 0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 34,
+      "force": 10,
+      "intelligence": 6,
+      "vitalite": 52
+    }
+  },
+  "mirgrillon": {
+    "ia": "agressif",
+    "id": "mirgrillon",
+    "img": "/assets/monstres/mirgrillon.png",
+    "initiative": 14,
+    "nom": "Mirgrillon",
+    "pa": 4,
+    "pv": 54,
+    "resistances": {
+      "feu": 0.15,
+      "terre": -0.15
+    },
+    "sorts": [
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 6,
+      "intelligence": 30,
+      "vitalite": 40
+    }
+  },
+  "palmifleur_malibout": {
+    "archiNom": "Palmito le Menteur",
+    "ia": "agressif",
+    "id": "palmifleur_malibout",
+    "img": "/assets/monstres/palmifleur_malibout.png",
+    "initiative": 11,
+    "nom": "Palmifleur Malibout",
+    "pa": 5,
+    "pv": 113,
+    "resistances": {
+      "air": 0.3,
+      "terre": -0.2
+    },
+    "sorts": [
+      "tir_courbe",
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 46,
+      "force": 12,
+      "intelligence": 10,
+      "vitalite": 66
+    }
+  },
+  "palmifleur_morito": {
+    "archiNom": "Palmiche le Serein",
+    "ia": "agressif",
+    "id": "palmifleur_morito",
+    "img": "/assets/monstres/palmifleur_morito.png",
+    "initiative": 9,
+    "nom": "Palmifleur Morito",
+    "pa": 5,
+    "pv": 219,
+    "resistances": {
+      "eau": 0.15,
+      "feu": -0.1,
+      "terre": 0.25
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 50,
+      "intelligence": 14,
+      "vitalite": 96
+    }
+  },
+  "palmifleur_passaoh": {
+    "archiNom": "Palmiflette le Convivial",
+    "ia": "agressif",
+    "id": "palmifleur_passaoh",
+    "img": "/assets/monstres/palmifleur_passaoh.png",
+    "initiative": 10,
+    "nom": "Palmifleur Passaoh",
+    "pa": 5,
+    "pv": 113,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.3
+    },
+    "sorts": [
+      "tir_courbe",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 12,
+      "intelligence": 46,
+      "vitalite": 66
+    }
+  },
+  "pissenlit_diabolique": {
+    "archiNom": "Pissdane l'Insipide",
+    "ia": "agressif",
+    "id": "pissenlit_diabolique",
+    "img": "/assets/monstres/pissenlit_diabolique.png",
+    "initiative": 10,
+    "nom": "Pissenlit Diabolique",
+    "pa": 5,
+    "pv": 40,
+    "resistances": {
+      "air": 0.1,
+      "feu": -0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 18,
+      "force": 12,
+      "intelligence": 32,
+      "vitalite": 38
+    }
+  },
+  "pyrasite": {
+    "ia": "agressif",
+    "id": "pyrasite",
+    "img": "/assets/monstres/pyrasite.png",
+    "initiative": 12,
+    "nom": "Pyrasite",
+    "pa": 5,
+    "pv": 63,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "force": 8,
+      "intelligence": 38,
+      "vitalite": 46
+    }
+  },
+  "rose_demoniaque": {
+    "archiNom": "Roz la Magicienne",
+    "ia": "agressif",
+    "id": "rose_demoniaque",
+    "img": "/assets/monstres/rose_demoniaque.png",
+    "initiative": 11,
+    "nom": "Rose Démoniaque",
+    "pa": 5,
+    "pv": 39,
+    "resistances": {
+      "air": 0.05,
+      "eau": -0.1,
+      "feu": 0.3,
+      "terre": -0.2
+    },
+    "sorts": [
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 16,
+      "force": 14,
+      "intelligence": 36,
+      "vitalite": 34
+    }
+  },
+  "sakarien": {
+    "ia": "agressif",
+    "id": "sakarien",
+    "img": "/assets/monstres/sakarien.png",
+    "initiative": 8,
+    "nom": "Sakarien",
+    "pa": 5,
+    "pv": 135,
+    "resistances": {
+      "eau": -0.1,
+      "feu": 0.15,
+      "terre": 0.2
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 36,
+      "intelligence": 14,
+      "vitalite": 72
+    }
+  },
+  "scarabosse_dore": {
+    "boss": true,
+    "dofus": "dofus_argente",
+    "ia": "agressif",
+    "id": "scarabosse_dore",
+    "img": "/assets/monstres/scarabosse_dore.png",
+    "initiative": 10,
+    "nom": "Scarabosse Doré",
+    "pa": 10,
+    "pv": 600,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "carapace_doree",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 11,
+      "force": 30,
+      "intelligence": 11,
+      "vitalite": 132
+    }
+  },
+  "scarafeuille_blanc": {
+    "archiNom": "Scapé l'Epée",
+    "ia": "agressif",
+    "id": "scarafeuille_blanc",
+    "img": "/assets/monstres/scarafeuille_blanc.png",
+    "initiative": 11,
+    "nom": "Scarafeuille Blanc",
+    "pa": 5,
+    "pv": 70,
+    "resistances": {
+      "air": 0.5,
+      "terre": -0.4
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 34,
+      "force": 6,
+      "intelligence": 6,
+      "vitalite": 48
+    }
+  },
+  "scarafeuille_bleu": {
+    "archiNom": "Scarfayss le Balafré",
+    "ia": "agressif",
+    "id": "scarafeuille_bleu",
+    "img": "/assets/monstres/scarafeuille_bleu.png",
+    "initiative": 10,
+    "nom": "Scarafeuille Bleu",
+    "pa": 5,
+    "pv": 70,
+    "resistances": {
+      "eau": 0.5,
+      "feu": -0.4
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "chance": 34,
+      "force": 6,
+      "intelligence": 6,
+      "vitalite": 48
+    }
+  },
+  "scarafeuille_immature": {
+    "ia": "agressif",
+    "id": "scarafeuille_immature",
+    "img": "/assets/monstres/scarafeuille_immature.png",
+    "initiative": 8,
+    "nom": "Scarafeuille Immature",
+    "pa": 4,
+    "pv": 49,
+    "resistances": {
+      "air": -0.15,
+      "eau": -0.15,
+      "feu": -0.15,
+      "terre": 0.5
+    },
+    "sorts": [
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 4,
+      "force": 22,
+      "intelligence": 4,
+      "vitalite": 34
+    }
+  },
+  "scarafeuille_noir": {
+    "ia": "agressif",
+    "id": "scarafeuille_noir",
+    "img": "/assets/monstres/scarafeuille_noir.png",
+    "initiative": 9,
+    "nom": "Scarafeuille Noir",
+    "pa": 5,
+    "pv": 95,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 27,
+      "intelligence": 12,
+      "vitalite": 60
+    }
+  },
+  "scarafeuille_rouge": {
+    "archiNom": "Scarouarze l'Epopée",
+    "ia": "agressif",
+    "id": "scarafeuille_rouge",
+    "img": "/assets/monstres/scarafeuille_rouge.png",
+    "initiative": 10,
+    "nom": "Scarafeuille Rouge",
+    "pa": 5,
+    "pv": 70,
+    "resistances": {
+      "eau": -0.4,
+      "feu": 0.5
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "force": 6,
+      "intelligence": 34,
+      "vitalite": 48
+    }
+  },
+  "scarafeuille_vert": {
+    "archiNom": "Scaramel le Fondant",
+    "ia": "agressif",
+    "id": "scarafeuille_vert",
+    "img": "/assets/monstres/scarafeuille_vert.png",
+    "initiative": 10,
+    "nom": "Scarafeuille Vert",
+    "pa": 5,
+    "pv": 70,
+    "resistances": {
+      "air": -0.4,
+      "terre": 0.5
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "force": 34,
+      "intelligence": 6,
+      "vitalite": 48
+    }
+  },
+  "sergent_chafer": {
+    "ia": "soutien",
+    "id": "sergent_chafer",
+    "img": "/assets/monstres/sergent_chafer.png",
+    "initiative": 9,
+    "nom": "Sergent Chafer",
+    "pa": 6,
+    "pv": 48,
+    "resistances": {
+      "feu": 0.1
+    },
+    "sorts": [
+      "soin_noir",
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 12,
+      "force": 28,
+      "intelligence": 24,
+      "vitalite": 30
+    }
+  },
+  "shin_larve": {
+    "boss": true,
+    "dofus": "dofus_argente",
+    "ia": "agressif",
+    "id": "shin_larve",
+    "img": "/assets/monstres/shin_larve.png",
+    "initiative": 9,
+    "nom": "Shin Larve",
+    "pa": 10,
+    "pv": 760,
+    "resistances": {
+      "eau": 0.3,
+      "feu": -0.1,
+      "terre": 0.15
+    },
+    "sorts": [
+      "ponte_larvaire",
+      "ecrasement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 11,
+      "chance": 34,
+      "force": 14,
+      "intelligence": 14,
+      "vitalite": 176
+    }
+  },
+  "tofoune": {
+    "ia": "agressif",
+    "id": "tofoune",
+    "img": "/assets/monstres/tofoune.png",
+    "initiative": 11,
+    "nom": "Tofoune",
+    "pa": 4,
+    "pv": 36,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.15,
+      "terre": -0.1
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 9,
+      "chance": 22,
+      "force": 4,
+      "intelligence": 6,
+      "vitalite": 42
+    }
+  },
+  "tofu": {
+    "archiNom": "Tofuldebeu l'Explosif",
+    "ia": "agressif",
+    "id": "tofu",
+    "img": "/assets/monstres/tofu.png",
+    "initiative": 12,
+    "nom": "Tofu",
+    "pa": 4,
+    "pv": 36,
+    "resistances": {
+      "air": -0.1,
+      "eau": 0.1,
+      "feu": 0.15,
+      "terre": -0.1
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 24,
+      "force": 4,
+      "intelligence": 4,
+      "vitalite": 42
+    }
+  },
+  "tofu_malefique": {
+    "archiNom": "Tofumanchou l'Empereur",
+    "ia": "agressif",
+    "id": "tofu_malefique",
+    "img": "/assets/monstres/tofu_malefique.png",
+    "initiative": 12,
+    "nom": "Tofu Maléfique",
+    "pa": 5,
+    "pv": 88,
+    "resistances": {
+      "air": -0.15,
+      "eau": 0.2,
+      "feu": -0.2,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 33,
+      "force": 12,
+      "intelligence": 8,
+      "vitalite": 62
+    }
+  },
+  "tofu_mutant": {
+    "ia": "agressif",
+    "id": "tofu_mutant",
+    "img": "/assets/monstres/tofu_mutant.png",
+    "initiative": 12,
+    "nom": "Tofu Mutant",
+    "pa": 5,
+    "pv": 63,
+    "resistances": {
+      "air": -0.15,
+      "eau": 0.2,
+      "feu": -0.2,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 25,
+      "force": 9,
+      "intelligence": 6,
+      "vitalite": 62
+    }
+  },
+  "tofu_noir": {
+    "ia": "agressif",
+    "id": "tofu_noir",
+    "img": "/assets/monstres/tofu_noir.png",
+    "initiative": 13,
+    "nom": "Tofu Noir",
+    "pa": 4,
+    "pv": 39,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": -0.15,
+      "terre": 0.1
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 26,
+      "force": 6,
+      "intelligence": 4,
+      "vitalite": 46
+    }
+  },
+  "tofu_ventripotent": {
+    "ia": "agressif",
+    "id": "tofu_ventripotent",
+    "img": "/assets/monstres/tofu_ventripotent.png",
+    "initiative": 6,
+    "nom": "Tofu Ventripotent",
+    "pa": 5,
+    "pv": 125,
+    "resistances": {
+      "air": 0.2,
+      "eau": 0.1,
+      "feu": 0.15,
+      "terre": -0.2
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "force": 10,
+      "intelligence": 8,
+      "vitalite": 96
+    }
+  },
+  "tofukaz": {
+    "ia": "agressif",
+    "id": "tofukaz",
+    "img": "/assets/monstres/tofukaz.png",
+    "initiative": 16,
+    "nom": "Tofukaz",
+    "pa": 5,
+    "pv": 34,
+    "resistances": {
+      "air": 0.1,
+      "eau": -0.1,
+      "feu": -0.15,
+      "terre": 0.25
+    },
+    "sorts": [
+      "tir_courbe",
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 30,
+      "force": 4,
+      "intelligence": 4,
+      "vitalite": 38
+    }
+  },
+  "tournesol_affame": {
+    "boss": true,
+    "dofus": "dofawa",
+    "ia": "agressif",
+    "id": "tournesol_affame",
+    "img": "/assets/monstres/tournesol_affame.png",
+    "initiative": 9,
+    "nom": "Tournesol Affamé",
+    "pa": 10,
+    "pv": 194,
+    "resistances": {
+      "air": -0.15,
+      "eau": -0.1,
+      "feu": 0.25,
+      "terre": 0.25
+    },
+    "sorts": [
+      "racines_voraces",
+      "ecrasement",
+      "charge",
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 9,
+      "force": 10,
+      "intelligence": 26,
+      "vitalite": 75
+    }
+  },
+  "tournesol_sauvage": {
+    "archiNom": "Tour le Vice",
+    "ia": "agressif",
+    "id": "tournesol_sauvage",
+    "img": "/assets/monstres/tournesol_sauvage.png",
+    "initiative": 10,
+    "nom": "Tournesol Sauvage",
+    "pa": 5,
+    "pv": 37,
+    "resistances": {
+      "air": -0.15,
+      "eau": 0.1,
+      "feu": -0.1,
+      "terre": 0.05
+    },
+    "sorts": [
+      "picotement"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 12,
+      "intelligence": 34,
+      "vitalite": 36
+    }
+  },
+  "vampire": {
+    "archiNom": "Vampunor le Glacial",
+    "ia": "agressif",
+    "id": "vampire",
+    "img": "/assets/monstres/vampire.png",
+    "initiative": 12,
+    "nom": "Vampire",
+    "pa": 5,
+    "pv": 69,
+    "resistances": {
+      "air": 0.1,
+      "feu": 0.2,
+      "terre": -0.1
+    },
+    "sorts": [
+      "tir_courbe",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 14,
+      "force": 8,
+      "intelligence": 36,
+      "vitalite": 48
+    }
+  }
+}

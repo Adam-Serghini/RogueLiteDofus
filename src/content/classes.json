@@ -1,0 +1,200 @@
+{
+  "cra": {
+    "id": "cra",
+    "img": "/assets/classes/cra.png",
+    "initiative": 12,
+    "nom": "Cra",
+    "pa": 6,
+    "pvBase": 45,
+    "sorts": [
+      "fleche_corrosive",
+      "fleche_magique",
+      "fleche_percante",
+      "fleche_intrusive",
+      "fleche_explosive",
+      "tir_puissant",
+      "maitrise_arc",
+      "oeil_affute"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "ecaflip": {
+    "id": "ecaflip",
+    "img": "/assets/classes/ecaflip.png",
+    "initiative": 10,
+    "nom": "Ecaflip",
+    "pa": 6,
+    "pvBase": 58,
+    "sorts": [
+      "des_double",
+      "tarot",
+      "all_in",
+      "griffe_joueuse",
+      "langue_rapeuse",
+      "odorat",
+      "perception",
+      "esprit_felin"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "eniripsa": {
+    "id": "eniripsa",
+    "img": "/assets/classes/eniripsa.png",
+    "initiative": 11,
+    "nom": "Eniripsa",
+    "pa": 6,
+    "pvBase": 50,
+    "sorts": [
+      "mot_interdit",
+      "mot_vampirique",
+      "mot_alternatif",
+      "mot_reconstitution",
+      "mot_revitalisant",
+      "mot_prevention",
+      "mot_jouvence",
+      "mot_stimulant"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "soin": 20,
+      "vitalite": 0
+    }
+  },
+  "feca": {
+    "id": "feca",
+    "img": "/assets/classes/feca.png",
+    "initiative": 7,
+    "nom": "Feca",
+    "pa": 6,
+    "pvBase": 72,
+    "sorts": [
+      "attaque_naturelle",
+      "glyphe_agressif",
+      "glyphe_stimulant",
+      "attaque_nuageuse",
+      "bulle",
+      "baton_du_berger",
+      "provocation",
+      "armures"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "iop": {
+    "id": "iop",
+    "img": "/assets/classes/iop.png",
+    "initiative": 8,
+    "nom": "Iop",
+    "pa": 6,
+    "pvBase": 60,
+    "sorts": [
+      "epee_celeste",
+      "epee_divine",
+      "tempete_lames",
+      "fracas",
+      "colere",
+      "epee_jugement",
+      "duel",
+      "vitalite"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "ouginak": {
+    "id": "ouginak",
+    "img": "/assets/classes/ouginak.png",
+    "initiative": 9,
+    "nom": "Ouginak",
+    "pa": 6,
+    "pvBase": 62,
+    "sorts": [
+      "proie",
+      "molosse",
+      "depouille",
+      "tetanisation",
+      "tibias",
+      "apaisement"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "sadida": {
+    "id": "sadida",
+    "img": "/assets/classes/sadida.png",
+    "initiative": 9,
+    "nom": "Sadida",
+    "pa": 6,
+    "pvBase": 55,
+    "sorts": [
+      "crachat_de_seve",
+      "deferlante",
+      "lame_liquide",
+      "etreinte_ronces",
+      "poupee_garde",
+      "rosee_regenerante",
+      "vigueur_bois"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "sram": {
+    "id": "sram",
+    "img": "/assets/classes/sram.png",
+    "initiative": 13,
+    "nom": "Sram",
+    "pa": 6,
+    "pvBase": 48,
+    "sorts": [
+      "attaque_ombre",
+      "coup_insidieux",
+      "coup_sournois",
+      "flasque_empoisonnee",
+      "deluge_lames",
+      "mise_a_mort",
+      "expert_poisons",
+      "invisibilite"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "akademie": {
+    "boss": "gob_boss",
+    "elite": [
+      "gob_elite"
+    ],
+    "normales": [
+      "gob_1",
+      "gob_2",
+      "gob_3"
+    ]
+  },
+  "astrub": {
+    "boss": "boss",
+    "elite": [
+      "combat_elite"
+    ],
+    "normales": [
+      "combat_1",
+      "combat_2",
+      "combat_3"
+    ]
+  },
+  "forgerons": {
+    "boss": "frg_boss",
+    "elite": [
+      "frg_elite"
+    ],
+    "normales": [
+      "frg_1",
+      "frg_2",
+      "frg_3"
+    ]
+  },
+  "grotte_hesque": {
+    "boss": "hsk_boss",
+    "elite": [
+      "hsk_elite"
+    ],
+    "normales": [
+      "hsk_1",
+      "hsk_2",
+      "hsk_3"
+    ]
+  },
+  "incarnam": {
+    "boss": "inc_boss",
+    "elite": [
+      "inc_elite"
+    ],
+    "normales": [
+      "inc_1",
+      "inc_2",
+      "inc_3"
+    ]
+  },
+  "kankreblath": {
+    "boss": "kan_boss",
+    "elite": [
+      "kan_elite"
+    ],
+    "normales": [
+      "kan_1",
+      "kan_2",
+      "kan_3"
+    ]
+  },
+  "kwakwa": {
+    "boss": "kwa_boss",
+    "elite": [
+      "kwa_elite"
+    ],
+    "normales": [
+      "kwa_1",
+      "kwa_2",
+      "kwa_3"
+    ]
+  },
+  "larves": {
+    "boss": "lrv_boss",
+    "elite": [
+      "lrv_elite"
+    ],
+    "normales": [
+      "lrv_1",
+      "lrv_2",
+      "lrv_3"
+    ]
+  },
+  "maison_fantome": {
+    "boss": "fan_boss",
+    "elite": [
+      "fan_elite"
+    ],
+    "normales": [
+      "fan_1",
+      "fan_2",
+      "fan_3"
+    ]
+  },
+  "scarafeuilles": {
+    "boss": "scr_boss",
+    "elite": [
+      "scr_elite"
+    ],
+    "normales": [
+      "scr_1",
+      "scr_2",
+      "scr_3"
+    ]
+  },
+  "tainela": {
+    "boss": "tai_boss",
+    "elite": [
+      "tai_elite"
+    ],
+    "normales": [
+      "tai_1",
+      "tai_2",
+      "tai_3"
+    ]
+  },
+  "tofus": {
+    "boss": "tof_boss",
+    "elite": [
+      "tof_elite"
+    ],
+    "normales": [
+      "tof_1",
+      "tof_2",
+      "tof_3"
+    ]
+  }
+}
