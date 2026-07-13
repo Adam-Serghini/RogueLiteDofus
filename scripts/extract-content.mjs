@@ -6,8 +6,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { stringifyCanonique } from "./canonical.mjs";
-import { SORTS, CLASSES, MONSTRES, COMBATS, ZONES } from "../src/data.ts";
-import { ITEMS_TOILES, BUTIN_TOILES } from "../src/items_gen.ts";
+import { SORTS, CLASSES, MONSTRES, COMBATS, ZONES, ITEMS_TOILES, BUTIN_TOILES } from "../src/data.ts";
 
 const DEST = path.resolve(import.meta.dirname, "../src/content");
 mkdirSync(DEST, { recursive: true });

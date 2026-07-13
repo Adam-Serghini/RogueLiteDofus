@@ -17,7 +17,7 @@ export const MONSTRES = monstresJson as unknown as Record<string, Monstre>;
 export const COMBATS = combatsJson as unknown as Record<string, CombatDef>;
 const ZONES_POOLS = zonesPoolsJson as unknown as Record<string, ZonePools>;
 export interface PoolsToile { normales: string[]; elites: string[]; boss: string[] }
-const ITEMS_TOILES = itemsToilesJson as unknown as Record<string, Item>;
+export const ITEMS_TOILES = itemsToilesJson as unknown as Record<string, Item>;
 export const BUTIN_TOILES = butinToilesJson as unknown as Record<string, PoolsToile>;
 
 // --- Dofus (reliques permanentes) --------------------------------------------
