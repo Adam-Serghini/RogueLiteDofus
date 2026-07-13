@@ -2,5 +2,9 @@ node_modules/
 dist/
 *.local
 .DS_Store
+editeur.html
 
 .claude/
+
+# Docs de travail locales (non versionnees)
+docs/superpowers/

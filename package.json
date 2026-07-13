@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "sim": "vitest run --config vitest.sim.config.ts",
     "typecheck": "tsc --noEmit",
-    "content:import": "node scripts/content-import.mjs"
+    "content:import": "node scripts/content-import.mjs",
+    "editor:build": "node scripts/editor-build.mjs"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
