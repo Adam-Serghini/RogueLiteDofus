@@ -37,6 +37,13 @@ describe("passe 1 — schéma", () => {
   it("refuse elite non-array dans zones_pools", () => {
     const err = validerContenu(modif((c) => { c.zones_pools.tainela.elite = "c1"; }), base());
     expect(err.some((e) => e.includes("[zones_pools: tainela]") && e.includes("elite") && e.includes("liste"))).toBe(true);
+    // Ensure no garbage "n'existe pas" entries from spreading a string char-by-char
+    expect(err.some((e) => e.includes("n'existe pas") && e.includes("« c »"))).toBe(false);
+  });
+  it("ne crashe pas sur elite malformé (nombre) — passe 2", () => {
+    const err = validerContenu(modif((c) => { c.zones_pools.tainela.elite = 123; }), base());
+    expect(Array.isArray(err)).toBe(true);
+    expect(err.some((e) => e.includes("[zones_pools: tainela]") && e.includes("elite"))).toBe(true);
   });
 });
 

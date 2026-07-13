@@ -106,7 +106,12 @@ export function validerContenu(contenu, base) {
     for (const e of c.ennemis ?? [])
       if (!contenu.monstres[e.monstre]) E("combats", id, `le monstre « ${e.monstre} » n'existe pas`);
   for (const [id, z] of Object.entries(contenu.zones_pools)) {
-    for (const cId of [...(z.normales ?? []), ...(z.elite ?? []), z.boss].filter(Boolean))
+    const combatsRef = [
+      ...(Array.isArray(z.normales) ? z.normales : []),
+      ...(Array.isArray(z.elite) ? z.elite : []),
+      ...(typeof z.boss === "string" ? [z.boss] : []),
+    ].filter(Boolean);
+    for (const cId of combatsRef)
       if (!contenu.combats[cId]) E("zones_pools", id, `le combat « ${cId} » n'existe pas`);
   }
   for (const [id, p] of Object.entries(contenu.butin_toiles))
