@@ -1,6 +1,8 @@
 const RARETES_ED = ["commun", "rare", "epique", "legendaire"];
 const SLOTS_ED = [["arme", "Arme"], ["coiffe", "Coiffe"], ["cape", "Cape"], ["anneau", "Anneau"]];
-const STATS_ED = ["force", "intelligence", "agilite", "chance", "vitalite", "soin", "prospection", "crit"];
+// Pas de force/intelligence/agilité/chance ici : les items ne portent que la
+// stat ADAPTATIVE (ligne « adaptatif »), qui alimente la voie du porteur.
+const STATS_ED = ["vitalite", "soin", "prospection", "crit"];
 const ELEMENTS_ED = ["terre", "feu", "eau", "air"];
 // Catalogue des mécaniques spéciales existantes (champ → valeur par défaut).
 const SPECIAUX = [
@@ -91,11 +93,9 @@ enregistrerCategorie("items", "Items", {
       for (const it of parToile[toile]) lignes.push(ligneListe(it.id, `${it.nom} · ${it.slot}`, vignetteAsset(`items/${it.id}.png`)));
     }
     lignes.push(el("button", { class: "ligne", onclick: () => {
-      const nom = prompt("Nom du nouvel objet :"); if (!nom) return;
-      const id = idDepuisNom(nom, C.items);
-      C.items[id] = { id, nom, slot: "anneau", tiers: { commun: { stats: {} } } };
+      const id = creerEntite("items", "nouvel objet", (nid) => ({ id: nid, nom: "Nouvel objet", slot: "anneau", tiers: { commun: { stats: {} } } }));
       C.butin_toiles["1"].normales.push(id); // pool par défaut, modifiable dans la fiche
-      E.selection = id; sauverBrouillon(); rendre();
+      sauverBrouillon();
     } }, "＋ Nouvel objet"));
     return lignes;
   },
@@ -105,7 +105,11 @@ enregistrerCategorie("items", "Items", {
     return [
       el("h2", {}, vignetteAsset(`items/${id}.png`, "apercu"), " ", it.nom, " ", el("span", { class: "note" }, id)),
       el("div", { class: "section" }, "Identité"),
-      champTexte(it, "nom", "Nom"),
+      champNom("items", id, (ancien, nouveau) => {
+        for (const bp of Object.values(C.butin_toiles))
+          for (const s of ["normales", "elites", "boss"])
+            bp[s] = bp[s].map((x) => (x === ancien ? nouveau : x));
+      }),
       champSelect(it, "slot", "Slot", SLOTS_ED),
       el("div", { class: "champ" }, el("label", {}, "Toile / source de drop"),
         el("span", {},
@@ -119,7 +123,7 @@ enregistrerCategorie("items", "Items", {
       el("div", { class: "section" }, "Mécaniques spéciales"),
       blocSpeciaux(it),
       el("div", { class: "boutons" },
-        el("button", { onclick: () => { const nid = idDepuisNom(it.nom + " copie", C.items); C.items[nid] = structuredClone(it); C.items[nid].id = nid; C.items[nid].nom += " (copie)"; if (p) C.butin_toiles[p.toile][p.src].push(nid); E.selection = nid; sauverBrouillon(); rendre(); } }, "Dupliquer"),
+        el("button", { onclick: () => { const nid = idDepuisNom(it.nom + " copie", C.items); C.items[nid] = structuredClone(it); C.items[nid].id = nid; C.items[nid].nom += " (copie)"; if (p) C.butin_toiles[p.toile][p.src].push(nid); E.nouveaux.push(`items:${nid}`); E.selection = nid; E.focusNom = true; sauverBrouillon(); rendre(); } }, "Dupliquer"),
         el("button", { class: "danger", onclick: () => { if (!confirm(`Supprimer ${it.nom} ?`)) return; delete C.items[id]; for (const bp of Object.values(C.butin_toiles)) for (const s of ["normales", "elites", "boss"]) bp[s] = bp[s].filter((x) => x !== id); E.selection = null; sauverBrouillon(); rendre(); } }, "Supprimer")),
     ];
   },

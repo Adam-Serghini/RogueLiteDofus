@@ -25,11 +25,9 @@ enregistrerCategorie("rencontres", "Rencontres", {
       for (const id of orphelins) lignes.push(ligneListe(id, C.combats[id].nom));
     }
     lignes.push(el("button", { class: "ligne", onclick: () => {
-      const nom = prompt("Nom de la rencontre :"); if (!nom) return;
-      const id = idDepuisNom(nom, C.combats);
-      C.combats[id] = { nom, ennemis: [{ monstre: Object.keys(C.monstres)[0], position: 0 }] };
+      const id = creerEntite("combats", "nouvelle rencontre", () => ({ nom: "Nouvelle rencontre", ennemis: [{ monstre: Object.keys(C.monstres)[0], position: 0 }] }));
       C.zones_pools[Object.keys(C.zones_pools)[0]].normales.push(id);
-      E.selection = id; sauverBrouillon(); rendre();
+      sauverBrouillon();
     } }, "＋ Nouvelle rencontre"));
     return lignes;
   },
@@ -48,7 +46,13 @@ enregistrerCategorie("rencontres", "Rencontres", {
     };
     return [
       el("h2", {}, c.nom, " ", el("span", { class: "note" }, id)),
-      champTexte(c, "nom", "Nom"),
+      champNom("combats", id, (ancien, nouveau) => {
+        for (const p of Object.values(C.zones_pools)) {
+          p.normales = p.normales.map((x) => (x === ancien ? nouveau : x));
+          p.elite = (p.elite ?? []).map((x) => (x === ancien ? nouveau : x));
+          if (p.boss === ancien) p.boss = nouveau;
+        }
+      }),
       el("div", { class: "champ" }, el("label", {}, "Zone / pool"),
         el("span", {},
           el("select", { onchange: (ev) => deplacerCombat(id, ev.target.value, z?.pool ?? "normales") },

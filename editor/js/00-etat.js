@@ -5,14 +5,17 @@ const ASSETS_LOCAUX = JSON.parse(document.getElementById("assets")?.textContent 
 const C = DONNEES.contenu; // raccourci : { sorts, classes, monstres, combats, zones_pools, items, butin_toiles }
 const CLE_BROUILLON = "rld_editeur_brouillon";
 
-const E = { categorie: "items", selection: null, recherche: "", modifie: false, assets: [] };
+// nouveaux : entités créées dans cette session ("collection:id") — leur id suit
+// encore le nom (les entités déjà exportées gardent leur id : Meta.archis et
+// Meta.collection du jeu référencent les ids des monstres/items expédiés).
+const E = { categorie: "items", selection: null, recherche: "", modifie: false, assets: [], nouveaux: [], focusNom: false };
 const CATEGORIES = []; // remplies par enregistrerCategorie() dans les fichiers suivants
 
 function sauverBrouillon() {
   E.modifie = true;
   try {
     localStorage.setItem(CLE_BROUILLON, JSON.stringify({
-      baseHash: DONNEES.baseHash, date: new Date().toISOString(), contenu: C, assets: E.assets,
+      baseHash: DONNEES.baseHash, date: new Date().toISOString(), contenu: C, assets: E.assets, nouveaux: E.nouveaux,
     }));
   } catch { /* stockage plein/indispo : l'export manuel reste possible */ }
 }
@@ -23,7 +26,7 @@ function restaurerBrouillon() {
   if (!confirm(`Reprendre le travail non exporté du ${new Date(b.date).toLocaleString("fr-FR")} ?`)) {
     localStorage.removeItem(CLE_BROUILLON); return;
   }
-  Object.assign(C, b.contenu); E.assets = b.assets ?? []; E.modifie = true;
+  Object.assign(C, b.contenu); E.assets = b.assets ?? []; E.nouveaux = b.nouveaux ?? []; E.modifie = true;
 }
 
 function idDepuisNom(nom, existants) {

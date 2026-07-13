@@ -41,6 +41,41 @@ function champSelect(obj, cle, libelle, options, apres) {
 
 function enregistrerCategorie(id, libelle, api) { CATEGORIES.push({ id, libelle, ...api }); }
 
+/** Champ Nom d'une entité. Tant que l'entité est NOUVELLE (créée dans cette
+ *  session), son id est recalculé depuis le nom à la fin de la saisie (blur),
+ *  et `majRefs(ancienId, nouvelId)` répercute le changement sur les références.
+ *  Les entités déjà expédiées gardent leur id (le jeu les référence). */
+function champNom(collection, id, majRefs) {
+  const obj = C[collection][id];
+  return el("div", { class: "champ" }, el("label", {}, "Nom"),
+    el("input", { type: "text", value: obj.nom ?? "",
+      oninput: (ev) => { obj.nom = ev.target.value; sauverBrouillon(); },
+      onchange: (ev) => {
+        const cle = `${collection}:${id}`;
+        const i = E.nouveaux.indexOf(cle);
+        if (i < 0) return;
+        const nouvelId = idDepuisNom(ev.target.value || "sans nom", C[collection]);
+        if (nouvelId === id) return;
+        C[collection][nouvelId] = obj;
+        delete C[collection][id];
+        if ("id" in obj) obj.id = nouvelId;
+        majRefs(id, nouvelId);
+        E.nouveaux[i] = `${collection}:${nouvelId}`;
+        E.selection = nouvelId;
+        sauverBrouillon(); rendre();
+      } }));
+}
+
+/** Crée une entité sans popup : nom par défaut, sélection, focus sur le champ Nom. */
+function creerEntite(collection, nomDefaut, fabrique) {
+  const id = idDepuisNom(nomDefaut, C[collection]);
+  C[collection][id] = fabrique(id);
+  E.nouveaux.push(`${collection}:${id}`);
+  E.selection = id; E.focusNom = true;
+  sauverBrouillon(); rendre();
+  return id;
+}
+
 function rendre() {
   const app = document.getElementById("app");
   // La recherche perd le focus à chaque frappe car rendre() détruit tout le DOM :
@@ -65,6 +100,11 @@ function rendre() {
     const s = document.getElementById("recherche-input");
     s.focus();
     s.setSelectionRange(curseur, curseur);
+  }
+  if (E.focusNom) {
+    E.focusNom = false;
+    const nom = fiche.querySelector("input[type=text]");
+    if (nom) { nom.focus(); nom.select(); }
   }
 }
 

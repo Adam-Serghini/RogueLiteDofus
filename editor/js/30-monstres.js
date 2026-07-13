@@ -28,10 +28,7 @@ enregistrerCategorie("monstres", "Monstres", {
     const lignes = Object.values(C.monstres).filter((m) => filtre(m.nom + m.id))
       .map((m) => ligneListe(m.id, `${m.nom}${m.boss ? " 👑" : ""} · ${m.pv} PV`, vignetteAsset(`monstres/${m.id}.png`)));
     lignes.push(el("button", { class: "ligne", onclick: () => {
-      const nom = prompt("Nom du nouveau monstre :"); if (!nom) return;
-      const id = idDepuisNom(nom, C.monstres);
-      C.monstres[id] = { id, nom, pv: 20, stats: { force: 5, intelligence: 5, agilite: 5, vitalite: 5 }, pa: 4, initiative: 8, resistances: {}, sorts: ["morsure"], ia: "agressif" };
-      E.selection = id; sauverBrouillon(); rendre();
+      creerEntite("monstres", "nouveau monstre", (nid) => ({ id: nid, nom: "Nouveau monstre", pv: 20, stats: { force: 5, intelligence: 5, agilite: 5, vitalite: 5 }, pa: 4, initiative: 8, resistances: {}, sorts: ["morsure"], ia: "agressif" }));
     } }, "＋ Nouveau monstre"));
     return lignes;
   },
@@ -43,7 +40,15 @@ enregistrerCategorie("monstres", "Monstres", {
     return [
       el("h2", {}, vignetteAsset(`monstres/${id}.png`), " ", m.nom, " ", el("span", { class: "note" }, id)),
       el("div", { class: "section" }, "Identité"),
-      champTexte(m, "nom", "Nom"),
+      champNom("monstres", id, (ancien, nouveau) => {
+        for (const c of Object.values(C.combats))
+          for (const e of c.ennemis) if (e.monstre === ancien) e.monstre = nouveau;
+        for (const s of Object.values(C.sorts))
+          if (s.invoqueMonstre) s.invoqueMonstre.pool = s.invoqueMonstre.pool.map((x) => (x === ancien ? nouveau : x));
+        E.assets = E.assets.map((a) => (a.fichier === `monstres/${ancien}.png` ? { ...a, fichier: `monstres/${nouveau}.png` } : a));
+        const m2 = C.monstres[nouveau];
+        if (m2.img === `/assets/monstres/${ancien}.png`) m2.img = `/assets/monstres/${nouveau}.png`;
+      }),
       el("div", { class: "champ" }, el("label", {}, "Image"),
         el("span", {}, apercu ? el("img", { class: "apercu", src: apercu }) : el("span", { class: "note" }, m.img ?? "aucune"), " ",
           el("button", { onclick: () => chercherSpriteDofusDB(m) }, "Chercher sur DofusDB…"))),
@@ -64,7 +69,7 @@ enregistrerCategorie("monstres", "Monstres", {
           " ", el("button", { onclick: () => { m.sorts.splice(i, 1); sauverBrouillon(); rendre(); } }, "✕")))),
       el("div", { class: "boutons" },
         el("button", { onclick: () => { m.sorts.push(Object.keys(C.sorts)[0]); sauverBrouillon(); rendre(); } }, "＋ Ajouter un sort"),
-        el("button", { onclick: () => { const nid = idDepuisNom(m.nom + " copie", C.monstres); C.monstres[nid] = structuredClone(m); C.monstres[nid].id = nid; C.monstres[nid].nom += " (copie)"; delete C.monstres[nid].img; E.selection = nid; sauverBrouillon(); rendre(); } }, "Dupliquer"),
+        el("button", { onclick: () => { const nid = idDepuisNom(m.nom + " copie", C.monstres); C.monstres[nid] = structuredClone(m); C.monstres[nid].id = nid; C.monstres[nid].nom += " (copie)"; delete C.monstres[nid].img; E.nouveaux.push(`monstres:${nid}`); E.selection = nid; E.focusNom = true; sauverBrouillon(); rendre(); } }, "Dupliquer"),
         el("button", { class: "danger", onclick: () => { if (!confirm(`Supprimer ${m.nom} ? (refusé à l'import s'il est utilisé dans une rencontre)`)) return; delete C.monstres[id]; E.selection = null; sauverBrouillon(); rendre(); } }, "Supprimer")),
     ];
   },
