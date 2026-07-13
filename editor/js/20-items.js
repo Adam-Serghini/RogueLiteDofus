@@ -88,7 +88,7 @@ enregistrerCategorie("items", "Items", {
     const lignes = [];
     for (const toile of Object.keys(parToile).sort((a, b) => (+a || 99) - (+b || 99))) {
       lignes.push(el("div", { class: "groupe" }, toile === "hors pool" ? "Hors pool (injoignable !)" : `Toile ${toile}`));
-      for (const it of parToile[toile]) lignes.push(ligneListe(it.id, `${it.nom} · ${it.slot}`));
+      for (const it of parToile[toile]) lignes.push(ligneListe(it.id, `${it.nom} · ${it.slot}`, vignetteAsset(`items/${it.id}.png`)));
     }
     lignes.push(el("button", { class: "ligne", onclick: () => {
       const nom = prompt("Nom du nouvel objet :"); if (!nom) return;
@@ -103,7 +103,7 @@ enregistrerCategorie("items", "Items", {
     const it = C.items[id]; if (!it) return [];
     const p = pouleDeItem(id);
     return [
-      el("h2", {}, it.nom, " ", el("span", { class: "note" }, id)),
+      el("h2", {}, vignetteAsset(`items/${id}.png`, "apercu"), " ", it.nom, " ", el("span", { class: "note" }, id)),
       el("div", { class: "section" }, "Identité"),
       champTexte(it, "nom", "Nom"),
       champSelect(it, "slot", "Slot", SLOTS_ED),

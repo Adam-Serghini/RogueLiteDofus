@@ -27,7 +27,8 @@ enregistrerCategorie("sorts", "Classes & sorts", {
     const lignes = [];
     const dansClasse = new Set(Object.values(C.classes).flatMap((cl) => cl.sorts));
     for (const cl of Object.values(C.classes)) {
-      lignes.push(el("div", { class: "groupe" }, `${cl.nom} · ${cl.pvBase} PV · ${cl.pa} PA (lecture seule)`));
+      lignes.push(el("div", { class: "groupe groupe-classe" }, vignetteAsset(`classes/${cl.id}.png`, "vignette vignette-classe"),
+        el("span", {}, `${cl.nom} · ${cl.pvBase} PV · ${cl.pa} PA (lecture seule)`)));
       for (const sId of cl.sorts)
         if (C.sorts[sId] && filtre(C.sorts[sId].nom + sId)) lignes.push(ligneListe(sId, `${C.sorts[sId].nom} · ${C.sorts[sId].coutPA} PA`));
     }

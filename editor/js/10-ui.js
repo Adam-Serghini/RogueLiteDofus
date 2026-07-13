@@ -68,7 +68,14 @@ function rendre() {
   }
 }
 
-function ligneListe(id, contenuLigne) {
-  return el("button", { class: "ligne" + (E.selection === id ? " actif" : ""), onclick: () => { E.selection = id; rendre(); } }, contenuLigne);
+function ligneListe(id, contenuLigne, vignette) {
+  return el("button", { class: "ligne" + (E.selection === id ? " actif" : "") + (vignette ? " avec-vignette" : ""), onclick: () => { E.selection = id; rendre(); } },
+    vignette ?? null, el("span", {}, contenuLigne));
+}
+
+/** Vignette d'un asset embarqué (`monstres/x.png`…) ; null si absent du build. */
+function vignetteAsset(chemin, classe = "vignette") {
+  const uri = ASSETS_LOCAUX[chemin];
+  return uri ? el("img", { class: classe, src: uri, alt: "" }) : null;
 }
 const filtre = (texte) => texte.toLowerCase().includes(E.recherche.toLowerCase());

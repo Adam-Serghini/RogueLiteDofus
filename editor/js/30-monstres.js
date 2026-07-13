@@ -26,7 +26,7 @@ async function chercherSpriteDofusDB(monstre) {
 enregistrerCategorie("monstres", "Monstres", {
   liste() {
     const lignes = Object.values(C.monstres).filter((m) => filtre(m.nom + m.id))
-      .map((m) => ligneListe(m.id, `${m.nom}${m.boss ? " 👑" : ""} · ${m.pv} PV`));
+      .map((m) => ligneListe(m.id, `${m.nom}${m.boss ? " 👑" : ""} · ${m.pv} PV`, vignetteAsset(`monstres/${m.id}.png`)));
     lignes.push(el("button", { class: "ligne", onclick: () => {
       const nom = prompt("Nom du nouveau monstre :"); if (!nom) return;
       const id = idDepuisNom(nom, C.monstres);
@@ -37,9 +37,11 @@ enregistrerCategorie("monstres", "Monstres", {
   },
   fiche(id) {
     const m = C.monstres[id]; if (!m) return [];
-    const apercu = E.assets.find((a) => a.fichier === `monstres/${id}.png`)?.url; // pas encore importé : preview via l'URL DofusDB
+    // priorité : sprite DofusDB en attente d'import (E.assets) > asset du repo embarqué au build
+    const apercu = E.assets.find((a) => a.fichier === `monstres/${id}.png`)?.url
+      ?? ASSETS_LOCAUX[`monstres/${id}.png`];
     return [
-      el("h2", {}, m.nom, " ", el("span", { class: "note" }, id)),
+      el("h2", {}, vignetteAsset(`monstres/${id}.png`), " ", m.nom, " ", el("span", { class: "note" }, id)),
       el("div", { class: "section" }, "Identité"),
       champTexte(m, "nom", "Nom"),
       el("div", { class: "champ" }, el("label", {}, "Image"),

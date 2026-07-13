@@ -1,5 +1,7 @@
 "use strict";
 const DONNEES = JSON.parse(document.getElementById("donnees").textContent);
+// Images du repo embarquées au build (data URIs) — chemin relatif → URI.
+const ASSETS_LOCAUX = JSON.parse(document.getElementById("assets")?.textContent ?? "{}");
 const C = DONNEES.contenu; // raccourci : { sorts, classes, monstres, combats, zones_pools, items, butin_toiles }
 const CLE_BROUILLON = "rld_editeur_brouillon";
 
