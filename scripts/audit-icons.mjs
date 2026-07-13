@@ -1,4 +1,4 @@
-// Icônes des objets à rareté : pour chaque objet d'items_gen.ts, cherche le
+// Icônes des objets à rareté : pour chaque objet de src/content/items.json, cherche le
 // match EXACT sur DofusDB et télécharge son icône. Les objets INVENTÉS (sans
 // homonyme) ont une surcharge iconId explicite ci-dessous. Rejouable.
 import { readFileSync, writeFileSync } from "node:fs";
@@ -30,8 +30,8 @@ const SURCHARGES = {
   ann_or: 9043, // vrai nom : Kwakanneau (variante de Flammes, la dorée)
 };
 
-const gen = readFileSync("src/items_gen.ts", "utf-8");
-const items = [...gen.matchAll(/"id": "(\w+)",\s+"nom": "([^"]+)"/g)].map((m) => [m[1], m[2]]);
+const items = Object.values(JSON.parse(readFileSync("src/content/items.json", "utf-8")))
+  .map((it) => [it.id, it.nom]);
 
 const echap = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const manquants = [];
