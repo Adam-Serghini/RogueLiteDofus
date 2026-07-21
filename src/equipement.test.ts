@@ -131,7 +131,7 @@ describe("rareté (objets à toiles)", () => {
   it("Incarnam droppe depuis son pool de toile ; les 12 zones de la t1 sont toutes à toile", () => {
     expect(butinToile("incarnam")!.normales).toContain("chapeau_de_l_aventurier");
     for (const z of ["larves", "grotte_hesque", "kwakwa"]) expect(butinToile(z)).not.toBeNull();
-    expect(butinToile("zone_inconnue")).toBeNull(); // le repli legacy reste couvert
+    expect(butinToile("zone_inconnue")).toBeNull(); // zone inconnue : aucun pool, aucun drop
     const run = nouvelleRun(["iop"]);
     const drops = tenterButin(run, "incarnam", "combat", () => 0); // tout tombe, pool[0], commun
     expect(drops.length).toBe(4);

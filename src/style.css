@@ -1168,11 +1168,6 @@ kbd {
   color: #b09a72;
   font-size: 0.8rem;
 }
-.equip-pano {
-  font-weight: 800;
-  color: var(--or-texte);
-  margin-top: 8px;
-}
 .equip-total {
   font-size: 0.72rem;
 }

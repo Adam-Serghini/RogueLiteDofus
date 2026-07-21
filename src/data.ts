@@ -183,7 +183,7 @@ export const RARETE_INFO: Record<Rarete, { nom: string; poids: number }> = {
 // --- Équipement (objets à rareté, importés de src/content/items.json) --------
 export const ITEMS: Record<string, Item> = ITEMS_TOILES;
 
-/** Pools d'objets à rareté d'une zone, par source de drop ; null = zone legacy. */
+/** Pools d'objets à rareté d'une zone, par source de drop ; null = zone inconnue (hors tranche). */
 export function butinToile(zoneId: string): PoolsToile | null {
   const idx = TRANCHES[0].zones.indexOf(zoneId);
   if (idx < 0) return null;

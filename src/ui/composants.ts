@@ -246,7 +246,7 @@ export function itemLignes(
   return parts.join(" · ");
 }
 
-/** Classe CSS de rareté d'un exemplaire ("" pour les objets legacy). */
+/** Classe CSS de rareté d'un exemplaire ("" si aucune rareté). */
 export const rareteCls = (inst?: ItemInstance | null): string => (inst?.rarete ? ` rarete-${inst.rarete}` : "");
 
 /** Nom d'objet coloré selon la rareté, avec libellé du palier en tooltip. */

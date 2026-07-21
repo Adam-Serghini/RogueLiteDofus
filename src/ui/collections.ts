@@ -116,11 +116,11 @@ export function showBestiaire(meta: Meta): Promise<void> {
 
 /** Armurerie : la collection persistante d'équipement, zone par zone.
  *  Jamais obtenu = grisé/transparent ; obtenu = en couleurs, avec le halo de la
- *  MEILLEURE rareté jamais obtenue (les objets legacy sans rareté n'ont pas de halo). */
+ *  MEILLEURE rareté jamais obtenue. */
 export function showArmurerie(meta: Meta): Promise<void> {
   return new Promise((res) => {
     const coll = meta.collection ?? {};
-    // catalogue d'une zone : pools à rareté (normales + exclusifs élite/boss/les-deux) ou pano legacy
+    // catalogue d'une zone : pools à rareté (normales + exclusifs élite/boss/les-deux)
     const itemsDeZone = (zoneId: string): { id: string; badge?: "boss" | "elite" | "elite_boss" }[] => {
       const pools = butinToile(zoneId);
       if (pools) {
