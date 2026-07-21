@@ -9,13 +9,11 @@ import {
   CLASSES,
   COMBATS,
   ITEMS,
-  PANOPLIES,
   MONSTRES,
   ZONES,
   TRANCHES,
   RARETE_INFO,
   KAMAS,
-  BUTIN_ZONE,
   butinToile,
   zonesDeTranche,
   MODIFICATEURS_ELITE,
@@ -1462,7 +1460,7 @@ function itemStatsHtml(inst: ItemInstance): string {
     if (v) chip(`ichip-res elem-${e}${v < 0 ? " malus" : ""}`, `${signe(Math.round(v * 100))}% ${elNom[e]}`);
   }
   // attaque d'arme (palier prioritaire)
-  const att = (inst.rarete ? it?.tiers?.[inst.rarete]?.attaque : undefined) ?? it?.attaque;
+  const att = inst.rarete ? it?.tiers?.[inst.rarete]?.attaque : undefined;
   if (att) chip("ichip-arme", `⚔ ${att.baseMin}–${att.baseMax} (${att.coutPA} PA)${att.cible === "ennemi_tous" ? " · ligne arrière" : ""}${att.vampirisme ? ` · vol ${Math.round(att.vampirisme * 100)} %` : ""}`);
   if (it?.paGamble) chips.push(`<span class="ichip ichip-pa" title="À chaque tour : ${Math.round(it.paGamble.pPlus * 100)} % de gagner +${it.paGamble.plus} PA, sinon −${it.paGamble.moins} PA">🎲 ${Math.round(it.paGamble.pPlus * 100)} % +${it.paGamble.plus} PA / −${it.paGamble.moins}</span>`);
   if (it?.ligneAvant) chips.push(`<span class="ichip malus" title="Équipable uniquement sur un personnage de la ligne avant">Ligne avant uniqt</span>`);
@@ -1537,17 +1535,6 @@ export function showInventaire(
         </div>`;
       }).join("");
 
-      // bonus de panoplie en cours pour ce perso
-      const compte: Record<string, number> = {};
-      for (const s of SLOTS) {
-        const inst = perso.equipement[s];
-        const it = inst ? ITEMS[inst.id] : undefined;
-        if (it?.panoplie) compte[it.panoplie] = (compte[it.panoplie] ?? 0) + 1;
-      }
-      const panoTxt = Object.entries(compte)
-        .map(([pid, n]) => `${PANOPLIES[pid]?.nom ?? pid} ${n}/${PANOPLIES[pid]?.pieces.length ?? 6}`)
-        .join(" · ");
-
       const inv = inventaire.length
         ? ordonnerInventaire(inventaire)
             .map(({ inst, i }) => {
@@ -1571,7 +1558,6 @@ export function showInventaire(
           <div class="equip-col">
             <h3>${escapeHtml(CLASSES[perso.classeId].nom)} · PV max ${pvMaxPerso(perso)}</h3>
             <div class="equip-slots">${slots}</div>
-            <p class="equip-pano">${panoTxt || "Aucune pièce équipée"}</p>
             <p class="equip-total muet">Bonus total : ${totalTxt}</p>
           </div>
           <div class="equip-col">
@@ -1939,7 +1925,7 @@ function carteProgression(p: PersoState): string {
   const classe = CLASSES[p.classeId];
   const prog = p.progression;
   const finals = statsFinales(classe, prog);
-  const bonus = bonusEquipement(p); // stats d'équipement + bonus de panoplie
+  const bonus = bonusEquipement(p); // stats d'équipement
   const pvMax = pvMaxPerso(p); // PV max équipement inclus
   const xpReq = xpRequis(prog.niveau);
   const xpPct = Math.min(100, Math.round((prog.xp / xpReq) * 100));
@@ -2184,7 +2170,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
         for (const id of pools.boss) entrees.set(id, { id, badge: entrees.get(id)?.badge === "elite" ? "elite_boss" : "boss" });
         return [...entrees.values()];
       }
-      return (PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? []).map((id) => ({ id }));
+      return [];
     };
     let total = 0, possedes = 0;
     const zoneHtml = (z: (typeof ZONES)[number]): string => {
@@ -2197,8 +2183,8 @@ export function showArmurerie(meta: Meta): Promise<void> {
         .map(({ id, badge }) => {
           const it = ITEMS[id]!;
           const palier = coll[id]; // undefined = jamais obtenu
-          const aHalo = palier && palier !== "base";
-          const rareteTxt = aHalo ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : palier ? "obtenu" : "jamais obtenu";
+          const aHalo = !!palier;
+          const rareteTxt = palier ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : "jamais obtenu";
           const badgeNom = { boss: "Boss", elite: "Élite", elite_boss: "Élite/Boss" } as const;
           const badgeSource = { boss: "donjon", elite: "combat dur", elite_boss: "combat dur & donjon" } as const;
           const badgeHtml = badge ? `<span class="bestiaire-badge armu-badge-${badge}">${badgeNom[badge]}</span>` : "";
@@ -2206,7 +2192,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
             <img src="${itemImg(id)}" alt="" loading="lazy" onerror="this.remove()" />
             ${badgeHtml}
             <span${aHalo ? ` class="inom-${palier}"` : ""}>${escapeHtml(it.nom)}</span>
-            <small>${aHalo ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : SLOT_NOM[it.slot]}</small>
+            <small>${palier ? RARETE_INFO[palier as keyof typeof RARETE_INFO].nom : SLOT_NOM[it.slot]}</small>
           </div>`;
         })
         .join("");

@@ -40,15 +40,10 @@ export interface TierItem {
   attaque?: AttaqueArme; // armes : peut progresser avec la rareté
 }
 
-/** Fourchette de jet [min, max] d'une stat sur un item (système legacy). */
-export type StatRolls = Partial<Record<keyof Stats, [number, number]>>;
-
 export interface Item {
   id: string;
   nom: string;
   slot: EquipSlot;
-  panoplie?: string; // id de la panoplie (objets legacy uniquement)
-  rolls?: StatRolls; // fourchettes de stats tirées au drop (legacy)
   tiers?: Partial<Record<Rarete, TierItem>>; // objets à rareté (stats fixes par palier)
   source?: "boss" | "elite" | "elite_boss"; // drop exclusif : donjon / combat dur / les deux
   paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip : pari de PA à chaque tour
@@ -69,35 +64,18 @@ export interface Item {
   renaissance?: number; // Kwakwanneau : renaît une fois par combat à cette fraction des PV max
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
-  // arme : attaque au corps à corps (case 1 en combat), élément = élément de frappe du perso
-  attaque?: AttaqueArme;
   img?: string;
 }
 
-/** Exemplaire d'item (inventaire/équipement). Legacy : stats rollées au drop.
- *  Rareté : stats/résists/PA du palier, FIGÉS ici au drop (la save reste autonome). */
+/** Exemplaire d'item (inventaire/équipement) : stats/résists/PA du palier, FIGÉS ici au drop
+ *  (la save reste autonome). */
 export interface ItemInstance {
   id: string; // id de l'Item de base
-  stats: Partial<Stats>; // valeurs tirées (legacy) ou du palier (rareté)
-  rarete?: Rarete; // absent = objet legacy (pas de halo)
+  stats: Partial<Stats>; // valeurs du palier (rareté)
+  rarete?: Rarete;
   adaptatif?: number; // stat adaptative du palier (carac de la voie du porteur)
   resistances?: Partial<Record<Element, number>>; // résistances du palier
   pa?: number; // PA bonus du palier
-}
-
-/** Bonus de panoplie accordé à partir de `seuil` pièces équipées. */
-export interface PanoplieBonus {
-  seuil: number;
-  stats?: Partial<Stats>;
-  pvBonus?: number;
-  resistances?: Partial<Record<Element, number>>;
-}
-
-export interface Panoplie {
-  id: string;
-  nom: string;
-  pieces: string[]; // ids des objets (un par slot)
-  bonus: PanoplieBonus[];
 }
 
 export type SpellTarget =
@@ -356,7 +334,7 @@ export interface Meta {
   runs: number; // nombre total de runs terminées (victoire ou mort)
   victoires: number; // sous-ensemble : runs achevées (les 6 zones vaincues)
   succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
-  collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue ("base" pour un objet legacy sans rareté)
+  collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

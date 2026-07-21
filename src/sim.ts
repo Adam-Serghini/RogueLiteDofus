@@ -6,7 +6,7 @@
 //  et sort un tableau : taux de victoire, tours joués, PV restants sur victoire.
 //  Équipe de référence : 4 classes par défaut, montée au NIVEAU ATTENDU de la
 //  zone (dérivé de la courbe d'XP), points investis dans la stat offensive
-//  dominante. Deux scénarios de stuff : « nu » et « set de zone » (rolls moyens).
+//  dominante. Deux scénarios de stuff : « nu » et « set de zone » (toile, palier commun).
 //
 //  LIMITES (à garder en tête) : `controllerIA` ne joue pas de façon optimale
 //  (spam du sort le plus cher, focus PV le plus bas ; seul le soin est géré via
@@ -15,7 +15,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, PANOPLIES, BUTIN_ZONE, XP_PAR_TYPE, XP_PAR_TOILE, SORTS, butinToile,
+  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, XP_PAR_TYPE, XP_PAR_TOILE, SORTS, butinToile,
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
@@ -70,17 +70,6 @@ function mulberry32(a: number): () => number {
 const estSoutien = (classeId: string): boolean =>
   CLASSES[classeId].sorts.some((id) => SORTS[id]?.type === "soin");
 
-/** ItemInstance aux stats = milieu de chaque fourchette (drop « moyen », legacy). */
-function itemMoyen(id: string): ItemInstance {
-  const rolls = ITEMS[id]?.rolls ?? {};
-  const stats: Partial<Stats> = {};
-  for (const k of Object.keys(rolls) as (keyof Stats)[]) {
-    const [lo, hi] = rolls[k]!;
-    stats[k] = Math.floor((lo + hi) / 2);
-  }
-  return { id, stats };
-}
-
 const SLOTS_SIM = ["arme", "coiffe", "cape", "anneau"] as const;
 
 /** Exemplaire d'un objet à rareté au palier demandé (repli : premier palier défini). */
@@ -122,8 +111,8 @@ function courbeNiveaux(): { entree: number[]; fin: number[] } {
 
 /**
  * Équipe de référence au niveau `niveau`, éventuellement stuffée des
- * `nbPieces` premières pièces du set `setId` (2 = mi-set réaliste, avec le
- * bonus de panoplie 2 pièces ; défaut = set complet).
+ * `nbPieces` premières pièces du pool de toile de la zone (2 = mi-set
+ * réaliste ; défaut = set complet).
  */
 function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunState {
   const run = nouvelleRun(IDS);
@@ -147,11 +136,6 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
       for (const slot of SLOTS_SIM.slice(0, nbPieces)) {
         const id = meilleurItemToile(pool, slot, TEAM[i].stat);
         if (id) perso.equipement[slot] = itemPalier(id, "commun");
-      }
-    } else if (zoneId) {
-      const setId = BUTIN_ZONE[zoneId];
-      for (const pieceId of PANOPLIES[setId]?.pieces.slice(0, nbPieces) ?? []) {
-        perso.equipement[ITEMS[pieceId].slot] = itemMoyen(pieceId);
       }
     }
     perso.pvActuels = pvMaxPerso(perso);
@@ -217,7 +201,7 @@ describe("équilibrage — simulation par rencontre", () => {
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
     out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${ELEM_DE_STAT[t.stat as string]})`).join(" ")}`);
     out.push(`Niveau attendu/zone: ${ZONES_SIM.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
-    out.push(`Colonnes — NU (sans stuff) | MI (2 pièces + bonus 2p) | SET (4 pièces, rolls moyens) : win% · tours · PV%restant(sur victoire)\n`);
+    out.push(`Colonnes — NU (sans stuff) | MI (2 pièces, toile commun) | SET (4 pièces, toile commun) : win% · tours · PV%restant(sur victoire)\n`);
 
     for (let z = 0; z < ZONES_SIM.length; z++) {
       const zone = ZONES_SIM[z];
@@ -225,7 +209,7 @@ describe("équilibrage — simulation par rencontre", () => {
       const runNu = equipeReference(niveau);
       const runMi = equipeReference(niveau, zone.id, 2);
       const runSet = equipeReference(niveau, zone.id);
-      out.push(`── ${zone.nom} (niv ${niveau}, ${butinToile(zone.id) ? "toile (objets communs)" : `set « ${PANOPLIES[BUTIN_ZONE[zone.id]]?.nom ?? "?"} »`}) ──`);
+      out.push(`── ${zone.nom} (niv ${niveau}, toile (objets communs)) ──`);
       const lignes: Array<{ id: string; type: string }> = [
         ...zone.pools.normales.map((id) => ({ id, type: "normale" })),
         ...zone.pools.elite.map((id) => ({ id, type: "élite" })),

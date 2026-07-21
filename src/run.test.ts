@@ -51,14 +51,14 @@ describe("sauvegarde de run", () => {
   it("round-trip : sauver puis charger restitue la run (zone, persos, PV, inventaire)", () => {
     const run = nouvelleRun(["iop", "cra"]);
     run.persos[0].pvActuels = 12;
-    run.inventaire.push({ id: "bouftou_coiffe", stats: { force: 10 } });
+    run.inventaire.push({ id: "chapeau_de_l_aventurier", rarete: "commun", stats: { vitalite: 4 } });
     sauverRunEnCours(3, run);
     const s = chargerRunEnCours();
     expect(s).not.toBeNull();
     expect(s!.zoneIdx).toBe(3);
     expect(s!.run.persos.map((p) => p.classeId)).toEqual(["iop", "cra"]);
     expect(s!.run.persos[0].pvActuels).toBe(12);
-    expect(s!.run.inventaire[0]).toEqual({ id: "bouftou_coiffe", stats: { force: 10 } });
+    expect(s!.run.inventaire[0]).toEqual({ id: "chapeau_de_l_aventurier", rarete: "commun", stats: { vitalite: 4 } });
   });
 
   it("effacer supprime la sauvegarde ; une save corrompue est ignorée", () => {
@@ -324,13 +324,13 @@ describe("recrutement — équipement du partant", () => {
   it("le remplacé rend son stuff à l'inventaire de la run", async () => {
     const { nouvelleRun, recruter, equiper, rollItem } = await import("./run");
     const run = nouvelleRun(["iop", "cra"]);
-    run.inventaire.push(rollItem("bouftou_coiffe", () => 0));
+    run.inventaire.push(rollItem("coiffe_bouftou", () => 0));
     equiper(run.inventaire, run.persos[0], 0); // le Iop porte la coiffe
     expect(run.inventaire.length).toBe(0);
     recruter(run, "sram", "iop"); // le Sram remplace le Iop
     expect(run.persos.some((p) => p.classeId === "iop")).toBe(false);
     expect(run.inventaire.length).toBe(1); // la coiffe est revenue
-    expect(run.inventaire[0].id).toBe("bouftou_coiffe");
+    expect(run.inventaire[0].id).toBe("coiffe_bouftou");
   });
 });
 

@@ -1,74 +1,48 @@
 // =============================================================================
-//  equipement.test.ts — Objets (jets), panoplies, drops, équiper/déséquiper.
+//  equipement.test.ts — Objets à rareté (toiles), drops, équiper/déséquiper.
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, combattantDepuisPerso, bonusEquipement,
   equiper, desequiper, tenterButin, rollItem, tirerRarete,
 } from "./run";
-import { PANOPLIES, butinToile } from "./data";
+import { butinToile } from "./data";
 import type { Meta } from "./types";
 
 const MIN = () => 0;     // jet au minimum de la fourchette (déterministe)
-const MAX = () => 0.999; // jet au maximum
 
-describe("jets d'items (rollItem)", () => {
-  it("tire chaque stat dans sa fourchette", () => {
-    expect(rollItem("bouftou_coiffe", MIN).stats).toEqual({ force: 16, intelligence: 16 }); // [16,20] → min
-    expect(rollItem("bouftou_coiffe", MAX).stats).toEqual({ force: 20, intelligence: 20 }); // → max
-    expect(rollItem("paysan_anneau", MIN).stats).toEqual({ chance: 11 }); // [11,15] → min
-  });
-});
-
-describe("bonus d'équipement & panoplie", () => {
-  it("somme les stats rollées des objets équipés", () => {
+describe("bonus d'équipement", () => {
+  it("somme les stats fixes des objets équipés (paliers commun)", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    // 2 pièces de panoplies DIFFÉRENTES → pas de bonus de set, on teste la somme brute
-    run.inventaire.push(rollItem("bouftou_coiffe", MIN)); // force16 int16
+    run.inventaire.push(rollItem("chapeau_de_l_aventurier", MIN)); // commun : vita 4
     equiper(run.inventaire, p, 0);
-    run.inventaire.push(rollItem("forgeron_anneau", MIN)); // vita21
+    run.inventaire.push(rollItem("cape_de_l_aventurier", MIN)); // commun : vita 6, prospection 2
     equiper(run.inventaire, p, 0);
     const b = bonusEquipement(p);
-    expect(b.stats.force).toBe(16);
-    expect(b.stats.intelligence).toBe(16);
-    expect(b.stats.vitalite).toBe(21);
-  });
-
-  it("déclenche les bonus de panoplie aux seuils (2 et 4 pièces)", () => {
-    const run = nouvelleRun(["iop"]);
-    const p = run.persos[0];
-    for (const id of PANOPLIES.aventurier.pieces.slice(0, 2)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
-    expect(bonusEquipement(p).stats.vitalite).toBe(10);       // bonus seuil 2
-    expect(bonusEquipement(p).resistances.terre ?? 0).toBe(0); // pas encore le bonus 4
-    for (const id of PANOPLIES.aventurier.pieces.slice(2)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
-    expect(bonusEquipement(p).resistances.terre).toBe(0.05);   // bonus seuil 4
+    expect(b.stats.vitalite).toBe(10);
+    expect(b.stats.prospection).toBe(2);
+    expect(b.resistances.terre).toBeCloseTo(0.02); // 0.01 + 0.01
+    expect(b.resistances.feu).toBeCloseTo(0.02);
   });
 
   it("combattantDepuisPerso applique stats, PV et résistances de l'équipement", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
     const base = combattantDepuisPerso(p);
-    run.inventaire.push(rollItem("bouftou_cape", MIN)); // Cape Bouffante +26 vita (min)
+    run.inventaire.push(rollItem("cape_de_l_aventurier", MIN)); // commun : +6 vita
     equiper(run.inventaire, p, 0);
     const equipe = combattantDepuisPerso(p);
-    expect(equipe.pvMax).toBe(base.pvMax + 26);
-    expect(equipe.stats.vitalite).toBe((base.stats.vitalite ?? 0) + 26);
-
-    // panoplie Bouftou complète → résistance Terre du bonus 6 pièces
-    for (const id of PANOPLIES.bouftou.pieces) {
-      if (id === "bouftou_cape") continue; // déjà équipée plus haut
-      run.inventaire.push(rollItem(id, MIN));
-      equiper(run.inventaire, p, 0);
-    }
-    expect(combattantDepuisPerso(p).resistances.terre).toBe(0.12);
+    expect(equipe.pvMax).toBe(base.pvMax + 6);
+    expect(equipe.stats.vitalite).toBe((base.stats.vitalite ?? 0) + 6);
+    expect(equipe.resistances.terre ?? 0).toBeCloseTo(0.01);
   });
 });
 
 describe("drops", () => {
   it("tenterButin renvoie des exemplaires et autorise les doublons", () => {
     const run = nouvelleRun(["iop"]);
-    const drops = tenterButin(run, "tainela", "combat", MIN); // rng 0 → tout tombe (zone legacy)
+    const drops = tenterButin(run, "tainela", "combat", MIN); // rng 0 → tout tombe (pool de la toile 3)
     expect(drops.length).toBe(4);
     expect(drops[0]).toHaveProperty("stats"); // exemplaire rollé
     const drops2 = tenterButin(run, "tainela", "combat", MIN); // re-drop possible
@@ -88,29 +62,34 @@ describe("drops", () => {
     expect(tenterButin(faible, "tainela", "combat", rng).length).toBe(0);
     expect(tenterButin(forte, "tainela", "combat", rng).length).toBeGreaterThan(0);
   });
+
+  it("zone inconnue (sans pool de toile) : aucun drop", () => {
+    const run = nouvelleRun(["iop"]);
+    expect(tenterButin(run, "zone_inconnue", "combat", MIN)).toEqual([]);
+  });
 });
 
 describe("équiper / déséquiper", () => {
   it("échange l'exemplaire entre l'inventaire et le slot", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    run.inventaire.push(rollItem("aventurier_coiffe", MIN));
+    run.inventaire.push(rollItem("chapeau_de_l_aventurier", MIN));
     equiper(run.inventaire, p, 0);
-    expect(p.equipement.coiffe?.id).toBe("aventurier_coiffe");
+    expect(p.equipement.coiffe?.id).toBe("chapeau_de_l_aventurier");
     expect(run.inventaire.length).toBe(0);
     desequiper(run.inventaire, p, "coiffe");
     expect(p.equipement.coiffe).toBeUndefined();
-    expect(run.inventaire.some((i) => i.id === "aventurier_coiffe")).toBe(true);
+    expect(run.inventaire.some((i) => i.id === "chapeau_de_l_aventurier")).toBe(true);
   });
 
   it("équiper un 2e objet du même slot renvoie l'ancien à l'inventaire", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    run.inventaire.push(rollItem("aventurier_coiffe", MIN), rollItem("bouftou_coiffe", MIN));
-    equiper(run.inventaire, p, 0); // aventurier_coiffe
-    equiper(run.inventaire, p, 0); // bouftou_coiffe (désormais en tête)
-    expect(p.equipement.coiffe?.id).toBe("bouftou_coiffe");
-    expect(run.inventaire.some((i) => i.id === "aventurier_coiffe")).toBe(true);
+    run.inventaire.push(rollItem("chapeau_de_l_aventurier", MIN), rollItem("coiffe_bouftou", MIN));
+    equiper(run.inventaire, p, 0); // chapeau_de_l_aventurier
+    equiper(run.inventaire, p, 0); // coiffe_bouftou (désormais en tête)
+    expect(p.equipement.coiffe?.id).toBe("coiffe_bouftou");
+    expect(run.inventaire.some((i) => i.id === "chapeau_de_l_aventurier")).toBe(true);
   });
 });
 
@@ -119,11 +98,11 @@ describe("attaque d'arme (case 1)", () => {
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
     expect(combattantDepuisPerso(p).armeSort).toBeUndefined(); // sans arme : case 1 vide
-    run.inventaire.push(rollItem("bouftou_arme", MIN));
+    run.inventaire.push(rollItem("epee_de_l_aventurier", MIN)); // commun
     equiper(run.inventaire, p, 0);
     const c = combattantDepuisPerso(p);
-    expect(c.armeSort?.coutPA).toBe(4); // coût propre à l'arme
-    expect(c.armeSort?.baseMax).toBe(22); // dégâts propres à l'arme
+    expect(c.armeSort?.coutPA).toBe(3); // coût propre à l'arme
+    expect(c.armeSort?.baseMax).toBe(11); // dégâts du palier commun
     expect(c.armeSort?.cible).toBe("ennemi_ligne");
   });
 });
@@ -246,13 +225,6 @@ describe("Armurerie (collection persistante)", () => {
     expect(meta.collection?.coiffe_du_tofu).toBe("legendaire");
     enregistrerCollection(meta, [{ id: "coiffe_du_tofu", rarete: "commun", stats: {} }]); // régression ignorée
     expect(meta.collection?.coiffe_du_tofu).toBe("legendaire");
-  });
-
-  it("un objet legacy sans rareté est marqué « base »", async () => {
-    const { enregistrerCollection } = await import("./run");
-    const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
-    enregistrerCollection(meta, [rollItem("bouftou_coiffe", MIN)]);
-    expect(meta.collection?.bouftou_coiffe).toBe("base");
   });
 });
 

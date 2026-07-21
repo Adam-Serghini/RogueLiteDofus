@@ -3,7 +3,7 @@
 //  Garde-fou : à chaque nouvelle zone, ces invariants doivent tenir.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { ZONES, COMBATS, MONSTRES, PANOPLIES, ITEMS, BUTIN_ZONE, TRANCHES, zonesDeTranche } from "./data";
+import { ZONES, COMBATS, MONSTRES, ITEMS, TRANCHES, zonesDeTranche, butinToile, itemsDeToile } from "./data";
 
 describe("intégrité des zones", () => {
   for (const zone of ZONES) {
@@ -27,12 +27,10 @@ describe("intégrité des zones", () => {
         expect(boss.length, `${zone.pools.boss} doit avoir 1 boss`).toBe(1);
       });
 
-      it("a une panoplie de butin valide dont les pièces existent", () => {
-        const panoId = BUTIN_ZONE[zone.id];
-        expect(panoId, `butin de ${zone.id}`).toBeDefined();
-        const pano = PANOPLIES[panoId];
-        expect(pano, `panoplie ${panoId}`).toBeDefined();
-        for (const piece of pano.pieces) expect(ITEMS[piece], `pièce ${piece}`).toBeDefined();
+      it("a un pool de butin à toile dont les objets existent", () => {
+        const pools = butinToile(zone.id);
+        expect(pools, `butin de ${zone.id}`).not.toBeNull();
+        for (const id of itemsDeToile(pools)) expect(ITEMS[id], `objet ${id}`).toBeDefined();
       });
     });
   }

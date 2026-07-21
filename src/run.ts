@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, PANOPLIES, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, BUTIN_ZONE, butinToile, itemsDeToile, KAMAS, TRANCHES } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
@@ -218,7 +218,7 @@ export function statPrincipale(state: PersoState): keyof Stats {
   return best;
 }
 
-/** Bonus total apporté par l'équipement d'un perso (objets + bonus de panoplie). */
+/** Bonus total apporté par l'équipement d'un perso (objets équipés). */
 export function bonusEquipement(state: PersoState): {
   stats: Stats; pvBonus: number; resistances: Partial<Record<Element, number>>; paBonus: number;
 } {
@@ -226,7 +226,6 @@ export function bonusEquipement(state: PersoState): {
   let pvBonus = 0;
   let paBonus = 0;
   const resistances: Partial<Record<Element, number>> = {};
-  const comptePano: Record<string, number> = {};
   for (const slot of Object.keys(state.equipement) as EquipSlot[]) {
     const inst = state.equipement[slot];
     const item = inst ? ITEMS[inst.id] : undefined;
@@ -237,12 +236,6 @@ export function bonusEquipement(state: PersoState): {
     paBonus += inst.pa ?? 0; // PA d'équipement (paliers de rareté)
     ajouterRes(resistances, item.resistances);
     ajouterRes(resistances, inst.resistances); // résistances du palier de rareté
-    if (item.panoplie) comptePano[item.panoplie] = (comptePano[item.panoplie] ?? 0) + 1;
-  }
-  for (const [panoId, n] of Object.entries(comptePano)) {
-    for (const b of PANOPLIES[panoId]?.bonus ?? []) {
-      if (n >= b.seuil) { ajouterStats(stats, b.stats); pvBonus += b.pvBonus ?? 0; ajouterRes(resistances, b.resistances); }
-    }
   }
   return { stats, pvBonus, resistances, paBonus };
 }
@@ -264,7 +257,7 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
   // pour un objet à rareté, l'attaque du palier prime (elle peut progresser)
   const armeInst = state.equipement.arme;
   const armeItem = armeInst ? ITEMS[armeInst.id] : undefined;
-  const attaque = (armeInst?.rarete ? armeItem?.tiers?.[armeInst.rarete]?.attaque : undefined) ?? armeItem?.attaque;
+  const attaque = armeInst?.rarete ? armeItem?.tiers?.[armeInst.rarete]?.attaque : undefined;
   const armeSort: Spell | undefined = armeItem && attaque
     ? {
       id: "arme_attaque", nom: armeItem.nom, type: "degats",
@@ -382,18 +375,9 @@ export function rollItemRarete(itemId: string, rng: () => number, autorisees: re
   return instanceDuTier(itemId, tirerRarete(rng, disponibles));
 }
 
-/** Crée un exemplaire d'item. Objet à rareté : palier tiré, stats fixes figées.
- *  Objet legacy : chaque stat tirée dans sa fourchette (jet façon Dofus). */
+/** Crée un exemplaire d'item : palier de rareté tiré, stats fixes figées. */
 export function rollItem(itemId: string, rng: () => number): ItemInstance {
-  const item = ITEMS[itemId];
-  if (item?.tiers) return rollItemRarete(itemId, rng)!;
-  const stats: Partial<Stats> = {};
-  const rolls = item?.rolls ?? {};
-  for (const k of Object.keys(rolls) as (keyof Stats)[]) {
-    const [lo, hi] = rolls[k]!;
-    stats[k] = lo + Math.floor(rng() * (hi - lo + 1));
-  }
-  return { id: itemId, stats };
+  return rollItemRarete(itemId, rng)!;
 }
 
 /** Prospection cumulée de l'équipe (stat de classe + équipement).
@@ -423,8 +407,7 @@ export function multKamasEquipe(run: RunState): number {
 
 /**
  * Tire le butin d'une victoire. Zone à toile (objets à rareté) : 4 tirages, chacun
- * pioche un objet au hasard dans le pool de la zone. Zone legacy : chaque pièce de
- * la panoplie a sa chance. Doublons autorisés.
+ * pioche un objet au hasard dans le pool de la zone. Doublons autorisés.
  */
 export function tenterButin(run: RunState, zoneId: string, type: string, rng: () => number, tauxType: string = type): ItemInstance[] {
   // tauxType découple le TAUX de drop du POOL : un combat dur modifié paie au taux
@@ -435,18 +418,19 @@ export function tenterButin(run: RunState, zoneId: string, type: string, rng: ()
   const p = taux * mult;
   const drops: ItemInstance[] = [];
   const pools = butinToile(zoneId);
-  const tirages = pools ? pools.normales : (PANOPLIES[BUTIN_ZONE[zoneId]]?.pieces ?? []);
+  if (!pools) return [];
+  const tirages = pools.normales;
   for (let i = 0; i < Math.min(Math.max(tirages.length, 1), 4); i++) {
     if (rng() < p) {
       let source = tirages;
       // le PREMIER tirage vient de la source exclusive du nœud (la carotte) :
       // objets « boss » au donjon, objets « élite » aux combats durs
-      if (pools && i === 0) {
+      if (i === 0) {
         if (type === "donjon" && pools.boss.length) source = pools.boss;
         else if (type === "combat_dur" && pools.elites.length) source = pools.elites;
       }
       if (!source.length) continue;
-      const id = pools ? source[Math.floor(rng() * source.length)] : source[i];
+      const id = source[Math.floor(rng() * source.length)];
       const inst = rollItem(id, rng);
       run.inventaire.push(inst);
       drops.push(inst);
@@ -655,7 +639,7 @@ export const SUCCES: Succes[] = [
       const capturables = monstresDeZone(z).filter((id) => MONSTRES[id]?.archiNom);
       return capturables.length > 0 && capturables.every((id) => c.meta.archis.includes(id));
     }) },
-  { id: "quatre_par_quatre", nom: "Quatre par quatre", desc: "Finir une run avec 4 héros en panoplie complète.",
+  { id: "quatre_par_quatre", nom: "Quatre par quatre", desc: "Finir une run avec 4 héros entièrement équipés.",
     cond: (c) => !!c.run && c.run.persos.length === 4 &&
       c.run.persos.every((p) => (["arme", "coiffe", "cape", "anneau"] as const).every((s) => p.equipement[s])) },
 ];
@@ -678,15 +662,10 @@ export function toileDeZone(zoneId: string): number {
   return idx >= 0 ? idx + 1 : 1;
 }
 
-/** Toile d'origine d'un objet (pool de toile, sinon zone de sa panoplie legacy). */
+/** Toile d'origine d'un objet (pool de toile). */
 export function toileDeItem(itemId: string): number {
   for (let t = 1; t <= TRANCHES[0].zones.length; t++) {
     if (itemsDeToile(butinToile(TRANCHES[0].zones[t - 1])).includes(itemId)) return t;
-  }
-  const panoId = ITEMS[itemId]?.panoplie;
-  if (panoId) {
-    const zoneId = Object.keys(BUTIN_ZONE).find((z) => BUTIN_ZONE[z] === panoId);
-    if (zoneId) return toileDeZone(zoneId);
   }
   return 1;
 }
@@ -758,7 +737,7 @@ export function acheterArticle(run: RunState, stock: ArticleHDV[], index: number
 /** Palier de rareté SUIVANT réellement défini sur l'objet (null si au max / non forgeable). */
 export function rareteSuivante(inst: ItemInstance): Rarete | null {
   const tiers = ITEMS[inst.id]?.tiers;
-  if (!tiers || !inst.rarete) return null; // objets legacy (rolls) : non forgeables
+  if (!tiers || !inst.rarete) return null; // pas d'objet à rareté / instance sans rareté : non forgeable
   for (let i = RARETES.indexOf(inst.rarete) + 1; i < RARETES.length; i++) {
     if (tiers[RARETES[i]]) return RARETES[i];
   }
@@ -897,8 +876,7 @@ export function bonusDegatsDofus(meta: Meta): number {
 }
 
 // Armurerie : rang des paliers de collection, dérivé de l'ordre canonique RARETES
-// (« base » = objet legacy sans rareté, sous le commun)
-const RANG_COLLECTION: string[] = ["base", ...RARETES];
+const RANG_COLLECTION: string[] = [...RARETES];
 
 /** Enregistre des exemplaires obtenus dans la collection persistante (Armurerie) :
  *  on retient, par objet, la meilleure rareté jamais obtenue. */
@@ -907,7 +885,8 @@ export function enregistrerCollection(meta: Meta, insts: ItemInstance[]): void {
   const coll = (meta.collection ??= {});
   let modifie = false;
   for (const inst of insts) {
-    const palier = inst.rarete ?? "base";
+    const palier = inst.rarete;
+    if (!palier) continue; // instance sans rareté (ne devrait plus exister)
     const actuel = coll[inst.id];
     if (!actuel || RANG_COLLECTION.indexOf(palier) > RANG_COLLECTION.indexOf(actuel)) {
       coll[inst.id] = palier;
