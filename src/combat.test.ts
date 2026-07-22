@@ -20,6 +20,17 @@ const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
   rng: rngMax, log: () => {}, playerDamageBonus: 1, ...over,
 });
 
+// Sorts synthétiques : remplacent les anciens sorts du Cra (retirés lors du rework du kit)
+// pour tester les mécaniques GÉNÉRIQUES du moteur, indépendamment de tout contenu réel.
+// Mêmes valeurs de jet que les sorts d'origine → les nombres attendus ne changent pas.
+const SYN_DEGATS: Spell = { // ex-Flèche magique (baseMin9/baseMax13/scaling0.35, ennemi_ligne)
+  id: "syn_degats", nom: "Syn Dégâts", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 9, baseMax: 13, scaling: 0.35,
+};
+const SYN_IGNORE_RES: Spell = { // ex-Flèche intrusive (baseMin5/baseMax7/scaling0.2, ennemi_tous, ignoreResistances+ignoreBouclier)
+  id: "syn_ignore_res", nom: "Syn Ignore Résistances", type: "degats", cible: "ennemi_tous", coutPA: 3, baseMin: 5, baseMax: 7, scaling: 0.2,
+  ignoreResistances: true, ignoreBouclier: true,
+};
+
 describe("élément de frappe", () => {
   it("est déterminé par la plus haute stat élémentaire", () => {
     const [iop, cra] = fabriquerEquipe();
@@ -53,8 +64,8 @@ describe("élément de frappe", () => {
     iop.stats = { ...iop.stats, chance: 999 }; // frappe désormais en Eau
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.resistances = { eau: 0.5 }; // -50 % subis en Eau
-    const sansRes = degatsCible(iop, SORTS.fleche_magique, { ...cible, resistances: {} }, { useMax: true, mult: 1, ctx: ctx() });
-    const avecRes = degatsCible(iop, SORTS.fleche_magique, cible, { useMax: true, mult: 1, ctx: ctx() });
+    const sansRes = degatsCible(iop, SYN_DEGATS, { ...cible, resistances: {} }, { useMax: true, mult: 1, ctx: ctx() });
+    const avecRes = degatsCible(iop, SYN_DEGATS, cible, { useMax: true, mult: 1, ctx: ctx() });
     expect(avecRes.dmg).toBeLessThan(sansRes.dmg);
   });
 });
@@ -65,7 +76,7 @@ describe("degatsCible", () => {
     iop.stats = { ...iop.stats, force: 60, intelligence: 10 };
     const [cible] = fabriquerEnnemis("combat_1");
     cible.resistances = { terre: 0.15 }; // résiste +15 % à la Terre
-    const r = degatsCible(iop, SORTS.fleche_magique, cible, { useMax: true, mult: 1, ctx: ctx() });
+    const r = degatsCible(iop, SYN_DEGATS, cible, { useMax: true, mult: 1, ctx: ctx() });
     // (13 + 60*0.35) * (1 - 0.15) * multOffensif(Int 10 = 1.05) = 34 * 0.85 * 1.05 = 30.3 → 30
     expect(r.dmg).toBe(30);
     expect(r.esquive).toBe(false);
@@ -75,18 +86,18 @@ describe("degatsCible", () => {
   it("le bonus Dofus augmente les dégâts du joueur", () => {
     const [iop] = fabriquerEquipe();
     const [bouftou] = fabriquerEnnemis("combat_1");
-    const base = degatsCible(iop, SORTS.fleche_magique, bouftou, { useMax: true, mult: 1, ctx: ctx() });
-    const boost = degatsCible(iop, SORTS.fleche_magique, bouftou, {
+    const base = degatsCible(iop, SYN_DEGATS, bouftou, { useMax: true, mult: 1, ctx: ctx() });
+    const boost = degatsCible(iop, SYN_DEGATS, bouftou, {
       useMax: true, mult: 1, ctx: ctx({ playerDamageBonus: 1.3 }),
     });
     expect(boost.dmg).toBeGreaterThan(base.dmg);
   });
 
-  it("ignoreResistances : Flèche intrusive ignore la ligne de résistance", () => {
+  it("ignoreResistances ignore la ligne de résistance", () => {
     const [, cra] = fabriquerEquipe();
     cra.stats = { ...cra.stats, agilite: 55, intelligence: 20 };
     const [bouftou] = fabriquerEnnemis("combat_1");
-    const r = degatsCible(cra, SORTS.fleche_intrusive, bouftou, { useMax: true, mult: 1, ctx: ctx() });
+    const r = degatsCible(cra, SYN_IGNORE_RES, bouftou, { useMax: true, mult: 1, ctx: ctx() });
     // (7 + 55*0.2) * multOffensif(Int 20 = 1.10) = 18 * 1.10 = 19.8 → 20, aucune résistance
     expect(r.dmg).toBe(20);
   });
@@ -94,7 +105,7 @@ describe("degatsCible", () => {
   it("esquive (Agilité) annule les dégâts", () => {
     const [iop, cra] = fabriquerEquipe();
     cra.stats = { ...cra.stats, agilite: 55 }; // esquive via Agilité
-    const r = degatsCible(iop, SORTS.fleche_magique, cra, { useMax: true, mult: 1, ctx: ctx({ rng: rngZero }) });
+    const r = degatsCible(iop, SYN_DEGATS, cra, { useMax: true, mult: 1, ctx: ctx({ rng: rngZero }) });
     expect(r.esquive).toBe(true);
     expect(r.dmg).toBe(0);
   });
@@ -107,8 +118,8 @@ describe("degatsCible", () => {
     const seq = [0.9, 0.0];
     let i = 0;
     const rngCrit = () => seq[Math.min(i++, seq.length - 1)];
-    const base = degatsCible(iop, SORTS.fleche_magique, bouftou, { useMax: true, mult: 1, ctx: ctx() });
-    const crit = degatsCible(iop, SORTS.fleche_magique, bouftou, { useMax: true, mult: 1, ctx: ctx({ rng: rngCrit }) });
+    const base = degatsCible(iop, SYN_DEGATS, bouftou, { useMax: true, mult: 1, ctx: ctx() });
+    const crit = degatsCible(iop, SYN_DEGATS, bouftou, { useMax: true, mult: 1, ctx: ctx({ rng: rngCrit }) });
     expect(crit.crit).toBe(true);
     expect(crit.dmg).toBeGreaterThan(base.dmg); // crit = bonus multiplicatif
   });
@@ -118,7 +129,7 @@ describe("règle de ligne (grille avant/arrière)", () => {
   it("un sort de ligne ne vise que la ligne avant (cases 0-3)", () => {
     const [iop] = fabriquerEquipe();
     const ennemis = fabriquerEnnemis("combat_2"); // cases 0, 1 (avant) + 4 (arrière)
-    const cibles = ciblesValides(iop, SORTS.fleche_magique, [iop, ...ennemis]);
+    const cibles = ciblesValides(iop, SYN_DEGATS, [iop, ...ennemis]);
     expect(cibles.length).toBeGreaterThan(0);
     expect(cibles.every((c) => c.position < 4)).toBe(true);
   });
@@ -127,7 +138,7 @@ describe("règle de ligne (grille avant/arrière)", () => {
     const [iop] = fabriquerEquipe();
     const ennemis = fabriquerEnnemis("combat_2");
     ennemis.filter((e) => e.position < 4).forEach((e) => (e.pvActuels = 0)); // ligne avant K.O.
-    const cibles = ciblesValides(iop, SORTS.fleche_magique, [iop, ...ennemis]);
+    const cibles = ciblesValides(iop, SYN_DEGATS, [iop, ...ennemis]);
     expect(cibles.length).toBeGreaterThan(0);
     expect(cibles.every((c) => c.pvActuels > 0)).toBe(true); // survivants (arrière) exposés
   });
@@ -135,7 +146,7 @@ describe("règle de ligne (grille avant/arrière)", () => {
   it("ennemi_tous outrepasse la ligne", () => {
     const [, cra] = fabriquerEquipe();
     const ennemis = fabriquerEnnemis("combat_2");
-    expect(ciblesValides(cra, SORTS.fleche_intrusive, [cra, ...ennemis]).length).toBe(ennemis.length);
+    expect(ciblesValides(cra, SYN_IGNORE_RES, [cra, ...ennemis]).length).toBe(ennemis.length);
   });
 
   it("un ennemi ne peut viser que les alliés de la ligne avant", () => {
@@ -249,7 +260,12 @@ describe("Iop — nouvelles mécaniques", () => {
   });
 });
 
-describe("Cra — nouvelles mécaniques", () => {
+// Le rework du Cra a retiré les 7 sorts qui portaient historiquement ces mécaniques
+// génériques du moteur (rembPA, ignoreBouclier, poison, vulnérabilité, rebond). Elles
+// restent utilisées par d'autres classes/contenus (poison, reductionDegats, rebond) ou
+// sont conservées comme socle réutilisable (rembPA) : on les teste ici via des sorts
+// synthétiques plutôt que via un sort réel.
+describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
   const rngK = (k: number): (() => number) => () => k;
   const mkEnnemi = (ref: string, over: Record<string, unknown> = {}) => {
     const [e] = fabriquerEnnemis("combat_1");
@@ -258,52 +274,60 @@ describe("Cra — nouvelles mécaniques", () => {
     return Object.assign(e, over);
   };
 
-  it("Flèche magique : chance (Chance) de rembourser le coût en PA", () => {
+  it("rembPA : chance (Chance) de rembourser le coût en PA — mécanique sans sort réel, candidate à purge", () => {
+    const synRembPA: Spell = { id: "syn_remb_pa", nom: "Syn RembPA", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 9, baseMax: 13, scaling: 0.35, rembPA: true };
     const [, cra] = fabriquerEquipe(); // chance 0 → base 5 %
     cra.paActuels = 0;
     const rate = mkEnnemi("rate");
-    lancerSort(cra, SORTS.fleche_magique, "rate", [cra, rate], ctx({ rng: rngK(0.9) })); // 0.9 ≥ 0.05
+    lancerSort(cra, synRembPA, "rate", [cra, rate], ctx({ rng: rngK(0.9) })); // 0.9 ≥ 0.05
     expect(cra.paActuels).toBe(0);
     cra.paActuels = 0;
     const proc = mkEnnemi("proc");
-    lancerSort(cra, SORTS.fleche_magique, "proc", [cra, proc], ctx({ rng: rngK(0.01) })); // 0.01 < 0.05
+    lancerSort(cra, synRembPA, "proc", [cra, proc], ctx({ rng: rngK(0.01) })); // 0.01 < 0.05
     expect(cra.paActuels).toBe(3); // coût remboursé
   });
 
-  it("Flèche intrusive : ignore le bouclier (dégâts directs aux PV)", () => {
+  it("ignoreBouclier : dégâts directs aux PV, bouclier contourné", () => {
     const [, cra] = fabriquerEquipe();
     const e = mkEnnemi("e", { bouclier: 100 });
-    lancerSort(cra, SORTS.fleche_intrusive, "e", [cra, e], ctx());
+    lancerSort(cra, SYN_IGNORE_RES, "e", [cra, e], ctx());
     expect(e.pvActuels).toBeLessThan(500); // les PV baissent malgré le bouclier
     expect(e.bouclier).toBe(100); // bouclier intact (contourné)
   });
 
-  it("Maîtrise de l'arc : buffe l'élément de frappe (+10) et le 2ᵉ (+5)", () => {
+  it("poison (DoT) : le sort applique une brûlure sur la cible", () => {
+    const synPoison: Spell = { id: "syn_poison", nom: "Syn Poison", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 12, baseMax: 16, scaling: 0.4, poison: { degats: 6, duree: 2 } };
     const [, cra] = fabriquerEquipe();
-    cra.stats = { ...cra.stats, agilite: 40, force: 20 }; // Air (1er), Terre (2e)
-    cra.effets = [];
-    lancerSort(cra, SORTS.maitrise_arc, cra.ref, [cra], ctx());
-    expect(cra.effets.some((x) => x.stat === "agilite" && x.valeur === 10)).toBe(true);
-    expect(cra.effets.some((x) => x.stat === "force" && x.valeur === 5)).toBe(true);
-  });
-
-  it("Tir Puissant : double la durée de l'effet de la prochaine flèche", () => {
-    const [, cra] = fabriquerEquipe();
-    cra.doubleEffetProchain = false;
     const e = mkEnnemi("e");
-    lancerSort(cra, SORTS.tir_puissant, cra.ref, [cra, e], ctx()); // arme le doublement
-    expect(cra.doubleEffetProchain).toBe(true);
-    lancerSort(cra, SORTS.fleche_explosive, "e", [cra, e], ctx()); // brûlure 2t → 4t
+    lancerSort(cra, synPoison, "e", [cra, e], ctx());
     const brulure = e.effets.find((x) => x.stat === "poison");
-    expect(brulure?.toursRestants).toBe(4);
-    expect(cra.doubleEffetProchain).toBe(false); // flag consommé
+    expect(brulure).toMatchObject({ valeur: 6, toursRestants: 2 });
   });
 
-  it("Flèche corrosive : applique une vulnérabilité (+10 % dégâts subis)", () => {
+  it("effet reductionDegats négatif : applique une vulnérabilité (+10 % dégâts subis)", () => {
+    const synVulnerabilite: Spell = { id: "syn_vulnerabilite", nom: "Syn Vulnérabilité", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 6, baseMax: 9, scaling: 0.25, effet: { duree: 2, stat: "reductionDegats", valeur: -0.1 } };
     const [, cra] = fabriquerEquipe();
     const e = mkEnnemi("e");
-    lancerSort(cra, SORTS.fleche_corrosive, "e", [cra, e], ctx());
+    lancerSort(cra, synVulnerabilite, "e", [cra, e], ctx());
     expect(e.effets.some((x) => x.stat === "reductionDegats" && x.valeur === -0.1)).toBe(true);
+  });
+
+  it("rebond : touche la cible primaire puis rebondit, +X % de dégâts par saut", () => {
+    const synRebond: Spell = { id: "syn_rebond", nom: "Syn Rebond", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 9, baseMax: 13, scaling: 0.4, rebond: { sauts: 2, bonusParSaut: 0.2 } };
+    const [, cra] = fabriquerEquipe();
+    const e0 = mkEnnemi("e0"); e0.position = 0;
+    const e1 = mkEnnemi("e1"); e1.position = 1;
+    const e2 = mkEnnemi("e2"); e2.position = 2;
+    lancerSort(cra, synRebond, "e0", [cra, e0, e1, e2], ctx());
+    const d0 = 500 - e0.pvActuels;
+    const d1 = 500 - e1.pvActuels;
+    const d2 = 500 - e2.pvActuels;
+    expect(d0).toBeGreaterThan(0);
+    expect(d1).toBeGreaterThan(0);
+    expect(d2).toBeGreaterThan(0);
+    // +20 % de dégâts par saut : le 2e ennemi touché prend plus que le 1er, le 3e plus que le 2e
+    expect(d1).toBeGreaterThan(d0);
+    expect(d2).toBeGreaterThan(d1);
   });
 });
 

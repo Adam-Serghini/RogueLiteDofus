@@ -107,6 +107,8 @@ export type EffetStat =
   | "tetanise" // Tétanisation : le porteur ne peut pas viser la ligne arrière (flag)
   | "ignoreLigne" // le porteur ignore la règle de ligne : ses sorts ennemi_ligne visent aussi l'arrière (flag)
   | "paParTour" // crédite ce nombre de PA à chaque début de tour du porteur, tant que l'effet dure
+  | "aiguille" // Xélor : chaque Téléfrag reçu par le porteur le reblesse (écho d'Aiguille)
+  | "crit" // Tir Puissant : + crit plat temporaire (propagé dans statsEffectives → se.crit)
   // buffs/debuffs temporaires de caractéristique (sommés dans statsEffectives) :
   | "force"
   | "intelligence"
@@ -198,6 +200,18 @@ export interface Spell {
   retraitPAChance?: number; // probabilité du retrait de PA (retraitPA) ; défaut 0.3 si absent
   bonusParPADispo?: number; // Flèche Punitive : +X % de dégâts par PA dispo AVANT le paiement du coût
   bonusParTelefrag?: number; // Rayon Obscur : +X % de dégâts par Téléfrag posé sur la cible
+  // --- rework du Cra ---
+  enflammee?: boolean; // Flèche enflammée : handler dédié (éclaboussure asymétrique avant/arrière)
+  degatsPoussee?: boolean; // Flèche de recul : rider de deplaceCible "arriere" — dégâts ignoreResistances si ça bouscule
+  // --- kit du Roublard ---
+  poseBombe?: boolean; // Bombe collante : colle une charge sur la cible (sans dégâts), cap BOMBES_MAX
+  kaboom?: boolean; // Kaboom : handler dédié (détonne toutes les bombes posées)
+  boomerang?: boolean; // Dagues Boomerang : frappe la cible, l'ennemi derrière, puis re-frappe la cible
+  resquille?: number; // Resquille : PA retirés à chaque ennemi touché par le prochain Kaboom du lanceur
+  // --- kit du Xélor ---
+  etatAiguille?: boolean; // Aiguille : marqueur documentaire — dégâts + pose l'effet "aiguille" (générique via `effet`)
+  telefragSiOccupee?: boolean; // Pendule : rider de deplaceCible — double Téléfrag si la rangée de destination était occupée
+  paProchainTour?: number; // Prémonition : paBonusNextTurn = max(actuel, valeur) — non cumulable avec lui-même
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
@@ -334,6 +348,7 @@ export interface Combatant {
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
   bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
   telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX
+  resquilleActive?: number; // Resquille (Roublard) : PA à retirer par ennemi touché au prochain Kaboom (expire en fin de tour)
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort). */

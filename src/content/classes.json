@@ -7,14 +7,12 @@
     "pa": 6,
     "pvBase": 45,
     "sorts": [
-      "fleche_corrosive",
-      "fleche_magique",
-      "fleche_percante",
-      "fleche_intrusive",
-      "fleche_explosive",
+      "fleche_punitive",
+      "fleche_enflammee",
+      "fleche_de_recul",
+      "oeil_de_taupe",
       "tir_puissant",
-      "maitrise_arc",
-      "oeil_affute"
+      "acuite_absolue"
     ],
     "stats": {
       "agilite": 0,
@@ -148,6 +146,29 @@
       "vitalite": 0
     }
   },
+  "roublard": {
+    "id": "roublard",
+    "img": "/assets/classes/roublard.png",
+    "initiative": 12,
+    "nom": "Roublard",
+    "pa": 6,
+    "pvBase": 47,
+    "sorts": [
+      "bombe_collante",
+      "kaboom",
+      "dagues_boomerang",
+      "roublabot",
+      "roublardise",
+      "resquille"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
   "sadida": {
     "id": "sadida",
     "img": "/assets/classes/sadida.png",
@@ -188,6 +209,29 @@
       "mise_a_mort",
       "expert_poisons",
       "invisibilite"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
+  "xelor": {
+    "id": "xelor",
+    "img": "/assets/classes/xelor.png",
+    "initiative": 14,
+    "nom": "Xélor",
+    "pa": 6,
+    "pvBase": 44,
+    "sorts": [
+      "aiguille",
+      "sablier_de_xelor",
+      "pendule",
+      "rayon_obscur",
+      "cadran_de_xelor",
+      "premonition"
     ],
     "stats": {
       "agilite": 0,

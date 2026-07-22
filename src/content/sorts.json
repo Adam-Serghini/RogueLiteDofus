@@ -1,4 +1,40 @@
 {
+  "acuite_absolue": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 2,
+    "desc": "Ignore la ligne de vue pendant 2 tours.",
+    "effet": {
+      "duree": 2,
+      "stat": "ignoreLigne",
+      "valeur": 1
+    },
+    "id": "acuite_absolue",
+    "nom": "Acuité absolue",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "aiguille": {
+    "baseMax": 10,
+    "baseMin": 7,
+    "cible": "ennemi_ligne",
+    "coutPA": 2,
+    "desc": "Blesse et aiguille la cible (1 tour) : chaque Téléfrag reçu la reblesse.",
+    "effet": {
+      "duree": 1,
+      "stat": "aiguille",
+      "valeur": 1
+    },
+    "etatAiguille": true,
+    "id": "aiguille",
+    "maxParCibleParTour": 1,
+    "maxParTour": 2,
+    "nom": "Aiguille",
+    "scaling": 0.35,
+    "type": "degats"
+  },
   "all_in": {
     "baseMax": 10,
     "baseMin": 6,
@@ -110,6 +146,19 @@
     "scaling": 0,
     "type": "buff"
   },
+  "bombe_collante": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_tous",
+    "coutPA": 2,
+    "desc": "Colle une bombe à la cible (5 max). N'explose qu'au Kaboom.",
+    "id": "bombe_collante",
+    "maxParTour": 2,
+    "nom": "Bombe collante",
+    "poseBombe": true,
+    "scaling": 0,
+    "type": "degats"
+  },
   "bulle": {
     "baseMax": 7,
     "baseMin": 4,
@@ -125,6 +174,22 @@
     "nom": "Bulle",
     "scaling": 0.2,
     "type": "degats"
+  },
+  "cadran_de_xelor": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldownTours": 4,
+    "coutPA": 4,
+    "desc": "La rangée de l'allié gagne +2 PA à chacun de ses tours pendant 2 tours.",
+    "id": "cadran_de_xelor",
+    "nom": "Cadran de Xelor",
+    "paParTourLigne": {
+      "duree": 2,
+      "valeur": 2
+    },
+    "scaling": 0,
+    "type": "buff"
   },
   "carapace_doree": {
     "baseMax": 22,
@@ -266,6 +331,19 @@
       "duree": 2
     },
     "scaling": 0.3,
+    "type": "degats"
+  },
+  "dagues_boomerang": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "boomerang": true,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Frappe la cible ; si un ennemi est derrière elle, le frappe puis re-frappe la cible.",
+    "id": "dagues_boomerang",
+    "maxParTour": 1,
+    "nom": "Dagues Boomerang",
+    "scaling": 0.4,
     "type": "degats"
   },
   "deferlante": {
@@ -523,85 +601,42 @@
     "scaling": 0.15,
     "type": "degats"
   },
-  "fleche_corrosive": {
+  "fleche_de_recul": {
     "baseMax": 9,
     "baseMin": 6,
     "cible": "ennemi_ligne",
-    "coutPA": 4,
-    "desc": "Touche 2 ennemis (faibles dégâts) + vulnérabilité : +10 % de dégâts subis (2t).",
-    "effet": {
-      "duree": 2,
-      "stat": "reductionDegats",
-      "valeur": -0.1
-    },
-    "id": "fleche_corrosive",
-    "nom": "Flèche corrosive",
-    "rebond": {
-      "bonusParSaut": 0,
-      "sauts": 1
-    },
-    "scaling": 0.25,
-    "type": "degats"
-  },
-  "fleche_explosive": {
-    "baseMax": 16,
-    "baseMin": 12,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 2,
-    "coutPA": 5,
-    "desc": "Gros dégâts de zone (3 max) + brûlure sur chaque cible (6/t, 2t).",
-    "id": "fleche_explosive",
-    "nom": "Flèche Explosive",
-    "poison": {
-      "degats": 6,
-      "duree": 2
-    },
-    "rebond": {
-      "bonusParSaut": 0,
-      "sauts": 2
-    },
-    "scaling": 0.4,
-    "type": "degats"
-  },
-  "fleche_intrusive": {
-    "baseMax": 7,
-    "baseMin": 5,
-    "cible": "ennemi_tous",
-    "coutPA": 3,
-    "desc": "Frappe n'importe quel ennemi (même l'arrière) ; ignore résistances et bouclier.",
-    "id": "fleche_intrusive",
-    "ignoreBouclier": true,
-    "ignoreResistances": true,
-    "nom": "Flèche intrusive",
+    "coutPA": 2,
+    "degatsPoussee": true,
+    "deplaceCible": "arriere",
+    "desc": "Repousse la cible en rangée arrière ; dégâts de poussée (ignorent les résistances) si ça bouscule.",
+    "id": "fleche_de_recul",
+    "maxParTour": 1,
+    "nom": "Flèche de recul",
     "scaling": 0.2,
     "type": "degats"
   },
-  "fleche_magique": {
-    "baseMax": 13,
-    "baseMin": 9,
+  "fleche_enflammee": {
+    "baseMax": 11,
+    "baseMin": 8,
     "cible": "ennemi_ligne",
     "coutPA": 3,
-    "desc": "Dégâts modérés ; faible chance (scale Chance) de rembourser le coût en PA.",
-    "id": "fleche_magique",
-    "nom": "Flèche magique",
-    "rembPA": true,
+    "desc": "Frappe la cible et éclabousse 50 % sur 2 ennemis arrière ; pleine puissance partout si la cible est déjà en rangée arrière.",
+    "enflammee": true,
+    "id": "fleche_enflammee",
+    "nom": "Flèche enflammée",
     "scaling": 0.35,
     "type": "degats"
   },
-  "fleche_percante": {
-    "baseMax": 13,
-    "baseMin": 9,
+  "fleche_punitive": {
+    "baseMax": 14,
+    "baseMin": 10,
+    "bonusParPADispo": 0.08,
     "cible": "ennemi_ligne",
-    "cooldownTours": 2,
-    "coutPA": 5,
-    "desc": "Touche le 1er ennemi puis rebondit 2 fois, +20 % de dégâts par saut.",
-    "id": "fleche_percante",
-    "nom": "Flèche perçante",
-    "rebond": {
-      "bonusParSaut": 0.2,
-      "sauts": 2
-    },
-    "scaling": 0.4,
+    "coutPA": 4,
+    "desc": "+8 % de dégâts par PA disponible avant le tir.",
+    "id": "fleche_punitive",
+    "nom": "Flèche Punitive",
+    "scaling": 0.45,
     "type": "degats"
   },
   "fracas": {
@@ -694,6 +729,18 @@
     "scaling": 0,
     "type": "buff"
   },
+  "kaboom": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "soi",
+    "coutPA": 3,
+    "desc": "Détonne TOUTES les bombes : chaque bombe inflige ses dégâts au porteur et 50 % à sa rangée.",
+    "id": "kaboom",
+    "kaboom": true,
+    "nom": "Kaboom",
+    "scaling": 0.35,
+    "type": "degats"
+  },
   "lame_liquide": {
     "baseMax": 22,
     "baseMin": 16,
@@ -752,23 +799,6 @@
     "nom": "Mâchoire du coffre",
     "scaling": 0.48,
     "type": "degats"
-  },
-  "maitrise_arc": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 4,
-    "coutPA": 2,
-    "desc": "+10 à l'élément de frappe et +5 au 2ᵉ pendant 3 tours.",
-    "id": "maitrise_arc",
-    "maitriseArc": {
-      "duree": 3,
-      "principal": 10,
-      "secondaire": 5
-    },
-    "nom": "Maîtrise de l'arc",
-    "scaling": 0,
-    "type": "buff"
   },
   "mise_a_mort": {
     "baseMax": 46,
@@ -938,22 +968,37 @@
     "scaling": 0,
     "type": "buff"
   },
-  "oeil_affute": {
+  "oeil_de_taupe": {
+    "baseMax": 9,
+    "baseMin": 6,
+    "cible": "ennemi_tous",
+    "cooldownTours": 2,
+    "coutPA": 3,
+    "desc": "Blesse toute une rangée : les touchés ne peuvent plus viser la rangée arrière à leur prochain tour.",
+    "effet": {
+      "duree": 1,
+      "stat": "tetanise",
+      "valeur": 1
+    },
+    "id": "oeil_de_taupe",
+    "nom": "Œil de Taupe",
+    "scaling": 0.25,
+    "type": "degats",
+    "zoneLigne": true
+  },
+  "pendule": {
     "baseMax": 0,
     "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 3,
-    "coutPA": 2,
-    "desc": "Les 2 prochains sorts offensifs tapent au maximum de leur fourchette.",
-    "effet": {
-      "duree": 99,
-      "stat": "maxRoll",
-      "valeur": 2
-    },
-    "id": "oeil_affute",
-    "nom": "Œil affûté",
+    "cible": "ennemi_tous",
+    "coutPA": 1,
+    "deplaceCible": "toggle",
+    "desc": "Déplace la cible sur la rangée opposée ; si elle y est attendue, Téléfrag pour les deux.",
+    "id": "pendule",
+    "maxParCibleParTour": 1,
+    "nom": "Pendule",
     "scaling": 0,
-    "type": "buff"
+    "telefragSiOccupee": true,
+    "type": "degats"
   },
   "perception": {
     "baseMax": 0,
@@ -1053,6 +1098,18 @@
     "scaling": 0,
     "type": "invocation"
   },
+  "premonition": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "coutPA": 3,
+    "desc": "+2 PA au prochain tour (non cumulable).",
+    "id": "premonition",
+    "nom": "Prémonition",
+    "paProchainTour": 2,
+    "scaling": 0,
+    "type": "buff"
+  },
   "proie": {
     "baseMax": 0,
     "baseMin": 0,
@@ -1091,6 +1148,31 @@
     "soinEquipeRatio": 0.6,
     "type": "degats"
   },
+  "rayon_obscur": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "bonusParTelefrag": 0.5,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 1,
+    "coutPA": 5,
+    "desc": "+50 % de dégâts par Téléfrag de la cible.",
+    "id": "rayon_obscur",
+    "nom": "Rayon Obscur",
+    "scaling": 0.4,
+    "type": "degats"
+  },
+  "resquille": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "coutPA": 3,
+    "desc": "Les bombes qui explosent ce tour retirent aussi 2 PA à chaque ennemi touché.",
+    "id": "resquille",
+    "nom": "Resquille",
+    "resquille": 2,
+    "scaling": 0,
+    "type": "buff"
+  },
   "rosee_regenerante": {
     "baseMax": 0,
     "baseMin": 0,
@@ -1119,6 +1201,45 @@
     "id": "rostre_broyeur",
     "nom": "Rostre broyeur",
     "scaling": 0.55,
+    "type": "degats"
+  },
+  "roublabot": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_tous",
+    "cooldownTours": 3,
+    "coutPA": 1,
+    "deplaceCible": "toggle",
+    "desc": "Déplace un ennemi sur la rangée opposée.",
+    "id": "roublabot",
+    "nom": "Roublabot",
+    "scaling": 0,
+    "type": "degats"
+  },
+  "roublardise": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 5,
+    "coutPA": 2,
+    "desc": "Un double encaisse le prochain coup direct à ta place.",
+    "id": "roublardise",
+    "nom": "Roublardise",
+    "nullifieProchain": true,
+    "scaling": 0,
+    "type": "buff"
+  },
+  "sablier_de_xelor": {
+    "baseMax": 8,
+    "baseMin": 5,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Faibles dégâts et vole 2 PA à la cible.",
+    "id": "sablier_de_xelor",
+    "nom": "Sablier de Xelor",
+    "retraitPA": 2,
+    "retraitPAChance": 1,
+    "scaling": 0.25,
     "type": "degats"
   },
   "sfvc": {
@@ -1231,10 +1352,13 @@
     "baseMax": 0,
     "baseMin": 0,
     "cible": "soi",
-    "cooldownTours": 2,
     "coutPA": 2,
-    "desc": "Double la durée de l'effet de la prochaine flèche.",
-    "doubleEffetProchain": true,
+    "desc": "+15 % de critique pendant 3 tours ; l'excédent au-delà du cap devient des dégâts finaux.",
+    "effet": {
+      "duree": 3,
+      "stat": "crit",
+      "valeur": 15
+    },
     "id": "tir_puissant",
     "nom": "Tir Puissant",
     "scaling": 0,

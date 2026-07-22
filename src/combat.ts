@@ -81,6 +81,9 @@ export function statsEffectives(c: Combatant): Stats {
     const bonus = sommeEffet(c, k);
     if (bonus) s[k] = (s[k] ?? 0) + bonus;
   }
+  // crit plat temporaire (Tir Puissant) : propagé vers se.crit, lu par chanceCrit/critExcedent
+  const bonusCrit = sommeEffet(c, "crit");
+  if (bonusCrit) s.crit = (s.crit ?? 0) + bonusCrit;
   return s;
 }
 
@@ -163,6 +166,9 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
 
   // Apaisement (Ouginak) : ne se lance qu'avec au moins 1 état de Rage
   if (sort.consommeRage && !(acteur.rage ?? 0)) return [];
+
+  // Kaboom (Roublard) : ne se lance que si un adversaire vivant porte au moins 1 bombe
+  if (sort.kaboom && !adverses(acteur, cs).some((e) => (e.bombes ?? 0) > 0)) return [];
 
   // Changer de ligne (Dagues Eurfolles) : il faut une case libre dans la rangée opposée
   if (sort.changeLigne && caseLibreRangeeOpposee(acteur, cs) === null) return [];
@@ -267,11 +273,14 @@ export function poserBombe(cible: Combatant): boolean {
   return true;
 }
 
-/** Pose un Téléfrag (Xélor), sous cap. L'écho d'Aiguille s'y branche (Task 5). */
-export function poserTelefrag(cible: Combatant, _cs: Combatant[], _ctx: CombatCtx): void {
+/** Pose un Téléfrag (Xélor), sous cap. Écho d'Aiguille : si la cible est aiguillée,
+ *  un nouveau jet de SORTS.aiguille (par l'acteur courant `lanceur`) la reblesse. */
+export function poserTelefrag(cible: Combatant, _cs: Combatant[], ctx: CombatCtx, lanceur?: Combatant): void {
   if ((cible.telefrags ?? 0) >= TELEFRAGS_MAX) return;
   cible.telefrags = (cible.telefrags ?? 0) + 1;
-  // Task 5 ajoute ici : si sommeEffet(cible, "aiguille") > 0 → re-jet de SORTS.aiguille par l'acteur courant.
+  if (lanceur && sommeEffet(cible, "aiguille") > 0) {
+    frappe(lanceur, SORTS.aiguille, cible, { useMax: false, mult: 1, ctx }, "Écho d'Aiguille");
+  }
 }
 
 /** Part du crit au-delà du cap 50 %, convertie en dégâts finaux (Tir Puissant).
@@ -495,6 +504,15 @@ function deplacerCible(cible: Combatant, mode: "toggle" | "arriere", cs: Combata
   ctx.log(`${cible.nom} est repoussé en ligne ${dest < NB_COLONNES ? "AVANT" : "ARRIÈRE"}.`);
 }
 
+/** Les `n` combattants de `pool` les plus proches en COLONNE de `ref` (rework Cra :
+ *  Flèche enflammée / Flèche de recul — éclaboussure/bousculade sur les voisins). */
+function plusProches(ref: Combatant, pool: Combatant[], n: number): Combatant[] {
+  const col = ref.position % NB_COLONNES;
+  return [...pool]
+    .sort((a, b) => Math.abs((a.position % NB_COLONNES) - col) - Math.abs((b.position % NB_COLONNES) - col))
+    .slice(0, n);
+}
+
 /** Ennemi vivant de la ligne ARRIÈRE le plus proche de la colonne de `cible`
  *  (la « victime derrière » de la Masse Aj Taye). null si cible déjà derrière. */
 function derriereEnLigne(cible: Combatant, cs: Combatant[]): Combatant | null {
@@ -594,6 +612,7 @@ function decrementerEffets(acteur: Combatant): void {
     acteur.provoqueTours = 0;
     acteur.provoque = false;
   }
+  acteur.resquilleActive = undefined; // Resquille (Roublard) : ne dure que le tour où elle est posée
 
   // cooldowns par cible
   for (const k of Object.keys(acteur.cooldowns)) {
@@ -641,6 +660,10 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.paBonusNextTurn += sort.paGain;
     ctx.log(`${cible.nom} recevra ${sort.paGain} PA au prochain tour.`);
   }
+  if (sort.paProchainTour) {
+    cible.paBonusNextTurn = Math.max(cible.paBonusNextTurn, sort.paProchainTour);
+    ctx.log(`${cible.nom} anticipe : +${sort.paProchainTour} PA au prochain tour (Prémonition).`);
+  }
   if (sort.bonusProchainSortPct) {
     cible.bonusOffensifProchain += sort.bonusProchainSortPct;
     ctx.log(`${cible.nom} prépare un sort renforcé (+${Math.round(sort.bonusProchainSortPct * 100)} %).`);
@@ -685,6 +708,10 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
   if (sort.nullifieProchain) {
     cible.nullifieProchainCoup = true;
     ctx.log(`${cible.nom} se prépare à annuler le prochain coup direct.`);
+  }
+  if (sort.resquille) {
+    cible.resquilleActive = sort.resquille;
+    ctx.log(`${cible.nom} prépare une Resquille (−${sort.resquille} PA au prochain Kaboom).`);
   }
 }
 
@@ -915,6 +942,90 @@ function lancerEspritFelin(lanceur: Combatant, cs: Combatant[], ctx: CombatCtx):
   }
 }
 
+/** Kaboom (Roublard) : détonne toutes les bombes posées sur les ennemis vivants.
+ *  Chaque bombe inflige un jet plein au porteur + 50 % (arrondi) aux AUTRES
+ *  vivants de sa rangée. Si le lanceur a une Resquille active, chaque ennemi
+ *  touché au moins une fois perd son montant en PA (une seule fois par ennemi). */
+function lancerKaboom(lanceur: Combatant, sort: Spell, cs: Combatant[], ctx: CombatCtx): void {
+  const touches = new Set<string>();
+  for (const porteur of adverses(lanceur, cs).filter((e) => (e.bombes ?? 0) > 0)) {
+    const n = porteur.bombes ?? 0;
+    const rangee = adverses(lanceur, cs).filter(
+      (e) => e.ref !== porteur.ref && estAvant(e) === estAvant(porteur),
+    );
+    for (let i = 0; i < n && porteur.pvActuels > 0; i++) {
+      if (frappe(lanceur, sort, porteur, { useMax: false, mult: 1, ctx }, sort.nom) > 0) touches.add(porteur.ref);
+      for (const voisin of rangee) {
+        if (voisin.pvActuels <= 0) continue;
+        if (frappe(lanceur, sort, voisin, { useMax: false, mult: 0.5, ctx }, sort.nom) > 0) touches.add(voisin.ref);
+      }
+    }
+  }
+  if (lanceur.resquilleActive) {
+    for (const ref of touches) {
+      const c = parRef(cs, ref);
+      if (c && c.pvActuels > 0) retirerPA(c, lanceur.resquilleActive, ctx);
+    }
+  }
+  lanceur.resquilleActive = undefined;
+  for (const c of cs) c.bombes = 0;
+}
+
+/** Flèche enflammée (Cra) : jet plein sur la cible ; si elle est en ligne AVANT,
+ *  50 % du jet éclabousse les 2 ennemis ARRIÈRE les plus proches en colonne ;
+ *  si elle est déjà en ligne ARRIÈRE, 100 % du jet touche aussi les 2 plus
+ *  proches de sa propre rangée. */
+function lancerFlecheEnflammee(
+  lanceur: Combatant, sort: Spell, cible: Combatant, cs: Combatant[], ctx: CombatCtx, paAvant: number,
+): void {
+  ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
+  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling };
+  const opts = { useMax: false, mult: 1, ctx, paAvant };
+  frappe(lanceur, base, cible, opts, sort.nom);
+  if (estAvant(cible)) {
+    const arrieres = adverses(lanceur, cs).filter((e) => !estAvant(e));
+    for (const t of plusProches(cible, arrieres, 2)) {
+      frappe(lanceur, base, t, { ...opts, mult: 0.5 }, `${sort.nom} (éclaboussure)`);
+    }
+  } else {
+    const memeRangee = adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && !estAvant(e));
+    for (const t of plusProches(cible, memeRangee, 2)) {
+      frappe(lanceur, base, t, opts, `${sort.nom} (éclaboussure)`);
+    }
+  }
+}
+
+/** Flèche de recul (Cra) : repousse la cible en ligne arrière. La bousculade
+ *  ne fait de dégâts (ignoreResistances) que s'il y a réellement collision :
+ *  pas de déplacement mais un autre ennemi partage la rangée où elle reste
+ *  bloquée, OU déplacement réussi dans une rangée d'arrivée déjà occupée
+ *  (occupation évaluée AVANT le déplacement). Rangée d'arrivée vide : aucun dégât. */
+function lancerFlecheDeRecul(
+  lanceur: Combatant, sort: Spell, cible: Combatant, cs: Combatant[], ctx: CombatCtx, paAvant: number,
+): void {
+  ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
+  const occupantsArriereAvant = vivants(cs).filter(
+    (x) => x.camp === cible.camp && x.ref !== cible.ref && !estAvant(x),
+  );
+  const posAvant = cible.position;
+  deplacerCible(cible, "arriere", cs, ctx);
+  const deplacee = cible.position !== posAvant;
+
+  const autre = deplacee
+    ? plusProches(cible, occupantsArriereAvant, 1)[0]
+    : plusProches(
+        cible,
+        vivants(cs).filter((x) => x.camp === cible.camp && x.ref !== cible.ref && estAvant(x) === estAvant(cible)),
+        1,
+      )[0];
+  if (!autre) return; // rien à bousculer : aucun dégât
+
+  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling, ignoreResistances: true };
+  const opts = { useMax: false, mult: 1, ctx, paAvant };
+  frappe(lanceur, base, cible, opts, `${sort.nom} (bousculade)`);
+  frappe(lanceur, base, autre, opts, `${sort.nom} (bousculade)`);
+}
+
 export function lancerSort(
   lanceur: Combatant,
   sort: Spell,
@@ -951,6 +1062,47 @@ export function lancerSort(
   }
   if (sort.espritFelin) {
     lancerEspritFelin(lanceur, cs, ctx);
+    return;
+  }
+
+  // --- BOMBE COLLANTE (Roublard) : pose une charge, pas de dégâts ---
+  if (sort.poseBombe && cible) {
+    if (poserBombe(cible)) ctx.log(`${lanceur.nom} colle une bombe sur ${cible.nom} (${cible.bombes}).`);
+    else ctx.log(`La bombe glisse : ${cible.nom} est déjà chargé au maximum.`);
+    poseCooldown(cible);
+    return;
+  }
+
+  // --- KABOOM (Roublard) : détonne toutes les bombes posées ---
+  if (sort.kaboom) {
+    lancerKaboom(lanceur, sort, cs, ctx);
+    return;
+  }
+
+  // --- DAGUES BOOMERANG (Roublard) : cible → arrière (100 %) → re-cible ---
+  if (sort.boomerang && cible) {
+    ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
+    frappe(lanceur, sort, cible, { useMax: false, mult: 1, ctx }, sort.nom);
+    const arriere = derriereEnLigne(cible, cs);
+    if (arriere && arriere.pvActuels > 0) {
+      frappe(lanceur, sort, arriere, { useMax: false, mult: 1, ctx }, sort.nom);
+      if (cible.pvActuels > 0) frappe(lanceur, sort, cible, { useMax: false, mult: 1, ctx }, sort.nom);
+    }
+    poseCooldown(cible);
+    return;
+  }
+
+  // --- FLÈCHE ENFLAMMÉE (Cra) : éclaboussure asymétrique avant/arrière ---
+  if (sort.enflammee && cible) {
+    lancerFlecheEnflammee(lanceur, sort, cible, cs, ctx, paAvant);
+    poseCooldown(cible);
+    return;
+  }
+
+  // --- FLÈCHE DE RECUL (Cra) : bousculade — dégâts seulement si ça bouscule ---
+  if (sort.degatsPoussee && cible) {
+    lancerFlecheDeRecul(lanceur, sort, cible, cs, ctx, paAvant);
+    poseCooldown(cible);
     return;
   }
 
@@ -1237,7 +1389,20 @@ export function lancerSort(
 
   // Déplacement de cible : pousse la cible dans la rangée opposée (ou seulement vers l'arrière)
   if (sort.deplaceCible && cible.pvActuels > 0) {
+    // Pendule : si la rangée de destination était déjà occupée AVANT le déplacement,
+    // double Téléfrag (la cible déplacée + l'occupant le plus proche en colonne).
+    const rangeeDestOccupee = sort.telefragSiOccupee
+      ? vivants(cs).some((x) => x.camp === cible.camp && estAvant(x) !== estAvant(cible))
+      : false;
+    const posAvant = cible.position;
     deplacerCible(cible, sort.deplaceCible, cs, ctx);
+    if (sort.telefragSiOccupee && rangeeDestOccupee && cible.position !== posAvant) {
+      poserTelefrag(cible, cs, ctx, lanceur);
+      const occupant = vivants(cs)
+        .filter((x) => x.camp === cible.camp && x.ref !== cible.ref && estAvant(x) === estAvant(cible))
+        .sort((a, b) => Math.abs(a.position - cible.position) - Math.abs(b.position - cible.position))[0];
+      if (occupant) poserTelefrag(occupant, cs, ctx, lanceur);
+    }
   }
 
   // Colère : passe le tour si la cible survit
