@@ -7,6 +7,7 @@ import {
   appliquerElement, gagnerXPPerso, classesDisponibles,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours,
 } from "./run";
+import { chargerConfig } from "./config";
 import type { Meta } from "./types";
 
 describe("allocation par élément", () => {
@@ -289,6 +290,17 @@ describe("rangée préférée", () => {
     expect(run.persos.find((p) => p.classeId === "cra")!.position).toBeGreaterThanOrEqual(4);
     recruter(run, "eniripsa"); // la recrue va dans SA rangée, pas « devant par défaut »
     expect(run.persos.find((p) => p.classeId === "eniripsa")!.position).toBeGreaterThanOrEqual(4);
+    localStorage.removeItem("rld_settings_v0");
+  });
+
+  it("une vieille sauvegarde sans les nouvelles classes retombe sur leur rangée par défaut", () => {
+    // Settings d'avant l'ajout du Roublard/Xélor : pas de clé pour eux.
+    localStorage.setItem("rld_settings_v0", JSON.stringify({ formation: { iop: "arriere", cra: "avant" } }));
+    const config = chargerConfig();
+    expect(config.formation.roublard).toBe("arriere"); // défaut, pas « avant » implicite
+    expect(config.formation.xelor).toBe("arriere");
+    expect(config.formation.iop).toBe("arriere"); // les choix stockés gagnent
+    expect(config.formation.cra).toBe("avant");
     localStorage.removeItem("rld_settings_v0");
   });
 });

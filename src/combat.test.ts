@@ -432,6 +432,22 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     for (let i = 0; i < 7; i++) poserTelefrag(e, [e], ctx());
     expect(e.telefrags).toBe(4);
   });
+  it("poserBombe et poserTelefrag journalisent via ctx (sans préfixe ▶)", () => {
+    const e = fabriquerEnnemis("combat_1")[0];
+    const lignes: string[] = [];
+    const c = ctx({ log: (m: string) => lignes.push(m) });
+    poserBombe(e, c);
+    poserTelefrag(e, [e], c);
+    expect(lignes).toHaveLength(2);
+    expect(lignes[0]).toBe(`💣 Une bombe colle à ${e.nom} (1/5).`);
+    expect(lignes[1]).toBe(`⏳ Téléfrag sur ${e.nom} (1/4).`);
+    for (const l of lignes) expect(l.startsWith("▶")).toBe(false);
+  });
+  it("poserBombe sans ctx ne journalise rien et ne casse pas", () => {
+    const e = fabriquerEnnemis("combat_1")[0];
+    expect(() => poserBombe(e)).not.toThrow();
+    expect(e.bombes).toBe(1);
+  });
   it("bonusParPADispo utilise les PA d'AVANT le paiement", () => {
     const syn: Spell = { id: "syn_pa", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 10, baseMax: 10, scaling: 0, bonusParPADispo: 0.08 };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));

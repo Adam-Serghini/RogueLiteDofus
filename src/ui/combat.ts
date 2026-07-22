@@ -362,6 +362,12 @@ function choisirSort(s: Spell): void {
   if (!acteur || !resolver) return;
   if (acteur.paActuels < s.coutPA) return; // pas assez de PA
   if (s.cible === "soi" || s.cible === "allie_tous") {
+    // auto-résolu (pas de clic de cible) : encore faut-il que le sort ait une cible
+    // valable (ex. Kaboom sans bombe posée) — sinon on ne consomme rien.
+    if (ciblesValides(acteur, s, combatants).length === 0) {
+      log("Ce sort n'a aucune cible valable.");
+      return;
+    }
     finir({ sort: s, cibleRef: acteur.ref }); // pas de cible à choisir
   } else {
     selectedSpell = s;
@@ -437,6 +443,8 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     else if (e.stat === "proie") badges.push(`🎯 Proie (vol ${Math.round(e.valeur * 100)} %)`);
     else if (e.stat === "tetanise") badges.push(`🦴 Tétanisé (${e.toursRestants})`);
   }
+  if ((c.bombes ?? 0) > 0) badges.push(`💣 ×${c.bombes}`);
+  if ((c.telefrags ?? 0) > 0) badges.push(`⏳ ×${c.telefrags}`);
   if ((c.rage ?? 0) > 0) badges.push(`🐺 Rage ×${c.rage}`);
   if (c.provoque) badges.push(`🛡 Provoque`);
   if (c.bonusOffensifProchain > 0)
@@ -657,11 +665,13 @@ function renderBarreSorts(): string {
       .map((id) => SORTS[id])
       .map((s, i) => {
         const cd = acteur.cooldowns[s.id] ?? 0; // cooldown par sort (côté lanceur)
-        const abordable = acteur.paActuels >= s.coutPA && cd <= 0;
+        // pas de cible valable (Kaboom sans bombe, Apaisement sans Rage, maxParTour atteint…) : griser
+        const sansCible = ciblesValides(acteur, s, combatants).length === 0;
+        const abordable = acteur.paActuels >= s.coutPA && cd <= 0 && !sansCible;
         const choisi = selectedSpell?.id === s.id;
         return `<button class="sort ${choisi ? "choisi" : ""} ${cd > 0 ? "cooldown" : ""}" data-sort="${s.id}" ${
           abordable ? "" : "disabled"
-        }>
+        } ${sansCible ? `title="Aucune cible valable"` : ""}>
         <span class="sort-touche">${i + 2}</span>
         <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${s.coutPA}</b></span>
         <span class="sort-icon-wrap"><span class="sort-nom-fallback">${escapeHtml(s.nom)}</span><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.classList.add('noicon'); this.remove()" /></span>

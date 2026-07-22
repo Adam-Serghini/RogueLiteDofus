@@ -267,9 +267,10 @@ export const BOMBES_MAX = 5;
 export const TELEFRAGS_MAX = 4;
 
 /** Colle une bombe (Roublard). false si le cap est atteint. */
-export function poserBombe(cible: Combatant): boolean {
+export function poserBombe(cible: Combatant, ctx?: CombatCtx): boolean {
   if ((cible.bombes ?? 0) >= BOMBES_MAX) return false;
   cible.bombes = (cible.bombes ?? 0) + 1;
+  ctx?.log(`💣 Une bombe colle à ${cible.nom} (${cible.bombes}/${BOMBES_MAX}).`);
   return true;
 }
 
@@ -278,6 +279,7 @@ export function poserBombe(cible: Combatant): boolean {
 export function poserTelefrag(cible: Combatant, _cs: Combatant[], ctx: CombatCtx, lanceur?: Combatant): void {
   if ((cible.telefrags ?? 0) >= TELEFRAGS_MAX) return;
   cible.telefrags = (cible.telefrags ?? 0) + 1;
+  ctx.log(`⏳ Téléfrag sur ${cible.nom} (${cible.telefrags}/${TELEFRAGS_MAX}).`);
   if (lanceur && sommeEffet(cible, "aiguille") > 0) {
     frappe(lanceur, SORTS.aiguille, cible, { useMax: false, mult: 1, ctx }, "Écho d'Aiguille");
   }
@@ -1067,8 +1069,7 @@ export function lancerSort(
 
   // --- BOMBE COLLANTE (Roublard) : pose une charge, pas de dégâts ---
   if (sort.poseBombe && cible) {
-    if (poserBombe(cible)) ctx.log(`${lanceur.nom} colle une bombe sur ${cible.nom} (${cible.bombes}).`);
-    else ctx.log(`La bombe glisse : ${cible.nom} est déjà chargé au maximum.`);
+    if (!poserBombe(cible, ctx)) ctx.log(`La bombe glisse : ${cible.nom} est déjà chargé au maximum.`);
     poseCooldown(cible);
     return;
   }

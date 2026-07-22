@@ -154,3 +154,5 @@ dimensions divines…
 5. **Compléter la T1 à 10–12 zones**, puis structure `Tranche` dans `data.ts`
    (méta-déblocage, sauvegarde de run).
 6. T2+ = saisie de contenu dans `data.ts` (le but de tout ce qui précède).
+
+Intention : réduction de toutes les classes à 6 sorts — à venir.

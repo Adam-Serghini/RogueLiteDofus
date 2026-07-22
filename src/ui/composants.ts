@@ -185,13 +185,15 @@ export function renderDofusRack(meta: Meta, compact = false): string {
 // Rôle court par classe (écran de choix d'équipe / recrutement).
 export const ROLE_CLASSE: Record<string, string> = {
   iop: "Bourrin — gros dégâts Terre au corps à corps",
-  cra: "Archère — dégâts Air à distance, esquive",
+  cra: "Archère — artillerie à conditions, ligne de vue",
   eniripsa: "Soigneuse — soins, boucliers, poisons",
   sadida: "Invocateur — poupée, contrôle, dégâts sur la durée",
   sram: "Assassin — DPT monocible & poisons",
   feca: "Protecteur — boucliers, glyphes, réduction de dégâts",
   ecaflip: "Joueur — mixte, hasard (dés & cartes)",
   ouginak: "Chasseur — marque sa Proie, Rage croissante, contrôle de ligne",
+  roublard: "Artificier — bombes collantes à détoner, contrôle de position",
+  xelor: "Horloger — Téléfrags, vol et don de PA, burst conditionné",
 };
 
 /** Carte de classe (portrait + rôle) pour le choix d'équipe / recrutement. */

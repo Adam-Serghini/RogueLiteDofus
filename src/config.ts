@@ -23,7 +23,7 @@ const ALLOCS_VALIDES = new Set<AllocationPref>(["terre", "feu", "eau", "air", "v
 const DEFAUT: Settings = {
   toucheFinTour: " ",
   autoFinTour: true,
-  formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere" },
+  formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere", roublard: "arriere", xelor: "arriere" },
   elements: { iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau", ouginak: "terre" },
 };
 
@@ -47,7 +47,9 @@ export function chargerConfig(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const merged = { ...DEFAUT, ...(JSON.parse(raw) as Partial<Settings>) };
-      merged.formation = formationValide(merged.formation) ? migrerFormation(merged.formation) : { ...DEFAUT.formation };
+      // Défauts d'abord, puis les choix stockés par-dessus : les classes absentes
+      // d'une vieille sauvegarde retombent sur leur rangée par défaut.
+      merged.formation = { ...DEFAUT.formation, ...(formationValide(merged.formation) ? migrerFormation(merged.formation) : {}) };
       if (!elementsValides(merged.elements)) merged.elements = { ...DEFAUT.elements };
       return merged;
     }
