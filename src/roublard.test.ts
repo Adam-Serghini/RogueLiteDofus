@@ -4,7 +4,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  lancerSort, ciblesValides, poserBombe, BOMBES_MAX, estAvant, effetsDebutTour,
+  lancerSort, ciblesValides, poserBombe, BOMBES_MAX, estAvant, effetsDebutTour, degatsCible,
   type CombatCtx,
 } from "./combat";
 import { SORTS, CLASSES } from "./data";
@@ -129,6 +129,55 @@ describe("Kaboom", () => {
     poserBombe(e);
     e.pvActuels = 0; // le porteur meurt
     expect(ciblesValides(r, SORTS.kaboom, cs)).toEqual([]);
+  });
+});
+
+describe("Kaboom — aura Portails / marque Conjuration (cross-classe, handler dédié)", () => {
+  // dégâts amplifiés (force haute) : à faible magnitude, 4-5 % se noie dans
+  // l'arrondi et le test ne distingue plus rien — ici l'écart est net.
+  const roublardPuissant = (): Combatant => {
+    const r = roublard();
+    r.stats = { ...r.stats, force: 300, intelligence: 0, chance: 0 };
+    r.elementChoisi = "terre";
+    return r;
+  };
+  const cibleResistante = (): Combatant => {
+    const [e] = ennemis();
+    e.pvMax = 5000; e.pvActuels = 5000;
+    return e;
+  };
+
+  it("porte l'aura des Portails d'un allié Éliotrope de même rangée (×1,04 à 4 portails)", () => {
+    const r = roublardPuissant();
+    r.position = 0; // avant
+    const allieAura: Combatant = { ...roublardPuissant(), ref: "elio_aura", position: 1, portails: 4 }; // même rangée
+    const e = cibleResistante();
+    const cs = [r, allieAura, e];
+    poserBombe(e);
+
+    const base = degatsCible(r, SORTS.kaboom, e, { useMax: false, mult: 1, ctx: ctx() }).dmg;
+    const avant = e.pvActuels;
+    lancerSort(r, SORTS.kaboom, r.ref, cs, ctx());
+    const dmg = avant - e.pvActuels;
+    expect(dmg).toBeGreaterThan(base); // l'aura des portails doit s'appliquer même via Kaboom
+    expect(Math.abs(dmg - Math.round(base * 1.04))).toBeLessThanOrEqual(1);
+  });
+
+  it("frappe plus fort une cible marquée par Conjuration (×1,05), même via Kaboom", () => {
+    const r = roublardPuissant();
+    r.position = 0; // avant
+    const marqueur: Combatant = { ...roublardPuissant(), ref: "elio_marqueur", position: 1 }; // même rangée que r
+    const e = cibleResistante();
+    e.conjuration = { pct: 0.05, lanceurRef: marqueur.ref, tours: 2 };
+    const cs = [r, marqueur, e];
+    poserBombe(e);
+
+    const base = degatsCible(r, SORTS.kaboom, e, { useMax: false, mult: 1, ctx: ctx() }).dmg;
+    const avant = e.pvActuels;
+    lancerSort(r, SORTS.kaboom, r.ref, cs, ctx());
+    const dmg = avant - e.pvActuels;
+    expect(dmg).toBeGreaterThan(base); // la marque Conjuration doit s'appliquer même via Kaboom
+    expect(Math.abs(dmg - Math.round(base * 1.05))).toBeLessThanOrEqual(1);
   });
 });
 

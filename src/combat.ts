@@ -50,8 +50,11 @@ export const vivants = (cs: Combatant[]): Combatant[] => cs.filter((c) => c.pvAc
 const parRef = (cs: Combatant[], ref: string): Combatant | undefined => cs.find((c) => c.ref === ref);
 const adverses = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
   vivants(cs).filter((c) => c.camp !== acteur.camp);
+// la Lance (Forgelance) partage le camp « ennemi » pour la grille/le ciblage,
+// mais n'est jamais un ALLIÉ réel : un soigneur ennemi ne doit jamais pouvoir
+// la cibler (ni aucun autre effet « allié »/rangée-alliée côté ennemi).
 const allies = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
-  vivants(cs).filter((c) => c.camp === acteur.camp);
+  vivants(cs).filter((c) => c.camp === acteur.camp && !c.estLance);
 
 /** Stat élémentaire associée à un élément (terre→force, feu→int, eau→chance, … ). */
 export const statElement = (stats: Stats, el: Element): number => {
@@ -329,6 +332,22 @@ export function multPortails(lanceur: Combatant, cs: Combatant[]): number {
   return 1 + 0.01 * meilleur;
 }
 
+/** Bonus de Conjuration (Éliotrope) : la cible est marquée, le marqueur (et sa
+ *  rangée) frappe plus fort dessus. Source unique (aussi utilisée par le chemin
+ *  générique de `lancerSort`) : c'est CE calcul que les handlers dédiés (Kaboom,
+ *  Dagues Boomerang, Flèches, Tarot…) doivent plier dans leur propre multiplicateur
+ *  pour ne pas ignorer la marque quand ils frappent une cible marquée. */
+export function multConjuration(lanceur: Combatant, cible: Combatant, cs: Combatant[]): number {
+  if (!cible.conjuration) return 1;
+  const marqueur = parRef(cs, cible.conjuration.lanceurRef);
+  const enRangeeDuMarqueur = !!marqueur && marqueur.pvActuels > 0 &&
+    marqueur.camp === lanceur.camp && estAvant(marqueur) === estAvant(lanceur);
+  if (lanceur.ref === cible.conjuration.lanceurRef || enRangeeDuMarqueur) {
+    return 1 + cible.conjuration.pct;
+  }
+  return 1;
+}
+
 /** Part du crit au-delà du cap 50 %, convertie en dégâts finaux (Tir Puissant).
  *  Seule la stat de crit PLATE peut déborder du cap — la Force seule ne le peut jamais. */
 export function critExcedent(se: Stats): number {
@@ -503,27 +522,38 @@ function infligerDegats(
   }
 
   // nullification (buff soi) : annule UN coup DIRECT (pas un tick de poison, qui ne
-  // passe pas par cette fonction), consommée dès le premier coup direct qui suit
-  if (dmg > 0 && cible.nullifieProchainCoup) {
+  // passe pas par cette fonction), consommée dès le premier coup direct qui suit.
+  // Jamais consommée par la part REDIRIGÉE (viaRedirection) : ce coup n'était pas
+  // adressé au porteur, sa nullification ne doit pas être gâchée dessus.
+  if (!viaRedirection && dmg > 0 && cible.nullifieProchainCoup) {
     cible.nullifieProchainCoup = false;
     ctx?.log(`${cible.nom} annule le coup grâce à sa nullification !`);
     dmg = 0;
   }
 
   // Redirection (Étreinte) : un allié porteur dévie une fraction des dégâts
-  // destinés à un allié en ligne ARRIÈRE (jamais le porteur lui-même). La part
-  // redirigée passe par un appel gardé (viaRedirection) pour ne jamais se
-  // re-rediriger, mais garde bouclier/nullification normaux côté porteur.
+  // destinés à un allié en ligne ARRIÈRE (jamais le porteur lui-même). Le bouclier
+  // de la VICTIME absorbe D'ABORD (sur le montant plein), puis seul le RESTE est
+  // partagé porteur/victime — la part vers le porteur passe par un appel gardé
+  // (viaRedirection) pour ne jamais se re-rediriger et ne jamais consommer la
+  // nullification du porteur (garde ci-dessus), mais garde son bouclier normal.
   if (!viaRedirection && dmg > 0 && ctx?.combatants && cible.camp === "joueur" && !estAvant(cible)) {
     const porteur = vivants(ctx.combatants).find((c) =>
       c.camp === cible.camp && c.ref !== cible.ref && c.redirection && c.redirection.tours > 0);
     if (porteur) {
+      let resteApresBouclier = dmg;
+      if (cible.bouclier > 0 && !ignoreBouclier) {
+        const absorbe = Math.min(cible.bouclier, resteApresBouclier);
+        cible.bouclier -= absorbe;
+        resteApresBouclier -= absorbe;
+      }
       const ratio = porteur.redirection!.ratio;
-      const versPorteur = Math.floor(dmg * ratio);
-      const versVictime = Math.ceil(dmg * (1 - ratio));
+      const versPorteur = Math.floor(resteApresBouclier * ratio);
+      const versVictime = Math.ceil(resteApresBouclier * (1 - ratio));
       ctx.log(`🌀 ${porteur.nom} dévie une partie du coup destiné à ${cible.nom}.`);
       infligerDegats(porteur, versPorteur, attaquant, ctx, false, true);
       dmg = versVictime;
+      ignoreBouclier = true; // déjà absorbé plus haut : ne pas re-consommer le bouclier de la victime
     }
   }
 
@@ -702,14 +732,27 @@ function decrementerEffets(acteur: Combatant): void {
   // compteurs temporisés (Arsenic, Bonne pioche, Provocation)
   if (acteur.poisonAmpliTours > 0) acteur.poisonAmpliTours -= 1;
   if (acteur.bonusDeTours > 0 && --acteur.bonusDeTours <= 0) acteur.bonusDe = 0;
-  if (acteur.provoqueTours && --acteur.provoqueTours <= 0) {
-    acteur.provoqueTours = 0;
-    acteur.provoque = false;
+  // Provocation : posée pendant CE tour → on saute le décompte une fois (sinon elle
+  // expirerait avant même le tour adverse suivant, qu'elle est censée contraindre).
+  if (acteur.provoqueTours) {
+    if (acteur.provoquePoseCeTour) {
+      acteur.provoquePoseCeTour = false;
+    } else if (--acteur.provoqueTours <= 0) {
+      acteur.provoqueTours = 0;
+      acteur.provoque = false;
+    }
   }
   acteur.resquilleActive = undefined; // Resquille (Roublard) : ne dure que le tour où elle est posée
 
-  // redirection (Étreinte) : décompte sur le porteur, retirée à 0
-  if (acteur.redirection && --acteur.redirection.tours <= 0) acteur.redirection = undefined;
+  // redirection (Étreinte) : décompte sur le porteur, retirée à 0 — même garde
+  // « posée ce tour » que Provocation ci-dessus, et pour la même raison.
+  if (acteur.redirection) {
+    if (acteur.redirectionPoseCeTour) {
+      acteur.redirectionPoseCeTour = false;
+    } else if (--acteur.redirection.tours <= 0) {
+      acteur.redirection = undefined;
+    }
+  }
 
   // cooldowns par cible
   for (const k of Object.keys(acteur.cooldowns)) {
@@ -787,6 +830,7 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
   if (sort.provoqueTours) {
     cible.provoque = true;
     cible.provoqueTours = sort.provoqueTours;
+    cible.provoquePoseCeTour = true;
     ctx.log(`${cible.nom} provoque les ennemis !`);
   }
   if (sort.contre) {
@@ -903,6 +947,7 @@ export function invoquerLance(
     camp: "ennemi",
     position,
     niveau: 1,
+    img: "/assets/spells/forgelance/lance.png",
     ...etatCombatInitial(),
     estInvocation: true,
     joueTour: false,
@@ -1049,22 +1094,23 @@ function lancerTarot(lanceur: Combatant, sort: Spell, cible: Combatant | undefin
   const couleur = COULEURS[Math.floor(ctx.rng() * 4)];
   ctx.log(`${lanceur.nom} tire un Tarot : ${couleur}.`);
   const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling };
-  const opts = { useMax: false, mult: 1, ctx };
+  const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
+  const optsPour = (t: Combatant) => ({ useMax: false, mult: mp * multConjuration(lanceur, t, cs), ctx });
 
   if (cible && cible.camp !== lanceur.camp) {
     // --- variante ennemie ---
     if (couleur === "pique") {
-      frappe(lanceur, { ...base, ignoreResistances: true }, cible, opts, "Tarot (Pique)");
+      frappe(lanceur, { ...base, ignoreResistances: true }, cible, optsPour(cible), "Tarot (Pique)");
     } else if (couleur === "carreau") {
       const t = ciblesAleatoires(adverses(lanceur, cs), 1, ctx.rng)[0];
-      if (t) frappe(lanceur, base, t, opts, "Tarot (Carreau)");
+      if (t) frappe(lanceur, base, t, optsPour(t), "Tarot (Carreau)");
     } else if (couleur === "coeur") {
-      const dmg = frappe(lanceur, base, cible, opts, "Tarot (Cœur)");
+      const dmg = frappe(lanceur, base, cible, optsPour(cible), "Tarot (Cœur)");
       if (dmg > 0) soigner(lanceur, dmg, ctx);
     } else {
       // trèfle : relance (deux frappes)
-      frappe(lanceur, base, cible, opts, "Tarot (Trèfle)");
-      if (cible.pvActuels > 0) frappe(lanceur, base, cible, opts, "Tarot (Trèfle, relance)");
+      frappe(lanceur, base, cible, optsPour(cible), "Tarot (Trèfle)");
+      if (cible.pvActuels > 0) frappe(lanceur, base, cible, optsPour(cible), "Tarot (Trèfle, relance)");
     }
   } else if (cible) {
     // --- variante alliée ---
@@ -1115,16 +1161,23 @@ function lancerEspritFelin(lanceur: Combatant, cs: Combatant[], ctx: CombatCtx):
  *  la détonation (au fil du combat, entre la pose et Kaboom) sont perdues (voulu). */
 function lancerKaboom(lanceur: Combatant, sort: Spell, cs: Combatant[], ctx: CombatCtx): void {
   const touches = new Set<string>();
+  const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
   for (const porteur of adverses(lanceur, cs).filter((e) => (e.bombes ?? 0) > 0)) {
     const n = porteur.bombes ?? 0;
     const rangee = adverses(lanceur, cs).filter(
       (e) => e.ref !== porteur.ref && estAvant(e) === estAvant(porteur),
     );
     for (let i = 0; i < n && porteur.pvActuels > 0; i++) {
-      if (frappe(lanceur, sort, porteur, { useMax: false, mult: 1, ctx }, sort.nom) > 0) touches.add(porteur.ref);
+      const multPorteur = mp * multConjuration(lanceur, porteur, cs);
+      if (frappe(lanceur, sort, porteur, { useMax: false, mult: multPorteur, ctx }, sort.nom) > 0 && !porteur.estLance) {
+        touches.add(porteur.ref);
+      }
       for (const voisin of rangee) {
         if (voisin.pvActuels <= 0) continue;
-        if (frappe(lanceur, sort, voisin, { useMax: false, mult: 0.5, ctx }, sort.nom) > 0) touches.add(voisin.ref);
+        const multVoisin = 0.5 * mp * multConjuration(lanceur, voisin, cs);
+        if (frappe(lanceur, sort, voisin, { useMax: false, mult: multVoisin, ctx }, sort.nom) > 0 && !voisin.estLance) {
+          touches.add(voisin.ref);
+        }
       }
     }
   }
@@ -1147,17 +1200,18 @@ function lancerFlecheEnflammee(
 ): void {
   ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
   const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling };
-  const opts = { useMax: false, mult: 1, ctx, paAvant };
+  const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
+  const opts = { useMax: false, mult: mp * multConjuration(lanceur, cible, cs), ctx, paAvant };
   frappe(lanceur, base, cible, opts, sort.nom);
   if (estAvant(cible)) {
     const arrieres = adverses(lanceur, cs).filter((e) => !estAvant(e));
     for (const t of plusProches(cible, arrieres, 2)) {
-      frappe(lanceur, base, t, { ...opts, mult: 0.5 }, `${sort.nom} (éclaboussure)`);
+      frappe(lanceur, base, t, { ...opts, mult: 0.5 * mp * multConjuration(lanceur, t, cs) }, `${sort.nom} (éclaboussure)`);
     }
   } else {
     const memeRangee = adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && !estAvant(e));
     for (const t of plusProches(cible, memeRangee, 2)) {
-      frappe(lanceur, base, t, opts, `${sort.nom} (éclaboussure)`);
+      frappe(lanceur, base, t, { ...opts, mult: mp * multConjuration(lanceur, t, cs) }, `${sort.nom} (éclaboussure)`);
     }
   }
 }
@@ -1179,7 +1233,8 @@ function lancerFlecheDeRecul(
 ): void {
   ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
   const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling, ignoreResistances: true };
-  const opts = { useMax: false, mult: 1, ctx, paAvant };
+  const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
+  const optsPour = (t: Combatant) => ({ useMax: false, mult: mp * multConjuration(lanceur, t, cs), ctx, paAvant });
 
   const rangeeDepart = vivants(cs).filter(
     (x) => x.camp === cible.camp && x.ref !== cible.ref && estAvant(x) === estAvant(cible),
@@ -1187,8 +1242,8 @@ function lancerFlecheDeRecul(
   if (rangeeDepart.length > 0) {
     // Cas 1 : rangée de départ occupée → pas de déplacement, bousculade aux deux.
     const autre = plusProches(cible, rangeeDepart, 1)[0];
-    frappe(lanceur, base, cible, opts, `${sort.nom} (bousculade)`);
-    frappe(lanceur, base, autre, opts, `${sort.nom} (bousculade)`);
+    frappe(lanceur, base, cible, optsPour(cible), `${sort.nom} (bousculade)`);
+    frappe(lanceur, base, autre, optsPour(autre), `${sort.nom} (bousculade)`);
     return;
   }
 
@@ -1202,8 +1257,8 @@ function lancerFlecheDeRecul(
   const autre = plusProches(cible, occupantsArriveeAvant, 1)[0];
   if (!autre) return; // arrivée vide (cas 3) : rien à bousculer
 
-  frappe(lanceur, base, cible, opts, `${sort.nom} (bousculade)`);
-  frappe(lanceur, base, autre, opts, `${sort.nom} (bousculade)`);
+  frappe(lanceur, base, cible, optsPour(cible), `${sort.nom} (bousculade)`);
+  frappe(lanceur, base, autre, optsPour(autre), `${sort.nom} (bousculade)`);
 }
 
 export function lancerSort(
@@ -1262,11 +1317,12 @@ export function lancerSort(
   // --- DAGUES BOOMERANG (Roublard) : cible → arrière (100 %) → re-cible ---
   if (sort.boomerang && cible) {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
-    frappe(lanceur, sort, cible, { useMax: false, mult: 1, ctx }, sort.nom);
+    const mpBoomerang = multPortails(lanceur, cs); // aura des portails, même hors handler générique
+    frappe(lanceur, sort, cible, { useMax: false, mult: mpBoomerang * multConjuration(lanceur, cible, cs), ctx }, sort.nom);
     const arriere = derriereEnLigne(cible, cs);
     if (arriere && arriere.pvActuels > 0) {
-      frappe(lanceur, sort, arriere, { useMax: false, mult: 1, ctx }, sort.nom);
-      if (cible.pvActuels > 0) frappe(lanceur, sort, cible, { useMax: false, mult: 1, ctx }, sort.nom);
+      frappe(lanceur, sort, arriere, { useMax: false, mult: mpBoomerang * multConjuration(lanceur, arriere, cs), ctx }, sort.nom);
+      if (cible.pvActuels > 0) frappe(lanceur, sort, cible, { useMax: false, mult: mpBoomerang * multConjuration(lanceur, cible, cs), ctx }, sort.nom);
     }
     poseCooldown(cible);
     return;
@@ -1362,6 +1418,7 @@ export function lancerSort(
   // --- ÉTREINTE DE VALKYR (Forgelance) : redirige une fraction des dégâts de la rangée arrière ---
   if (sort.redirigeArriere) {
     lanceur.redirection = { ratio: sort.redirigeArriere.ratio, tours: sort.redirigeArriere.duree };
+    lanceur.redirectionPoseCeTour = true;
     ctx.log(`${lanceur.nom} lance ${sort.nom} : protège sa rangée arrière.`);
     poseCooldown(lanceur);
     return;
@@ -1464,23 +1521,18 @@ export function lancerSort(
   const doubleDuree = !!lanceur.doubleEffetProchain;
   lanceur.doubleEffetProchain = false;
   // Signature de Grunob (« Travail d'équipe ») : +X % par allié vivant dans sa rangée
+  // (allies() exclut déjà la Lance — elle ne compte jamais comme un allié réel).
   let multLigne = 1 + (lanceur.bonusParAllieLigne ?? 0) *
     allies(lanceur, cs).filter((a) => a.ref !== lanceur.ref && estAvant(a) === estAvant(lanceur)).length;
   // Portails (Éliotrope) : aura de dégâts pour le porteur et sa rangée
   multLigne *= multPortails(lanceur, cs);
   // Conjuration (Éliotrope) : marque posée sur la cible, bonus pour le marqueur et sa rangée
-  if (cible.conjuration) {
-    const marqueur = parRef(cs, cible.conjuration.lanceurRef);
-    const enRangeeDuMarqueur = !!marqueur && marqueur.pvActuels > 0 &&
-      marqueur.camp === lanceur.camp && estAvant(marqueur) === estAvant(lanceur);
-    if (lanceur.ref === cible.conjuration.lanceurRef || enRangeeDuMarqueur) {
-      multLigne *= 1 + cible.conjuration.pct;
-    }
-  }
+  multLigne *= multConjuration(lanceur, cible, cs);
   // Dépouille (Ouginak) : +X % par AUTRE ennemi vivant sur la ligne de la cible
+  // (la Lance n'est pas un ennemi réel, elle ne doit jamais compter dans ce bonus).
   if (sort.bonusParEnnemiLigneCible) {
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
-      adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && estAvant(e) === estAvant(cible)).length;
+      adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && !e.estLance && estAvant(e) === estAvant(cible)).length;
   }
   // Muspel (Forgelance) : ×(1 + taux × nb d'ennemis non-lance de la zone), calculé AVANT les jets
   if (sort.bonusParEnnemiToucheZone) {
@@ -1503,7 +1555,7 @@ export function lancerSort(
       }
       if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
       infligerDegats(t, r.dmg, lanceur, ctx);
-      total += r.dmg;
+      if (!t.estLance) total += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin fantôme
       ctx.log(
         `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
           (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
@@ -1550,7 +1602,7 @@ export function lancerSort(
     for (const coup of sort.coups) {
       if (cible.pvActuels <= 0) break;
       const dmg = frappe(lanceur, coup, cible, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
-      totalDmg += dmg;
+      if (!cible.estLance) totalDmg += dmg; // durabilité de lance ≠ dégâts réels : pas de soin/bouclier fantômes
       if (dmg > 0 && cible.pvActuels > 0 && coup.proc && ctx.rng() < coup.proc.p) {
         if (coup.proc.poison) appliquerPoison(cible, lanceur, coup.proc.poison);
         if (coup.proc.friction) appliquerEffet(cible, { stat: "friction", valeur: 1, duree: coup.proc.friction });
@@ -1578,6 +1630,7 @@ export function lancerSort(
   // systématiquement nul — le déplacement/la marque plus bas fait tout le travail.
   const sauteJetDegats = sort.baseMax === 0 && (!!sort.deplaceCible || !!sort.conjuration);
 
+  const nonEsquivees = new Set<string>(); // Hydra : le bouclier ne compte que les cibles réellement touchées
   touchees.forEach((t, i) => {
     if (sauteJetDegats) return;
     const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult * multLigne;
@@ -1588,7 +1641,8 @@ export function lancerSort(
     } else {
       if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
       infligerDegats(t, r.dmg, lanceur, ctx, sort.ignoreBouclier);
-      totalDmg += r.dmg;
+      nonEsquivees.add(t.ref);
+      if (!t.estLance) totalDmg += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin/bouclier fantômes
       // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats.
       if (!t.estLance) {
         ctx.log(
@@ -1623,7 +1677,8 @@ export function lancerSort(
   });
 
   // Conjuration (Éliotrope) : pose la marque sur la cible (aucun jet — sauteJetDegats)
-  if (sort.conjuration) {
+  // — jamais sur la Lance, qui n'est pas une cible de marque (comme bombes/téléfrags).
+  if (sort.conjuration && !cible.estLance) {
     const pct = (lanceur.portails ?? 0) >= sort.conjuration.seuil
       ? sort.conjuration.pctSeuil
       : sort.conjuration.pct;
@@ -1635,7 +1690,8 @@ export function lancerSort(
   if (sort.toucheDerriere) {
     const t = derriereEnLigne(cible, cs);
     if (t && t.pvActuels > 0) {
-      totalDmg += frappe(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
+      const dmg = frappe(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
+      if (!t.estLance) totalDmg += dmg; // pas de soin/bouclier fantôme sur la durabilité de la lance
     }
   }
 
@@ -1652,7 +1708,7 @@ export function lancerSort(
       } else {
         if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
         infligerDegats(t, r.dmg, lanceur, ctx);
-        totalDmg += r.dmg;
+        if (!t.estLance) totalDmg += r.dmg; // pas de soin/bouclier fantôme sur la durabilité de la lance
         ctx.log(
           `${sort.nom} rebondit sur ${t.nom} : ${r.dmg} dégâts !` +
             (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
@@ -1684,9 +1740,11 @@ export function lancerSort(
     ctx.log(`${lanceur.nom} gagne un bouclier de ${b}.`);
   }
 
-  // Hydra (Forgelance) : bouclier au lanceur = valeur × nb d'ennemis non-lance touchés
+  // Hydra (Forgelance) : bouclier au lanceur = valeur × nb d'ennemis non-lance RÉELLEMENT
+  // touchés (aligné sur « touché » : un ennemi esquivé ne compte pas — contrairement à
+  // Muspel/bonusParEnnemiToucheZone qui compte la zone AVANT les jets, par spec).
   if (sort.bouclierParEnnemiTouche) {
-    const nbNonLance = touchees.filter((t) => !t.estLance).length;
+    const nbNonLance = touchees.filter((t) => !t.estLance && nonEsquivees.has(t.ref)).length;
     if (nbNonLance > 0) {
       const b = sort.bouclierParEnnemiTouche * nbNonLance;
       lanceur.bouclier += b;
@@ -1774,7 +1832,11 @@ export function appliquerChanceEcaflip(acteur: Combatant, ctx: CombatCtx): void 
 }
 
 // --- Fin de combat -----------------------------------------------------------
-const campMort = (cs: Combatant[], camp: Camp): boolean => vivants(cs).every((c) => c.camp !== camp);
+// une Lance (Forgelance) vivante ne maintient jamais son camp « vivant » : c'est
+// un pseudo-combattant (obstacle), pas un combattant réel qui peut faire gagner
+// le combat en restant debout.
+const campMort = (cs: Combatant[], camp: Camp): boolean =>
+  vivants(cs).every((c) => c.camp !== camp || c.estLance);
 export const combatTermine = (cs: Combatant[]): boolean => campMort(cs, "joueur") || campMort(cs, "ennemi");
 export const joueurGagne = (cs: Combatant[]): boolean => campMort(cs, "ennemi") && !campMort(cs, "joueur");
 
@@ -1829,10 +1891,17 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       }
 
       decrementerEffets(acteur);
-      // Conjuration (Éliotrope) : décompte les marques posées par cet acteur, s'éteint à 0
+      // Conjuration (Éliotrope) : décompte les marques posées par cet acteur, s'éteint à 0.
+      // Marque orpheline : si le marqueur est mort entre-temps, elle ne recevra plus
+      // jamais de décompte (ses propres fins de tour n'arrivent plus) — on la purge
+      // dès la fin de tour de N'IMPORTE QUI d'autre pour éviter un bonus permanent.
       for (const c of combatants) {
-        if (c.conjuration?.lanceurRef === acteur.ref && --c.conjuration.tours <= 0) {
-          delete c.conjuration;
+        if (!c.conjuration) continue;
+        if (c.conjuration.lanceurRef === acteur.ref) {
+          if (--c.conjuration.tours <= 0) delete c.conjuration;
+        } else {
+          const marqueur = parRef(combatants, c.conjuration.lanceurRef);
+          if (!marqueur || marqueur.pvActuels <= 0) delete c.conjuration;
         }
       }
       // recharge des PA en FIN de tour : entre deux tours, la gemme PA montre

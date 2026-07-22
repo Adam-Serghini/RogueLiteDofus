@@ -129,6 +129,28 @@ describe("Dépouille", () => {
     // 2 autres ennemis en ligne avant avec lui → ×2 (±1 d'arrondi interne)
     expect(Math.abs(avecLigne - dmgSeul * 2)).toBeLessThanOrEqual(1);
   });
+
+  it("la Lance (Forgelance) sur la ligne de la cible ne compte pas dans le bonus", () => {
+    const pack = ennemis(); // gob_boss : 3 ennemis en ligne avant (0,1,2)
+    const grunob = pack[0];
+    const sansLance = (() => {
+      const o = ouginak();
+      const avant = grunob.pvActuels;
+      lancerSort(o, SORTS.depouille, grunob.ref, [o, ...pack], ctx());
+      return avant - grunob.pvActuels;
+    })();
+    grunob.pvActuels = 500;
+    // une Lance vivante, plantée dans la MÊME rangée avant (case 3, encore libre)
+    const lance: Combatant = { ...pack[1], ref: "lance_x", estLance: true, position: 3, pvActuels: 2, pvMax: 2 };
+    const avecLance = (() => {
+      const o = ouginak();
+      const avant = grunob.pvActuels;
+      lancerSort(o, SORTS.depouille, grunob.ref, [o, ...pack, lance], ctx());
+      return avant - grunob.pvActuels;
+    })();
+    // la Lance en plus ne doit RIEN changer au bonus (elle n'est pas un ennemi réel)
+    expect(Math.abs(avecLance - sansLance)).toBeLessThanOrEqual(1);
+  });
 });
 
 describe("Tibias", () => {

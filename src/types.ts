@@ -358,6 +358,7 @@ export interface Combatant {
   joueTour?: boolean; // false pour une invocation
   provoque?: boolean; // les ennemis doivent la cibler en priorité
   provoqueTours?: number; // Provocation : tours restants de provocation (sinon permanent)
+  provoquePoseCeTour?: boolean; // vrai le tour où provoqueTours est posé : le décompte de fin de tour est sauté une fois (sinon la provocation expirerait avant le tour adverse suivant)
   dureeRestante?: number; // optionnel : disparaît après N tours
   lancersCeTour?: Record<string, number>; // clés `sortId` et `sortId:cibleRef` — remis à {} au début du tour du combattant
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
@@ -370,6 +371,7 @@ export interface Combatant {
   estLance?: boolean; // vrai pour le pseudo-combattant « Lance » (camp ennemi, invocation)
   lanceurRef?: string; // ref du Forgelance propriétaire de la lance
   redirection?: { ratio: number; tours: number }; // Étreinte : redirige une fraction des dégâts subis par un allié arrière vers le porteur
+  redirectionPoseCeTour?: boolean; // vrai le tour où redirection est posée : le décompte de fin de tour est sauté une fois (même bug/fix que provoquePoseCeTour)
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort). */

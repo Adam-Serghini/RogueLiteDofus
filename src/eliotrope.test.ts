@@ -4,13 +4,13 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  lancerSort, ciblesValides, PORTAILS_MAX,
+  lancerSort, ciblesValides, PORTAILS_MAX, runCombat,
   type CombatCtx,
 } from "./combat";
 import { SORTS, CLASSES } from "./data";
 import { multSoin } from "./progression";
 import { nouvelleRun, equipeCombattante } from "./run";
-import type { Combatant } from "./types";
+import type { Combatant, Action } from "./types";
 
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet max, pas de crit
 const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
@@ -122,6 +122,25 @@ describe("Rayon de Wakfu", () => {
     const part = Math.round((dmg / 1) * multSoin(e.stats)); // = round(dmg × 1.5)
     expect(multSoin(e.stats)).toBeCloseTo(1.5);
     expect(al1.pvActuels).toBe(Math.min(al1.pvMax, 100 + part));
+  });
+
+  it("la Lance (Forgelance) touchée par la zone ne compte pas dans le soin (dégâts fantômes)", () => {
+    const e = eliotrope();
+    e.position = 4; // arrière : ne compte pas dans « sa rangée avant »
+    e.stats = { ...e.stats, intelligence: 0, soin: 0 }; // multSoin = 1
+    const en1 = ennemiA(0); // avant : ennemi réel
+    const lance: Combatant = { ...ennemiA(1), ref: "lance_test", estLance: true, position: 1, pvActuels: 2, pvMax: 2 };
+    const al1 = allieA(0);
+    al1.pvActuels = 100;
+    const cs = [e, en1, lance, al1];
+
+    const pv1Avant = en1.pvActuels;
+    lancerSort(e, SORTS.rayon_de_wakfu, en1.ref, cs, ctx());
+    const dmgReel = pv1Avant - en1.pvActuels; // seul dégât réel : la lance ne compte pas
+    expect(dmgReel).toBeGreaterThan(0);
+    expect(lance.pvActuels).toBe(1); // la lance a bien été touchée (−1 durabilité)
+    // le soin (ratio 1, 1 seul allié en ligne avant) ne doit PAS inclure le jet virtuel de la lance
+    expect(al1.pvActuels).toBe(Math.min(al1.pvMax, 100 + dmgReel));
   });
 
   it("ne soigne personne s'il n'y a aucun allié en ligne avant", () => {
@@ -236,5 +255,48 @@ describe("Conjuration", () => {
     const cs = [e, cible];
     lancerSort(e, SORTS.conjuration, cible.ref, cs, ctx());
     expect(cible.conjuration!.pct).toBeCloseTo(0.1);
+  });
+
+  it("MINOR — ne peut pas marquer la Lance (Forgelance)", () => {
+    const e = eliotrope();
+    const lance: Combatant = { ...ennemiA(0), ref: "lance_x", estLance: true };
+    const cs = [e, lance];
+    lancerSort(e, SORTS.conjuration, lance.ref, cs, ctx());
+    expect(lance.conjuration).toBeUndefined();
+  });
+
+  it("MINOR — une marque ne reste pas orpheline : elle expire dès la fin d'un autre tour après la mort du marqueur", async () => {
+    const e = eliotrope();
+    e.position = 0; e.initiative = 100; e.pvMax = 10; e.pvActuels = 10; // meurt en un coup
+    const cible = ennemiA(0);
+    const attaquant = ennemiA(1);
+    attaquant.initiative = 50;
+    attaquant.paMax = SORTS.morsure.coutPA; attaquant.paActuels = attaquant.paMax;
+    const cs = [e, cible, attaquant];
+
+    let eAJoue = false;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref === e.ref && !eAJoue) {
+        eAJoue = true;
+        return { sort: SORTS.conjuration, cibleRef: cible.ref };
+      }
+      return null;
+    };
+    let attaqueFaite = false;
+    const controllerEnnemi = (acteur: Combatant): Action | null => {
+      if (acteur.ref === attaquant.ref && !attaqueFaite) {
+        attaqueFaite = true;
+        return { sort: SORTS.morsure, cibleRef: e.ref }; // tue le marqueur
+      }
+      return null;
+    };
+
+    await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: controllerEnnemi },
+      rng: () => 0.99,
+    });
+
+    expect(e.pvActuels).toBe(0); // le marqueur est bien mort
+    expect(cible.conjuration).toBeUndefined(); // la marque n'est pas restée orpheline
   });
 });

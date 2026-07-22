@@ -11,7 +11,7 @@ import {
 } from "./combat";
 import { SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus, bonusEquipe, equipeCombattante, nouvelleRun } from "./run";
-import type { Spell } from "./types";
+import type { Spell, Combatant } from "./types";
 
 // rng=0.99 → jamais d'esquive, jet au max, jamais de crit (déterministe).
 const rngMax: () => number = () => 0.99;
@@ -519,6 +519,30 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0 })).toBe(0);
     // seul le crit PLAT déborde : force 999 + crit 20 → excédent 0.20
     expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0, crit: 20 })).toBeCloseTo(0.2);
+  });
+  it("bonusParAllieLigne (signature Grunob) ignore la Lance dans le compte d'alliés de rangée", () => {
+    const syn: Spell = { id: "syn_grunob", nom: "G", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+    const grunob = fabriquerEnnemis("combat_1")[0];
+    grunob.bonusParAllieLigne = 0.15;
+    grunob.position = 0;
+    grunob.resistances = {};
+    grunob.stats = { ...grunob.stats, agilite: 0, force: 0 };
+    const cible = equipeCombattante(nouvelleRun(["iop"]))[0];
+    cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
+    const allieReel = { ...grunob, ref: "ally2", position: 1 }; // même rangée : compte normalement
+
+    const sansLance = (() => {
+      const c = { ...cible, pvActuels: 500, pvMax: 500 };
+      lancerSort(grunob, syn, c.ref, [grunob, allieReel, c], ctx());
+      return 500 - c.pvActuels;
+    })();
+    const lance: Combatant = { ...grunob, ref: "lance_x", estLance: true, position: 2 }; // même rangée
+    const avecLance = (() => {
+      const c = { ...cible, pvActuels: 500, pvMax: 500 };
+      lancerSort(grunob, syn, c.ref, [grunob, allieReel, lance, c], ctx());
+      return 500 - c.pvActuels;
+    })();
+    expect(avecLance).toBe(sansLance); // la Lance en plus ne doit rien changer
   });
 });
 

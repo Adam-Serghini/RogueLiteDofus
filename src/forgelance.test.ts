@@ -6,11 +6,12 @@
 import { describe, it, expect } from "vitest";
 import {
   lancerSort, ciblesValides, poserBombe, degatsCible, LANCE_DURABILITE,
+  invoquerLance, runCombat, controllerIA,
   type CombatCtx,
 } from "./combat";
 import { SORTS, CLASSES } from "./data";
 import { nouvelleRun, equipeCombattante } from "./run";
-import type { Combatant } from "./types";
+import type { Combatant, Action } from "./types";
 
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet max, pas de crit
 const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
@@ -71,6 +72,7 @@ describe("Lance", () => {
     expect(lance.position).toBeLessThan(4);
     expect(lance.lanceurRef).toBe(f.ref);
     expect(lance.pvActuels).toBe(LANCE_DURABILITE);
+    expect(lance.img).toBe("/assets/spells/forgelance/lance.png"); // MINOR : icône dédiée sur la carte
   });
 
   it("se plante dans la rangée de la cible (arrière)", () => {
@@ -88,6 +90,38 @@ describe("Lance", () => {
     const cs = [f, en0];
     lancerSort(f, SORTS.lance, en0.ref, cs, ctx());
     expect(ciblesValides(f, SORTS.lance, cs)).toEqual([]);
+  });
+
+  it("CRIT — une lance vivante ne maintient PAS son camp en vie : victoire dès le dernier ennemi réel mort (runCombat)", async () => {
+    const f = forgelance();
+    f.initiative = 100; // agit en premier
+    const faible = ennemiA(0);
+    faible.pvActuels = 1; faible.pvMax = 1;
+    faible.initiative = 0;
+    const cs = [f, faible];
+
+    const lance = invoquerLance(f, faible, cs, { rng: rngMax, log: () => {}, playerDamageBonus: 1 })!;
+    expect(lance).not.toBeNull();
+    expect(lance.pvActuels).toBeGreaterThan(0);
+
+    let joueurAJoue = false;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref === f.ref && !joueurAJoue) {
+        joueurAJoue = true;
+        return { sort: SORTS.muspel, cibleRef: faible.ref };
+      }
+      return null;
+    };
+    const controllerEnnemi = (): Action | null => null;
+
+    const gagne = await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: controllerEnnemi },
+      rng: rngMax,
+    });
+
+    expect(faible.pvActuels).toBe(0); // le seul ennemi réel est mort
+    expect(lance.pvActuels).toBeGreaterThan(0); // la lance, elle, est toujours vivante
+    expect(gagne).toBe(true); // victoire immédiate malgré la lance vivante
   });
 });
 
@@ -147,6 +181,17 @@ describe("Hydra", () => {
     lancerSort(f, SORTS.lance, en0.ref, cs, ctx());
     lancerSort(f, SORTS.hydra, en0.ref, cs, ctx());
     expect(f.bouclier).toBe(6 * 2); // en0 + en1, pas la lance
+  });
+
+  it("MINOR — le bouclier ne compte que les ennemis RÉELLEMENT touchés (pas ceux qui esquivent)", () => {
+    const f = forgelance();
+    const en0 = ennemiA(0);
+    en0.stats = { ...en0.stats, agilite: 500 }; // esquive garantie (chance plafonnée à 50 %)
+    const en1 = ennemiA(1); // agilité 0 : ne peut pas esquiver
+    const cs = [f, en0, en1];
+    // rng bas et constant : force l'esquive d'en0 (chance>0) sans faire dévier en1 (chance=0)
+    lancerSort(f, SORTS.hydra, en0.ref, cs, ctx({ rng: () => 0.01 }));
+    expect(f.bouclier).toBe(6); // seul en1 compte : en0 a esquivé
   });
 });
 
@@ -257,6 +302,54 @@ describe("Étreinte de Valkyr", () => {
     expect(dmgF).toBeGreaterThan(0);
     expect(Math.abs(dmgAllie - dmgF)).toBeLessThanOrEqual(1);
   });
+
+  it("CRIT — protège la rangée arrière au tour ADVERSE suivant, puis expire (runCombat, pas seulement lancerSort direct)", async () => {
+    const f = forgelance();
+    f.position = 0; // avant
+    f.initiative = 100; // agit en premier côté joueur, tous les rounds
+    const alliéArriere = allieA(4);
+    alliéArriere.pvActuels = 300; alliéArriere.pvMax = 300;
+    const en0 = ennemiA(0);
+    en0.paMax = SORTS.morsure.coutPA; // exactement 1 attaque possible par tour
+    en0.paActuels = en0.paMax;
+    const cs = [f, alliéArriere, en0];
+
+    let etreintePosee = false;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref === f.ref && !etreintePosee) {
+        etreintePosee = true;
+        return { sort: SORTS.etreinte_de_valkyr, cibleRef: f.ref };
+      }
+      return null;
+    };
+    let attaques = 0;
+    const snapshots: Array<[number, number]> = [];
+    const controllerEnnemi = (acteur: Combatant): Action | null => {
+      if (acteur.paActuels < SORTS.morsure.coutPA || attaques >= 2) return null;
+      attaques++;
+      snapshots.push([f.pvActuels, alliéArriere.pvActuels]); // PV juste AVANT cette attaque
+      return { sort: SORTS.morsure, cibleRef: alliéArriere.ref };
+    };
+
+    await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: controllerEnnemi },
+      rng: ctx().rng,
+    });
+
+    expect(attaques).toBe(2);
+    // attaque 1 (round où l'Étreinte vient d'être posée) : redirigée, le porteur encaisse sa part
+    const [fAvant1, aAvant1] = snapshots[0];
+    const [fAvant2, aAvant2] = snapshots[1]; // = PV juste après l'attaque 1 (rien d'autre n'a bougé entre-temps)
+    const dmgF1 = fAvant1 - fAvant2;
+    const dmgA1 = aAvant1 - aAvant2;
+    expect(dmgF1).toBeGreaterThan(0); // le porteur a bien encaissé sa part au tour adverse SUIVANT la pose
+    expect(dmgA1).toBeGreaterThan(0);
+    // attaque 2 (round suivant : redirection expirée au tour de f) : plus aucune déviation
+    const dmgF2 = fAvant2 - f.pvActuels;
+    const dmgA2 = aAvant2 - alliéArriere.pvActuels;
+    expect(dmgF2).toBe(0);
+    expect(dmgA2).toBeGreaterThan(0);
+  });
 });
 
 describe("interactions croisées", () => {
@@ -309,5 +402,49 @@ describe("interactions croisées", () => {
     const lance = laLance(cs)!;
     expect(poserBombe(lance)).toBe(false);
     expect(lance.bombes ?? 0).toBe(0);
+  });
+
+  it("IMPORTANT — un soigneur ennemi ne peut jamais cibler la Lance, même la plus « blessée »", () => {
+    const f = forgelance();
+    const cible = ennemiA(0);
+    const cs = [f, cible];
+    lancerSort(f, SORTS.lance, cible.ref, cs, ctx());
+    const lance = laLance(cs)!;
+    lance.pvActuels = 1; // la plus "blessée" du camp ennemi si elle comptait comme alliée
+    const soigneur = ennemiA(1);
+    soigneur.ia = "soutien";
+    soigneur.sorts = ["soin_noir"];
+    cible.pvActuels = 200; cible.pvMax = 500; // seul allié RÉEL blessé du soigneur
+    cs.push(soigneur);
+
+    expect(ciblesValides(soigneur, SORTS.soin_noir, cs).some((c) => c.estLance)).toBe(false);
+    const action = controllerIA(soigneur, cs) as Action | null; // controllerIA est synchrone en pratique
+    expect(action).not.toBeNull();
+    expect(action!.cibleRef).not.toBe(lance.ref); // jamais la lance
+    expect(action!.cibleRef).toBe(cible.ref); // le vrai blessé
+  });
+
+  it("IMPORTANT — Étreinte : le bouclier de la victime absorbe D'ABORD, la nullification du porteur n'est jamais consommée par la part redirigée", () => {
+    const f = forgelance();
+    f.position = 0; // avant
+    f.pvActuels = 200; f.pvMax = 200;
+    f.nullifieProchainCoup = true; // le porteur a une nullification prête (Roublardise)
+    const alliéArriere = allieA(4);
+    alliéArriere.pvActuels = 200; alliéArriere.pvMax = 200;
+    alliéArriere.bouclier = 10; // bouclier de la VICTIME (partiel) : doit absorber avant tout partage
+    const en0 = ennemiA(0);
+    const cs = [f, alliéArriere, en0];
+    lancerSort(f, SORTS.etreinte_de_valkyr, f.ref, cs, ctx());
+
+    lancerSort(en0, SORTS.morsure, alliéArriere.ref, cs, ctx());
+    const dmgAllie = 200 - alliéArriere.pvActuels;
+    const dmgF = 200 - f.pvActuels;
+    expect(alliéArriere.bouclier).toBe(0); // le bouclier de la victime a bien été consommé
+    expect(dmgAllie).toBeGreaterThan(0);
+    expect(dmgF).toBeGreaterThan(0);
+    // la moitié/moitié porte sur le RESTE post-bouclier, pas sur le montant plein
+    expect(Math.abs(dmgAllie - dmgF)).toBeLessThanOrEqual(1);
+    // la nullification du porteur n'a PAS été consommée par la part redirigée
+    expect(f.nullifieProchainCoup).toBe(true);
   });
 });
