@@ -294,6 +294,9 @@ function degatsAvec(
   // Rage (Ouginak) : +RAGE_BONUS par charge accumulée
   if (lanceur.rage) dmg *= 1 + RAGE_BONUS * Math.min(lanceur.rage, RAGE_MAX);
 
+  // Ascension « Boss enragés » : dégâts cumulés tour après tour
+  if (lanceur.enrageCumul) dmg *= 1 + lanceur.enrageCumul;
+
   // bonus de rebond (saut)
   dmg *= opts.mult;
 
@@ -1163,6 +1166,14 @@ export function lancerSort(
 }
 
 // --- Signatures de boss --------------------------------------------------------
+/** Ascension « Boss enragés » : au début de chaque tour de l'enragé, ses dégâts
+ *  infligés montent de `enrage` (cumulatif, sans cap). */
+export function appliquerEnrage(acteur: Combatant, ctx: CombatCtx): void {
+  if (!acteur.enrage) return;
+  acteur.enrageCumul = (acteur.enrageCumul ?? 0) + acteur.enrage;
+  ctx.log(`🔥 ${acteur.nom} s'enrage : +${Math.round(acteur.enrageCumul * 100)} % de dégâts.`);
+}
+
 /** Mue élémentaire (Kwakwa) : au début de son tour, le porteur devient très
  *  résistant partout SAUF dans un élément tiré au hasard (résistance 0) —
  *  force le joueur à changer d'élément de frappe à chaque tour du boss. */
@@ -1220,6 +1231,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       aJoue.add(acteur.ref);
 
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
+      appliquerEnrage(acteur, ctx); // Ascension : boss enragés
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)
       if (effetsDebutTour(acteur, combatants, ctx)) {
         await hooks.onUpdate?.();

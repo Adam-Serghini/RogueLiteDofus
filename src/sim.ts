@@ -21,7 +21,8 @@ import {
 import { runCombat, controllerIA } from "./combat";
 import { progressionInitiale, gagnerXP, investirN, POINTS_PAR_NIVEAU } from "./progression";
 import {
-  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateurElite, instanceDuTier,
+  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateursElite, instanceDuTier,
+  effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
   type RunState,
 } from "./run";
 import type { ItemInstance, Rarete, Stats } from "./types";
@@ -55,6 +56,14 @@ const ELEM_DE_STAT: Record<string, string> = { force: "terre", intelligence: "fe
 const N = 200; // combats par (rencontre × scénario de stuff)
 const NORMAUX_PAR_ZONE = 6; // path moyen supposé pour la courbe d'XP (plateau Pokelike ~10 nœuds)
 const ELITES_PAR_ZONE = 1;
+// Palier d'Ascension mesuré par le sim (0 = jeu de base). Le sim ne rejoue que des
+// RENCONTRES ISOLÉES, pas des runs entières : la taverne réduite (tavernePct) et les
+// PV de départ amputés (pvDepartPct) d'Ascension ne s'appliquent qu'entre/au début des
+// runs réelles et restent donc HORS scope de cette mesure — seuls les effets qui
+// modifient directement les ennemis (meute, PV/stats, enrage boss, PA final, élites
+// doubles) sont appliqués ici via `appliquerAscensionEnnemis`/`appliquerModificateursElite`.
+const ASCENSION = 0;
+const EFF_ASCENSION = effetsAscension(ASCENSION);
 
 // --- PRNG reproductible (mulberry32, pur, sans dépendance) -------------------
 function mulberry32(a: number): () => number {
@@ -146,14 +155,26 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
 // --- Simulation d'une rencontre ----------------------------------------------
 interface Bilan { win: number; turns: number; hpWin: number; maxTurns: number; }
 
-async function simuler(run: RunState, combatId: string, seed0: number, elite = false): Promise<Bilan> {
+interface OptsRencontre {
+  type: "combat" | "combat_dur" | "donjon";
+  especesZone?: string[];
+  derniereZone?: boolean;
+}
+
+async function simuler(run: RunState, combatId: string, seed0: number, opts: OptsRencontre): Promise<Bilan> {
   let wins = 0, turnsTot = 0, hpWinTot = 0, maxTurns = 0;
   for (let i = 0; i < N; i++) {
     const equipe = equipeCombattante(run);
     run.persos.forEach((p, j) => { if (estSoutien(p.classeId)) equipe[j].ia = "soutien"; });
     const rng = mulberry32((seed0 + i * 0x9e3779b9) >>> 0);
     const ennemis = fabriquerEnnemis(combatId);
-    if (elite) appliquerModificateurElite(ennemis, rng); // comme en jeu : la meute est modifiée
+    if (opts.type === "combat_dur") {
+      // comme en jeu : la meute élite est modifiée (A5 : 2 modificateurs distincts)
+      appliquerModificateursElite(ennemis, rng, undefined, EFF_ASCENSION.elitesDoubles ? 2 : 1);
+    }
+    appliquerAscensionEnnemis(ennemis, EFF_ASCENSION, {
+      type: opts.type, especesZone: opts.especesZone, derniereZone: opts.derniereZone, rng,
+    });
     const cs = [...equipe, ...ennemis];
     let turns = 0;
     const win = await runCombat(cs, {
@@ -219,13 +240,19 @@ describe("équilibrage — simulation par rencontre", () => {
       const runNuBoss = equipeReference(niveauxFin[z]);
       const runMiBoss = equipeReference(niveauxFin[z], zone.id, 2);
       const runSetBoss = equipeReference(niveauxFin[z], zone.id);
+      const especesZone = especesNormalesDeZone(zone);
+      const derniereZone = z === ZONES_SIM.length - 1;
       for (const { id, type } of lignes) {
         const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
         const boss = type === "boss";
         const elite = type === "élite";
-        const nu = await simuler(boss ? runNuBoss : runNu, id, seed, elite);
-        const mi = await simuler(boss ? runMiBoss : runMi, id, seed, elite);
-        const set = await simuler(boss ? runSetBoss : runSet, id, seed, elite);
+        const opts: OptsRencontre = {
+          type: boss ? "donjon" : elite ? "combat_dur" : "combat",
+          especesZone, derniereZone,
+        };
+        const nu = await simuler(boss ? runNuBoss : runNu, id, seed, opts);
+        const mi = await simuler(boss ? runMiBoss : runMi, id, seed, opts);
+        const set = await simuler(boss ? runSetBoss : runSet, id, seed, opts);
         const dr = drapeaux(type === "élite" ? "elite" : type, nu, mi, set);
         out.push(
           `  ${type.padEnd(7)} ${id.padEnd(10)} ` +

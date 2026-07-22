@@ -260,6 +260,30 @@ export const OCRE_PALIERS: OcrePalier[] = [
   { seuil: 250, paBonus: 3, degats: 0.3 },
 ];
 
+// --- Ascension (échelle de difficulté opt-in — jouer A(n) cumule A1..A(n)) -------
+export interface EffetsAscension {
+  packPlus1?: boolean; // +1 monstre dans les combats NORMAUX (si case libre)
+  tavernePct?: number; // remplace TAVERNE_PCT
+  bossEnrage?: number; // le boss gagne +X de dégâts infligés à chacun de ses tours (cumulatif)
+  pvMult?: number; // PV des monstres
+  elitesDoubles?: boolean; // les combats durs tirent DEUX modificateurs élite
+  statMultOffensif?: number; // stats offensives des monstres
+  pvDepartPct?: number; // fraction des PV au départ de la run (et des recrues)
+  bossFinalPaBonus?: number; // PA bonus du boss de la DERNIÈRE zone
+}
+export interface PalierAscension { id: string; nom: string; desc: string; effets: EffetsAscension }
+export const ASCENSION: PalierAscension[] = [
+  { id: "meute", nom: "Meute élargie", desc: "+1 monstre dans les combats normaux", effets: { packPlus1: true } },
+  { id: "tavernes", nom: "Tavernes avares", desc: "Les tavernes ne soignent plus que 30 % des PV", effets: { tavernePct: 0.3 } },
+  { id: "enrage", nom: "Boss enragés", desc: "Les boss gagnent +10 % de dégâts à chacun de leurs tours", effets: { bossEnrage: 0.1 } },
+  { id: "vigueur", nom: "Monstres vigoureux", desc: "PV des monstres +20 %", effets: { pvMult: 1.2 } },
+  { id: "elites", nom: "Élites doubles", desc: "Les combats durs cumulent deux modificateurs", effets: { elitesDoubles: true } },
+  { id: "frappe", nom: "Frappe chirurgicale", desc: "Caractéristiques offensives des monstres +15 %", effets: { statMultOffensif: 1.15 } },
+  { id: "frugal", nom: "Départ frugal", desc: "L'équipe commence la run à 75 % de ses PV", effets: { pvDepartPct: 0.75 } },
+  { id: "rempart", nom: "Le dernier rempart", desc: "Le boss final gagne +2 PA", effets: { bossFinalPaBonus: 2 } },
+];
+export const ASCENSION_MAX = ASCENSION.length;
+
 /** Sous-dossier d'icône de chaque sort (rangé par classe propriétaire ; sorts de mobs → « monstres »). */
 export const SORT_DOSSIER: Record<string, string> = (() => {
   const m: Record<string, string> = {};

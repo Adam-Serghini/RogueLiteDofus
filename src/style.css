@@ -523,6 +523,70 @@ button.item-carte:disabled {
   filter: grayscale(1);
 }
 
+/* Sélecteur d'Ascension (accueil) */
+.asc-section {
+  max-width: 460px;
+  margin: 4px auto 8px;
+  text-align: center;
+}
+.asc-rangee {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.asc-btn {
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 800;
+  font-size: 0.85em;
+  color: var(--txt);
+  cursor: pointer;
+}
+.asc-btn.asc-sel {
+  border-color: var(--danger);
+  box-shadow: 0 0 8px #b23b2e55;
+  color: var(--danger);
+}
+.asc-btn.asc-verrou {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.asc-malus {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  color: var(--muet);
+  font-size: 0.85em;
+  text-align: left;
+  max-width: 380px;
+  margin-inline: auto;
+}
+.asc-malus li {
+  padding: 1px 0;
+}
+.asc-record {
+  color: var(--or);
+  font-weight: 700;
+  font-size: 0.85em;
+  margin: 6px 0 0;
+}
+/* Badge de palier (carte, recap) */
+.asc-badge {
+  display: inline-block;
+  background: var(--panel-2);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 1px 8px;
+  font-size: 0.75em;
+  font-weight: 800;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .dofus-rack {
   display: flex;
   flex-wrap: wrap;

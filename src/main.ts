@@ -2,13 +2,14 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, TAVERNE_PCT, TRANCHES, zonesDeTranche, DOFUS_DROP_RATE, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, TRANCHES, zonesDeTranche, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
 import { restat, PV_PAR_VITA } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
-  appliquerModificateurElite,
+  appliquerModificateursElite, effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
+  tavernePctAscension, tauxDofusAscension, enregistrerAscension,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
   appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
@@ -37,16 +38,34 @@ interface ResultatCombat {
   combatants: Combatant[];
 }
 
-async function resoudreCombat(run: RunState, combatId: string, elite = false, eliteModif?: string): Promise<ResultatCombat> {
+interface OptsCombat {
+  elite?: boolean;
+  eliteModifs?: string[];
+  type: "combat" | "combat_dur" | "donjon";
+  zone?: ZoneDef;
+  derniereZone?: boolean;
+}
+
+async function resoudreCombat(
+  run: RunState, combatId: string, opts: OptsCombat,
+): Promise<ResultatCombat> {
   let titre = COMBATS[combatId]?.nom ?? "Combat";
   const equipe = equipeCombattante(run);
   const ennemis = fabriquerEnnemis(combatId);
-  if (elite) {
-    // combat dur : le modificateur vient du nœud (affiché au survol sur la carte) ;
+  if (opts.elite) {
+    // combat dur : le(s) modificateur(s) vien(nen)t du nœud (affichés au survol sur la carte) ;
     // absent (zaap, vieille save) → tirage aléatoire
-    const modif = appliquerModificateurElite(ennemis, Math.random, eliteModif);
-    titre = `${titre} · ${modif.nom} (${modif.desc})`;
+    const nombre = effetsAscension(run.ascension).elitesDoubles ? 2 : 1;
+    const modifs = appliquerModificateursElite(ennemis, Math.random, opts.eliteModifs, nombre);
+    titre = `${titre} · ${modifs.map((m) => `${m.nom} (${m.desc})`).join(" · ")}`;
   }
+  // paliers d'Ascension : renfort de meute / PV / stats offensives / rage de boss
+  appliquerAscensionEnnemis(ennemis, effetsAscension(run.ascension), {
+    type: opts.type,
+    especesZone: opts.zone ? especesNormalesDeZone(opts.zone) : undefined,
+    derniereZone: opts.derniereZone,
+    rng: Math.random,
+  });
   appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
   // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
   const { damageMult, paBonus, vitaBonus, resAllBonus } = bonusEquipe(meta);
@@ -129,12 +148,14 @@ const LABEL_FR: Record<NodeType, string> = {
 };
 
 async function resoudreType(
-  run: RunState, type: NodeType, combatId: string | undefined, xp: number, zoneId?: string, eliteModif?: string,
+  run: RunState, type: NodeType, combatId: string | undefined, xp: number,
+  zone?: ZoneDef, derniereZone?: boolean, eliteModifs?: string[],
 ): Promise<Issue> {
+  const zoneId = zone?.id;
   switch (type) {
     case "combat":
     case "combat_dur": {
-      const { gagne } = await resoudreCombat(run, combatId!, type === "combat_dur", eliteModif);
+      const { gagne } = await resoudreCombat(run, combatId!, { elite: type === "combat_dur", eliteModifs, type, zone });
       if (!gagne) return "wipe";
       const toile = zoneId ? toileDeZone(zoneId) : 1;
       crediterKamas(run, Math.round(gainKamas(type, toile, Math.random) * multKamasEquipe(run)));
@@ -145,11 +166,12 @@ async function resoudreType(
       return "continue";
     }
     case "taverne": {
+      const pct = tavernePctAscension(run.ascension);
       const propos = propositionsRecrutement(run, Math.random);
-      const choix = await ui.showTaverne(run.persos, propos, TAVERNE_PCT);
+      const choix = await ui.showTaverne(run.persos, propos, pct);
       if (choix.type === "soin") {
-        soignerEquipe(run, TAVERNE_PCT);
-        await ui.showTransition("🍺 Taverne", `L'équipe récupère ${Math.round(TAVERNE_PCT * 100)} % de ses PV max.`);
+        soignerEquipe(run, pct);
+        await ui.showTransition("🍺 Taverne", `L'équipe récupère ${Math.round(pct * 100)} % de ses PV max.`);
       } else {
         recruter(run, choix.classeId, choix.remplace);
         await ui.showTransition("🍺 Recrue !", `${CLASSES[choix.classeId].nom} rejoint l'équipe.`);
@@ -173,19 +195,20 @@ async function resoudreType(
       return "continue";
     }
     case "donjon": {
-      const { gagne, combatants } = await resoudreCombat(run, combatId!);
+      const { gagne, combatants } = await resoudreCombat(run, combatId!, { type: "donjon", zone, derniereZone });
       if (!gagne) return "wipe";
       await recompenserButin(run, zoneId, type);
       const boss = combatants.find((c) => c.camp === "ennemi" && c.dofusLache);
       if (boss?.dofusLache) {
-        // 1 % de base, boosté par la prospection d'équipe (même formule que les items)
+        // taux de base + prospection d'équipe (même formule que les items) + palier d'Ascension
         const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
-        if (Math.random() < DOFUS_DROP_RATE * mult) {
+        const taux = tauxDofusAscension(run.ascension);
+        if (Math.random() < taux * mult) {
           ajouterDofus(meta, boss.dofusLache);
           const copies = meta.dofus.filter((d) => d === boss.dofusLache).length;
           await ui.showDofus(boss.dofusLache, copies);
         } else {
-          await ui.showTransition("Donjon vaincu !", "Le boss n'a pas lâché son Dofus cette fois… (1 % de chance)");
+          await ui.showTransition("Donjon vaincu !", `Le boss n'a pas lâché son Dofus cette fois… (${Math.round(taux * 100)} % de chance)`);
         }
       }
       return "victoire";
@@ -207,14 +230,15 @@ async function deZaap(pools: ZonePools): Promise<{ type: NodeType; combatId?: st
 /** Parcourt le plateau d'une zone jusqu'au donjon.
  *  Sauvegarde la run après chaque nœud résolu (reprise possible à tout moment ;
  *  un combat en cours n'est pas sauvegardé → nœud à refaire). */
-async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise<"wipe" | "clear" | "accueil" | "recommencer-memes" | "recommencer-choix"> {
+async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniereZone: boolean): Promise<"wipe" | "clear" | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   if (!run.carte) {
     // pas de carte sauvegardée (nouvelle zone) — sinon on reprend celle en cours
-    run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[]);
+    const nbModifsElite = effetsAscension(run.ascension).elitesDoubles ? 2 : 1;
+    run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[], nbModifsElite);
     sauverRunEnCours(zoneIdx, run);
   }
   for (;;) {
-    const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas);
+    const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas, run.ascension);
     if (node === "accueil") return "accueil"; // la run reste sauvegardée → « Reprendre »
     if (node === "recommencer-memes" || node === "recommencer-choix") return node;
 
@@ -223,7 +247,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
     let xp = node.xp ?? 0;
     if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools));
 
-    const issue = await resoudreType(run, type, combatId, xp, zone.id, node.eliteModif);
+    const issue = await resoudreType(run, type, combatId, xp, zone, derniereZone, node.eliteModifs);
 
     node.visite = true;
     run.carte!.courant = node.id;
@@ -238,9 +262,9 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
 }
 
 /** Ce que la boucle doit faire après une run : rien, ou en relancer une. */
-type SuiteRun = null | { relancer: string[] | "selection" };
+type SuiteRun = null | { relancer: string[] | "selection"; ascension: number };
 
-async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[]): Promise<SuiteRun> {
+async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[], ascension = 0): Promise<SuiteRun> {
   let run: RunState;
   let depart = 0;
   if (reprise) {
@@ -249,17 +273,20 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[]): Prom
   } else {
     const choix = choixImpose ?? (await ui.showChoixEquipe());
     if (!choix) return null; // retour à l'accueil depuis la sélection
-    run = nouvelleRun(choix);
+    run = nouvelleRun(choix, ascension);
   }
   const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!); // une run = une tranche
   for (let z = depart; z < zones.length; z++) {
     const zone = zones[z];
-    const issue = await jouerZone(run, zone, z);
+    const issue = await jouerZone(run, zone, z, z === zones.length - 1);
     if (issue === "accueil") return null; // run sauvegardée, retour au lobby
     if (issue === "recommencer-memes" || issue === "recommencer-choix") {
       effacerRunEnCours();
       enregistrerRun(meta, false); // recommencer = abandonner (run échouée)
-      return { relancer: issue === "recommencer-memes" ? (run.choixDepart ?? run.persos.slice(0, 2).map((p) => p.classeId)) : "selection" };
+      return {
+        relancer: issue === "recommencer-memes" ? (run.choixDepart ?? run.persos.slice(0, 2).map((p) => p.classeId)) : "selection",
+        ascension: run.ascension, // le palier de la run abandonnée est conservé pour la relance
+      };
     }
     if (issue === "wipe") {
       effacerRunEnCours();
@@ -277,6 +304,7 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[]): Prom
   }
   effacerRunEnCours();
   enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
+  enregistrerAscension(meta, TRANCHES.find((t) => t.active)!.id, run.ascension); // record d'Ascension de la tranche
   await ui.showRecap(run, true, verifierSucces(meta, run, true));
   return null;
 }
@@ -286,18 +314,18 @@ async function boucle(): Promise<void> {
     const reprise = chargerRunEnCours();
     const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!);
     const repriseInfo = reprise
-      ? { zoneNom: zones[reprise.zoneIdx]?.nom ?? "?", zoneNum: reprise.zoneIdx + 1, nbZones: zones.length }
+      ? { zoneNom: zones[reprise.zoneIdx]?.nom ?? "?", zoneNum: reprise.zoneIdx + 1, nbZones: zones.length, ascension: reprise.run.ascension }
       : null;
-    const action = await ui.showStart(meta, () => reinitialiserMeta(meta), repriseInfo);
+    const { action, ascension } = await ui.showStart(meta, () => reinitialiserMeta(meta), repriseInfo);
     if (action === "abandonner") {
       effacerRunEnCours();
       enregistrerRun(meta, false); // l'abandon compte comme une run échouée
       continue; // retour à l'accueil
     }
-    let suite = await jouerRun(action === "reprendre" ? reprise : null);
+    let suite = await jouerRun(action === "reprendre" ? reprise : null, undefined, ascension);
     // redémarrages en chaîne (bouton ↻ de la carte), sans repasser par l'accueil
     while (suite?.relancer) {
-      suite = await jouerRun(null, suite.relancer === "selection" ? undefined : suite.relancer);
+      suite = await jouerRun(null, suite.relancer === "selection" ? undefined : suite.relancer, suite.ascension);
     }
   }
 }

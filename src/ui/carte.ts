@@ -1,7 +1,7 @@
 // =============================================================================
 //  ui/carte.ts — écran du plateau (carte de nœuds), transition et zaap.
 // =============================================================================
-import { CLASSES, COMBATS, MONSTRES, MODIFICATEURS_ELITE } from "../data";
+import { CLASSES, COMBATS, MONSTRES, MODIFICATEURS_ELITE, ASCENSION } from "../data";
 import { atteignables, noeud } from "../carte";
 import { escapeHtml, ecran, root } from "./dom";
 import {
@@ -101,6 +101,7 @@ export function showCarte(
   zoneNom: string,
   inventaire: ItemInstance[] = [],
   kamas = 0,
+  ascension = 0,
 ): Promise<MapNode | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   return new Promise((res) => {
     const draw = () => {
@@ -158,16 +159,18 @@ export function showCarte(
           ]
             .filter(Boolean)
             .join(" ");
-          const modif = n.type === "combat_dur" ? MODIFICATEURS_ELITE.find((m) => m.id === n.eliteModif) : undefined;
-          const tip = modif ? ` data-tip="${escapeHtml(`Combat dur — ${modif.nom}
-${modif.desc}
+          const modifs = n.type === "combat_dur"
+            ? (n.eliteModifs ?? []).map((id) => MODIFICATEURS_ELITE.find((m) => m.id === id)).filter((m): m is NonNullable<typeof m> => !!m)
+            : [];
+          const tip = modifs.length ? ` data-tip="${escapeHtml(`Combat dur — ${modifs.map((m) => m.nom).join(" · ")}
+${modifs.map((m) => m.desc).join(" · ")}
 Butin au taux donjon.`)}"` : "";
           return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px"${tip}>
             <span class="case-art">
               <img class="case-img" src="${caseAsset(n)}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
               <span class="mn-icon" style="display:none">${NODE_ICON[n.type]}</span>
             </span>
-            <span class="mn-lbl">${NODE_LABEL[n.type]}${modif ? `<small class="mn-modif">${escapeHtml(modif.nom)}</small>` : ""}</span>
+            <span class="mn-lbl">${NODE_LABEL[n.type]}${modifs.length ? `<small class="mn-modif">${escapeHtml(modifs.map((m) => m.nom).join(" · "))}</small>` : ""}</span>
           </button>`;
         })
         .join("");
@@ -197,7 +200,7 @@ Butin au taux donjon.`)}"` : "";
       root.innerHTML = `
         <div class="carte-ecran map-layout">
           <header class="map-topbar">
-            <h2 class="zone-titre">${escapeHtml(zoneNom)}</h2>
+            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension — ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}</h2>
             <div class="topbar-actions">
               <button id="carte-persos" class="aside-icone" title="Caractéristiques${points ? ` · ${points} pts à dépenser` : ""}"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" />${points ? `<span class="aside-compte">${points}</span>` : ""}</button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>

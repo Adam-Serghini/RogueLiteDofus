@@ -1,7 +1,7 @@
 // =============================================================================
 //  ui/accueil.ts — écrans d'accueil : démarrage, choix d'équipe, succès, Dofus.
 // =============================================================================
-import { DOFUS, TRANCHES } from "../data";
+import { DOFUS, TRANCHES, ASCENSION, ASCENSION_MAX } from "../data";
 import { escapeHtml, ecran, root } from "./dom";
 import {
   LOGO,
@@ -15,7 +15,7 @@ import {
   BTN_RETOUR,
 } from "./assets";
 import { renderDofusRack, carteClasse } from "./composants";
-import { classesDisponibles, SUCCES } from "../run";
+import { classesDisponibles, SUCCES, recordAscension } from "../run";
 import { showSettings } from "./inventaire";
 import { showBestiaire, showArmurerie } from "./collections";
 import type { Meta } from "../types";
@@ -26,6 +26,7 @@ export interface RepriseInfo {
   zoneNom: string;
   zoneNum: number;
   nbZones: number;
+  ascension: number;
 }
 
 export type StartAction = "nouvelle" | "reprendre" | "abandonner";
@@ -34,86 +35,120 @@ export function showStart(
   meta: Meta,
   onReset: () => void,
   reprise: RepriseInfo | null = null,
-): Promise<StartAction> {
+): Promise<{ action: StartAction; ascension: number }> {
   return new Promise((res) => {
     const nbUniques = new Set(meta.dofus).size;
     const total = Object.keys(DOFUS).length;
+    const trancheActive = TRANCHES.find((t) => t.active);
+    const record = trancheActive ? recordAscension(meta, trancheActive.id) : undefined;
+    let sel = 0; // palier d'Ascension sélectionné (nouvelle run uniquement)
 
-    // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
-    const boutons = reprise
-      ? `<button id="btn-reprendre" class="btn-jouer btn-reprendre" title="Reprendre la run — Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}"><img src="${BTN_JOUER}" alt="Reprendre" onerror="this.remove()" /></button>
-         <button id="btn-abandon" class="secondaire">Abandonner la run</button>`
-      : `<button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>`;
+    const draw = () => {
+      // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
+      const boutons = reprise
+        ? `<button id="btn-reprendre" class="btn-jouer btn-reprendre" title="Reprendre la run — Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}"><img src="${BTN_JOUER}" alt="Reprendre" onerror="this.remove()" /></button>
+           <button id="btn-abandon" class="secondaire">Abandonner la run</button>`
+        : `<button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>`;
 
-    ecran(`
-      <div class="coin-menu">
-        <button id="btn-dofus" class="coin-param" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
-        <button id="btn-bestiaire" class="coin-param" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
-        <button id="btn-armurerie" class="coin-param" title="Armurerie"><img src="${MENU_ARMURERIE}" alt="Armurerie" onerror="this.parentElement.textContent='🛡️'" /></button>
-        <button id="btn-succes" class="coin-param" title="Succès"><img src="${MENU_SUCCES}" alt="Succès" onerror="this.remove()" /></button>
-        <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
-      </div>
-      <img class="logo-accueil" src="${LOGO}" alt="Roguefus Lite" onerror="this.remove()" />
-      <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
-      <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
-      <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
-      ${reprise ? `<p class="accueil-reprise">⚔ Run en cours — <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b></p>` : ""}
-      <div class="tranches-rack">
-        ${TRANCHES.map((t) => `
-          <div class="tranche-carte ${t.active ? "active" : "locked"}" title="${t.active ? `${t.zones.length} zones` : "Bientôt disponible"}">
-            <span class="tranche-nom">${escapeHtml(t.nom)}</span>
-            <span class="tranche-niveaux">Niv. ${t.niveaux[0]}${t.niveaux[1] !== t.niveaux[0] ? `–${t.niveaux[1]}` : ""}</span>
-            <span class="tranche-detail">${t.active ? `${t.zones.length} zones` : "🔒 Verrouillé"}</span>
-          </div>`).join("")}
-      </div>
-      <div class="boutons-ecran">
-        ${boutons}
-        ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
-      </div>
-    `);
-    document
-      .getElementById("btn-settings")
-      ?.addEventListener("click", async () => {
-        await showSettings();
-        showStart(meta, onReset, reprise).then(res);
+      // sélecteur d'Ascension : visible seulement si la tranche active a déjà été
+      // remportée au moins une fois (record défini), et pas en reprise (palier figé)
+      const ascensionHtml = (!reprise && record !== undefined) ? (() => {
+        const max = Math.min(record + 1, ASCENSION_MAX);
+        const rangs: string[] = [];
+        for (let n = 0; n <= max; n++) {
+          rangs.push(`<button class="asc-btn ${n === sel ? "asc-sel" : ""}" data-asc="${n}">A${n}</button>`);
+        }
+        if (max < ASCENSION_MAX) rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats A${max} pour la débloquer">🔒 A${max + 1}</button>`);
+        const malus = sel > 0
+          ? `<ul class="asc-malus">${ASCENSION.slice(0, sel).map((p) => `<li>• ${escapeHtml(p.nom)} — ${escapeHtml(p.desc)}</li>`).join("")}</ul>`
+          : "";
+        return `<div class="asc-section">
+          <div class="asc-rangee">${rangs.join("")}</div>
+          ${malus}
+          ${record >= 1 ? `<p class="asc-record">Record : A${record} ✓</p>` : ""}
+        </div>`;
+      })() : "";
+
+      ecran(`
+        <div class="coin-menu">
+          <button id="btn-dofus" class="coin-param" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
+          <button id="btn-bestiaire" class="coin-param" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
+          <button id="btn-armurerie" class="coin-param" title="Armurerie"><img src="${MENU_ARMURERIE}" alt="Armurerie" onerror="this.parentElement.textContent='🛡️'" /></button>
+          <button id="btn-succes" class="coin-param" title="Succès"><img src="${MENU_SUCCES}" alt="Succès" onerror="this.remove()" /></button>
+          <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
+        </div>
+        <img class="logo-accueil" src="${LOGO}" alt="Roguefus Lite" onerror="this.remove()" />
+        <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
+        <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
+        <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
+        ${reprise ? `<p class="accueil-reprise">⚔ Run en cours — <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b>${reprise.ascension >= 1 ? ` <span class="asc-badge" title="Palier d'Ascension de cette run">A${reprise.ascension}</span>` : ""}</p>` : ""}
+        <div class="tranches-rack">
+          ${TRANCHES.map((t) => `
+            <div class="tranche-carte ${t.active ? "active" : "locked"}" title="${t.active ? `${t.zones.length} zones` : "Bientôt disponible"}">
+              <span class="tranche-nom">${escapeHtml(t.nom)}</span>
+              <span class="tranche-niveaux">Niv. ${t.niveaux[0]}${t.niveaux[1] !== t.niveaux[0] ? `–${t.niveaux[1]}` : ""}</span>
+              <span class="tranche-detail">${t.active ? `${t.zones.length} zones` : "🔒 Verrouillé"}</span>
+            </div>`).join("")}
+        </div>
+        ${ascensionHtml}
+        <div class="boutons-ecran">
+          ${boutons}
+          ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
+        </div>
+      `);
+      document
+        .getElementById("btn-settings")
+        ?.addEventListener("click", async () => {
+          await showSettings();
+          draw();
+        });
+      document
+        .getElementById("btn-succes")
+        ?.addEventListener("click", async () => {
+          await showSucces(meta);
+          draw();
+        });
+      document
+        .getElementById("btn-bestiaire")
+        ?.addEventListener("click", async () => {
+          await showBestiaire(meta);
+          draw();
+        });
+      document
+        .getElementById("btn-armurerie")
+        ?.addEventListener("click", async () => {
+          await showArmurerie(meta);
+          draw();
+        });
+      document
+        .getElementById("btn-dofus")
+        ?.addEventListener("click", async () => {
+          await showCollectionDofus(meta);
+          draw();
+        });
+      root
+        .querySelectorAll<HTMLButtonElement>(".asc-btn[data-asc]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            sel = Number(btn.dataset.asc);
+            draw();
+          });
+        });
+      document
+        .getElementById("btn-start")
+        ?.addEventListener("click", () => res({ action: "nouvelle", ascension: sel }));
+      document
+        .getElementById("btn-reprendre")
+        ?.addEventListener("click", () => res({ action: "reprendre", ascension: 0 }));
+      document
+        .getElementById("btn-abandon")
+        ?.addEventListener("click", () => res({ action: "abandonner", ascension: 0 }));
+      document.getElementById("btn-reset")?.addEventListener("click", () => {
+        onReset();
+        draw();
       });
-    document
-      .getElementById("btn-succes")
-      ?.addEventListener("click", async () => {
-        await showSucces(meta);
-        showStart(meta, onReset, reprise).then(res);
-      });
-    document
-      .getElementById("btn-bestiaire")
-      ?.addEventListener("click", async () => {
-        await showBestiaire(meta);
-        showStart(meta, onReset, reprise).then(res);
-      });
-    document
-      .getElementById("btn-armurerie")
-      ?.addEventListener("click", async () => {
-        await showArmurerie(meta);
-        showStart(meta, onReset, reprise).then(res);
-      });
-    document
-      .getElementById("btn-dofus")
-      ?.addEventListener("click", async () => {
-        await showCollectionDofus(meta);
-        showStart(meta, onReset, reprise).then(res);
-      });
-    document
-      .getElementById("btn-start")
-      ?.addEventListener("click", () => res("nouvelle"));
-    document
-      .getElementById("btn-reprendre")
-      ?.addEventListener("click", () => res("reprendre"));
-    document
-      .getElementById("btn-abandon")
-      ?.addEventListener("click", () => res("abandonner"));
-    document.getElementById("btn-reset")?.addEventListener("click", () => {
-      onReset();
-      showStart(meta, onReset, reprise).then(res);
-    });
+    };
+    draw();
   });
 }
 

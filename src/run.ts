@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ZONES, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
@@ -43,6 +43,7 @@ export interface RunState {
   stats: RunStats; // récap de fin de run
   kamas: number; // monnaie de la run (perdue à la mort)
   choixDepart?: string[]; // roster choisi au départ (pour « recommencer avec les mêmes héros »)
+  ascension: number; // palier d'Ascension de la run (0 = jeu de base)
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -119,9 +120,10 @@ function cellulesPour(ids: string[]): Record<string, number> {
   return cells;
 }
 
-export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
+export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0): RunState {
   const cells = cellulesPour(choix);
   const elemsPref = chargerConfig().elements; // élément préféré par classe (préréglages)
+  const eff = effetsAscension(ascension);
   const persos: PersoState[] = choix.map((classeId) => {
     const progression = progressionInitiale();
     const perso: PersoState = {
@@ -133,9 +135,10 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART): RunState {
     };
     const pref = elemsPref[classeId]; // préréglage (absent = Libre)
     if (pref) appliquerElement(perso, pref);
+    if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
   });
-  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix] };
+  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------
@@ -182,11 +185,20 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
         if (inst) run.inventaire.push(inst);
       }
       run.persos[idx] = nouveauPerso(run, classeId, run.persos[idx].position);
+      appliquerPvDepartAscension(run, run.persos[idx]);
       return;
     }
   }
   const pris = new Set(run.persos.map((p) => p.position));
-  run.persos.push(nouveauPerso(run, classeId, caseLibrePreferee(classeId, pris)));
+  const recrue = nouveauPerso(run, classeId, caseLibrePreferee(classeId, pris));
+  run.persos.push(recrue);
+  appliquerPvDepartAscension(run, recrue);
+}
+
+/** Applique le PV de départ réduit d'Ascension (le même que `nouvelleRun`) à une recrue. */
+function appliquerPvDepartAscension(run: RunState, perso: PersoState): void {
+  const eff = effetsAscension(run.ascension);
+  if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
 }
 
 // --- Équipement --------------------------------------------------------------
@@ -534,6 +546,86 @@ export function appliquerModificateurElite(enemies: Combatant[], rng: () => numb
   return m;
 }
 
+/** Applique `nombre` modificateurs d'élite DISTINCTS (ids imposés d'abord, complétés au tirage). */
+export function appliquerModificateursElite(
+  enemies: Combatant[], rng: () => number, modifIds?: string[], nombre = 1,
+): ModificateurElite[] {
+  const restants = [...MODIFICATEURS_ELITE];
+  const choisis: ModificateurElite[] = [];
+  for (const id of modifIds ?? []) {
+    const i = restants.findIndex((m) => m.id === id);
+    if (i >= 0 && choisis.length < nombre) choisis.push(restants.splice(i, 1)[0]);
+  }
+  while (choisis.length < nombre && restants.length) choisis.push(restants.splice(Math.floor(rng() * restants.length), 1)[0]);
+  for (const m of choisis) appliquerModificateurElite(enemies, rng, m.id);
+  return choisis;
+}
+
+// --- Ascension : application aux ennemis ----------------------------------------
+/** Espèces (uniques) des combats NORMAUX d'une zone — vivier du renfort d'Ascension. */
+export function especesNormalesDeZone(zone: ZoneDef): string[] {
+  const ids = new Set<string>();
+  for (const cid of zone.pools.normales) for (const e of COMBATS[cid]?.ennemis ?? []) ids.add(e.monstre);
+  return [...ids];
+}
+
+/** Applique les malus d'Ascension à une meute (voir EffetsAscension). */
+export function appliquerAscensionEnnemis(
+  ennemis: Combatant[], eff: EffetsAscension,
+  opts: { type: "combat" | "combat_dur" | "donjon"; especesZone?: string[]; derniereZone?: boolean; rng: () => number },
+): void {
+  // A1 : renfort dans les combats normaux (avant les mults : il les subit aussi)
+  if (eff.packPlus1 && opts.type === "combat" && opts.especesZone?.length) {
+    const occupees = new Set(ennemis.map((e) => e.position));
+    const cell = [0, 1, 2, 3, 4, 5, 6, 7].find((c) => !occupees.has(c));
+    if (cell !== undefined) {
+      const espece = opts.especesZone[Math.floor(opts.rng() * opts.especesZone.length)];
+      ennemis.push(depuisMonstre(MONSTRES[espece], `asc_${espece}`, cell));
+    }
+  }
+  for (const e of ennemis) {
+    if (eff.statMultOffensif) {
+      const st = e.stats;
+      e.stats = {
+        ...st,
+        force: Math.round(st.force * eff.statMultOffensif),
+        intelligence: Math.round(st.intelligence * eff.statMultOffensif),
+        agilite: Math.round(st.agilite * eff.statMultOffensif),
+        chance: Math.round((st.chance ?? 0) * eff.statMultOffensif),
+      };
+    }
+    if (eff.pvMult) {
+      e.pvMax = Math.round(e.pvMax * eff.pvMult);
+      e.pvBase = e.pvMax;
+      e.pvActuels = e.pvMax;
+    }
+    const estBoss = !!(e.monstreId && MONSTRES[e.monstreId]?.boss);
+    if (estBoss && opts.type === "donjon") {
+      if (eff.bossEnrage) e.enrage = eff.bossEnrage;
+      if (eff.bossFinalPaBonus && opts.derniereZone) { e.paMax += eff.bossFinalPaBonus; e.paActuels = e.paMax; }
+    }
+  }
+}
+
+// --- Ascension -----------------------------------------------------------------
+/** Effets cumulés des paliers A1..A(palier). Booléens OR, pourcentages « dernier
+ *  gagne », multiplicateurs composés, bonus additionnés. */
+export function effetsAscension(palier: number): EffetsAscension {
+  const eff: EffetsAscension = {};
+  for (const p of ASCENSION.slice(0, Math.max(0, Math.min(palier, ASCENSION.length)))) {
+    const e = p.effets;
+    if (e.packPlus1) eff.packPlus1 = true;
+    if (e.tavernePct !== undefined) eff.tavernePct = e.tavernePct;
+    if (e.bossEnrage) eff.bossEnrage = (eff.bossEnrage ?? 0) + e.bossEnrage;
+    if (e.pvMult) eff.pvMult = (eff.pvMult ?? 1) * e.pvMult;
+    if (e.elitesDoubles) eff.elitesDoubles = true;
+    if (e.statMultOffensif) eff.statMultOffensif = (eff.statMultOffensif ?? 1) * e.statMultOffensif;
+    if (e.pvDepartPct !== undefined) eff.pvDepartPct = e.pvDepartPct;
+    if (e.bossFinalPaBonus) eff.bossFinalPaBonus = (eff.bossFinalPaBonus ?? 0) + e.bossFinalPaBonus;
+  }
+  return eff;
+}
+
 /** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */
 export function appliquerArchimonstres(enemies: Combatant[], rng: () => number, chance = ARCHI.chance): void {
   for (const e of enemies) {
@@ -592,6 +684,12 @@ export function chargerRunEnCours(): RunSauvee | null {
     }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
+    s.run.ascension = s.run.ascension ?? 0; // rétro-compat : anciennes saves sans ascension
+    // rétro-compat : ancien champ scalaire eliteModif → tableau eliteModifs
+    for (const n of s.run.carte?.noeuds ?? []) {
+      const legacy = (n as { eliteModif?: string }).eliteModif;
+      if (legacy && !n.eliteModifs) n.eliteModifs = [legacy];
+    }
     return s as RunSauvee;
   } catch {
     return null;
@@ -642,6 +740,14 @@ export const SUCCES: Succes[] = [
   { id: "quatre_par_quatre", nom: "Quatre par quatre", desc: "Finir une run avec 4 héros entièrement équipés.",
     cond: (c) => !!c.run && c.run.persos.length === 4 &&
       c.run.persos.every((p) => (["arme", "coiffe", "cape", "anneau"] as const).every((s) => p.equipement[s])) },
+  { id: "ascension_1", nom: "Ascension I", desc: "Vaincre la tranche en Ascension 1.",
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 1 },
+  { id: "ascension_3", nom: "Ascension III", desc: "Vaincre la tranche en Ascension 3.",
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 3 },
+  { id: "ascension_5", nom: "Ascension V", desc: "Vaincre la tranche en Ascension 5.",
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 5 },
+  { id: "ascension_8", nom: "Ascension VIII", desc: "Vaincre la tranche en Ascension 8 — le sommet.",
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 8 },
 ];
 
 /** Évalue les succès non débloqués ; persiste et renvoie les nouveaux. */
@@ -831,8 +937,8 @@ export function chargerMeta(): Meta {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const m = JSON.parse(raw) as Partial<Meta>;
-      // rétro-compat : les vieux saves n'ont ni compteurs ni archis
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {} };
+      // rétro-compat : les vieux saves n'ont ni compteurs ni archis ni ascension
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: m.ascension };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
@@ -862,6 +968,24 @@ export function reinitialiserMeta(meta: Meta): void {
 export function enregistrerRun(meta: Meta, reussie: boolean): void {
   meta.runs += 1;
   if (reussie) meta.victoires += 1;
+  sauverMeta(meta);
+}
+
+/** % de soin de taverne effectif au palier donné. */
+export function tavernePctAscension(palier: number): number {
+  return effetsAscension(palier).tavernePct ?? TAVERNE_PCT;
+}
+/** Chance de drop de Dofus par boss au palier donné (+1 %/palier). */
+export function tauxDofusAscension(palier: number): number {
+  return DOFUS_DROP_RATE + 0.01 * palier;
+}
+/** Record d'Ascension d'une tranche (undefined = jamais vaincue). */
+export function recordAscension(meta: Meta, trancheId: string): number | undefined {
+  return meta.ascension?.[trancheId];
+}
+/** Toute victoire enregistre max(record, palier) et persiste la Meta. */
+export function enregistrerAscension(meta: Meta, trancheId: string, palier: number): void {
+  meta.ascension = { ...(meta.ascension ?? {}), [trancheId]: Math.max(meta.ascension?.[trancheId] ?? 0, palier) };
   sauverMeta(meta);
 }
 

@@ -12,6 +12,16 @@ const randInt = (rng: Rng, min: number, max: number): number =>
 
 const pick = <T>(rng: Rng, arr: T[]): T => arr[Math.floor(rng() * arr.length)];
 
+/** Tire `n` éléments DISTINCTS de `arr` (sans remise), dans l'ordre du tirage. */
+function tirerDistincts<T>(rng: Rng, arr: T[], n: number): T[] {
+  const restants = [...arr];
+  const choisis: T[] = [];
+  while (choisis.length < n && restants.length) {
+    choisis.push(restants.splice(Math.floor(rng() * restants.length), 1)[0]);
+  }
+  return choisis;
+}
+
 function pickType(rng: Rng, poids: Record<string, number>): NodeType {
   const entries = Object.entries(poids);
   const total = entries.reduce((s, [, w]) => s + w, 0);
@@ -24,7 +34,7 @@ function pickType(rng: Rng, poids: Record<string, number>): NodeType {
 }
 
 /** Renseigne combatId / xp d'un nœud selon son type, depuis les pools de la zone. */
-function enrichir(rng: Rng, node: MapNode, pools: ZonePools): void {
+function enrichir(rng: Rng, node: MapNode, pools: ZonePools, nbModifsElite: number): void {
   switch (node.type) {
     case "combat":
       node.combatId = pick(rng, pools.normales);
@@ -33,7 +43,8 @@ function enrichir(rng: Rng, node: MapNode, pools: ZonePools): void {
     case "combat_dur":
       node.combatId = pick(rng, pools.elite);
       node.xp = XP_PAR_TYPE.combat_dur;
-      node.eliteModif = pick(rng, MODIFICATEURS_ELITE).id; // connu d'avance → affiché au survol
+      // connus d'avance → affichés au survol
+      node.eliteModifs = tirerDistincts(rng, MODIFICATEURS_ELITE, nbModifsElite).map((m) => m.id);
       break;
     case "donjon":
       node.combatId = pools.boss;
@@ -65,7 +76,9 @@ function profilLargeur(rng: Rng): number[] {
 const colonnesDe = (nb: number): number[] =>
   nb === 2 ? [-0.5, 0.5] : nb === 3 ? [-1, 0, 1] : [0];
 
-export function genererCarte(rng: Rng, pools: ZonePools, sansNoeuds: NodeType[] = []): GameMap {
+export function genererCarte(
+  rng: Rng, pools: ZonePools, sansNoeuds: NodeType[] = [], nbModifsElite = 1,
+): GameMap {
   // types de nœuds exclus par la zone (ex. pas d'Otomai à Incarnam)
   const poids = Object.fromEntries(
     Object.entries(GEN_CARTE.poids).filter(([t]) => !sansNoeuds.includes(t as NodeType)),
@@ -81,7 +94,7 @@ export function genererCarte(rng: Rng, pools: ZonePools, sansNoeuds: NodeType[] 
       const type: NodeType =
         l === 0 ? "combat" : l === nbLignes - 1 ? "donjon" : pickType(rng, poids);
       const node: MapNode = { id: `n${l}_${c}`, type, ligne: l, colonne, suivants: [] };
-      enrichir(rng, node, pools);
+      enrichir(rng, node, pools, nbModifsElite);
       ligne.push(node);
     });
     lignes.push(ligne);

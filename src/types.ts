@@ -290,6 +290,8 @@ export interface Combatant {
   paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip portée
   rage?: number; // états de Rage (Ouginak) : +RAGE_BONUS de dégâts par charge, consommés par Apaisement
   elementLibre?: boolean; // Kwakwaffe portée : l'élément choisi n'est plus limité au top 2
+  enrage?: number; // Ascension A3 : +X de dégâts infligés par tour (posé par run.ts sur le boss)
+  enrageCumul?: number; // accumulé par le moteur au début de chaque tour de l'enragé
   renaissance?: number; // Kwakwanneau : fraction de PV de la renaissance (une par combat)
   renaissancesRestantes?: number; // compteur de renaissances disponibles ce combat
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant
@@ -335,6 +337,7 @@ export interface Meta {
   victoires: number; // sous-ensemble : runs achevées (les 6 zones vaincues)
   succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
   collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue
+  ascension?: Record<string, number>; // record par tranche : plus haut palier VAINCU (absent = tranche jamais finie)
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------
@@ -349,7 +352,7 @@ export interface MapNode {
   visite?: boolean;
   combatId?: string; // pour les nœuds de combat : quel encounter
   xp?: number; // récompense XP (combats)
-  eliteModif?: string; // combat_dur : id du modificateur (tiré à la génération, affiché au survol)
+  eliteModifs?: string[]; // combat_dur : ids des modificateurs (tirés à la génération, affichés au survol)
 }
 
 export interface GameMap {

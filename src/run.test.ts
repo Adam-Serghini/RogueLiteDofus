@@ -52,6 +52,7 @@ describe("sauvegarde de run", () => {
     const run = nouvelleRun(["iop", "cra"]);
     run.persos[0].pvActuels = 12;
     run.inventaire.push({ id: "chapeau_de_l_aventurier", rarete: "commun", stats: { vitalite: 4 } });
+    run.ascension = 3;
     sauverRunEnCours(3, run);
     const s = chargerRunEnCours();
     expect(s).not.toBeNull();
@@ -59,6 +60,17 @@ describe("sauvegarde de run", () => {
     expect(s!.run.persos.map((p) => p.classeId)).toEqual(["iop", "cra"]);
     expect(s!.run.persos[0].pvActuels).toBe(12);
     expect(s!.run.inventaire[0]).toEqual({ id: "chapeau_de_l_aventurier", rarete: "commun", stats: { vitalite: 4 } });
+    expect(s!.run.ascension).toBe(3);
+  });
+
+  it("vieille save sans ascension → 0", () => {
+    const run = nouvelleRun(["iop", "cra"]);
+    sauverRunEnCours(1, run);
+    const raw = JSON.parse(store.get("rld_run_v0")!);
+    delete raw.run.ascension;
+    store.set("rld_run_v0", JSON.stringify(raw));
+    const s = chargerRunEnCours();
+    expect(s!.run.ascension).toBe(0);
   });
 
   it("effacer supprime la sauvegarde ; une save corrompue est ignorée", () => {
