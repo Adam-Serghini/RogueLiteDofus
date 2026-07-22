@@ -105,6 +105,8 @@ export type EffetStat =
   | "friction" // bloque soins ET boucliers du porteur (flag : valeur ignorée)
   | "proie" // marque de l'Ouginak : valeur = vol de vie d'ÉQUIPE contre le porteur (unique)
   | "tetanise" // Tétanisation : le porteur ne peut pas viser la ligne arrière (flag)
+  | "ignoreLigne" // le porteur ignore la règle de ligne : ses sorts ennemi_ligne visent aussi l'arrière (flag)
+  | "paParTour" // crédite ce nombre de PA à chaque début de tour du porteur, tant que l'effet dure
   // buffs/debuffs temporaires de caractéristique (sommés dans statsEffectives) :
   | "force"
   | "intelligence"
@@ -187,6 +189,15 @@ export interface Spell {
   rage?: boolean; // le sort confère 1 état de Rage au lanceur (cap RAGE_MAX)
   consommeRage?: boolean; // Apaisement : consomme TOUTE la Rage, soigne baseMin-baseMax PAR charge
   bonusParEnnemiLigneCible?: number; // Dépouille : +% de dégâts par AUTRE ennemi sur la ligne de la cible
+  maxParTour?: number; // nombre maximum de lancers de ce sort par tour (toutes cibles confondues)
+  maxParCibleParTour?: number; // nombre maximum de lancers de ce sort SUR UNE MÊME cible par tour
+  // --- socle Roublard / Xélor / rework Cra ---
+  deplaceCible?: "toggle" | "arriere"; // déplace la CIBLE dans la rangée opposée ("toggle") ou vers l'arrière seulement ("arriere") ; échec silencieux si la rangée est pleine
+  nullifieProchain?: boolean; // buff : le porteur annule son prochain coup direct reçu (pas les poisons)
+  paParTourLigne?: { valeur: number; duree: number }; // crédite ce nombre de PA à chaque début de tour, à TOUTE la rangée de l'allié ciblé, pendant la durée
+  retraitPAChance?: number; // probabilité du retrait de PA (retraitPA) ; défaut 0.3 si absent
+  bonusParPADispo?: number; // Flèche Punitive : +X % de dégâts par PA dispo AVANT le paiement du coût
+  bonusParTelefrag?: number; // Rayon Obscur : +X % de dégâts par Téléfrag posé sur la cible
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
@@ -319,6 +330,10 @@ export interface Combatant {
   provoque?: boolean; // les ennemis doivent la cibler en priorité
   provoqueTours?: number; // Provocation : tours restants de provocation (sinon permanent)
   dureeRestante?: number; // optionnel : disparaît après N tours
+  lancersCeTour?: Record<string, number>; // clés `sortId` et `sortId:cibleRef` — remis à {} au début du tour du combattant
+  nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
+  bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
+  telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort). */

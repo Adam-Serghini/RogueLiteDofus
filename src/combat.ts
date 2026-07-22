@@ -138,8 +138,10 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
       base = adverses(acteur, cs);
       break;
     case "ennemi_ligne": {
-      // règle de ligne SYMÉTRIQUE : on ne vise que la ligne avant (cases 0-3)
-      base = ligneFront(adverses(acteur, cs));
+      // règle de ligne SYMÉTRIQUE : on ne vise que la ligne avant (cases 0-3),
+      // sauf si le lanceur ignore la ligne (Œil perçant…) : alors comme ennemi_tous
+      const adv = adverses(acteur, cs);
+      base = sommeEffet(acteur, "ignoreLigne") > 0 ? adv : ligneFront(adv);
       break;
     }
     case "mixte":
@@ -169,8 +171,16 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   if (enCooldownSort(acteur, sort)) return [];
   // un sort à cooldown n'est plus ciblable sur une cible en attente de recharge
   if (sort.cooldown) base = base.filter((c) => !enCooldown(acteur, sort, c.ref));
+  // limites de lancer « par tour » (maxParTour / maxParCibleParTour)
+  if (sort.maxParTour && (acteur.lancersCeTour?.[sort.id] ?? 0) >= sort.maxParTour) return [];
+  if (sort.maxParCibleParTour) {
+    base = base.filter((c) => (acteur.lancersCeTour?.[`${sort.id}:${c.ref}`] ?? 0) < sort.maxParCibleParTour!);
+  }
   return base;
 }
+
+/** Remise à zéro des limites de lancer « par tour » (appelée au début du tour du combatant). */
+export function reinitialiserLancersTour(c: Combatant): void { c.lancersCeTour = {}; }
 
 /** Cibles effectivement touchées par un sort de dégâts (primaire + rebonds). */
 function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: Combatant[]): Combatant[] {
@@ -226,6 +236,8 @@ interface BaseDegats {
   scaling: number;
   ignoreResistances?: boolean;
   perceResistances?: number; // fraction des résistances ignorée (Dagues Aj'Deh'La)
+  bonusParPADispo?: number; // Flèche Punitive : +X % par PA dispo AVANT paiement (opts.paAvant)
+  bonusParTelefrag?: number; // Rayon Obscur : +X % par Téléfrag posé sur la cible
 }
 
 // --- Rage (Ouginak) -----------------------------------------------------------
@@ -244,6 +256,30 @@ export function chanceCrit(se: Stats): number {
   return Math.min(0.5, se.force * 0.005 + (se.crit ?? 0) / 100);
 }
 
+// --- Bombes (Roublard) / Téléfrags (Xélor) -----------------------------------
+export const BOMBES_MAX = 5;
+export const TELEFRAGS_MAX = 4;
+
+/** Colle une bombe (Roublard). false si le cap est atteint. */
+export function poserBombe(cible: Combatant): boolean {
+  if ((cible.bombes ?? 0) >= BOMBES_MAX) return false;
+  cible.bombes = (cible.bombes ?? 0) + 1;
+  return true;
+}
+
+/** Pose un Téléfrag (Xélor), sous cap. L'écho d'Aiguille s'y branche (Task 5). */
+export function poserTelefrag(cible: Combatant, _cs: Combatant[], _ctx: CombatCtx): void {
+  if ((cible.telefrags ?? 0) >= TELEFRAGS_MAX) return;
+  cible.telefrags = (cible.telefrags ?? 0) + 1;
+  // Task 5 ajoute ici : si sommeEffet(cible, "aiguille") > 0 → re-jet de SORTS.aiguille par l'acteur courant.
+}
+
+/** Part du crit au-delà du cap 50 %, convertie en dégâts finaux (Tir Puissant).
+ *  Seule la stat de crit PLATE peut déborder du cap — la Force seule ne le peut jamais. */
+export function critExcedent(se: Stats): number {
+  return Math.max(0, Math.min(0.5, se.force * 0.005) + (se.crit ?? 0) / 100 - 0.5);
+}
+
 /** Bonus de dégâts d'un critique : +25 % de base + Agilité, plafonné à +60 %. */
 export function bonusDegatsCrit(se: Stats): number {
   return Math.min(0.6, 0.25 + se.agilite * 0.004);
@@ -253,7 +289,7 @@ export function degatsCible(
   lanceur: Combatant,
   sort: Spell,
   cible: Combatant,
-  opts: { useMax: boolean; mult: number; ctx: CombatCtx },
+  opts: { useMax: boolean; mult: number; ctx: CombatCtx; paAvant?: number },
 ): ResultatDegats {
   return degatsAvec(lanceur, sort, cible, opts);
 }
@@ -262,7 +298,7 @@ function degatsAvec(
   lanceur: Combatant,
   base: BaseDegats,
   cible: Combatant,
-  opts: { useMax: boolean; mult: number; ctx: CombatCtx },
+  opts: { useMax: boolean; mult: number; ctx: CombatCtx; paAvant?: number },
 ): ResultatDegats {
   const { ctx } = opts;
   const se = statsEffectives(lanceur);
@@ -296,6 +332,13 @@ function degatsAvec(
 
   // Ascension « Boss enragés » : dégâts cumulés tour après tour
   if (lanceur.enrageCumul) dmg *= 1 + lanceur.enrageCumul;
+
+  // Flèche Punitive : +X % par PA disponible avant le lancer
+  if (base.bonusParPADispo && opts.paAvant !== undefined) dmg *= 1 + base.bonusParPADispo * opts.paAvant;
+  // Rayon Obscur : +X % par Téléfrag de la cible
+  if (base.bonusParTelefrag) dmg *= 1 + base.bonusParTelefrag * (cible.telefrags ?? 0);
+  // Tir Puissant : le crit au-delà du cap devient des dégâts finaux
+  dmg *= 1 + critExcedent(se);
 
   // bonus de rebond (saut)
   dmg *= opts.mult;
@@ -379,6 +422,13 @@ function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
  *  Si `attaquant`/`ctx` sont fournis et que la cible a une posture de contre
  *  (Duel), elle peut riposter d'une frappe modeste (sans re-déclenchement). */
 function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ctx?: CombatCtx, ignoreBouclier?: boolean): void {
+  // nullification (buff soi) : annule UN coup DIRECT (pas un tick de poison, qui ne
+  // passe pas par cette fonction), consommée dès le premier coup direct qui suit
+  if (dmg > 0 && cible.nullifieProchainCoup) {
+    cible.nullifieProchainCoup = false;
+    ctx?.log(`${cible.nom} annule le coup grâce à sa nullification !`);
+    dmg = 0;
+  }
   if (attaquant && dmg > 0) ctx?.onDegats?.(attaquant.ref, dmg); // stats de run
   let reste = dmg;
   if (cible.bouclier > 0 && !ignoreBouclier) {
@@ -435,6 +485,16 @@ function caseLibreRangeeOpposee(c: Combatant, cs: Combatant[]): number | null {
   return null;
 }
 
+/** Déplace une CIBLE vers la rangée opposée de son propre camp (échec silencieux
+ *  si celle-ci est pleine). "arriere" : ne pousse que si la cible est en avant. */
+function deplacerCible(cible: Combatant, mode: "toggle" | "arriere", cs: Combatant[], ctx: CombatCtx): void {
+  if (mode === "arriere" && !estAvant(cible)) return; // déjà en arrière : rien à faire
+  const dest = caseLibreRangeeOpposee(cible, cs);
+  if (dest === null) return; // rangée opposée pleine : échec silencieux
+  cible.position = dest;
+  ctx.log(`${cible.nom} est repoussé en ligne ${dest < NB_COLONNES ? "AVANT" : "ARRIÈRE"}.`);
+}
+
 /** Ennemi vivant de la ligne ARRIÈRE le plus proche de la colonne de `cible`
  *  (la « victime derrière » de la Masse Aj Taye). null si cible déjà derrière. */
 function derriereEnLigne(cible: Combatant, cs: Combatant[]): Combatant | null {
@@ -478,6 +538,11 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
     acteur.paActuels += acteur.paBonusNextTurn;
     ctx.log(`${acteur.nom} gagne ${acteur.paBonusNextTurn} PA (Mot d'ivation).`);
     acteur.paBonusNextTurn = 0;
+  }
+  // PA par tour (Cadran…) : crédite tant que l'effet dure (posé par paParTourLigne)
+  for (const e of acteur.effets.filter((x) => x.stat === "paParTour")) {
+    acteur.paActuels += e.valeur;
+    ctx.log(`${acteur.nom} gagne ${e.valeur} PA (effet de ligne).`);
   }
   // poison (DoT) — peut tuer, et se transmet alors au combattant derrière
   for (const e of acteur.effets.filter((x) => x.stat === "poison")) {
@@ -617,6 +682,10 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     ctx.log(`${cible.nom} prépare un Tir Puissant (effet de la prochaine flèche doublé).`);
   }
   if (sort.dissipePositifs) dissiperPositifs(cible, ctx);
+  if (sort.nullifieProchain) {
+    cible.nullifieProchainCoup = true;
+    ctx.log(`${cible.nom} se prépare à annuler le prochain coup direct.`);
+  }
 }
 
 /** Invoque une Poupée de garde (une seule active par invocateur). */
@@ -763,7 +832,7 @@ function frappe(
   lanceur: Combatant,
   base: BaseDegats,
   t: Combatant,
-  opts: { useMax: boolean; mult: number; ctx: CombatCtx },
+  opts: { useMax: boolean; mult: number; ctx: CombatCtx; paAvant?: number },
   nomSort: string,
 ): number {
   const r = degatsAvec(lanceur, base, t, opts);
@@ -853,7 +922,15 @@ export function lancerSort(
   cs: Combatant[],
   ctx: CombatCtx,
 ): void {
+  // Flèche Punitive : PA dispo AVANT paiement — la boucle de combat débite paActuels
+  // avant d'appeler lancerSort, donc « avant paiement » = paActuels + coutPA ici.
+  const paAvant = lanceur.paActuels + sort.coutPA;
   const cible = parRef(cs, cibleRef);
+  if (sort.maxParTour || sort.maxParCibleParTour) {
+    const l = (lanceur.lancersCeTour ??= {});
+    l[sort.id] = (l[sort.id] ?? 0) + 1;
+    if (cibleRef) l[`${sort.id}:${cibleRef}`] = (l[`${sort.id}:${cibleRef}`] ?? 0) + 1;
+  }
   const poseCooldown = (t: Combatant) => {
     if (sort.cooldown) lanceur.cooldowns[`${sort.id}:${t.ref}`] = sort.cooldown;
     if (sort.cooldownTours) lanceur.cooldowns[sort.id] = sort.cooldownTours;
@@ -948,6 +1025,17 @@ export function lancerSort(
     for (const c of cs) c.effets = c.effets.filter((e) => e.stat !== "proie"); // une seule proie
     cible.effets.push({ stat: "proie", valeur: sort.marqueProie, toursRestants: 99 });
     ctx.log(`🎯 ${lanceur.nom} désigne ${cible.nom} comme Proie : l'équipe vole ${Math.round(sort.marqueProie * 100)} % des dégâts qu'elle lui inflige.`);
+    poseCooldown(cible);
+    return;
+  }
+
+  // --- PA PAR TOUR DE LIGNE (Cadran…) : toute la rangée de l'allié ciblé gagne l'effet ---
+  if (sort.paParTourLigne && cible) {
+    const rangee = allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(cible));
+    for (const a of rangee) {
+      appliquerEffet(a, { stat: "paParTour", valeur: sort.paParTourLigne.valeur, duree: sort.paParTourLigne.duree });
+    }
+    ctx.log(`${lanceur.nom} lance ${sort.nom} : la ligne de ${cible.nom} gagne +${sort.paParTourLigne.valeur} PA/tour.`);
     poseCooldown(cible);
     return;
   }
@@ -1059,7 +1147,7 @@ export function lancerSort(
 
   touchees.forEach((t, i) => {
     const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult * multLigne;
-    const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx });
+    const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx, paAvant });
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${sort.nom} !`);
       ctx.fx?.({ type: "esquive", ref: t.ref });
@@ -1098,7 +1186,7 @@ export function lancerSort(
       .filter((e) => e.ref !== cible.ref)
       .sort((a, b) => a.position - b.position)[0];
     if (t) {
-      const r = degatsCible(lanceur, sort, t, { useMax: false, mult: sort.siCibleMeurt.rebondDegatsX, ctx });
+      const r = degatsCible(lanceur, sort, t, { useMax: false, mult: sort.siCibleMeurt.rebondDegatsX, ctx, paAvant });
       if (r.esquive) {
         ctx.log(`${t.nom} esquive le rebond de ${sort.nom} !`);
         ctx.fx?.({ type: "esquive", ref: t.ref });
@@ -1142,9 +1230,14 @@ export function lancerSort(
     soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
   }
 
-  // Fracas : retrait de PA immédiat — 30 % de chance
-  if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < 0.3) {
+  // Fracas / Arc des Rivages : retrait de PA immédiat — 30 % de chance par défaut
+  if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < (sort.retraitPAChance ?? 0.3)) {
     retirerPA(cible, sort.retraitPA, ctx);
+  }
+
+  // Déplacement de cible : pousse la cible dans la rangée opposée (ou seulement vers l'arrière)
+  if (sort.deplaceCible && cible.pvActuels > 0) {
+    deplacerCible(cible, sort.deplaceCible, cs, ctx);
   }
 
   // Colère : passe le tour si la cible survit
@@ -1230,6 +1323,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       const acteur = candidats[0];
       aJoue.add(acteur.ref);
 
+      reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer par tour
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       appliquerEnrage(acteur, ctx); // Ascension : boss enragés
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)

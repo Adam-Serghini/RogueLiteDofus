@@ -4,10 +4,12 @@
 import { describe, it, expect } from "vitest";
 import {
   degatsCible, elementDeFrappe, ciblesValides, runCombat, controllerIA, lancerSort,
+  reinitialiserLancersTour, effetsDebutTour, poserBombe, poserTelefrag, critExcedent,
   type CombatCtx,
 } from "./combat";
 import { SORTS } from "./data";
-import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus, bonusEquipe } from "./run";
+import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus, bonusEquipe, equipeCombattante, nouvelleRun } from "./run";
+import type { Spell } from "./types";
 
 // rng=0.99 → jamais d'esquive, jet au max, jamais de crit (déterministe).
 const rngMax: () => number = () => 0.99;
@@ -317,5 +319,132 @@ describe("Tir courbe (monstres tireurs)", () => {
     iop.provoque = true;
     const provoquees = ciblesValides(tireur, SORTS.tir_courbe, [iop, cra, tireur]);
     expect(provoquees.map((c) => c.ref)).toEqual([iop.ref]);
+  });
+});
+
+describe("limites de lancer par tour", () => {
+  const sortLimite: Spell = { id: "syn_limite", nom: "Syn", type: "degats", cible: "ennemi_ligne",
+    coutPA: 1, baseMin: 1, baseMax: 1, scaling: 0, maxParTour: 2, maxParCibleParTour: 1 };
+  it("maxParTour bloque le 3e lancer, maxParCibleParTour exclut la cible déjà visée", () => {
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    const ennemis = fabriquerEnnemis("combat_1").map((e) => { e.pvActuels = 999; e.pvMax = 999; e.stats = { ...e.stats, agilite: 0 }; return e; });
+    const cs = [iop, ...ennemis];
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    iop.paActuels = 9;
+    expect(ciblesValides(iop, sortLimite, cs).length).toBeGreaterThan(0);
+    lancerSort(iop, sortLimite, ennemis[0].ref, cs, ctx);
+    // la cible déjà visée est exclue (1/cible), les autres restent
+    expect(ciblesValides(iop, sortLimite, cs).map((c) => c.ref)).not.toContain(ennemis[0].ref);
+    lancerSort(iop, sortLimite, ennemis[1].ref, cs, ctx);
+    expect(ciblesValides(iop, sortLimite, cs)).toEqual([]); // 2/tour atteint
+  });
+  it("le compteur se remet à zéro au début du tour du lanceur", () => {
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    iop.lancersCeTour = { syn_limite: 2 };
+    // simuler le passage par le début de tour (même mécanisme que la boucle runCombat)
+    reinitialiserLancersTour(iop);
+    expect(ciblesValides(iop, sortLimite, [iop, ...fabriquerEnnemis("combat_1")]).length).toBeGreaterThan(0);
+  });
+});
+
+describe("socle nouvelles classes — déplacement / nullification / PA / ligne de vue", () => {
+  const ctx = () => ({ rng: () => 0.99, log: () => {}, playerDamageBonus: 1 });
+  it("deplaceCible 'toggle' envoie l'ennemi sur la rangée opposée (même colonne si libre)", () => {
+    const syn: Spell = { id: "syn_dep", nom: "S", type: "degats", cible: "ennemi_tous", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: "toggle" };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    const pack = fabriquerEnnemis("combat_1");
+    const devant = pack.find((e) => e.position < 4)!;
+    const colonne = devant.position;
+    lancerSort(iop, syn, devant.ref, [iop, ...pack], ctx());
+    expect(devant.position).toBe(colonne + 4);
+  });
+  it("nullifieProchain annule UN coup direct mais pas un poison", () => {
+    const buff: Spell = { id: "syn_null", nom: "N", type: "buff", cible: "soi", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, nullifieProchain: true };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    iop.pvActuels = 500; iop.pvMax = 500; iop.stats = { ...iop.stats, agilite: 0 };
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    lancerSort(iop, buff, iop.ref, [iop, ennemi], ctx());
+    lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx());
+    expect(iop.pvActuels).toBe(500); // coup annulé
+    lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx());
+    expect(iop.pvActuels).toBeLessThan(500); // flag consommé
+  });
+  it("paParTourLigne crédite +2 PA au début des tours de la rangée, pendant la durée", () => {
+    const cadranSyn: Spell = { id: "syn_cadran", nom: "C", type: "buff", cible: "allie", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, paParTourLigne: { valeur: 2, duree: 2 } };
+    const equipe = equipeCombattante(nouvelleRun(["iop", "cra"]));
+    const [iop] = equipe; // les persos de départ partagent-ils une rangée ? forcer : iop.position = 0 ; cra.position = 1
+    equipe[1].position = 1;
+    lancerSort(iop, cadranSyn, equipe[1].ref, equipe, ctx());
+    const paAvant = iop.paActuels;
+    effetsDebutTour(iop, equipe, ctx() as never);
+    expect(iop.paActuels).toBe(paAvant + 2);
+  });
+  it("l'effet ignoreLigne ouvre la rangée arrière aux sorts ennemi_ligne", () => {
+    const acuiteSyn: Spell = { id: "syn_acuite", nom: "A", type: "buff", cible: "soi", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, effet: { duree: 2, stat: "ignoreLigne", valeur: 1 } };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    const pack = fabriquerEnnemis("gob_elite"); // pack avec rangée arrière
+    const arriere = pack.filter((e) => e.position >= 4);
+    expect(arriere.length).toBeGreaterThan(0);
+    expect(ciblesValides(iop, SORTS.morsure, [iop, ...pack]).some((c) => c.position >= 4)).toBe(false);
+    lancerSort(iop, acuiteSyn, iop.ref, [iop, ...pack], ctx());
+    expect(ciblesValides(iop, SORTS.morsure, [iop, ...pack]).some((c) => c.position >= 4)).toBe(true);
+  });
+  it("retraitPAChance: 1 retire les PA à coup sûr", () => {
+    const sablierSyn: Spell = { id: "syn_sablier", nom: "S", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 1, baseMax: 1, scaling: 0, retraitPA: 2, retraitPAChance: 1 };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    const pa = ennemi.paActuels;
+    lancerSort(iop, sablierSyn, ennemi.ref, [iop, ennemi], { rng: () => 0.9, log: () => {}, playerDamageBonus: 1 }); // 0.9 raterait un 30 %
+    expect(ennemi.paActuels).toBe(pa - 2);
+  });
+});
+
+describe("socle — compteurs et modificateurs de dégâts", () => {
+  it("poserBombe cape à 5, poserTelefrag cape à 4", () => {
+    const e = fabriquerEnnemis("combat_1")[0];
+    for (let i = 0; i < 7; i++) poserBombe(e);
+    expect(e.bombes).toBe(5);
+    for (let i = 0; i < 7; i++) poserTelefrag(e, [e], ctx());
+    expect(e.telefrags).toBe(4);
+  });
+  it("bonusParPADispo utilise les PA d'AVANT le paiement", () => {
+    const syn: Spell = { id: "syn_pa", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 10, baseMax: 10, scaling: 0, bonusParPADispo: 0.08 };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    iop.stats = { ...iop.stats, force: 0, agilite: 0 };
+    const cible = fabriquerEnnemis("combat_1")[0];
+    cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
+    // simule le débit de PA fait par la boucle de runCombat AVANT d'appeler lancerSort :
+    // « 6 PA dispo avant paiement » ⇒ paActuels vaut déjà 6 - 4 = 2 au moment de l'appel.
+    iop.paActuels = 6;
+    iop.paActuels -= syn.coutPA;
+    lancerSort(iop, syn, cible.ref, [iop, cible], ctx());
+    expect(500 - cible.pvActuels).toBe(Math.round(10 * (1 + 0.08 * 6))); // 6 PA dispo, pas 2
+  });
+  it("bonusParTelefrag multiplie par les téléfrags de la cible", () => {
+    const syn: Spell = { id: "syn_ray", nom: "R", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0, bonusParTelefrag: 0.5 };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    iop.stats = { ...iop.stats, force: 0, agilite: 0 };
+    const cible = fabriquerEnnemis("combat_1")[0];
+    cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
+    cible.telefrags = 4;
+    lancerSort(iop, syn, cible.ref, [iop, cible], ctx());
+    expect(500 - cible.pvActuels).toBe(Math.round(10 * 3)); // ×(1 + 0.5×4)
+  });
+  it("le crit au-delà du cap 50 % se convertit en dégâts finaux", () => {
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    // force 0 + crit 65 → chanceCrit = 0.5 (cap), excédent 0.15
+    iop.stats = { ...iop.stats, force: 0, agilite: 0, crit: 65 };
+    const cible = fabriquerEnnemis("combat_1")[0];
+    cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
+    const syn: Spell = { id: "syn_crit", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+    lancerSort(iop, syn, cible.ref, [iop, cible], { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 }); // 0.99 > 0.5 : pas de crit
+    expect(500 - cible.pvActuels).toBe(Math.round(10 * 1.15));
+  });
+  it("la Force seule ne déborde jamais du cap de crit (pas d'excédent)", () => {
+    // force 999 + crit 0 → contribution Force plafonnée à 0.5 DANS l'excédent → excédent 0
+    expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0 })).toBe(0);
+    // seul le crit PLAT déborde : force 999 + crit 20 → excédent 0.20
+    expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0, crit: 20 })).toBeCloseTo(0.2);
   });
 });
