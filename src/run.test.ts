@@ -91,7 +91,7 @@ describe("classes désactivées", () => {
     const dispo = classesDisponibles();
     expect(dispo).not.toContain("sadida");
     expect(dispo).toContain("ouginak");
-    expect(dispo.length).toBe(9);
+    expect(dispo.length).toBe(10);
     // le recrutement passe par classesDisponibles → jamais proposé
     const run = nouvelleRun(["iop", "cra"]);
     expect(classesHorsEquipe(run)).not.toContain("sadida");

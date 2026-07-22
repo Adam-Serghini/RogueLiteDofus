@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   degatsCible, elementDeFrappe, ciblesValides, runCombat, controllerIA, lancerSort,
   reinitialiserLancersTour, effetsDebutTour, poserBombe, poserTelefrag, critExcedent,
+  poserPortail, multPortails, PORTAILS_MAX,
   type CombatCtx,
 } from "./combat";
 import { SORTS } from "./data";
@@ -517,5 +518,52 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0 })).toBe(0);
     // seul le crit PLAT déborde : force 999 + crit 20 → excédent 0.20
     expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0, crit: 20 })).toBeCloseTo(0.2);
+  });
+});
+
+describe("portails (Éliotrope) et Conjuration — moteur", () => {
+  const ctx = () => ({ rng: () => 0.99, log: () => {}, playerDamageBonus: 1 });
+  it("poserPortail cape à 4 ; multPortails : 2 %/portail au porteur, 1 %/portail à sa rangée", () => {
+    const [iop, cra] = equipeCombattante(nouvelleRun(["iop", "cra"]));
+    iop.position = 0; cra.position = 1; // même rangée
+    for (let i = 0; i < 6; i++) poserPortail(iop, ctx() as CombatCtx);
+    expect(iop.portails).toBe(PORTAILS_MAX);
+    expect(multPortails(iop, [iop, cra])).toBeCloseTo(1.08); // porteur : 2 % × 4
+    expect(multPortails(cra, [iop, cra])).toBeCloseTo(1.04); // allié même rangée : 1 % × 4
+    cra.position = 4; // rangée différente → pas d'aura
+    expect(multPortails(cra, [iop, cra])).toBeCloseTo(1);
+    iop.pvActuels = 0; cra.position = 1; // porteur mort → plus d'aura pour l'allié
+    expect(multPortails(cra, [iop, cra])).toBeCloseTo(1);
+  });
+  it("l'aura de portails multiplie les dégâts du porteur", () => {
+    const syn: Spell = { id: "syn_p", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 100, baseMax: 100, scaling: 0 };
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    iop.stats = { ...iop.stats, force: 0, agilite: 0 };
+    const monte = () => { const c = fabriquerEnnemis("combat_1")[0]; c.pvActuels = 500; c.pvMax = 500; c.resistances = {}; c.stats = { ...c.stats, agilite: 0 }; return c; };
+    const sans = monte();
+    lancerSort(iop, syn, sans.ref, [iop, sans], ctx() as CombatCtx);
+    const base = 500 - sans.pvActuels;
+    for (let i = 0; i < 4; i++) poserPortail(iop, ctx() as CombatCtx);
+    const avec = monte();
+    lancerSort(iop, syn, avec.ref, [iop, avec], ctx() as CombatCtx);
+    expect(500 - avec.pvActuels).toBe(Math.round(base * 1.08));
+  });
+  it("Conjuration : +pct seulement pour le marqueur et sa rangée, s'éteint au bout de N tours du marqueur", () => {
+    const syn: Spell = { id: "syn_c", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 100, baseMax: 100, scaling: 0 };
+    const [iop, cra] = equipeCombattante(nouvelleRun(["iop", "cra"]));
+    iop.position = 0; cra.position = 4; // rangées différentes
+    for (const c of [iop, cra]) c.stats = { ...c.stats, force: 0, agilite: 0 };
+    const monte = () => { const c = fabriquerEnnemis("combat_1")[0]; c.pvActuels = 500; c.pvMax = 500; c.resistances = {}; c.stats = { ...c.stats, agilite: 0 }; return c; };
+    const nue = monte();
+    lancerSort(iop, syn, nue.ref, [iop, cra, nue], ctx() as CombatCtx);
+    const base = 500 - nue.pvActuels;
+    const marquee = monte();
+    marquee.conjuration = { pct: 0.1, lanceurRef: iop.ref, tours: 2 };
+    lancerSort(iop, syn, marquee.ref, [iop, cra, marquee], ctx() as CombatCtx); // marqueur → +10 %
+    expect(500 - marquee.pvActuels).toBe(Math.round(base * 1.1));
+    const marquee2 = monte();
+    marquee2.conjuration = { pct: 0.1, lanceurRef: iop.ref, tours: 2 };
+    lancerSort(cra, syn, marquee2.ref, [iop, cra, marquee2], ctx() as CombatCtx); // AUTRE rangée → pas de bonus
+    expect(500 - marquee2.pvActuels).toBe(base);
   });
 });

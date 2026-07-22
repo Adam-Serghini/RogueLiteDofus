@@ -47,6 +47,29 @@
       "vitalite": 0
     }
   },
+  "eliotrope": {
+    "id": "eliotrope",
+    "img": "/assets/classes/eliotrope.png",
+    "initiative": 12,
+    "nom": "Éliotrope",
+    "pa": 6,
+    "pvBase": 45,
+    "sorts": [
+      "rayon_de_wakfu",
+      "sarcasme",
+      "parasite",
+      "portail",
+      "coalition",
+      "conjuration"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
   "eniripsa": {
     "id": "eniripsa",
     "img": "/assets/classes/eniripsa.png",

@@ -212,6 +212,13 @@ export interface Spell {
   etatAiguille?: boolean; // Aiguille : marqueur documentaire — dégâts + pose l'effet "aiguille" (générique via `effet`)
   telefragSiOccupee?: boolean; // Pendule : rider de deplaceCible — double Téléfrag si la rangée de destination était occupée
   paProchainTour?: number; // Prémonition : paBonusNextTurn = max(actuel, valeur) — non cumulable avec lui-même
+  // --- kit de l'Éliotrope ---
+  posePortail?: boolean; // Portail : ouvre un portail (compteur cumulable, cap PORTAILS_MAX)
+  soinLigneAvantRatio?: number; // Rayon de Wakfu : les dégâts RÉELLEMENT infligés sur la rangée soignent la rangée avant alliée (répartis à parts égales)
+  effetSiPortails?: { seuil: number; valeur: number }; // Sarcasme : remplace la valeur de `effet` si portails du lanceur ≥ seuil
+  poisonSiPortails?: { seuil: number; ratio: number; duree: number }; // Parasite : pose un poison = jet × ratio si portails du lanceur ≥ seuil
+  paProchainTourLigne?: { valeur: number; seuil: number; valeurSeuil: number }; // Coalition : paBonusNextTurn += sur le lanceur et sa rangée (valeurSeuil si portails ≥ seuil)
+  conjuration?: { pct: number; seuil: number; pctSeuil: number; duree: number }; // Conjuration : pose la marque Combatant.conjuration sur la cible (pctSeuil si portails du lanceur ≥ seuil)
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
@@ -349,6 +356,8 @@ export interface Combatant {
   bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
   telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX
   resquilleActive?: number; // Resquille (Roublard) : PA à retirer par ennemi touché au prochain Kaboom (expire en fin de tour)
+  portails?: number; // portails ouverts (Éliotrope), cap PORTAILS_MAX — aura de dégâts pour le porteur et sa rangée
+  conjuration?: { pct: number; lanceurRef: string; tours: number }; // marque Conjuration (Éliotrope) : +pct dégâts pour le lanceur et sa rangée, décompte en fin de tour du lanceur
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort). */

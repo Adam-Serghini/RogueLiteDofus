@@ -285,6 +285,25 @@ export function poserTelefrag(cible: Combatant, _cs: Combatant[], ctx: CombatCtx
   }
 }
 
+// --- Portails (Éliotrope) -----------------------------------------------------
+export const PORTAILS_MAX = 4;
+
+/** Ouvre un portail (Éliotrope) — compteur cumulable, cap 4. */
+export function poserPortail(lanceur: Combatant, ctx: CombatCtx): void {
+  if ((lanceur.portails ?? 0) >= PORTAILS_MAX) return;
+  lanceur.portails = (lanceur.portails ?? 0) + 1;
+  ctx.log(`🌀 ${lanceur.nom} ouvre un portail (${lanceur.portails}/${PORTAILS_MAX}).`);
+}
+
+/** Aura des portails : ×(1+2 %/portail) pour le porteur, ×(1+1 %/portail) pour sa rangée. */
+export function multPortails(lanceur: Combatant, cs: Combatant[]): number {
+  if (lanceur.portails) return 1 + 0.02 * lanceur.portails;
+  const meilleur = Math.max(0, ...cs.filter((c) =>
+    c.camp === lanceur.camp && c.ref !== lanceur.ref && c.pvActuels > 0 &&
+    (c.portails ?? 0) > 0 && estAvant(c) === estAvant(lanceur)).map((c) => c.portails ?? 0));
+  return 1 + 0.01 * meilleur;
+}
+
 /** Part du crit au-delà du cap 50 %, convertie en dégâts finaux (Tir Puissant).
  *  Seule la stat de crit PLATE peut déborder du cap — la Force seule ne le peut jamais. */
 export function critExcedent(se: Stats): number {
@@ -1216,6 +1235,25 @@ export function lancerSort(
     return;
   }
 
+  // --- PORTAIL (Éliotrope) : ouvre un portail (compteur), pas de cible ni d'effet direct ---
+  if (sort.posePortail) {
+    poserPortail(lanceur, ctx);
+    poseCooldown(lanceur);
+    return;
+  }
+
+  // --- COALITION (Éliotrope) : += paBonusNextTurn sur le lanceur et sa rangée (cumulable) ---
+  if (sort.paProchainTourLigne) {
+    const valeur = (lanceur.portails ?? 0) >= sort.paProchainTourLigne.seuil
+      ? sort.paProchainTourLigne.valeurSeuil
+      : sort.paProchainTourLigne.valeur;
+    const rangee = allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur));
+    for (const a of rangee) a.paBonusNextTurn += valeur;
+    ctx.log(`${lanceur.nom} lance ${sort.nom} : sa rangée gagne +${valeur} PA au prochain tour.`);
+    poseCooldown(lanceur);
+    return;
+  }
+
   // --- BUFF / DEBUFF (soutien) ---
   if (sort.type === "buff" || sort.type === "debuff") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
@@ -1262,12 +1300,54 @@ export function lancerSort(
   // Signature de Grunob (« Travail d'équipe ») : +X % par allié vivant dans sa rangée
   let multLigne = 1 + (lanceur.bonusParAllieLigne ?? 0) *
     allies(lanceur, cs).filter((a) => a.ref !== lanceur.ref && estAvant(a) === estAvant(lanceur)).length;
+  // Portails (Éliotrope) : aura de dégâts pour le porteur et sa rangée
+  multLigne *= multPortails(lanceur, cs);
+  // Conjuration (Éliotrope) : marque posée sur la cible, bonus pour le marqueur et sa rangée
+  if (cible.conjuration) {
+    const marqueur = parRef(cs, cible.conjuration.lanceurRef);
+    const enRangeeDuMarqueur = !!marqueur && marqueur.pvActuels > 0 &&
+      marqueur.camp === lanceur.camp && estAvant(marqueur) === estAvant(lanceur);
+    if (lanceur.ref === cible.conjuration.lanceurRef || enRangeeDuMarqueur) {
+      multLigne *= 1 + cible.conjuration.pct;
+    }
+  }
   // Dépouille (Ouginak) : +X % par AUTRE ennemi vivant sur la ligne de la cible
   if (sort.bonusParEnnemiLigneCible) {
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
       adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && estAvant(e) === estAvant(cible)).length;
   }
   let totalDmg = 0;
+
+  // Rayon de Wakfu (Éliotrope) : zoneLigne — les dégâts RÉELLEMENT infligés (post
+  // résistances/esquive) soignent à parts égales la rangée avant alliée du lanceur.
+  if (sort.soinLigneAvantRatio) {
+    ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
+    let total = 0;
+    for (const t of ciblesDegats(lanceur, sort, cible, cs)) {
+      const r = degatsCible(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx, paAvant });
+      if (r.esquive) {
+        ctx.log(`${t.nom} esquive ${sort.nom} !`);
+        ctx.fx?.({ type: "esquive", ref: t.ref });
+        continue;
+      }
+      if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
+      infligerDegats(t, r.dmg, lanceur, ctx);
+      total += r.dmg;
+      ctx.log(
+        `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
+          (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+      );
+    }
+    const rangeeAvant = allies(lanceur, cs).filter(estAvant);
+    if (total > 0 && rangeeAvant.length) {
+      // convention des soins dérivés de dégâts (vampirismeRatio, soinEquipeRatio,
+      // soinAllieBlesseRatio) : le montant scale avec multSoin(lanceur.stats)
+      const part = Math.round((total * sort.soinLigneAvantRatio / rangeeAvant.length) * multSoin(lanceur.stats));
+      for (const a of rangeeAvant) soigner(a, part, ctx);
+    }
+    poseCooldown(cible);
+    return;
+  }
 
   // Mise à mort : échoue si la cible survivrait au coup (projection au max roll)
   if (sort.executeSeulement) {
@@ -1321,10 +1401,11 @@ export function lancerSort(
   const touchees = ciblesDegats(lanceur, sort, cible, cs);
   let primaireMorte = false;
 
-  // Sorts purement utilitaires (Pendule/Roublabot : repositionnement via deplaceCible,
-  // baseMin/baseMax = 0) : pas de jet de dégâts ni de jet d'esquive à faire consommer/
-  // logguer pour un résultat systématiquement nul — le déplacement plus bas fait tout le travail.
-  const sauteJetDegats = sort.baseMax === 0 && !!sort.deplaceCible;
+  // Sorts purement utilitaires (Pendule/Roublabot : repositionnement via deplaceCible ;
+  // Conjuration : pose une marque sans jet — baseMin/baseMax = 0) : pas de jet de
+  // dégâts ni de jet d'esquive à faire consommer/logguer pour un résultat
+  // systématiquement nul — le déplacement/la marque plus bas fait tout le travail.
+  const sauteJetDegats = sort.baseMax === 0 && (!!sort.deplaceCible || !!sort.conjuration);
 
   touchees.forEach((t, i) => {
     if (sauteJetDegats) return;
@@ -1343,7 +1424,20 @@ export function lancerSort(
       );
       if (t.pvActuels > 0) {
         if (sort.poison) appliquerPoison(t, lanceur, etirer(sort.poison, doubleDuree));
-        if (sort.effet) appliquerEffet(t, etirer(sort.effet, doubleDuree));
+        // Parasite (Éliotrope) : poison = jet (dégâts réellement infligés) × ratio, si portails ≥ seuil
+        if (sort.poisonSiPortails && (lanceur.portails ?? 0) >= sort.poisonSiPortails.seuil) {
+          appliquerPoison(t, lanceur, etirer(
+            { degats: Math.round(r.dmg * sort.poisonSiPortails.ratio), duree: sort.poisonSiPortails.duree },
+            doubleDuree,
+          ));
+        }
+        if (sort.effet) {
+          // Sarcasme (Éliotrope) : remplace la valeur de l'effet si portails du lanceur ≥ seuil
+          const effetFinal = sort.effetSiPortails && (lanceur.portails ?? 0) >= sort.effetSiPortails.seuil
+            ? { ...sort.effet, valeur: sort.effetSiPortails.valeur }
+            : sort.effet;
+          appliquerEffet(t, etirer(effetFinal, doubleDuree));
+        }
         if (sort.procAleatoire && sort.procAleatoire.length) {
           const proc = sort.procAleatoire[Math.floor(ctx.rng() * sort.procAleatoire.length)];
           if (proc.dissipePositifs) dissiperPositifs(t, ctx);
@@ -1353,6 +1447,15 @@ export function lancerSort(
     }
     if (i === 0 && t.pvActuels <= 0) primaireMorte = true;
   });
+
+  // Conjuration (Éliotrope) : pose la marque sur la cible (aucun jet — sauteJetDegats)
+  if (sort.conjuration) {
+    const pct = (lanceur.portails ?? 0) >= sort.conjuration.seuil
+      ? sort.conjuration.pctSeuil
+      : sort.conjuration.pct;
+    cible.conjuration = { pct, lanceurRef: lanceur.ref, tours: sort.conjuration.duree };
+    ctx.log(`${lanceur.nom} lance ${sort.nom} : ${cible.nom} est marqué (+${Math.round(pct * 100)} %, ${sort.conjuration.duree}t).`);
+  }
 
   // Masse Aj Taye : l'attaque traverse et touche l'ennemi derrière la cible
   if (sort.toucheDerriere) {
@@ -1542,6 +1645,12 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       }
 
       decrementerEffets(acteur);
+      // Conjuration (Éliotrope) : décompte les marques posées par cet acteur, s'éteint à 0
+      for (const c of combatants) {
+        if (c.conjuration?.lanceurRef === acteur.ref && --c.conjuration.tours <= 0) {
+          delete c.conjuration;
+        }
+      }
       // recharge des PA en FIN de tour : entre deux tours, la gemme PA montre
       // le pool réel — un retrait de PA adverse se voit immédiatement.
       acteur.paActuels = acteur.paMax;

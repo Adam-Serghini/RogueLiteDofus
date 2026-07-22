@@ -227,6 +227,23 @@
     "scaling": 0.72,
     "type": "degats"
   },
+  "coalition": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 2,
+    "desc": "Le lanceur et sa rangée gagnent +2 PA au prochain tour (+3 avec 3 portails ou plus).",
+    "id": "coalition",
+    "nom": "Coalition",
+    "paProchainTourLigne": {
+      "seuil": 3,
+      "valeur": 2,
+      "valeurSeuil": 3
+    },
+    "scaling": 0,
+    "type": "buff"
+  },
   "colere": {
     "baseMax": 24,
     "baseMin": 18,
@@ -255,6 +272,24 @@
     "id": "colere_royale",
     "nom": "Colère royale",
     "scaling": 0.45,
+    "type": "degats"
+  },
+  "conjuration": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_tous",
+    "conjuration": {
+      "duree": 2,
+      "pct": 0.05,
+      "pctSeuil": 0.1,
+      "seuil": 3
+    },
+    "cooldownTours": 1,
+    "coutPA": 2,
+    "desc": "Marque une cible : l'Éliotrope et sa rangée lui infligent +5 % (+10 % avec 3 portails ou plus) pendant 2 tours.",
+    "id": "conjuration",
+    "nom": "Conjuration",
+    "scaling": 0,
     "type": "degats"
   },
   "coup_de_bec": {
@@ -986,6 +1021,22 @@
     "type": "degats",
     "zoneLigne": true
   },
+  "parasite": {
+    "baseMax": 15,
+    "baseMin": 11,
+    "cible": "ennemi_ligne",
+    "coutPA": 5,
+    "desc": "Gros dégâts ; avec 3 portails ou plus, inocule un poison valant 50 % du coup.",
+    "id": "parasite",
+    "nom": "Parasite",
+    "poisonSiPortails": {
+      "duree": 2,
+      "ratio": 0.5,
+      "seuil": 3
+    },
+    "scaling": 0.45,
+    "type": "degats"
+  },
   "pendule": {
     "baseMax": 0,
     "baseMin": 0,
@@ -1082,6 +1133,19 @@
     "scaling": 0,
     "type": "invocation"
   },
+  "portail": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "coutPA": 1,
+    "desc": "Ouvre un portail (4 max) : +2 % de dégâts par portail, +1 % pour les alliés de la rangée.",
+    "id": "portail",
+    "maxParTour": 2,
+    "nom": "Portail",
+    "posePortail": true,
+    "scaling": 0,
+    "type": "buff"
+  },
   "poupee_garde": {
     "baseMax": 0,
     "baseMin": 0,
@@ -1147,6 +1211,19 @@
     "scaling": 0.5,
     "soinEquipeRatio": 0.6,
     "type": "degats"
+  },
+  "rayon_de_wakfu": {
+    "baseMax": 9,
+    "baseMin": 6,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Balaye la rangée avant : les dégâts infligés soignent d'autant les alliés de la rangée avant.",
+    "id": "rayon_de_wakfu",
+    "nom": "Rayon de Wakfu",
+    "scaling": 0.3,
+    "soinLigneAvantRatio": 1,
+    "type": "degats",
+    "zoneLigne": true
   },
   "rayon_obscur": {
     "baseMax": 12,
@@ -1240,6 +1317,26 @@
     "retraitPA": 2,
     "retraitPAChance": 1,
     "scaling": 0.25,
+    "type": "degats"
+  },
+  "sarcasme": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Blesse et démoralise : la cible inflige −5 % (−10 % avec 3 portails ou plus) pendant 1 tour.",
+    "effet": {
+      "duree": 1,
+      "stat": "degatsInfliges",
+      "valeur": -0.05
+    },
+    "effetSiPortails": {
+      "seuil": 3,
+      "valeur": -0.1
+    },
+    "id": "sarcasme",
+    "nom": "Sarcasme",
+    "scaling": 0.4,
     "type": "degats"
   },
   "sfvc": {
