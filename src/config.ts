@@ -24,6 +24,9 @@ const DEFAUT: Settings = {
   toucheFinTour: " ",
   autoFinTour: true,
   formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere", roublard: "arriere", xelor: "arriere" },
+  // roublard/xelor n'ont volontairement pas d'entrée ici : kits « bi-teinte » sans stat
+  // offensive dominante évidente (dégâts + repositionnement/contrôle) — pas de choix par
+  // défaut imposé, l'allocation reste libre pour le joueur.
   elements: { iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau", ouginak: "terre" },
 };
 

@@ -444,7 +444,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     else if (e.stat === "tetanise") badges.push(`🦴 Tétanisé (${e.toursRestants})`);
   }
   if ((c.bombes ?? 0) > 0) badges.push(`💣 ×${c.bombes}`);
-  if ((c.telefrags ?? 0) > 0) badges.push(`⏳ ×${c.telefrags}`);
+  if ((c.telefrags ?? 0) > 0) badges.push(`⌛ ×${c.telefrags}`); // ⌛ distinct de ⏳ (badge d'init ci-dessus)
   if ((c.rage ?? 0) > 0) badges.push(`🐺 Rage ×${c.rage}`);
   if (c.provoque) badges.push(`🛡 Provoque`);
   if (c.bonusOffensifProchain > 0)

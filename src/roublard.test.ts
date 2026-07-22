@@ -211,6 +211,17 @@ describe("Roublabot", () => {
     expect(estAvant(e)).toBe(false);
     expect(r.cooldowns["roublabot"]).toBe(3);
   });
+
+  it("ne fait aucun jet de dégâts/esquive (baseMax 0) et ne logue ni « dégâts » ni « esquive »", () => {
+    const r = roublard();
+    const [e] = ennemis();
+    const cs = [r, e];
+    let appelsRng = 0;
+    const logs: string[] = [];
+    lancerSort(r, SORTS.roublabot, e.ref, cs, ctx({ rng: () => { appelsRng++; return 0.99; }, log: (m) => logs.push(m) }));
+    expect(appelsRng).toBe(0); // aucun jet de dégâts/esquive consommé
+    expect(logs.some((m) => /dégâts|esquive/i.test(m))).toBe(false);
+  });
 });
 
 describe("Roublardise", () => {

@@ -114,6 +114,19 @@ describe("signatures des boss", () => {
     expect(cs.length).toBe(3);
   });
 
+  it("réinvocation : les compteurs de bombes/téléfrags du mort sont purgés (ressuscité \"propre\")", () => {
+    const cs = fabriquerEnnemis("fan_boss");
+    const boss = cs.find((c) => c.monstreId === "boostache")!;
+    const mini = cs.find((c) => c.monstreId === "boostache_prepubere")!;
+    mini.bombes = 3;
+    mini.telefrags = 2;
+    mini.pvActuels = 0; // vaincu, compteurs encore posés
+    lancerSort(boss, SORTS.enfer_des_zombies, boss.ref, cs, ctx());
+    expect(mini.pvActuels).toBeGreaterThan(0); // bien réinvoqué
+    expect(mini.bombes ?? 0).toBe(0);
+    expect(mini.telefrags ?? 0).toBe(0);
+  });
+
   it("Travail d'équipe : Grunob inflige +6 % par allié vivant dans sa rangée", () => {
     const cs = fabriquerEnnemis("gob_boss"); // Grunob + Gobaladée + Gobichon (avant) + Gobaliste (arrière)
     const boss = cs.find((c) => c.monstreId === "directeur_grunob")!;

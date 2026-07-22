@@ -148,6 +148,17 @@ describe("Pendule", () => {
     expect(ciblesValides(x, SORTS.pendule, cs)).not.toContain(e1);
   });
 
+  it("ne fait aucun jet de dégâts/esquive (baseMax 0) et ne logue ni « dégâts » ni « esquive »", () => {
+    const x = xelor();
+    const e1 = ennemiA(0);
+    const cs = [x, e1];
+    let appelsRng = 0;
+    const logs: string[] = [];
+    lancerSort(x, SORTS.pendule, e1.ref, cs, ctx({ rng: () => { appelsRng++; return 0.99; }, log: (m) => logs.push(m) }));
+    expect(appelsRng).toBe(0); // aucun jet de dégâts/esquive consommé
+    expect(logs.some((m) => /dégâts|esquive/i.test(m))).toBe(false);
+  });
+
   it("écho d'Aiguille : une cible aiguillée subit un jet d'Aiguille en plus quand elle est Téléfragée", () => {
     const x = xelor();
     const e1 = ennemiA(0); // aiguillée puis téléfragée

@@ -87,22 +87,23 @@ describe("Flèche enflammée", () => {
 });
 
 describe("Flèche de recul", () => {
-  it("cas 1 : pas de déplacement (déjà en arrière, un autre ennemi partage la rangée) → bousculade ignoreResistances aux deux", () => {
+  it("cas 1 : un autre ennemi partage la rangée de DÉPART (avant) → pas de déplacement, bousculade ignoreResistances aux deux", () => {
     const c = cra();
-    const cible = ennemiA(4); // déjà en arrière
+    const cible = ennemiA(0); // ligne avant
     cible.resistances = { terre: 1, feu: 1, eau: 1, air: 1 }; // résistance totale : ignoreResistances doit passer outre
-    const voisin = ennemiA(5); // partage la rangée arrière
-    const cs = [c, cible, voisin];
+    const voisin = ennemiA(1); // partage la rangée de départ (avant)
+    const cs = [c, cible, voisin]; // rangée arrière VIDE : la cible pourrait s'y déplacer, mais le voisin de départ bloque
     lancerSort(c, SORTS.fleche_de_recul, cible.ref, cs, ctx());
-    expect(cible.position).toBe(4); // aucun déplacement
+    expect(estAvant(cible)).toBe(true); // aucun déplacement malgré une arrière libre
+    expect(cible.position).toBe(0);
     // jet max = 9 (6-9), dégâts pleins malgré la résistance totale (ignoreResistances)
     expect(500 - cible.pvActuels).toBe(9);
     expect(500 - voisin.pvActuels).toBe(9);
   });
 
-  it("cas 2 : déplacée, rangée d'arrivée déjà occupée → bousculade aux deux", () => {
+  it("cas 2 : déplacée, rangée d'arrivée déjà occupée (mais pas pleine) → bousculade aux deux", () => {
     const c = cra();
-    const cible = ennemiA(0); // ligne avant
+    const cible = ennemiA(0); // ligne avant, seule sur sa rangée
     const occupant = ennemiA(4); // occupe déjà la case en face
     const cs = [c, cible, occupant];
     lancerSort(c, SORTS.fleche_de_recul, cible.ref, cs, ctx());
@@ -118,6 +119,26 @@ describe("Flèche de recul", () => {
     lancerSort(c, SORTS.fleche_de_recul, cible.ref, cs, ctx());
     expect(estAvant(cible)).toBe(false); // déplacement réussi
     expect(cible.pvActuels).toBe(500); // aucun dégât : rien à bousculer
+  });
+
+  it("rangée de départ libre mais rangée d'arrivée PLEINE → le déplacement échoue silencieusement, aucun dégât", () => {
+    // Lecture retenue du texte de conception : la bousculade ne s'applique qu'en cas de
+    // collision RÉELLE (départ partagé, ou arrivée déjà occupée après un déplacement réussi).
+    // Si l'arrivée est pleine, deplacerCible() échoue en silence (comme pour tout autre
+    // déplacement du moteur) : aucun déplacement n'a lieu, donc aucune collision, donc
+    // aucun dégât de poussée — même si la cible était seule sur sa rangée de départ.
+    const c = cra();
+    const cible = ennemiA(0); // seule en ligne avant
+    const e4 = ennemiA(4);
+    const e5 = ennemiA(5);
+    const e6 = ennemiA(6);
+    const e7 = ennemiA(7); // ligne arrière pleine (4 cases occupées)
+    const cs = [c, cible, e4, e5, e6, e7];
+    lancerSort(c, SORTS.fleche_de_recul, cible.ref, cs, ctx());
+    expect(estAvant(cible)).toBe(true); // le déplacement a échoué
+    expect(cible.position).toBe(0);
+    expect(cible.pvActuels).toBe(500);
+    for (const e of [e4, e5, e6, e7]) expect(e.pvActuels).toBe(500);
   });
 
   it("1 seul lancer par tour (maxParTour)", () => {

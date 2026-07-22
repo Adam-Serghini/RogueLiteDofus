@@ -531,6 +531,8 @@ function verifierRenaissance(c: Combatant, ctx?: CombatCtx): void {
   if (c.pvActuels > 0 || !c.renaissance || !(c.renaissancesRestantes ?? 0)) return;
   c.renaissancesRestantes = (c.renaissancesRestantes ?? 1) - 1;
   c.pvActuels = Math.max(1, Math.round(c.pvMax * c.renaissance));
+  c.bombes = 0; // purge des compteurs du porteur mort (§B3), même logique que ressusciter()
+  c.telefrags = 0;
   ctx?.log(`🥚 ${c.nom} renaît de son Kwakwanneau à ${c.pvActuels} PV !`);
 }
 
@@ -663,6 +665,10 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     ctx.log(`${cible.nom} recevra ${sort.paGain} PA au prochain tour.`);
   }
   if (sort.paProchainTour) {
+    // Math.max() volontaire : ce gain ne se CUMULE avec AUCUNE autre source de PA au
+    // prochain tour (dont paGain juste au-dessus) — poser Mot d'ivation puis Prémonition
+    // ne garde que le plus gros des deux, le premier posé est perdu. Comportement voulu
+    // (Prémonition est un plancher garanti, pas un stack).
     cible.paBonusNextTurn = Math.max(cible.paBonusNextTurn, sort.paProchainTour);
     ctx.log(`${cible.nom} anticipe : +${sort.paProchainTour} PA au prochain tour (Prémonition).`);
   }
@@ -823,6 +829,8 @@ function ressusciter(lanceur: Combatant, spec: { pvPct: number }, cs: Combatant[
   c.pvActuels = Math.max(1, Math.round(c.pvMax * spec.pvPct));
   c.effets = [];
   c.bouclier = 0;
+  c.bombes = 0; // purge des compteurs du porteur mort (§B3) : un ressuscité revient "propre"
+  c.telefrags = 0;
   ctx.log(`${lanceur.nom} réinvoque ${c.nom} d'entre les morts (${c.pvActuels} PV) !`);
 }
 
@@ -947,7 +955,9 @@ function lancerEspritFelin(lanceur: Combatant, cs: Combatant[], ctx: CombatCtx):
 /** Kaboom (Roublard) : détonne toutes les bombes posées sur les ennemis vivants.
  *  Chaque bombe inflige un jet plein au porteur + 50 % (arrondi) aux AUTRES
  *  vivants de sa rangée. Si le lanceur a une Resquille active, chaque ennemi
- *  touché au moins une fois perd son montant en PA (une seule fois par ennemi). */
+ *  touché au moins une fois perd son montant en PA (une seule fois par ennemi).
+ *  `adverses()` ne renvoie que les VIVANTS : les bombes d'un porteur mort avant
+ *  la détonation (au fil du combat, entre la pose et Kaboom) sont perdues (voulu). */
 function lancerKaboom(lanceur: Combatant, sort: Spell, cs: Combatant[], ctx: CombatCtx): void {
   const touches = new Set<string>();
   for (const porteur of adverses(lanceur, cs).filter((e) => (e.bombes ?? 0) > 0)) {
@@ -999,31 +1009,44 @@ function lancerFlecheEnflammee(
 
 /** Flèche de recul (Cra) : repousse la cible en ligne arrière. La bousculade
  *  ne fait de dégâts (ignoreResistances) que s'il y a réellement collision :
- *  pas de déplacement mais un autre ennemi partage la rangée où elle reste
- *  bloquée, OU déplacement réussi dans une rangée d'arrivée déjà occupée
- *  (occupation évaluée AVANT le déplacement). Rangée d'arrivée vide : aucun dégât. */
+ *  - Cas 1 : un AUTRE ennemi partage la rangée de DÉPART de la cible → aucun
+ *    déplacement (même si la rangée d'arrivée est libre), dégâts aux deux.
+ *  - Cas 2 : rangée de départ libre → déplacement tenté ; si la rangée
+ *    d'arrivée contenait déjà un ennemi (occupation évaluée AVANT le
+ *    déplacement) → dégâts aux deux.
+ *  - Cas 3 : déplacée, arrivée vide → aucun dégât.
+ *  - Rangée de départ libre mais arrivée PLEINE : deplacerCible() échoue en
+ *    silence (comme tout déplacement moteur quand la case est prise) → aucun
+ *    déplacement, donc aucune collision, donc aucun dégât (lecture retenue
+ *    du texte de conception face à ce cas non explicitement traité). */
 function lancerFlecheDeRecul(
   lanceur: Combatant, sort: Spell, cible: Combatant, cs: Combatant[], ctx: CombatCtx, paAvant: number,
 ): void {
   ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
-  const occupantsArriereAvant = vivants(cs).filter(
+  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling, ignoreResistances: true };
+  const opts = { useMax: false, mult: 1, ctx, paAvant };
+
+  const rangeeDepart = vivants(cs).filter(
+    (x) => x.camp === cible.camp && x.ref !== cible.ref && estAvant(x) === estAvant(cible),
+  );
+  if (rangeeDepart.length > 0) {
+    // Cas 1 : rangée de départ occupée → pas de déplacement, bousculade aux deux.
+    const autre = plusProches(cible, rangeeDepart, 1)[0];
+    frappe(lanceur, base, cible, opts, `${sort.nom} (bousculade)`);
+    frappe(lanceur, base, autre, opts, `${sort.nom} (bousculade)`);
+    return;
+  }
+
+  const occupantsArriveeAvant = vivants(cs).filter(
     (x) => x.camp === cible.camp && x.ref !== cible.ref && !estAvant(x),
   );
   const posAvant = cible.position;
   deplacerCible(cible, "arriere", cs, ctx);
-  const deplacee = cible.position !== posAvant;
+  if (cible.position === posAvant) return; // déplacement échoué (arrivée pleine, ou déjà en arrière) : aucun dégât
 
-  const autre = deplacee
-    ? plusProches(cible, occupantsArriereAvant, 1)[0]
-    : plusProches(
-        cible,
-        vivants(cs).filter((x) => x.camp === cible.camp && x.ref !== cible.ref && estAvant(x) === estAvant(cible)),
-        1,
-      )[0];
-  if (!autre) return; // rien à bousculer : aucun dégât
+  const autre = plusProches(cible, occupantsArriveeAvant, 1)[0];
+  if (!autre) return; // arrivée vide (cas 3) : rien à bousculer
 
-  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling, ignoreResistances: true };
-  const opts = { useMax: false, mult: 1, ctx, paAvant };
   frappe(lanceur, base, cible, opts, `${sort.nom} (bousculade)`);
   frappe(lanceur, base, autre, opts, `${sort.nom} (bousculade)`);
 }
@@ -1298,7 +1321,13 @@ export function lancerSort(
   const touchees = ciblesDegats(lanceur, sort, cible, cs);
   let primaireMorte = false;
 
+  // Sorts purement utilitaires (Pendule/Roublabot : repositionnement via deplaceCible,
+  // baseMin/baseMax = 0) : pas de jet de dégâts ni de jet d'esquive à faire consommer/
+  // logguer pour un résultat systématiquement nul — le déplacement plus bas fait tout le travail.
+  const sauteJetDegats = sort.baseMax === 0 && !!sort.deplaceCible;
+
   touchees.forEach((t, i) => {
+    if (sauteJetDegats) return;
     const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult * multLigne;
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx, paAvant });
     if (r.esquive) {
