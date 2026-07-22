@@ -6,6 +6,7 @@ import {
   degatsCible, elementDeFrappe, ciblesValides, runCombat, controllerIA, lancerSort,
   reinitialiserLancersTour, effetsDebutTour, poserBombe, poserTelefrag, critExcedent,
   poserPortail, multPortails, PORTAILS_MAX,
+  invoquerLance, LANCE_DURABILITE,
   type CombatCtx,
 } from "./combat";
 import { SORTS } from "./data";
@@ -565,5 +566,76 @@ describe("portails (Éliotrope) et Conjuration — moteur", () => {
     marquee2.conjuration = { pct: 0.1, lanceurRef: iop.ref, tours: 2 };
     lancerSort(cra, syn, marquee2.ref, [iop, cra, marquee2], ctx() as CombatCtx); // AUTRE rangée → pas de bonus
     expect(500 - marquee2.pvActuels).toBe(base);
+  });
+});
+
+describe("la Lance (Forgelance) et la redirection — moteur", () => {
+  const ctx = () => ({ rng: () => 0.99, log: () => {}, playerDamageBonus: 1 });
+  const monte = () => {
+    const [iop, cra] = equipeCombattante(nouvelleRun(["iop", "cra"]));
+    iop.position = 0; cra.position = 4;
+    const pack = fabriquerEnnemis("gob_elite").map((e) => {
+      e.pvActuels = 500; e.pvMax = 500; e.stats = { ...e.stats, agilite: 0 };
+      return e;
+    });
+    return { iop, cra, pack, cs: [iop, cra, ...pack] };
+  };
+
+  it("invoquerLance : rangée de la cible, une seule à la fois, durabilité 2 puis bouclier au propriétaire", () => {
+    const { iop, pack, cs } = monte();
+    const devant = pack.find((e) => e.position < 4)!;
+    const lance = invoquerLance(iop, devant, cs, ctx() as CombatCtx)!;
+    expect(lance).not.toBeNull();
+    expect(lance.position).toBeLessThan(4);
+    expect(invoquerLance(iop, devant, cs, ctx() as CombatCtx)).toBeNull(); // une seule lance vivante à la fois
+
+    const syn: Spell = { id: "syn_l", nom: "L", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 50, baseMax: 50, scaling: 0 };
+    lancerSort(iop, syn, lance.ref, cs, ctx() as CombatCtx);
+    expect(lance.pvActuels).toBe(LANCE_DURABILITE - 1); // −1 quel que soit le montant du coup
+    expect(iop.bouclier).toBe(0); // pas encore détruite
+    lancerSort(iop, syn, lance.ref, cs, ctx() as CombatCtx);
+    expect(lance.pvActuels).toBe(0);
+    expect(iop.bouclier).toBeGreaterThan(0); // destruction → bouclier au propriétaire
+  });
+
+  it("la lance protège la ligne arrière ennemie : exposée quand l'avant est vide, re-protégée par une lance avant vivante", () => {
+    const { iop, pack, cs } = monte();
+    const referenceAvant = pack.find((e) => e.position < 4)!;
+    for (const e of pack.filter((x) => x.position < 4)) e.pvActuels = 0; // vide la rangée avant ennemie
+    expect(ciblesValides(iop, SORTS.morsure, cs).some((c) => c.position >= 4)).toBe(true); // avant vide → arrière exposé
+
+    const lance = invoquerLance(iop, referenceAvant, cs, ctx() as CombatCtx)!;
+    expect(lance).not.toBeNull();
+    expect(lance.position).toBeLessThan(4); // plantée en ligne AVANT (rangée de la référence)
+    expect(ciblesValides(iop, SORTS.morsure, cs).every((c) => c.estLance || c.position < 4)).toBe(true); // arrière re-protégé
+  });
+
+  it("redirection : ~50 % des dégâts subis par un allié arrière vont au porteur, jamais re-redirigés", () => {
+    const { iop, cra, pack, cs } = monte();
+    iop.redirection = { ratio: 0.5, tours: 1 };
+    iop.pvActuels = 200; iop.pvMax = 200; iop.bouclier = 0;
+    cra.pvActuels = 200; cra.pvMax = 200; cra.stats = { ...cra.stats, agilite: 0 };
+    const ennemi = pack[0];
+    const avantCra = cra.pvActuels;
+    const avantIop = iop.pvActuels;
+    lancerSort(ennemi, SORTS.morsure, cra.ref, cs, ctx() as CombatCtx);
+    const dmgCra = avantCra - cra.pvActuels;
+    const dmgIop = avantIop - iop.pvActuels;
+    expect(dmgIop).toBeGreaterThan(0); // le porteur encaisse sa part
+    expect(dmgCra).toBeGreaterThan(0); // la victime encaisse le reste
+    expect(Math.abs(dmgIop - dmgCra)).toBeLessThanOrEqual(1); // ≈ moitié/moitié (arrondis ceil/floor)
+    expect(dmgCra + dmgIop).toBeGreaterThan(0);
+  });
+
+  it("la redirection ne s'applique pas à la ligne AVANT, ni au porteur lui-même", () => {
+    const { iop, cra, pack, cs } = monte();
+    iop.position = 0; cra.position = 1; // les deux en AVANT
+    iop.redirection = { ratio: 0.5, tours: 1 };
+    iop.pvActuels = 200; iop.pvMax = 200;
+    cra.pvActuels = 200; cra.pvMax = 200; cra.stats = { ...cra.stats, agilite: 0 };
+    const ennemi = pack[0];
+    lancerSort(ennemi, SORTS.morsure, cra.ref, cs, ctx() as CombatCtx);
+    expect(iop.pvActuels).toBe(200); // ligne avant : pas de redirection
+    expect(cra.pvActuels).toBeLessThan(200);
   });
 });

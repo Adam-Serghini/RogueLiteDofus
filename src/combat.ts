@@ -27,6 +27,7 @@ export interface CombatCtx {
   playerDamageBonus: number; // multiplicateur Dofus appliqué au camp joueur
   fx?: (ev: FxEvent) => void; // effets visuels (optionnel)
   onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (optionnel)
+  combatants?: Combatant[]; // référence vivante de la liste en cours (posée par lancerSort) — lookup Lance/redirection
 }
 
 export type Controller = (
@@ -158,6 +159,13 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
     if (prov.length) base = prov;
   }
 
+  // zoneLance (Forgelance : Muspel/Hydra/Jormun) : la lance VIVANTE du lanceur
+  // est toujours une cible valide, où qu'elle soit (résolution = sa rangée).
+  if (sort.zoneLance) {
+    const lance = vivants(cs).find((c) => c.estLance && c.lanceurRef === acteur.ref);
+    if (lance && !base.some((c) => c.ref === lance.ref)) base = [...base, lance];
+  }
+
   // Tétanisation (Ouginak) : le porteur ne peut pas viser la ligne arrière adverse
   if ((sort.cible === "ennemi_tous" || sort.cible === "ennemi_ligne" || sort.cible === "mixte") &&
       sommeEffet(acteur, "tetanise") > 0) {
@@ -169,6 +177,11 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
 
   // Kaboom (Roublard) : ne se lance que si un adversaire vivant porte au moins 1 bombe
   if (sort.kaboom && !adverses(acteur, cs).some((e) => (e.bombes ?? 0) > 0)) return [];
+
+  // Lance (Forgelance) : une seule vivante par lanceur — grisée si déjà plantée
+  if (sort.invoqueLance && vivants(cs).some((c) => c.ref === `lance_${acteur.ref}`)) return [];
+  // Vajra (Forgelance) : injouable sans lance vivante du lanceur
+  if (sort.rappelleLance && !vivants(cs).some((c) => c.ref === `lance_${acteur.ref}`)) return [];
 
   // Changer de ligne (Dagues Eurfolles) : il faut une case libre dans la rangée opposée
   if (sort.changeLigne && caseLibreRangeeOpposee(acteur, cs) === null) return [];
@@ -190,6 +203,16 @@ export function reinitialiserLancersTour(c: Combatant): void { c.lancersCeTour =
 
 /** Cibles effectivement touchées par un sort de dégâts (primaire + rebonds). */
 function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: Combatant[]): Combatant[] {
+  // Forgelance (Muspel/Hydra/Jormun) : résolution = la rangée de la cible cliquée
+  // (front row normale, ou celle de la lance si c'est elle qui est visée) —
+  // Jormun (tousSiLanceArriere) : si la cible est la lance en rangée ARRIÈRE, TOUS les ennemis.
+  if (sort.zoneLance) {
+    if (sort.tousSiLanceArriere && primaire.estLance && !estAvant(primaire)) {
+      return adverses(acteur, cs);
+    }
+    const memeRangee = estAvant(primaire);
+    return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
+  }
   // zone : toute la rangée (avant/arrière) de la cible cliquée (Tempête de lames)
   if (sort.zoneLigne) {
     const memeRangee = estAvant(primaire);
@@ -268,6 +291,7 @@ export const TELEFRAGS_MAX = 4;
 
 /** Colle une bombe (Roublard). false si le cap est atteint. */
 export function poserBombe(cible: Combatant, ctx?: CombatCtx): boolean {
+  if (cible.estLance) return false; // la lance (Forgelance) n'est pas une cible de compteur
   if ((cible.bombes ?? 0) >= BOMBES_MAX) return false;
   cible.bombes = (cible.bombes ?? 0) + 1;
   ctx?.log(`💣 Une bombe colle à ${cible.nom} (${cible.bombes}/${BOMBES_MAX}).`);
@@ -277,6 +301,7 @@ export function poserBombe(cible: Combatant, ctx?: CombatCtx): boolean {
 /** Pose un Téléfrag (Xélor), sous cap. Écho d'Aiguille : si la cible est aiguillée,
  *  un nouveau jet de SORTS.aiguille (par l'acteur courant `lanceur`) la reblesse. */
 export function poserTelefrag(cible: Combatant, _cs: Combatant[], ctx: CombatCtx, lanceur?: Combatant): void {
+  if (cible.estLance) return; // la lance (Forgelance) n'est pas une cible de compteur
   if ((cible.telefrags ?? 0) >= TELEFRAGS_MAX) return;
   cible.telefrags = (cible.telefrags ?? 0) + 1;
   ctx.log(`⏳ Téléfrag sur ${cible.nom} (${cible.telefrags}/${TELEFRAGS_MAX}).`);
@@ -451,7 +476,32 @@ function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
 /** Inflige des dégâts en consommant d'abord le bouclier, puis les PV.
  *  Si `attaquant`/`ctx` sont fournis et que la cible a une posture de contre
  *  (Duel), elle peut riposter d'une frappe modeste (sans re-déclenchement). */
-function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ctx?: CombatCtx, ignoreBouclier?: boolean): void {
+function infligerDegats(
+  cible: Combatant,
+  dmg: number,
+  attaquant?: Combatant,
+  ctx?: CombatCtx,
+  ignoreBouclier?: boolean,
+  viaRedirection?: boolean,
+): void {
+  // Lance (Forgelance) : durabilité forfaitaire, ignore le montant réel, pas de
+  // crit/esquive/log normal ; à 0 → détruite, bouclier au propriétaire.
+  if (cible.estLance) {
+    if (cible.pvActuels <= 0) return; // déjà détruite
+    cible.pvActuels -= 1;
+    ctx?.log(`🔱 La lance encaisse (${Math.max(0, cible.pvActuels)}/${LANCE_DURABILITE}).`);
+    if (cible.pvActuels <= 0) {
+      cible.pvActuels = 0;
+      const proprio = ctx?.combatants && parRef(ctx.combatants, cible.lanceurRef ?? "");
+      if (proprio && proprio.pvActuels > 0) {
+        const bonus = Math.round(8 * multSoin(proprio.stats));
+        proprio.bouclier += bonus;
+        ctx?.log(`🔱 La lance de ${proprio.nom} vole en éclats : ${proprio.nom} gagne ${bonus} bouclier.`);
+      }
+    }
+    return;
+  }
+
   // nullification (buff soi) : annule UN coup DIRECT (pas un tick de poison, qui ne
   // passe pas par cette fonction), consommée dès le premier coup direct qui suit
   if (dmg > 0 && cible.nullifieProchainCoup) {
@@ -459,6 +509,24 @@ function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ct
     ctx?.log(`${cible.nom} annule le coup grâce à sa nullification !`);
     dmg = 0;
   }
+
+  // Redirection (Étreinte) : un allié porteur dévie une fraction des dégâts
+  // destinés à un allié en ligne ARRIÈRE (jamais le porteur lui-même). La part
+  // redirigée passe par un appel gardé (viaRedirection) pour ne jamais se
+  // re-rediriger, mais garde bouclier/nullification normaux côté porteur.
+  if (!viaRedirection && dmg > 0 && ctx?.combatants && cible.camp === "joueur" && !estAvant(cible)) {
+    const porteur = vivants(ctx.combatants).find((c) =>
+      c.camp === cible.camp && c.ref !== cible.ref && c.redirection && c.redirection.tours > 0);
+    if (porteur) {
+      const ratio = porteur.redirection!.ratio;
+      const versPorteur = Math.floor(dmg * ratio);
+      const versVictime = Math.ceil(dmg * (1 - ratio));
+      ctx.log(`🌀 ${porteur.nom} dévie une partie du coup destiné à ${cible.nom}.`);
+      infligerDegats(porteur, versPorteur, attaquant, ctx, false, true);
+      dmg = versVictime;
+    }
+  }
+
   if (attaquant && dmg > 0) ctx?.onDegats?.(attaquant.ref, dmg); // stats de run
   let reste = dmg;
   if (cible.bouclier > 0 && !ignoreBouclier) {
@@ -499,7 +567,10 @@ function infligerDegats(cible: Combatant, dmg: number, attaquant?: Combatant, ct
     ctx.rng() < pRiposte
   ) {
     const r = degatsAvec(cible, { baseMin: 8, baseMax: 12, scaling: 0.3 }, attaquant, { useMax: false, mult: 1, ctx });
-    infligerDegats(attaquant, r.dmg); // pas d'attaquant → pas de contre-riposte
+    // pas d'attaquant → pas de contre-riposte ; pas de ctx non plus, donc la redirection
+    // (Étreinte) ne s'applique jamais ici — de toute façon inatteignable avec le contenu
+    // actuel (contre/riposteAvant sont des mécaniques côté joueur uniquement).
+    infligerDegats(attaquant, r.dmg);
     ctx.log(`${cible.nom} riposte : ${r.dmg} dégâts à ${attaquant.nom}.`);
   }
 }
@@ -636,6 +707,9 @@ function decrementerEffets(acteur: Combatant): void {
     acteur.provoque = false;
   }
   acteur.resquilleActive = undefined; // Resquille (Roublard) : ne dure que le tour où elle est posée
+
+  // redirection (Étreinte) : décompte sur le porteur, retirée à 0
+  if (acteur.redirection && --acteur.redirection.tours <= 0) acteur.redirection = undefined;
 
   // cooldowns par cible
   for (const k of Object.keys(acteur.cooldowns)) {
@@ -782,6 +856,64 @@ function invoquerPoupee(
   ctx.log(`${lanceur.nom} invoque une ${invo.nom} (${invo.pv} PV) qui provoque les ennemis.`);
 }
 
+// --- La Lance (Forgelance) -----------------------------------------------------
+/** Durabilité forfaitaire de la Lance : encaisse 2 coups quel qu'en soit le montant. */
+export const LANCE_DURABILITE = 2;
+
+/** Invoque une Lance (camp ENNEMI) à la case libre la plus proche en colonne de
+ *  la rangée de `cibleEnnemie`. Une seule lance vivante par lanceur ; null si
+ *  une lance du lanceur est déjà vivante, ou si la rangée cible est pleine. */
+export function invoquerLance(
+  lanceur: Combatant,
+  cibleEnnemie: Combatant,
+  cs: Combatant[],
+  ctx: CombatCtx,
+): Combatant | null {
+  const ref = `lance_${lanceur.ref}`;
+  if (vivants(cs).some((c) => c.ref === ref)) return null; // une seule lance vivante à la fois
+
+  const [debut, fin] = estAvant(cibleEnnemie) ? [0, NB_COLONNES - 1] : [NB_COLONNES, 2 * NB_COLONNES - 1];
+  const prises = new Set(vivants(cs).filter((c) => c.camp === "ennemi").map((c) => c.position));
+  const colCible = cibleEnnemie.position % NB_COLONNES;
+  let position: number | null = null;
+  let meilleureDist = Infinity;
+  for (let p = debut; p <= fin; p++) {
+    if (prises.has(p)) continue;
+    const d = Math.abs((p % NB_COLONNES) - colCible);
+    if (d < meilleureDist) { meilleureDist = d; position = p; }
+  }
+  if (position === null) return null; // rangée cible pleine
+
+  // une vieille lance morte du même lanceur ne doit pas traîner dans cs
+  const idx = cs.findIndex((c) => c.ref === ref);
+  if (idx >= 0) cs.splice(idx, 1);
+
+  const lance: Combatant = {
+    ref,
+    nom: "Lance",
+    pvBase: LANCE_DURABILITE,
+    pvMax: LANCE_DURABILITE,
+    pvActuels: LANCE_DURABILITE,
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0 },
+    paMax: 0,
+    paActuels: 0,
+    initiative: 0,
+    resistances: {},
+    sorts: [],
+    camp: "ennemi",
+    position,
+    niveau: 1,
+    ...etatCombatInitial(),
+    estInvocation: true,
+    joueTour: false,
+    estLance: true,
+    lanceurRef: lanceur.ref,
+  };
+  cs.push(lance);
+  ctx.log(`🔱 ${lanceur.nom} plante une Lance.`);
+  return lance;
+}
+
 // --- Invocations de monstres (signatures de boss) ------------------------------
 /** Première case libre (0-7) du camp — les invocations arrivent devant d'abord. */
 function caseLibre(camp: Camp, cs: Combatant[]): number | null {
@@ -899,10 +1031,14 @@ function frappe(
   }
   if (r.crit) opts.ctx.fx?.({ type: "crit", ref: t.ref });
   infligerDegats(t, r.dmg, lanceur, opts.ctx);
-  opts.ctx.log(
-    `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
-      (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
-  );
+  // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats —
+  // pas besoin de la ligne de dégâts générique en plus.
+  if (!t.estLance) {
+    opts.ctx.log(
+      `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
+        (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+    );
+  }
   return r.dmg;
 }
 
@@ -1077,6 +1213,7 @@ export function lancerSort(
   cs: Combatant[],
   ctx: CombatCtx,
 ): void {
+  ctx.combatants = cs; // Lance/redirection : lookup depuis infligerDegats, référence à jour
   // Flèche Punitive : PA dispo AVANT paiement — la boucle de combat débite paActuels
   // avant d'appeler lancerSort, donc « avant paiement » = paActuels + coutPA ici.
   const paAvant = lanceur.paActuels + sort.coutPA;
@@ -1201,6 +1338,35 @@ export function lancerSort(
     return;
   }
 
+  // --- LANCE (Forgelance) : plante la lance dans la rangée de la cible ---
+  if (sort.invoqueLance) {
+    if (!cible) return;
+    invoquerLance(lanceur, cible, cs, ctx);
+    poseCooldown(lanceur);
+    return;
+  }
+
+  // --- VAJRA (Forgelance) : rappelle la lance (bris standard) et soigne selon sa durabilité restante ---
+  if (sort.rappelleLance) {
+    const lance = cs.find((c) => c.ref === `lance_${lanceur.ref}` && c.pvActuels > 0);
+    if (!lance) return; // gardé aussi par ciblesValides
+    const durabiliteRestante = lance.pvActuels;
+    ctx.log(`${lanceur.nom} rappelle sa lance (Vajra).`);
+    while (lance.pvActuels > 0) infligerDegats(lance, 1, undefined, ctx);
+    const soin = Math.round(sort.rappelleLance.soinParDurabilite * durabiliteRestante * multSoin(lanceur.stats));
+    soigner(lanceur, soin, ctx);
+    poseCooldown(lanceur);
+    return;
+  }
+
+  // --- ÉTREINTE DE VALKYR (Forgelance) : redirige une fraction des dégâts de la rangée arrière ---
+  if (sort.redirigeArriere) {
+    lanceur.redirection = { ratio: sort.redirigeArriere.ratio, tours: sort.redirigeArriere.duree };
+    ctx.log(`${lanceur.nom} lance ${sort.nom} : protège sa rangée arrière.`);
+    poseCooldown(lanceur);
+    return;
+  }
+
   // --- SOIN ---
   if (sort.type === "soin") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
@@ -1316,6 +1482,11 @@ export function lancerSort(
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
       adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && estAvant(e) === estAvant(cible)).length;
   }
+  // Muspel (Forgelance) : ×(1 + taux × nb d'ennemis non-lance de la zone), calculé AVANT les jets
+  if (sort.bonusParEnnemiToucheZone) {
+    const nbNonLance = ciblesDegats(lanceur, sort, cible, cs).filter((t) => !t.estLance).length;
+    multLigne *= 1 + sort.bonusParEnnemiToucheZone * nbNonLance;
+  }
   let totalDmg = 0;
 
   // Rayon de Wakfu (Éliotrope) : zoneLigne — les dégâts RÉELLEMENT infligés (post
@@ -1418,10 +1589,13 @@ export function lancerSort(
       if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
       infligerDegats(t, r.dmg, lanceur, ctx, sort.ignoreBouclier);
       totalDmg += r.dmg;
-      ctx.log(
-        `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
-          (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
-      );
+      // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats.
+      if (!t.estLance) {
+        ctx.log(
+          `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
+            (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+        );
+      }
       if (t.pvActuels > 0) {
         if (sort.poison) appliquerPoison(t, lanceur, etirer(sort.poison, doubleDuree));
         // Parasite (Éliotrope) : poison = jet (dégâts réellement infligés) × ratio, si portails ≥ seuil
@@ -1508,6 +1682,16 @@ export function lancerSort(
     const b = Math.round(totalDmg * sort.bouclierRatioDegats);
     lanceur.bouclier += b;
     ctx.log(`${lanceur.nom} gagne un bouclier de ${b}.`);
+  }
+
+  // Hydra (Forgelance) : bouclier au lanceur = valeur × nb d'ennemis non-lance touchés
+  if (sort.bouclierParEnnemiTouche) {
+    const nbNonLance = touchees.filter((t) => !t.estLance).length;
+    if (nbNonLance > 0) {
+      const b = sort.bouclierParEnnemiTouche * nbNonLance;
+      lanceur.bouclier += b;
+      ctx.log(`${lanceur.nom} gagne un bouclier de ${b} (Hydra).`);
+    }
   }
 
   // Pattounes : soigne le lanceur d'une fraction des dégâts infligés

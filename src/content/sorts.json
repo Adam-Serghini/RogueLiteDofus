@@ -565,6 +565,22 @@
     "scaling": 0,
     "type": "buff"
   },
+  "etreinte_de_valkyr": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 2,
+    "coutPA": 2,
+    "desc": "Pendant 1 tour, encaisse la moitié des dégâts subis par les alliés de la rangée arrière.",
+    "id": "etreinte_de_valkyr",
+    "nom": "Étreinte de Valkyr",
+    "redirigeArriere": {
+      "duree": 1,
+      "ratio": 0.5
+    },
+    "scaling": 0,
+    "type": "buff"
+  },
   "etreinte_glaciale": {
     "baseMax": 24,
     "baseMin": 18,
@@ -739,6 +755,20 @@
     "type": "degats",
     "vampirismeRatio": 0.3
   },
+  "hydra": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "bouclierParEnnemiTouche": 6,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Balaye la rangée de la cible (ou de la lance) : +6 de bouclier par ennemi touché.",
+    "id": "hydra",
+    "maxParTour": 1,
+    "nom": "Hydra",
+    "scaling": 0.35,
+    "type": "degats",
+    "zoneLance": true
+  },
   "invisibilite": {
     "baseMax": 0,
     "baseMin": 0,
@@ -764,6 +794,20 @@
     "scaling": 0,
     "type": "buff"
   },
+  "jormun": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Balaye la rangée avant — lancé sur la lance en rangée arrière : frappe TOUS les ennemis.",
+    "id": "jormun",
+    "maxParTour": 1,
+    "nom": "Jormun",
+    "scaling": 0.35,
+    "tousSiLanceArriere": true,
+    "type": "degats",
+    "zoneLance": true
+  },
   "kaboom": {
     "baseMax": 12,
     "baseMin": 8,
@@ -786,6 +830,19 @@
     "nom": "Lame liquide",
     "scaling": 0.5,
     "type": "degats"
+  },
+  "lance": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "ennemi_tous",
+    "coutPA": 1,
+    "desc": "Plante la lance dans la rangée de la cible (2 points de durabilité ; brisée par les coups alliés → bouclier).",
+    "id": "lance",
+    "invoqueLance": true,
+    "maxParTour": 2,
+    "nom": "Lance",
+    "scaling": 0,
+    "type": "buff"
   },
   "langue_rapeuse": {
     "baseMax": 14,
@@ -989,6 +1046,20 @@
     "scaling": 0.35,
     "soinEquipeRatio": 0.25,
     "type": "degats"
+  },
+  "muspel": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "bonusParEnnemiToucheZone": 0.15,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Balaye la rangée de la cible (ou de la lance) : +15 % de dégâts par ennemi touché.",
+    "id": "muspel",
+    "maxParTour": 1,
+    "nom": "Muspel",
+    "scaling": 0.35,
+    "type": "degats",
+    "zoneLance": true
   },
   "odorat": {
     "baseMax": 0,
@@ -1458,6 +1529,21 @@
     },
     "id": "tir_puissant",
     "nom": "Tir Puissant",
+    "scaling": 0,
+    "type": "buff"
+  },
+  "vajra": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "coutPA": 2,
+    "desc": "Rappelle la lance (bouclier de bris inclus) et soigne selon sa durabilité restante.",
+    "id": "vajra",
+    "maxParTour": 1,
+    "nom": "Vajra",
+    "rappelleLance": {
+      "soinParDurabilite": 7
+    },
     "scaling": 0,
     "type": "buff"
   },

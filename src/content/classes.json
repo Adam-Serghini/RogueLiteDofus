@@ -121,6 +121,29 @@
       "vitalite": 0
     }
   },
+  "forgelance": {
+    "id": "forgelance",
+    "img": "/assets/classes/forgelance.png",
+    "initiative": 11,
+    "nom": "Forgelance",
+    "pa": 6,
+    "pvBase": 50,
+    "sorts": [
+      "muspel",
+      "hydra",
+      "jormun",
+      "lance",
+      "vajra",
+      "etreinte_de_valkyr"
+    ],
+    "stats": {
+      "agilite": 0,
+      "force": 0,
+      "intelligence": 0,
+      "prospection": 100,
+      "vitalite": 0
+    }
+  },
   "iop": {
     "id": "iop",
     "img": "/assets/classes/iop.png",

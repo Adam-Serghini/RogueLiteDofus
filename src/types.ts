@@ -219,6 +219,14 @@ export interface Spell {
   poisonSiPortails?: { seuil: number; ratio: number; duree: number }; // Parasite : pose un poison = jet × ratio si portails du lanceur ≥ seuil
   paProchainTourLigne?: { valeur: number; seuil: number; valeurSeuil: number }; // Coalition : paBonusNextTurn += sur le lanceur et sa rangée (valeurSeuil si portails ≥ seuil)
   conjuration?: { pct: number; seuil: number; pctSeuil: number; duree: number }; // Conjuration : pose la marque Combatant.conjuration sur la cible (pctSeuil si portails du lanceur ≥ seuil)
+  // --- kit du Forgelance ---
+  invoqueLance?: boolean; // Lance : plante la Lance dans la rangée de la cible ; grisé si une lance du lanceur est déjà vivante
+  zoneLance?: boolean; // Muspel/Hydra/Jormun : cible = ennemi de rangée avant OU la lance alliée ; résolution = la rangée de la cible
+  bonusParEnnemiToucheZone?: number; // Muspel : ×(1 + taux × nb d'ennemis VIVANTS non-lance dans la zone), calculé AVANT les jets
+  bouclierParEnnemiTouche?: number; // Hydra : bouclier au lanceur = cette valeur × nb d'ennemis (non-lance) touchés
+  tousSiLanceArriere?: boolean; // Jormun : si la cible est la lance en rangée ARRIÈRE, touche TOUS les ennemis
+  rappelleLance?: { soinParDurabilite: number }; // Vajra : rappelle la lance (bris standard) et soigne selon sa durabilité restante ; injouable sans lance vivante
+  redirigeArriere?: { ratio: number; duree: number }; // Étreinte de Valkyr : pose Combatant.redirection sur le lanceur
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
@@ -358,6 +366,10 @@ export interface Combatant {
   resquilleActive?: number; // Resquille (Roublard) : PA à retirer par ennemi touché au prochain Kaboom (expire en fin de tour)
   portails?: number; // portails ouverts (Éliotrope), cap PORTAILS_MAX — aura de dégâts pour le porteur et sa rangée
   conjuration?: { pct: number; lanceurRef: string; tours: number }; // marque Conjuration (Éliotrope) : +pct dégâts pour le lanceur et sa rangée, décompte en fin de tour du lanceur
+  // --- Forgelance ---
+  estLance?: boolean; // vrai pour le pseudo-combattant « Lance » (camp ennemi, invocation)
+  lanceurRef?: string; // ref du Forgelance propriétaire de la lance
+  redirection?: { ratio: number; tours: number }; // Étreinte : redirige une fraction des dégâts subis par un allié arrière vers le porteur
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort). */
