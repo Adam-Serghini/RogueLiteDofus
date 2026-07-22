@@ -294,11 +294,13 @@ describe("rangée préférée", () => {
   });
 
   it("une vieille sauvegarde sans les nouvelles classes retombe sur leur rangée par défaut", () => {
-    // Settings d'avant l'ajout du Roublard/Xélor : pas de clé pour eux.
+    // Settings d'avant l'ajout du Roublard/Xélor/Éliotrope/Forgelance : pas de clé pour eux.
     localStorage.setItem("rld_settings_v0", JSON.stringify({ formation: { iop: "arriere", cra: "avant" } }));
     const config = chargerConfig();
     expect(config.formation.roublard).toBe("arriere"); // défaut, pas « avant » implicite
     expect(config.formation.xelor).toBe("arriere");
+    expect(config.formation.eliotrope).toBe("arriere");
+    expect(config.formation.forgelance).toBe("avant");
     expect(config.formation.iop).toBe("arriere"); // les choix stockés gagnent
     expect(config.formation.cra).toBe("avant");
     localStorage.removeItem("rld_settings_v0");

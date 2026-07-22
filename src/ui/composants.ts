@@ -194,6 +194,8 @@ export const ROLE_CLASSE: Record<string, string> = {
   ouginak: "Chasseur — marque sa Proie, Rage croissante, contrôle de ligne",
   roublard: "Artificier — bombes collantes à détoner, contrôle de position",
   xelor: "Horloger — Téléfrags, vol et don de PA, burst conditionné",
+  eliotrope: "Portailleur — buffs de rangée, soins par les dégâts, burst à portails",
+  forgelance: "Lancier — zones autour de sa lance, boucliers, redirection",
 };
 
 /** Carte de classe (portrait + rôle) pour le choix d'équipe / recrutement. */

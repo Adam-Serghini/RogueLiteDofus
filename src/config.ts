@@ -23,7 +23,7 @@ const ALLOCS_VALIDES = new Set<AllocationPref>(["terre", "feu", "eau", "air", "v
 const DEFAUT: Settings = {
   toucheFinTour: " ",
   autoFinTour: true,
-  formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere", roublard: "arriere", xelor: "arriere" },
+  formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", forgelance: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere", roublard: "arriere", xelor: "arriere", eliotrope: "arriere" },
   // roublard/xelor n'ont volontairement pas d'entrée ici : kits « bi-teinte » sans stat
   // offensive dominante évidente (dégâts + repositionnement/contrôle) — pas de choix par
   // défaut imposé, l'allocation reste libre pour le joueur.
