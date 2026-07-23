@@ -2507,7 +2507,6 @@ kbd {
   height: 100%;
   object-fit: cover;
   display: block;
-  transform: scale(1.22); /* zoome pour effacer la marge transparente du PNG */
 }
 .sort-touche {
   position: absolute;
