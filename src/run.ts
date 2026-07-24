@@ -230,7 +230,20 @@ export function statPrincipale(state: PersoState): keyof Stats {
   return best;
 }
 
-/** Bonus total apporté par l'équipement d'un perso (objets équipés). */
+/** Bonus de PA quand les 4 pièces d'une même panoplie sont équipées. */
+export const PANOPLIE_BONUS_PA = 1;
+
+/** Compte des pièces équipées par panoplie (pour le bonus et l'affichage inventaire). */
+export function comptePanoplies(state: PersoState): Record<string, number> {
+  const compte: Record<string, number> = {};
+  for (const inst of Object.values(state.equipement)) {
+    const pano = inst && ITEMS[inst.id]?.panoplie;
+    if (pano) compte[pano] = (compte[pano] ?? 0) + 1;
+  }
+  return compte;
+}
+
+/** Bonus total apporté par l'équipement d'un perso (objets équipés + panoplie complète). */
 export function bonusEquipement(state: PersoState): {
   stats: Stats; pvBonus: number; resistances: Partial<Record<Element, number>>; paBonus: number;
 } {
@@ -249,6 +262,8 @@ export function bonusEquipement(state: PersoState): {
     ajouterRes(resistances, item.resistances);
     ajouterRes(resistances, inst.resistances); // résistances du palier de rareté
   }
+  // panoplie complète (4 pièces du même set, rareté indifférente) → +1 PA
+  if (Object.values(comptePanoplies(state)).some((n) => n >= 4)) paBonus += PANOPLIE_BONUS_PA;
   return { stats, pvBonus, resistances, paBonus };
 }
 

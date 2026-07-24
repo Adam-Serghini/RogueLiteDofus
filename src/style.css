@@ -1235,6 +1235,14 @@ kbd {
 .equip-total {
   font-size: 0.72rem;
 }
+.equip-pano {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+}
+.equip-pano.complete {
+  font-weight: 800;
+  color: var(--or-texte);
+}
 .equip-inv {
   display: flex;
   flex-direction: column;

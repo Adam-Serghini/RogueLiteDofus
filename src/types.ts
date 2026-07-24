@@ -44,6 +44,7 @@ export interface Item {
   id: string;
   nom: string;
   slot: EquipSlot;
+  panoplie?: string; // nom affichable de la panoplie — 4 pièces équipées = +1 PA (élite/boss : jamais de panoplie)
   tiers?: Partial<Record<Rarete, TierItem>>; // objets à rareté (stats fixes par palier)
   source?: "boss" | "elite" | "elite_boss"; // drop exclusif : donjon / combat dur / les deux
   paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip : pari de PA à chaque tour

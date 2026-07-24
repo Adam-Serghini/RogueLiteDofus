@@ -6,7 +6,7 @@ import {
   nouvelleRun, combattantDepuisPerso, bonusEquipement,
   equiper, desequiper, tenterButin, rollItem, tirerRarete,
 } from "./run";
-import { butinToile } from "./data";
+import { butinToile, ITEMS } from "./data";
 import type { Meta } from "./types";
 
 const MIN = () => 0;     // jet au minimum de la fourchette (déterministe)
@@ -36,6 +36,55 @@ describe("bonus d'équipement", () => {
     expect(equipe.pvMax).toBe(base.pvMax + 6);
     expect(equipe.stats.vitalite).toBe((base.stats.vitalite ?? 0) + 6);
     expect(equipe.resistances.terre ?? 0).toBeCloseTo(0.01);
+  });
+});
+
+describe("bonus de panoplie (4 pièces de la même panoplie = +1 PA)", () => {
+  const SET_AVENTURIER = ["chapeau_de_l_aventurier", "cape_de_l_aventurier", "anneau_de_l_aventurier", "epee_de_l_aventurier"];
+
+  it("les 4 pièces d'une panoplie donnent +1 PA (visible sur le combatant)", () => {
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    const paBase = combattantDepuisPerso(p).paMax;
+    for (const id of SET_AVENTURIER) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
+    expect(bonusEquipement(p).paBonus).toBe(1);
+    expect(combattantDepuisPerso(p).paMax).toBe(paBase + 1);
+  });
+
+  it("3 pièces + une pièce hors panoplie → aucun bonus (une pièce boss casse le set)", () => {
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    for (const id of SET_AVENTURIER.slice(0, 3)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
+    expect(bonusEquipement(p).paBonus).toBe(0); // 3/4 : rien
+    run.inventaire.push(rollItem("epee_de_l_aventurier", MIN)); // 4/4 : bonus
+    equiper(run.inventaire, p, 0);
+    expect(bonusEquipement(p).paBonus).toBe(1);
+    run.inventaire.push(rollItem("boufcoiffe_royale", MIN)); // coiffe BOSS (t3) remplace la coiffe du set
+    equiper(run.inventaire, p, 0);
+    expect(bonusEquipement(p).paBonus).toBe(0); // le set est cassé
+  });
+
+  it("la rareté est indifférente (mélange commun/légendaire)", () => {
+    const run = nouvelleRun(["iop"]);
+    const p = run.persos[0];
+    const MAXR = () => 0.999; // palier légendaire
+    run.inventaire.push(rollItem(SET_AVENTURIER[0], MAXR));
+    equiper(run.inventaire, p, 0);
+    for (const id of SET_AVENTURIER.slice(1)) { run.inventaire.push(rollItem(id, MIN)); equiper(run.inventaire, p, 0); }
+    expect(bonusEquipement(p).paBonus).toBe(1);
+  });
+
+  it("chaque panoplie de la t1 compte exactement 4 pièces, une par slot", () => {
+    const parPano: Record<string, string[]> = {};
+    for (const it of Object.values(ITEMS)) {
+      if (it.panoplie) (parPano[it.panoplie] ??= []).push(it.id);
+    }
+    expect(Object.keys(parPano).length).toBe(12);
+    for (const [nom, ids] of Object.entries(parPano)) {
+      expect(ids.length, nom).toBe(4);
+      const slots = new Set(ids.map((id) => ITEMS[id].slot));
+      expect(slots.size, nom).toBe(4); // coiffe + cape + anneau + arme
+    }
   });
 });
 

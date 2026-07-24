@@ -27,6 +27,8 @@ import {
   importerSauvegarde,
   peutEquiper,
   toileDeItem,
+  comptePanoplies,
+  PANOPLIE_BONUS_PA,
   type PersoState,
 } from "../run";
 import type { Element, EquipSlot, ItemInstance } from "../types";
@@ -108,6 +110,11 @@ export function showInventaire(
           <div class="equip-col">
             <h3>${escapeHtml(CLASSES[perso.classeId].nom)} · PV max ${pvMaxPerso(perso)}</h3>
             <div class="equip-slots">${slots}</div>
+            ${Object.entries(comptePanoplies(perso))
+              .map(([nom, n]) => n >= 4
+                ? `<p class="equip-pano complete">${escapeHtml(nom)} 4/4 : +${PANOPLIE_BONUS_PA} PA</p>`
+                : `<p class="equip-pano muet">${escapeHtml(nom)} ${n}/4</p>`)
+              .join("")}
             <p class="equip-total muet">Bonus total : ${totalTxt}</p>
           </div>
           <div class="equip-col">

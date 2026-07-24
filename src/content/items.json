@@ -24,6 +24,7 @@
   "alliance_akwadala": {
     "id": "alliance_akwadala",
     "nom": "Alliance Akwadala",
+    "panoplie": "Panoplie Akwadala",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -178,6 +179,7 @@
   "anneau_bille": {
     "id": "anneau_bille",
     "nom": "Anneau Bille",
+    "panoplie": "Panoplie Cancrelune",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -225,6 +227,7 @@
   "anneau_bouftou": {
     "id": "anneau_bouftou",
     "nom": "Anneau Bouftou",
+    "panoplie": "Panoplie du Bouftou",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -256,6 +259,7 @@
   "anneau_champ_champ": {
     "id": "anneau_champ_champ",
     "nom": "Anneau Champ Champ",
+    "panoplie": "Panoplie Champ Champ",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -331,6 +335,7 @@
   "anneau_de_l_aventurier": {
     "id": "anneau_de_l_aventurier",
     "nom": "Anneau de l'Aventurier",
+    "panoplie": "Panoplie de l'Aventurier",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -402,6 +407,7 @@
   "anneau_du_boostache": {
     "id": "anneau_du_boostache",
     "nom": "Anneau du Boostache",
+    "panoplie": "Panoplie Fantomatique",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -433,6 +439,7 @@
   "anneau_du_tofu": {
     "id": "anneau_du_tofu",
     "nom": "Anneau du Tofu",
+    "panoplie": "Panoplie du Tofu",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -687,6 +694,7 @@
   "bague_cristalline": {
     "id": "bague_cristalline",
     "nom": "Bague Cristalline",
+    "panoplie": "Panoplie Cristalline",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -741,6 +749,7 @@
   "bague_rafe": {
     "id": "bague_rafe",
     "nom": "Bague Rafe",
+    "panoplie": "Panoplie du Directeur",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -772,6 +781,7 @@
   "baguette_cetera": {
     "id": "baguette_cetera",
     "nom": "Baguette Cetera",
+    "panoplie": "Panoplie Cancrelune",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -847,6 +857,7 @@
   "baguette_du_tofu": {
     "id": "baguette_du_tofu",
     "nom": "Baguette du Tofu",
+    "panoplie": "Panoplie du Tofu",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -906,6 +917,7 @@
   "baguette_larvesque": {
     "id": "baguette_larvesque",
     "nom": "Baguette Larvesque",
+    "panoplie": "Panoplie Cristalline",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -1032,6 +1044,7 @@
   "baguette_scafeuille": {
     "id": "baguette_scafeuille",
     "nom": "Baguette Scafeuille",
+    "panoplie": "Panoplie Scarafeuille",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -1151,6 +1164,7 @@
   "baton_akwadala": {
     "id": "baton_akwadala",
     "nom": "Bâton Akwadala",
+    "panoplie": "Panoplie Akwadala",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -1206,6 +1220,7 @@
   "baton_carnivore": {
     "id": "baton_carnivore",
     "nom": "Bâton Carnivore",
+    "panoplie": "Panoplie Champ Champ",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -1541,6 +1556,7 @@
   "cape_akwadala": {
     "id": "cape_akwadala",
     "nom": "Cape Akwadala",
+    "panoplie": "Panoplie Akwadala",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1576,6 +1592,7 @@
   "cape_champ_champ": {
     "id": "cape_champ_champ",
     "nom": "Cape Champ Champ",
+    "panoplie": "Panoplie Champ Champ",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1631,6 +1648,7 @@
   "cape_de_l_aventurier": {
     "id": "cape_de_l_aventurier",
     "nom": "Cape de l'Aventurier",
+    "panoplie": "Panoplie de l'Aventurier",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1682,6 +1700,7 @@
   "cape_du_boostache": {
     "id": "cape_du_boostache",
     "nom": "Cape du Boostache",
+    "panoplie": "Panoplie Fantomatique",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1713,6 +1732,7 @@
   "cape_du_bouftou": {
     "id": "cape_du_bouftou",
     "nom": "Cape du Bouftou",
+    "panoplie": "Panoplie du Bouftou",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1764,6 +1784,7 @@
   "cape_du_tofu": {
     "id": "cape_du_tofu",
     "nom": "Cape du Tofu",
+    "panoplie": "Panoplie du Tofu",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1856,6 +1877,7 @@
   "cape_lumette": {
     "id": "cape_lumette",
     "nom": "Cape Lumette",
+    "panoplie": "Panoplie Cancrelune",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -1907,6 +1929,7 @@
   "cape_ricefini": {
     "id": "cape_ricefini",
     "nom": "Cape Ricéfini",
+    "panoplie": "Panoplie du Directeur",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -2027,6 +2050,7 @@
   "casque_noix": {
     "id": "casque_noix",
     "nom": "Casque Noix",
+    "panoplie": "Panoplie Cancrelune",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2111,6 +2135,7 @@
   "chapeau_akwadala": {
     "id": "chapeau_akwadala",
     "nom": "Chapeau Akwadala",
+    "panoplie": "Panoplie Akwadala",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2157,6 +2182,7 @@
   "chapeau_de_l_aventurier": {
     "id": "chapeau_de_l_aventurier",
     "nom": "Chapeau de l'Aventurier",
+    "panoplie": "Panoplie de l'Aventurier",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2206,6 +2232,7 @@
   "chapeau_du_directeur_grunob": {
     "id": "chapeau_du_directeur_grunob",
     "nom": "Chapeau du Directeur Grunob",
+    "panoplie": "Panoplie du Directeur",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2257,6 +2284,7 @@
   "chapeau_lithique": {
     "id": "chapeau_lithique",
     "nom": "Chapeau Lithique",
+    "panoplie": "Panoplie Cristalline",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2312,6 +2340,7 @@
   "coiffe_bouftou": {
     "id": "coiffe_bouftou",
     "nom": "Coiffe Bouftou",
+    "panoplie": "Panoplie du Bouftou",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2363,6 +2392,7 @@
   "coiffe_champ_champ": {
     "id": "coiffe_champ_champ",
     "nom": "Coiffe Champ Champ",
+    "panoplie": "Panoplie Champ Champ",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2418,6 +2448,7 @@
   "coiffe_du_tofu": {
     "id": "coiffe_du_tofu",
     "nom": "Coiffe du Tofu",
+    "panoplie": "Panoplie du Tofu",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -2642,6 +2673,7 @@
   "epee_de_l_aventurier": {
     "id": "epee_de_l_aventurier",
     "nom": "Épée de l'Aventurier",
+    "panoplie": "Panoplie de l'Aventurier",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -2761,6 +2793,7 @@
   "faux_du_directeur_grunob": {
     "id": "faux_du_directeur_grunob",
     "nom": "Faux du Directeur Grunob",
+    "panoplie": "Panoplie du Directeur",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -2875,6 +2908,7 @@
   "kwakanneau_de_terre": {
     "id": "kwakanneau_de_terre",
     "nom": "Kwakanneau de Terre",
+    "panoplie": "Panoplie du Kwak",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -2906,6 +2940,7 @@
   "kwaklame_de_vent": {
     "id": "kwaklame_de_vent",
     "nom": "Kwaklame de Vent",
+    "panoplie": "Panoplie du Kwak",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -2961,6 +2996,7 @@
   "kwakoiffe_de_flammes": {
     "id": "kwakoiffe_de_flammes",
     "nom": "Kwakoiffe de Flammes",
+    "panoplie": "Panoplie du Kwak",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -3112,6 +3148,7 @@
   "kwape_de_glace": {
     "id": "kwape_de_glace",
     "nom": "Kwape de Glace",
+    "panoplie": "Panoplie du Kwak",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -3203,6 +3240,7 @@
   "la_mokette": {
     "id": "la_mokette",
     "nom": "La Mokette",
+    "panoplie": "Panoplie Cristalline",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -3305,6 +3343,7 @@
   "marteau_bouftou": {
     "id": "marteau_bouftou",
     "nom": "Marteau Bouftou",
+    "panoplie": "Panoplie du Bouftou",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -3538,6 +3577,7 @@
   "pelle_du_bois_dormant": {
     "id": "pelle_du_bois_dormant",
     "nom": "Pelle du Bois Dormant",
+    "panoplie": "Panoplie Fantomatique",
     "slot": "arme",
     "tiers": {
       "commun": {
@@ -3712,6 +3752,7 @@
   "scaracape_noire": {
     "id": "scaracape_noire",
     "nom": "Scaracape Noire",
+    "panoplie": "Panoplie Scarafeuille",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -3775,6 +3816,7 @@
   "scaracoiffe_noire": {
     "id": "scaracoiffe_noire",
     "nom": "Scaracoiffe Noire",
+    "panoplie": "Panoplie Scarafeuille",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -3838,6 +3880,7 @@
   "scaranneau_noir": {
     "id": "scaranneau_noir",
     "nom": "Scaranneau Noir",
+    "panoplie": "Panoplie Scarafeuille",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -3897,6 +3940,7 @@
   "shako": {
     "id": "shako",
     "nom": "Shako",
+    "panoplie": "Panoplie Fantomatique",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -3928,6 +3972,7 @@
   "vegacape": {
     "id": "vegacape",
     "nom": "Vegacape",
+    "panoplie": "Panoplie Véga",
     "slot": "cape",
     "tiers": {
       "commun": {
@@ -3959,6 +4004,7 @@
   "vegacoiffe": {
     "id": "vegacoiffe",
     "nom": "Vegacoiffe",
+    "panoplie": "Panoplie Véga",
     "slot": "coiffe",
     "tiers": {
       "commun": {
@@ -3990,6 +4036,7 @@
   "veganneau": {
     "id": "veganneau",
     "nom": "Veganneau",
+    "panoplie": "Panoplie Véga",
     "slot": "anneau",
     "tiers": {
       "commun": {
@@ -4021,6 +4068,7 @@
   "vegaton": {
     "id": "vegaton",
     "nom": "Vegaton",
+    "panoplie": "Panoplie Véga",
     "slot": "arme",
     "tiers": {
       "commun": {
