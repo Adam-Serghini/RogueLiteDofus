@@ -388,13 +388,11 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
   /** Déroule un round complet via prochainActeur et renvoie la séquence des refs. */
   const round = (cs: Combatant[]): string[] => {
     const aJoue = new Set<string>();
-    let dernier: "joueur" | "ennemi" | null = null;
     const ordre: string[] = [];
     for (;;) {
-      const a = prochainActeur(cs, aJoue, dernier);
+      const a = prochainActeur(cs, aJoue);
       if (!a) break;
       aJoue.add(a.ref);
-      dernier = a.camp;
       ordre.push(a.ref);
     }
     return ordre;
@@ -402,8 +400,8 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
 
   it("4v2 : A E A E A A (surplus allié en fin de round)", () => {
     const cs = [
-      combattant("a1", "joueur", 40), combattant("a2", "joueur", 30),
-      combattant("a3", "joueur", 20), combattant("a4", "joueur", 10),
+      combattant("a1", "joueur", 40), combattant("a2", "joueur", 38),
+      combattant("a3", "joueur", 36), combattant("a4", "joueur", 34),
       combattant("e1", "ennemi", 35), combattant("e2", "ennemi", 25),
     ];
     expect(round(cs)).toEqual(["a1", "e1", "a2", "e2", "a3", "a4"]);
@@ -411,7 +409,7 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
 
   it("2v5 : A E A E E E E — et l'ennemi ouvre s'il a la meilleure init", () => {
     const cs = [
-      combattant("a1", "joueur", 40), combattant("a2", "joueur", 30),
+      combattant("a1", "joueur", 40), combattant("a2", "joueur", 38),
       combattant("e1", "ennemi", 35), combattant("e2", "ennemi", 25),
       combattant("e3", "ennemi", 20), combattant("e4", "ennemi", 15), combattant("e5", "ennemi", 10),
     ];
@@ -419,6 +417,28 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
     // meilleure init ennemie → l'ennemi ouvre
     const cs2 = [combattant("a1", "joueur", 20), combattant("e1", "ennemi", 50), combattant("e2", "ennemi", 10)];
     expect(round(cs2)).toEqual(["e1", "a1", "e2"]);
+  });
+
+  it("la séquence est FIGÉE : un mort libère son créneau sans ré-entrelacement", () => {
+    const a1 = combattant("a1", "joueur", 40);
+    const a2 = combattant("a2", "joueur", 38);
+    const e1 = combattant("e1", "ennemi", 35);
+    const e2 = combattant("e2", "ennemi", 25);
+    const cs = [a1, a2, e1, e2];
+    expect(round(cs)).toEqual(["a1", "e1", "a2", "e2"]);
+    e1.pvActuels = 0; // le premier ennemi meurt
+    expect(round(cs)).toEqual(["a1", "a2", "e2"]); // A A E — PAS de ré-alternance
+    e1.pvActuels = 50; // ressuscité : il retrouve SON créneau d'origine
+    expect(round(cs)).toEqual(["a1", "e1", "a2", "e2"]);
+  });
+
+  it("un debuff d'initiative en cours de combat ne change PLUS l'ordre (séquence figée au départ)", () => {
+    const a1 = combattant("a1", "joueur", 40);
+    const e1 = combattant("e1", "ennemi", 35);
+    const cs = [a1, e1];
+    expect(round(cs)).toEqual(["a1", "e1"]);
+    e1.effets.push({ stat: "initiative", valeur: 99, toursRestants: 9 }); // même un ÉNORME buff
+    expect(round(cs)).toEqual(["a1", "e1"]); // l'ordre reste celui du début de combat
   });
 
   it("un invoqué joue TOUJOURS juste après son invocateur (hors alternance), à chaque round", () => {

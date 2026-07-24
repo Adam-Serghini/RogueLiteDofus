@@ -9,7 +9,7 @@ import {
   ELEMENTS,
   elementsForts,
   elementDeFrappe,
-  prochainActeur,
+  ordreDuCombat,
   type FxEvent,
 } from "../combat";
 import { libelleTouche } from "../config";
@@ -568,19 +568,13 @@ function initEffective(c: Combatant): number {
   );
 }
 
-/** Timeline d'ordre des tours : projection d'un round complet via la MÊME règle
- *  que le moteur (alternance allié/ennemi, invoqués collés à leur invocateur). */
+/** Timeline d'ordre des tours : la SÉQUENCE FIGÉE du combat (même source que le
+ *  moteur — ordreDuCombat), morts exclus de l'affichage. */
 function renderTimeline(): string {
-  const ordre: Combatant[] = [];
-  const simJoue = new Set<string>();
-  let dernier: Camp | null = null;
-  for (;;) {
-    const a = prochainActeur(combatants, simJoue, dernier);
-    if (!a) break;
-    simJoue.add(a.ref);
-    dernier = a.camp;
-    ordre.push(a);
-  }
+  const parRef = new Map(combatants.map((c) => [c.ref, c]));
+  const ordre = ordreDuCombat(combatants)
+    .map((ref) => parRef.get(ref))
+    .filter((c): c is Combatant => !!c && c.pvActuels > 0);
   if (ordre.length < 2) return "";
   // pastille ciblable = combattant valide pour le sort en cours de ciblage
   const cibles =

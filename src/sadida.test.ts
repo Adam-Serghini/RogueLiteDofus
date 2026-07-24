@@ -84,7 +84,10 @@ describe("réduction d'initiative", () => {
     expect(front.effets.some((e) => e.stat === "initiative" && e.valeur < 0)).toBe(true);
   });
 
-  it("un malus d'initiative change l'ordre des tours", async () => {
+  it("l'ordre des tours est FIGÉ au départ : un malus d'initiative en combat ne le change plus", async () => {
+    // Depuis les tours alternés (séquence figée en début de combat), l'effet
+    // `initiative` de la Déferlante ne réordonne plus rien — l'ordre vient de
+    // l'initiative de DÉPART. (Rider à re-designer, cf. spec tours-alternés.)
     const [iop] = fabriquerEquipe(); // initiative 8
     const mob = fabriquerEnnemis("inc_1").find((e) => e.nom === "Chafer Éclaireur")!; // initiative 11
 
@@ -96,8 +99,8 @@ describe("réduction d'initiative", () => {
     };
 
     expect(await premier([iop, mob])).toBe(mob.ref); // le Chafer (init 11) d'abord
-    mob.effets.push({ stat: "initiative", valeur: -10, toursRestants: 99 }); // 11 → 1
-    expect(await premier([iop, mob])).toBe(iop.ref); // l'Iop (init 8) passe devant
+    mob.effets.push({ stat: "initiative", valeur: -10, toursRestants: 99 }); // 11 → 1 (effectif)
+    expect(await premier([iop, mob])).toBe(mob.ref); // …mais l'ordre de DÉPART tient toujours
   });
 });
 

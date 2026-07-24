@@ -106,7 +106,8 @@ export function elementDeFrappe(c: Combatant): Element {
 }
 
 /** Initiative effective = base + effets (négatifs = ralentissement). */
-const initOf = (c: Combatant): number => c.initiative + sommeEffet(c, "initiative");
+// (l'ancien initOf — initiative effective avec effets — a disparu avec la séquence
+//  figée : seule l'initiative de DÉPART compte pour l'ordre, cf. ordreDuCombat)
 
 // --- Grille & règle de ligne -------------------------------------------------
 // position = case de grille 0..7 : 0-3 = ligne avant, 4-7 = ligne arrière.
@@ -1853,29 +1854,55 @@ export const combatTermine = (cs: Combatant[]): boolean => campMort(cs, "joueur"
 export const joueurGagne = (cs: Combatant[]): boolean => campMort(cs, "ennemi") && !campMort(cs, "joueur");
 
 /**
- * Prochain acteur du round (ordre ALTERNÉ allié/ennemi) :
- * 1. Priorité absolue aux invoqués (`invoquePar`) vivants dont l'invocateur a déjà
- *    joué ce round — une invocation joue TOUJOURS juste après son invocateur, même
- *    si ça enchaîne deux tours du même camp.
- * 2. Sinon, alternance : le camp OPPOSÉ au dernier acteur, tant qu'il a des
- *    combattants à jouer (invoqués exclus du pool — ils attendent leur invocateur) ;
- *    sinon l'autre camp enchaîne (surplus en fin de round).
- * 3. En début de round (dernierCamp null), la meilleure initiative effective ouvre.
- * Tri par initiative effective à chaque étape. null = round terminé.
+ * Séquence de tour du combat — FIGÉE : déterministe depuis la composition, donc
+ * recomputable à tout moment (les morts restent dans `cs` et gardent leur créneau,
+ * simplement sauté tant qu'ils sont à 0 PV — un ressuscité retrouve sa place).
+ * Construction :
+ * 1. Combattants « principaux » (ni invocations-obstacles, ni invoqués) entrelacés
+ *    allié/ennemi : la meilleure initiative de BASE ouvre, chaque camp défile dans
+ *    son ordre d'initiative, le surplus du camp majoritaire ferme le round
+ *    (4v2 → A E A E A A). L'initiative de DÉPART seule compte : un debuff d'init
+ *    en cours de combat ne réordonne plus rien (séquence figée, choix design).
+ * 2. Chaque invoqué (`invoquePar`) est inséré juste APRÈS son invocateur — il joue
+ *    collé à lui à chaque round, même si ça enchaîne deux tours du même camp.
  */
-export function prochainActeur(
-  cs: Combatant[], aJoue: Set<string>, dernierCamp: Camp | null,
-): Combatant | null {
-  const jouables = vivants(cs).filter((c) => !c.estInvocation && !aJoue.has(c.ref));
-  if (!jouables.length) return null;
-  const meilleur = (l: Combatant[]) => [...l].sort((a, b) => initOf(b) - initOf(a))[0];
-  const attaches = jouables.filter((c) => c.invoquePar && aJoue.has(c.invoquePar));
-  if (attaches.length) return meilleur(attaches);
-  const libres = jouables.filter((c) => !c.invoquePar);
-  if (!libres.length) return meilleur(jouables); // repli sûr (invocateur ni joué ni vivant — cascade normalement passée avant)
-  const attendu: Camp | null = dernierCamp === "joueur" ? "ennemi" : dernierCamp === "ennemi" ? "joueur" : null;
-  const duCamp = attendu ? libres.filter((c) => c.camp === attendu) : [];
-  return meilleur(duCamp.length ? duCamp : libres);
+export function ordreDuCombat(cs: Combatant[]): string[] {
+  const principaux = cs.filter((c) => !c.estInvocation && !c.invoquePar);
+  const parInit = (l: Combatant[]) => [...l].sort((a, b) => b.initiative - a.initiative);
+  const files: Record<Camp, Combatant[]> = {
+    joueur: parInit(principaux.filter((c) => c.camp === "joueur")),
+    ennemi: parInit(principaux.filter((c) => c.camp === "ennemi")),
+  };
+  const premier = parInit(principaux)[0];
+  let camp: Camp = premier ? premier.camp : "joueur";
+  const ordre: string[] = [];
+  while (files.joueur.length || files.ennemi.length) {
+    if (!files[camp].length) camp = camp === "joueur" ? "ennemi" : "joueur"; // surplus de l'autre camp
+    ordre.push(files[camp].shift()!.ref);
+    const oppose: Camp = camp === "joueur" ? "ennemi" : "joueur";
+    if (files[oppose].length) camp = oppose; // alternance tant que l'autre camp a du monde
+  }
+  // invoqués : insérés juste après leur invocateur (après ses invoqués déjà insérés)
+  for (const c of cs) {
+    if (!c.invoquePar || c.estInvocation) continue;
+    let i = ordre.indexOf(c.invoquePar);
+    if (i < 0) continue; // invocateur hors séquence (ne devrait pas arriver)
+    const invoquesDe = new Set(cs.filter((x) => x.invoquePar === c.invoquePar).map((x) => x.ref));
+    while (i + 1 < ordre.length && invoquesDe.has(ordre[i + 1])) i++;
+    ordre.splice(i + 1, 0, c.ref);
+  }
+  return ordre;
+}
+
+/** Prochain acteur du round : le premier de la séquence figée (ordreDuCombat)
+ *  encore vivant et n'ayant pas joué ce round. null = round terminé. */
+export function prochainActeur(cs: Combatant[], aJoue: Set<string>): Combatant | null {
+  const parRefLocal = new Map(cs.map((c) => [c.ref, c]));
+  for (const ref of ordreDuCombat(cs)) {
+    const c = parRefLocal.get(ref);
+    if (c && c.pvActuels > 0 && !aJoue.has(ref)) return c;
+  }
+  return null;
 }
 
 /** Mort de l'invocateur = mort de ses invocations (en cascade). La Lance se brise
@@ -1912,17 +1939,15 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
   while (!combatTermine(combatants)) {
     if (++garde > 1000) break; // sécurité anti-boucle infinie
 
-    // Un round : chaque combattant agit une fois, en ALTERNANCE allié/ennemi
-    // (voir prochainActeur — l'initiative effective décide qui ouvre le round et
-    // l'ordre INTERNE de chaque camp ; les invoqués jouent collés à leur invocateur).
+    // Un round : chaque combattant agit une fois, dans la SÉQUENCE FIGÉE du combat
+    // (ordreDuCombat — alternance allié/ennemi établie au départ ; les morts sont
+    // sautés sans ré-entrelacement, les invoqués jouent collés à leur invocateur).
     const aJoue = new Set<string>();
-    let dernierCamp: Camp | null = null;
     for (;;) {
       if (combatTermine(combatants)) break;
-      const acteur = prochainActeur(combatants, aJoue, dernierCamp);
+      const acteur = prochainActeur(combatants, aJoue);
       if (!acteur) break;
       aJoue.add(acteur.ref);
-      dernierCamp = acteur.camp;
 
       reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer par tour
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
