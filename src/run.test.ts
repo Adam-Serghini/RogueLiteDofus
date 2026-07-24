@@ -40,6 +40,25 @@ describe("compteur de runs", () => {
   });
 });
 
+describe("bonus d'équipe (Dofus) appliqués aux combattants", () => {
+  it("le bonus de vitalité du Dofawa ne RESSUSCITE pas un héros mort (bug du 1 PV)", async () => {
+    const { appliquerBonusEquipeCombat, equipeCombattante, nouvelleRun } = await import("./run");
+    const run = nouvelleRun(["iop", "eniripsa"]);
+    const [iop, eni] = equipeCombattante(run);
+    eni.pvActuels = 0; // l'Eniripsa est morte au combat précédent
+    const pvIopAvant = iop.pvActuels;
+    appliquerBonusEquipeCombat([iop, eni], { damageMult: 1.15, paBonus: 1, vitaBonus: 2, resAllBonus: 0.01 });
+    // vivant : PV max ET courants montent, PA aussi
+    expect(iop.pvMax).toBeGreaterThan(pvIopAvant);
+    expect(iop.pvActuels).toBe(pvIopAvant + 2);
+    expect(iop.paMax).toBeGreaterThan(6);
+    // morte : ses maxima montent mais elle RESTE morte
+    expect(eni.pvMax).toBeGreaterThan(0);
+    expect(eni.pvActuels).toBe(0);
+    expect(eni.resistances.terre).toBeCloseTo(0.01);
+  });
+});
+
 describe("sauvegarde de run", () => {
   // mock localStorage (l'environnement de test n'en a pas)
   const store = new Map<string, string>();

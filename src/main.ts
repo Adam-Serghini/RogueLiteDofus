@@ -3,14 +3,14 @@
 // =============================================================================
 import "./style.css";
 import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, TRANCHES, zonesDeTranche, DROP, type ZonePools, type ZoneDef } from "./data";
-import { runCombat, controllerIA, ELEMENTS, type Controller } from "./combat";
-import { restat, PV_PAR_VITA } from "./progression";
+import { runCombat, controllerIA, type Controller } from "./combat";
+import { restat } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   appliquerModificateursElite, effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
   tavernePctAscension, tauxDofusAscension, enregistrerAscension,
-  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, prospectionEquipe,
+  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
   appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
@@ -68,16 +68,9 @@ async function resoudreCombat(
   });
   appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
   // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
-  const { damageMult, paBonus, vitaBonus, resAllBonus } = bonusEquipe(meta);
-  for (const c of equipe) {
-    if (paBonus) { c.paMax += paBonus; c.paActuels = c.paMax; }
-    if (vitaBonus) {
-      c.stats.vitalite += vitaBonus;
-      const add = vitaBonus * PV_PAR_VITA;
-      c.pvBase += add; c.pvMax += add; c.pvActuels += add;
-    }
-    if (resAllBonus) for (const el of ELEMENTS) c.resistances[el] = (c.resistances[el] ?? 0) + resAllBonus;
-  }
+  const bonus = bonusEquipe(meta);
+  appliquerBonusEquipeCombat(equipe, bonus); // un héros mort reste mort (pas de résurrection Dofawa)
+  const damageMult = bonus.damageMult;
   const combatants = [...equipe, ...ennemis];
   ui.beginCombat(combatants, titre, meta);
   const gagne = await runCombat(combatants, {

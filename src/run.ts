@@ -1069,3 +1069,27 @@ export function bonusEquipe(meta: Meta): { damageMult: number; paBonus: number; 
   }
   return { damageMult: bonusDegatsDofus(meta) + ocre.degats, paBonus: ocre.paBonus, vitaBonus, resAllBonus };
 }
+
+/** Applique les bonus d'équipe (Dofus + Ocre) aux combattants du joueur, à la
+ *  construction du combat. Un héros MORT (0 PV) voit ses maxima montés mais reste
+ *  mort — le bonus de vitalité du Dofawa ressuscitait sinon les morts à 1 PV/copie. */
+export function appliquerBonusEquipeCombat(
+  equipe: Combatant[],
+  bonus: { damageMult: number; paBonus: number; vitaBonus: number; resAllBonus: number },
+): void {
+  for (const c of equipe) {
+    if (bonus.paBonus) { c.paMax += bonus.paBonus; c.paActuels = c.paMax; }
+    if (bonus.vitaBonus) {
+      c.stats.vitalite += bonus.vitaBonus;
+      const add = bonus.vitaBonus * PV_PAR_VITA;
+      c.pvBase += add;
+      c.pvMax += add;
+      if (c.pvActuels > 0) c.pvActuels += add; // jamais de résurrection par le bonus
+    }
+    if (bonus.resAllBonus) {
+      for (const el of ["terre", "feu", "eau", "air"] as Element[]) {
+        c.resistances[el] = (c.resistances[el] ?? 0) + bonus.resAllBonus;
+      }
+    }
+  }
+}
