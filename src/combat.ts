@@ -1770,9 +1770,14 @@ export function lancerSort(
     soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
   }
 
-  // Fracas / Arc des Rivages : retrait de PA immédiat — 30 % de chance par défaut
-  if (sort.retraitPA && cible.pvActuels > 0 && ctx.rng() < (sort.retraitPAChance ?? 0.3)) {
-    retirerPA(cible, sort.retraitPA, ctx);
+  // Fracas / Arc des Rivages / Étreinte glaciale : retrait de PA — 30 % de chance
+  // par défaut, jeté PAR CIBLE TOUCHÉE (identique pour les monociblés ; une zone
+  // avec retraitPA gèle donc chaque cible de la zone indépendamment).
+  if (sort.retraitPA) {
+    for (const t of touchees) {
+      if (t.pvActuels <= 0 || t.estLance || !nonEsquivees.has(t.ref)) continue;
+      if (ctx.rng() < (sort.retraitPAChance ?? 0.3)) retirerPA(t, sort.retraitPA, ctx);
+    }
   }
 
   // Déplacement de cible : pousse la cible dans la rangée opposée (ou seulement vers l'arrière)

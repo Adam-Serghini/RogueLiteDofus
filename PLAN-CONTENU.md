@@ -75,7 +75,7 @@ invocations/résurrection côté monstres et passif de ligne ajoutés au moteur.
 
 | Boss | Signature | Statut |
 |---|---|---|
-| Kardorim | « Étreinte glaciale » — dégâts de ligne + −initiative (2t) | ✅ |
+| Kardorim | « Étreinte glaciale » — dégâts de ligne + −1 PA garanti par cible (le −init est mort avec l'ordre de tour figé) | ✅ |
 | Tournesol Affamé | « Racines voraces » — drain rendu en PV à son camp | ✅ |
 | Bouftou Royal | « Colère royale » — +25 Force cumulable (fin du stalemate) | ✅ |
 | Batofu | « Piqué fulgurant » — gros coup + 25 % d'esquive (2t) | ✅ |

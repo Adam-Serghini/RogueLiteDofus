@@ -33,6 +33,25 @@ describe("signatures des boss", () => {
     }
   });
 
+  it("Étreinte glaciale : Kardorim gèle TOUTE la ligne — dégâts et −1 PA garanti à chaque cible", () => {
+    // Le rider −initiative est mort avec l'ordre des tours figé → remplacé par du retrait de PA.
+    const boss = bossDe("inc_boss");
+    const equipe = fabriquerEquipe().slice(0, 2);
+    for (const [i, h] of equipe.entries()) {
+      h.position = i; // les deux en ligne avant
+      h.stats = { ...h.stats, agilite: 0 };
+      h.pvActuels = 500; h.pvMax = 500;
+      h.paActuels = h.paMax;
+    }
+    const cs = [boss, ...equipe];
+    lancerSort(boss, SORTS.etreinte_glaciale, equipe[0].ref, cs, ctx({ rng: () => 0.9 })); // 0.9 raterait un 30 %
+    for (const h of equipe) {
+      expect(h.pvActuels).toBeLessThan(500); // toute la ligne touchée
+      expect(h.paActuels).toBe(h.paMax - 1); // −1 PA garanti
+      expect(h.effets.some((e) => e.stat === "initiative")).toBe(false); // plus de rider d'init
+    }
+  });
+
   it("Colère royale : le Bouftou Royal cumule de la Force à chaque lancer", () => {
     const boss = bossDe("tai_boss");
     const [iop] = fabriquerEquipe();

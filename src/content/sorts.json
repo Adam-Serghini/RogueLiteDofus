@@ -587,14 +587,11 @@
     "cible": "ennemi_ligne",
     "cooldownTours": 3,
     "coutPA": 6,
-    "desc": "Kardorim — glace toute la ligne avant : dégâts + initiative réduite (2t).",
-    "effet": {
-      "duree": 2,
-      "stat": "initiative",
-      "valeur": -6
-    },
+    "desc": "Kardorim glace toute la ligne avant : dégâts et −1 PA au prochain tour de chaque cible.",
     "id": "etreinte_glaciale",
     "nom": "Étreinte glaciale",
+    "retraitPA": 1,
+    "retraitPAChance": 1,
     "scaling": 0.5,
     "type": "degats",
     "zoneLigne": true
