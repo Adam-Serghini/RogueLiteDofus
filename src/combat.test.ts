@@ -7,6 +7,7 @@ import {
   reinitialiserLancersTour, effetsDebutTour, poserBombe, poserTelefrag, critExcedent,
   poserPortail, multPortails, PORTAILS_MAX,
   invoquerLance, LANCE_DURABILITE,
+  prochainActeur, purgerInvocationsOrphelines,
   type CombatCtx,
 } from "./combat";
 import { SORTS } from "./data";
@@ -376,6 +377,82 @@ describe("Tir courbe (monstres tireurs)", () => {
     iop.provoque = true;
     const provoquees = ciblesValides(tireur, SORTS.tir_courbe, [iop, cra, tireur]);
     expect(provoquees.map((c) => c.ref)).toEqual([iop.ref]);
+  });
+});
+
+describe("ordre des tours alterné (allié/ennemi)", () => {
+  /** Clone minimal d'un combattant réel, camp/init/ref contrôlés. */
+  const combattant = (ref: string, camp: "joueur" | "ennemi", initiative: number, extra: Partial<Combatant> = {}): Combatant => ({
+    ...fabriquerEnnemis("combat_1")[0], ref, camp, initiative, effets: [], pvActuels: 100, pvMax: 100, ...extra,
+  });
+  /** Déroule un round complet via prochainActeur et renvoie la séquence des refs. */
+  const round = (cs: Combatant[]): string[] => {
+    const aJoue = new Set<string>();
+    let dernier: "joueur" | "ennemi" | null = null;
+    const ordre: string[] = [];
+    for (;;) {
+      const a = prochainActeur(cs, aJoue, dernier);
+      if (!a) break;
+      aJoue.add(a.ref);
+      dernier = a.camp;
+      ordre.push(a.ref);
+    }
+    return ordre;
+  };
+
+  it("4v2 : A E A E A A (surplus allié en fin de round)", () => {
+    const cs = [
+      combattant("a1", "joueur", 40), combattant("a2", "joueur", 30),
+      combattant("a3", "joueur", 20), combattant("a4", "joueur", 10),
+      combattant("e1", "ennemi", 35), combattant("e2", "ennemi", 25),
+    ];
+    expect(round(cs)).toEqual(["a1", "e1", "a2", "e2", "a3", "a4"]);
+  });
+
+  it("2v5 : A E A E E E E — et l'ennemi ouvre s'il a la meilleure init", () => {
+    const cs = [
+      combattant("a1", "joueur", 40), combattant("a2", "joueur", 30),
+      combattant("e1", "ennemi", 35), combattant("e2", "ennemi", 25),
+      combattant("e3", "ennemi", 20), combattant("e4", "ennemi", 15), combattant("e5", "ennemi", 10),
+    ];
+    expect(round(cs)).toEqual(["a1", "e1", "a2", "e2", "e3", "e4", "e5"]);
+    // meilleure init ennemie → l'ennemi ouvre
+    const cs2 = [combattant("a1", "joueur", 20), combattant("e1", "ennemi", 50), combattant("e2", "ennemi", 10)];
+    expect(round(cs2)).toEqual(["e1", "a1", "e2"]);
+  });
+
+  it("un invoqué joue TOUJOURS juste après son invocateur (hors alternance), à chaque round", () => {
+    const cs = [
+      combattant("a1", "joueur", 50), combattant("a2", "joueur", 10),
+      combattant("boss", "ennemi", 40),
+      combattant("invoc", "ennemi", 99, { invoquePar: "boss" }), // init 99 mais ATTACHÉ au boss
+    ];
+    expect(round(cs)).toEqual(["a1", "boss", "invoc", "a2"]);
+    expect(round(cs)).toEqual(["a1", "boss", "invoc", "a2"]); // round suivant : pareil (attachement permanent)
+  });
+
+  it("les invocations-obstacles (Poupée, Lance) n'occupent aucun créneau", () => {
+    const cs = [
+      combattant("a1", "joueur", 30),
+      combattant("poupee", "joueur", 99, { estInvocation: true }),
+      combattant("e1", "ennemi", 20),
+    ];
+    expect(round(cs)).toEqual(["a1", "e1"]);
+  });
+
+  it("la mort de l'invocateur tue ses invocations (cascade), la lance sans bouclier de bris", () => {
+    const boss = combattant("boss", "ennemi", 40);
+    const invoc = combattant("invoc", "ennemi", 20, { invoquePar: "boss" });
+    const forgelance = combattant("fl", "joueur", 30);
+    const lance = combattant("lance_fl", "ennemi", 0, { estLance: true, lanceurRef: "fl", pvActuels: 2, pvMax: 2, estInvocation: true });
+    const cs = [forgelance, boss, invoc, lance];
+    boss.pvActuels = 0;
+    forgelance.pvActuels = 0;
+    const bouclierAvant = forgelance.bouclier;
+    purgerInvocationsOrphelines(cs, ctx());
+    expect(invoc.pvActuels).toBe(0); // meurt avec son invocateur
+    expect(lance.pvActuels).toBe(0); // la lance se brise avec son porteur
+    expect(forgelance.bouclier).toBe(bouclierAvant); // pas de bouclier de bris (porteur mort)
   });
 });
 

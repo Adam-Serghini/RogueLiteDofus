@@ -11,6 +11,7 @@ import {
   elementDeFrappe,
   statElement,
   statsEffectives,
+  prochainActeur,
   type FxEvent,
 } from "../combat";
 import { multOffensif, multSoin } from "../progression";
@@ -618,11 +619,19 @@ function initEffective(c: Combatant): number {
   );
 }
 
-/** Timeline d'ordre des tours (combattants vivants triés par initiative). */
+/** Timeline d'ordre des tours : projection d'un round complet via la MÊME règle
+ *  que le moteur (alternance allié/ennemi, invoqués collés à leur invocateur). */
 function renderTimeline(): string {
-  const ordre = combatants
-    .filter((c) => c.pvActuels > 0 && !c.estInvocation)
-    .sort((a, b) => initEffective(b) - initEffective(a));
+  const ordre: Combatant[] = [];
+  const simJoue = new Set<string>();
+  let dernier: Camp | null = null;
+  for (;;) {
+    const a = prochainActeur(combatants, simJoue, dernier);
+    if (!a) break;
+    simJoue.add(a.ref);
+    dernier = a.camp;
+    ordre.push(a);
+  }
   if (ordre.length < 2) return "";
   // pastille ciblable = combattant valide pour le sort en cours de ciblage
   const cibles =

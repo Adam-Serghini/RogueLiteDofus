@@ -907,6 +907,7 @@ function invoquerPoupee(
     estInvocation: true,
     joueTour: false,
     provoque: invo.provoque,
+    invoquePar: lanceur.ref, // la Poupée meurt avec son Sadida (cascade)
   });
   ctx.log(`${lanceur.nom} invoque une ${invo.nom} (${invo.pv} PV) qui provoque les ennemis.`);
 }
@@ -1851,6 +1852,52 @@ const campMort = (cs: Combatant[], camp: Camp): boolean =>
 export const combatTermine = (cs: Combatant[]): boolean => campMort(cs, "joueur") || campMort(cs, "ennemi");
 export const joueurGagne = (cs: Combatant[]): boolean => campMort(cs, "ennemi") && !campMort(cs, "joueur");
 
+/**
+ * Prochain acteur du round (ordre ALTERNÉ allié/ennemi) :
+ * 1. Priorité absolue aux invoqués (`invoquePar`) vivants dont l'invocateur a déjà
+ *    joué ce round — une invocation joue TOUJOURS juste après son invocateur, même
+ *    si ça enchaîne deux tours du même camp.
+ * 2. Sinon, alternance : le camp OPPOSÉ au dernier acteur, tant qu'il a des
+ *    combattants à jouer (invoqués exclus du pool — ils attendent leur invocateur) ;
+ *    sinon l'autre camp enchaîne (surplus en fin de round).
+ * 3. En début de round (dernierCamp null), la meilleure initiative effective ouvre.
+ * Tri par initiative effective à chaque étape. null = round terminé.
+ */
+export function prochainActeur(
+  cs: Combatant[], aJoue: Set<string>, dernierCamp: Camp | null,
+): Combatant | null {
+  const jouables = vivants(cs).filter((c) => !c.estInvocation && !aJoue.has(c.ref));
+  if (!jouables.length) return null;
+  const meilleur = (l: Combatant[]) => [...l].sort((a, b) => initOf(b) - initOf(a))[0];
+  const attaches = jouables.filter((c) => c.invoquePar && aJoue.has(c.invoquePar));
+  if (attaches.length) return meilleur(attaches);
+  const libres = jouables.filter((c) => !c.invoquePar);
+  if (!libres.length) return meilleur(jouables); // repli sûr (invocateur ni joué ni vivant — cascade normalement passée avant)
+  const attendu: Camp | null = dernierCamp === "joueur" ? "ennemi" : dernierCamp === "ennemi" ? "joueur" : null;
+  const duCamp = attendu ? libres.filter((c) => c.camp === attendu) : [];
+  return meilleur(duCamp.length ? duCamp : libres);
+}
+
+/** Mort de l'invocateur = mort de ses invocations (en cascade). La Lance se brise
+ *  SANS le bouclier de bris (son porteur est mort) ; les invoqués disparaissent. */
+export function purgerInvocationsOrphelines(cs: Combatant[], ctx: CombatCtx): void {
+  for (;;) {
+    const morts = new Set(cs.filter((c) => c.pvActuels <= 0).map((c) => c.ref));
+    const orphelines = cs.filter((c) =>
+      c.pvActuels > 0 && (
+        (c.invoquePar !== undefined && morts.has(c.invoquePar)) ||
+        (c.estLance && c.lanceurRef !== undefined && morts.has(c.lanceurRef))
+      ));
+    if (!orphelines.length) return;
+    for (const o of orphelines) {
+      o.pvActuels = 0;
+      ctx.log(o.estLance
+        ? `La lance se brise : son porteur est tombé.`
+        : `${o.nom} disparaît avec son invocateur !`);
+    }
+  }
+}
+
 // --- Boucle de combat --------------------------------------------------------
 export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Promise<boolean> {
   const ctx: CombatCtx = {
@@ -1865,24 +1912,24 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
   while (!combatTermine(combatants)) {
     if (++garde > 1000) break; // sécurité anti-boucle infinie
 
-    // Un round : chaque combattant agit une fois, dans l'ordre de l'initiative
-    // EFFECTIVE (recalculée à chaque pick, pour que les baisses d'init pendant
-    // le round repoussent les acteurs qui n'ont pas encore joué). Les invocations
-    // occupent une place mais ne jouent pas.
+    // Un round : chaque combattant agit une fois, en ALTERNANCE allié/ennemi
+    // (voir prochainActeur — l'initiative effective décide qui ouvre le round et
+    // l'ordre INTERNE de chaque camp ; les invoqués jouent collés à leur invocateur).
     const aJoue = new Set<string>();
+    let dernierCamp: Camp | null = null;
     for (;;) {
       if (combatTermine(combatants)) break;
-      const candidats = vivants(combatants).filter((c) => !c.estInvocation && !aJoue.has(c.ref));
-      if (!candidats.length) break;
-      candidats.sort((a, b) => initOf(b) - initOf(a));
-      const acteur = candidats[0];
+      const acteur = prochainActeur(combatants, aJoue, dernierCamp);
+      if (!acteur) break;
       aJoue.add(acteur.ref);
+      dernierCamp = acteur.camp;
 
       reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer par tour
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       appliquerEnrage(acteur, ctx); // Ascension : boss enragés
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)
       if (effetsDebutTour(acteur, combatants, ctx)) {
+        purgerInvocationsOrphelines(combatants, ctx); // mort au poison → ses invocations tombent aussi
         await hooks.onUpdate?.();
         continue;
       }
@@ -1898,6 +1945,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
         if (acteur.paActuels < action.sort.coutPA) break;
         acteur.paActuels -= action.sort.coutPA;
         lancerSort(acteur, action.sort, action.cibleRef, combatants, ctx);
+        purgerInvocationsOrphelines(combatants, ctx); // un invocateur vient-il de tomber ?
         await hooks.onUpdate?.();
       }
 
