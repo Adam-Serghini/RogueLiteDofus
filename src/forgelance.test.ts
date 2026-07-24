@@ -5,7 +5,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  lancerSort, ciblesValides, poserBombe, degatsCible, LANCE_DURABILITE,
+  lancerSort, ciblesValides, poserBombe, degatsCible, LANCE_DURABILITE, LANCE_BOUCLIER_BRIS,
   invoquerLance, runCombat, controllerIA,
   type CombatCtx,
 } from "./combat";
@@ -256,7 +256,7 @@ describe("Vajra", () => {
     expect(ciblesValides(f, SORTS.vajra, cs)).toEqual([f]);
     lancerSort(f, SORTS.vajra, f.ref, cs, ctx());
     expect(f.pvActuels).toBe(100 + 7 * LANCE_DURABILITE); // soin selon durabilité restante
-    expect(f.bouclier).toBeGreaterThan(0); // bouclier de bris standard, en plus du soin
+    expect(f.bouclier).toBe(LANCE_BOUCLIER_BRIS); // bouclier de bris (doublé au playtest), en plus du soin
     expect(cs.filter((c) => c.pvActuels > 0 && c.estLance).length).toBe(0); // la lance a disparu
   });
 

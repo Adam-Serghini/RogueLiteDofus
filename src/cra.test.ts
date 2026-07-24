@@ -187,6 +187,11 @@ describe("Œil de Taupe", () => {
 });
 
 describe("Tir Puissant", () => {
+  it("est limité à 1 lancer par tour (retour de playtest)", () => {
+    expect(SORTS.tir_puissant.maxParTour).toBe(1);
+  });
+
+
   it("+15 % de crit (buff, 3 tours) ; l'excédent au-delà du cap devient des dégâts finaux", () => {
     const c = cra();
     c.stats = { ...c.stats, crit: 40 }; // 40 % de crit plat (équipement)

@@ -514,7 +514,7 @@ function infligerDegats(
       cible.pvActuels = 0;
       const proprio = ctx?.combatants && parRef(ctx.combatants, cible.lanceurRef ?? "");
       if (proprio && proprio.pvActuels > 0) {
-        const bonus = Math.round(8 * multSoin(proprio.stats));
+        const bonus = Math.round(LANCE_BOUCLIER_BRIS * multSoin(proprio.stats));
         proprio.bouclier += bonus;
         ctx?.log(`🔱 La lance de ${proprio.nom} vole en éclats : ${proprio.nom} gagne ${bonus} bouclier.`);
       }
@@ -916,6 +916,9 @@ function invoquerPoupee(
 // --- La Lance (Forgelance) -----------------------------------------------------
 /** Durabilité forfaitaire de la Lance : encaisse 2 coups quel qu'en soit le montant. */
 export const LANCE_DURABILITE = 2;
+/** Bouclier accordé au Forgelance quand sa lance se brise ou est rappelée (×multSoin).
+ *  Doublé (8→16) sur retour de playtest : la boucle pose/rappel devait payer plus. */
+export const LANCE_BOUCLIER_BRIS = 16;
 
 /** Invoque une Lance (camp ENNEMI) à la case libre la plus proche en colonne de
  *  la rangée de `cibleEnnemie`. Une seule lance vivante par lanceur ; null si

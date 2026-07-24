@@ -9,6 +9,7 @@ import {
   ELEMENTS,
   elementsForts,
   elementDeFrappe,
+  statsEffectives,
   ordreDuCombat,
   type FxEvent,
 } from "../combat";
@@ -434,13 +435,18 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
           ${bouclier > 0 ? `<span class="pv-bouclier" title="Bouclier">${bouclier}</span>` : ""}
         </span>
       </div>
-      <div class="mini-stats">
-        <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(c.stats)}%</span>
-        <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(c.stats)}%</span>
-        <span class="ms" title="Soins (Soin + Intelligence)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(c.stats)}%</span>
-        <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(c.stats)}%</span>
-        ${(c.stats.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(c.stats)}%</span>` : ""}
-      </div>
+      ${(() => {
+        // stats EFFECTIVES (buffs temporaires inclus — Tir Puissant, Maîtrise…) :
+        // sans ça, un perso buffé ne voit jamais ses % bouger sur sa carte.
+        const se = statsEffectives(c);
+        return `<div class="mini-stats">
+        <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(se)}%</span>
+        <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(se)}%</span>
+        <span class="ms" title="Soins (Soin + Intelligence)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(se)}%</span>
+        <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(se)}%</span>
+        ${(se.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(se)}%</span>` : ""}
+      </div>`;
+      })()}
       ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
       ${resChips ? `<div class="res-row">${resChips}</div>` : ""}
       <div class="badges">${badges.map((b) => `<span class="badge">${escapeHtml(b)}</span>`).join("")}</div>

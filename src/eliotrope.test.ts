@@ -80,6 +80,11 @@ describe("Portail", () => {
 });
 
 describe("Rayon de Wakfu", () => {
+  it("est limité à 2 lancers par tour (retour de playtest)", () => {
+    expect(SORTS.rayon_de_wakfu.maxParTour).toBe(2);
+  });
+
+
   it("frappe toute la rangée avant ennemie et répartit le soin à parts égales sur la rangée avant alliée", () => {
     const e = eliotrope();
     e.position = 4; // arrière, ne compte pas dans « sa rangée avant »

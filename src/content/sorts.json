@@ -1287,6 +1287,7 @@
     "coutPA": 3,
     "desc": "Balaye la rangée avant : les dégâts infligés soignent d'autant les alliés de la rangée avant.",
     "id": "rayon_de_wakfu",
+    "maxParTour": 2,
     "nom": "Rayon de Wakfu",
     "scaling": 0.25,
     "soinLigneAvantRatio": 1,
@@ -1521,6 +1522,7 @@
       "valeur": 15
     },
     "id": "tir_puissant",
+    "maxParTour": 1,
     "nom": "Tir Puissant",
     "scaling": 0,
     "type": "buff"
