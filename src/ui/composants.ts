@@ -4,12 +4,68 @@
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
-import { ELEMENTS, chanceCrit, bonusDegatsCrit } from "../combat";
+import { ELEMENTS, chanceCrit, bonusDegatsCrit, statsEffectives, elementDeFrappe, statElement } from "../combat";
 import { statsFinales, multSoin, multOffensif, pctRembPA as rembPA } from "../progression";
 import { bonusEquipement, STAT_PAR_ELEMENT, type PersoState } from "../run";
-import type { Element, EquipSlot, ItemInstance, Meta, Stats } from "../types";
+import type { Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, classe_img, ICON_KAMAS } from "./assets";
 import { escapeHtml, tipsFlottants } from "./dom";
+
+/**
+ * Contenu du tooltip d'un sort : fourchette de dégâts/soin **calculée pour le
+ * lanceur courant** (jet + élément × scaling × puissance, hors crit/résistance),
+ * ou jets de BASE si `acteur` est null (encyclopédie, hors combat) ; puis effet
+ * et cible. Pour les sorts spéciaux (multi-coups, dé, projectiles), on s'appuie
+ * sur la description.
+ */
+export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
+  let principal = "";
+  if (acteur) {
+    const se = statsEffectives(acteur);
+    if (s.type === "soin") {
+      if (s.soinComplet)
+        principal = `<span class="tip-val soin">♥ Soin complet</span>`;
+      else if (s.baseMax > 0) {
+        const m = multSoin(se);
+        principal = `<span class="tip-val soin">♥ ${Math.round(s.baseMin * m)} – ${Math.round(s.baseMax * m)}</span><span class="tip-unite">PV rendus</span>`;
+      }
+    } else if (
+      s.type === "degats" &&
+      s.baseMax > 0 &&
+      !s.coups &&
+      !s.projectiles &&
+      !s.de
+    ) {
+      const el = elementDeFrappe(acteur);
+      const stat = statElement(se, el);
+      const mult = multOffensif(se);
+      const min = Math.round((s.baseMin + stat * s.scaling) * mult);
+      const max = Math.round((s.baseMax + stat * s.scaling) * mult);
+      principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el el-${el}">${elNom[el]}</span>`;
+    }
+  } else if (s.baseMax > 0 && !s.coups && !s.projectiles && !s.de) {
+    // hors combat (encyclopédie) : jets de base, l'élément dépendra de la voie du perso
+    principal = s.type === "soin"
+      ? `<span class="tip-val soin">♥ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">PV rendus (base)</span>`
+      : `<span class="tip-val dgt">⚔ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">base · élément selon la voie</span>`;
+  }
+  // cooldowns : global au sort (cooldownTours) ou par cible (cooldown) + état en cours
+  const cd: string[] = [];
+  if (s.cooldownTours) cd.push(`⏳ recharge ${s.cooldownTours} tour${s.cooldownTours > 1 ? "s" : ""}`);
+  if (s.cooldown) cd.push(`⏳ recharge ${s.cooldown} tour${s.cooldown > 1 ? "s" : ""} par cible`);
+  if (s.maxParTour) cd.push(`${s.maxParTour}×/tour`);
+  if (s.maxParCibleParTour) cd.push(`${s.maxParCibleParTour}×/cible/tour`);
+  const restant = acteur?.cooldowns[s.id] ?? 0;
+  if (restant > 0) cd.push(`<b class="tip-cd-actif">en recharge (${restant}t)</b>`);
+  return [
+    `<div class="tip-nom">${escapeHtml(s.nom)}<span class="tip-pa">${s.coutPA} PA</span></div>`,
+    principal ? `<div class="tip-stat">${principal}</div>` : "",
+    s.desc ? `<div class="tip-effet">${escapeHtml(s.desc)}</div>` : "",
+    `<div class="tip-cible">🎯 ${CIBLE_LBL[s.cible] ?? s.cible}${cd.length ? ` · ${cd.join(" · ")}` : ""}</div>`,
+  ]
+    .filter(Boolean)
+    .join("");
+}
 
 /** Tooltip partagé pour la collection de Dofus (survol). */
 export function initDofusTooltip(): void {

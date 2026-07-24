@@ -825,7 +825,8 @@ button.item-carte:disabled {
   line-height: 1.35;
   color: var(--txt);
 }
-.sort-tip .tip-nom {
+.sort-tip .tip-nom,
+.ency-sort-detail .tip-nom {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -834,7 +835,8 @@ button.item-carte:disabled {
   color: var(--txt);
   font-size: 0.96rem;
 }
-.sort-tip .tip-pa {
+.sort-tip .tip-pa,
+.ency-sort-detail .tip-pa {
   flex: none;
   background: var(--pa);
   color: #fff;
@@ -843,31 +845,37 @@ button.item-carte:disabled {
   border-radius: 999px;
   padding: 1px 8px;
 }
-.sort-tip .tip-stat {
+.sort-tip .tip-stat,
+.ency-sort-detail .tip-stat {
   margin: 7px 0 5px;
   display: flex;
   align-items: center;
   gap: 9px;
 }
-.sort-tip .tip-val {
+.sort-tip .tip-val,
+.ency-sort-detail .tip-val {
   font-size: 1.12rem;
   font-weight: 900;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.sort-tip .tip-val.dgt {
+.sort-tip .tip-val.dgt,
+.ency-sort-detail .tip-val.dgt {
   color: var(--danger);
 }
-.sort-tip .tip-val.soin {
+.sort-tip .tip-val.soin,
+.ency-sort-detail .tip-val.soin {
   color: var(--pv);
 }
-.sort-tip .tip-unite {
+.sort-tip .tip-unite,
+.ency-sort-detail .tip-unite {
   font-size: 0.68rem;
   color: var(--muet);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.sort-tip .tip-el {
+.sort-tip .tip-el,
+.ency-sort-detail .tip-el {
   font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 8px;
@@ -875,24 +883,29 @@ button.item-carte:disabled {
   background: #00000014;
   color: var(--txt);
 }
-.sort-tip .tip-el.el-terre {
+.sort-tip .tip-el.el-terre,
+.ency-sort-detail .tip-el.el-terre {
   background: var(--terre);
   color: #fff;
 }
-.sort-tip .tip-el.el-feu {
+.sort-tip .tip-el.el-feu,
+.ency-sort-detail .tip-el.el-feu {
   background: var(--feu);
   color: #fff;
 }
-.sort-tip .tip-el.el-air {
+.sort-tip .tip-el.el-air,
+.ency-sort-detail .tip-el.el-air {
   background: var(--air);
   color: #fff;
 }
-.sort-tip .tip-effet {
+.sort-tip .tip-effet,
+.ency-sort-detail .tip-effet {
   font-size: 0.8rem;
   color: var(--txt);
   line-height: 1.32;
 }
-.sort-tip .tip-cible {
+.sort-tip .tip-cible,
+.ency-sort-detail .tip-cible {
   margin-top: 7px;
   padding-top: 6px;
   border-top: 1px solid #00000016;
@@ -1242,6 +1255,83 @@ kbd {
 .equip-pano.complete {
   font-weight: 800;
   color: var(--or-texte);
+}
+
+/* --- Encyclopédie des classes ------------------------------------------- */
+.ency-onglets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0;
+}
+.ency-onglet {
+  width: 52px;
+  height: 52px;
+  padding: 4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+.ency-onglet img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.ency-onglet.actif {
+  border-color: var(--or-texte);
+  background: rgba(255, 255, 255, 0.5);
+}
+.ency-fiche {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
+}
+.ency-tete {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.ency-portrait {
+  width: 84px;
+  height: 98px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.ency-tete h2 {
+  margin: 0;
+}
+.ency-role {
+  margin: 2px 0;
+}
+.ency-bases {
+  margin: 2px 0;
+  font-size: 0.85rem;
+}
+.ency-sorts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+.ency-sort {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+}
+.ency-sort-icone img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.ency-sort-detail {
+  flex: 1;
+  min-width: 0;
 }
 .equip-inv {
   display: flex;

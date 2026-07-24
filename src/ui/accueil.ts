@@ -17,7 +17,7 @@ import {
 import { renderDofusRack, carteClasse } from "./composants";
 import { classesDisponibles, SUCCES, recordAscension } from "../run";
 import { showSettings } from "./inventaire";
-import { showBestiaire, showArmurerie } from "./collections";
+import { showBestiaire, showArmurerie, showEncyclopedie } from "./collections";
 import type { Meta } from "../types";
 
 // --- Écrans ------------------------------------------------------------------
@@ -73,6 +73,7 @@ export function showStart(
         <div class="coin-menu">
           <button id="btn-dofus" class="coin-param" title="Dofus"><img src="${MENU_DOFUS}" alt="Dofus" onerror="this.remove()" /></button>
           <button id="btn-bestiaire" class="coin-param" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>
+          <button id="btn-encyclopedie" class="coin-param" title="Encyclopédie des classes">📖</button>
           <button id="btn-armurerie" class="coin-param" title="Armurerie"><img src="${MENU_ARMURERIE}" alt="Armurerie" onerror="this.parentElement.textContent='🛡️'" /></button>
           <button id="btn-succes" class="coin-param" title="Succès"><img src="${MENU_SUCCES}" alt="Succès" onerror="this.remove()" /></button>
           <button id="btn-settings" class="coin-param" title="Paramètres"><img src="${MENU_PARAM}" alt="Paramètres" onerror="this.remove()" /></button>
@@ -112,6 +113,12 @@ export function showStart(
         .getElementById("btn-bestiaire")
         ?.addEventListener("click", async () => {
           await showBestiaire(meta);
+          draw();
+        });
+      document
+        .getElementById("btn-encyclopedie")
+        ?.addEventListener("click", async () => {
+          await showEncyclopedie();
           draw();
         });
       document

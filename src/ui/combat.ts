@@ -9,12 +9,9 @@ import {
   ELEMENTS,
   elementsForts,
   elementDeFrappe,
-  statElement,
-  statsEffectives,
   prochainActeur,
   type FxEvent,
 } from "../combat";
-import { multOffensif, multSoin } from "../progression";
 import { libelleTouche } from "../config";
 import {
   A,
@@ -33,7 +30,6 @@ import {
 } from "./assets";
 import { root, escapeHtml, tipsFlottants, masquerTooltips, config } from "./dom";
 import {
-  CIBLE_LBL,
   ELEMENT_AIDE,
   elNom,
   pctCrit,
@@ -41,6 +37,7 @@ import {
   pctSoin,
   pctDgtsFinaux,
   pctRembPA,
+  sortTooltipHtml,
 } from "./composants";
 import type { Action, Camp, Combatant, Element, Meta, Spell } from "../types";
 
@@ -83,54 +80,6 @@ export function initControlesClavier(): void {
       }
     }
   });
-}
-
-/**
- * Contenu du tooltip d'un sort : fourchette de dégâts/soin **calculée pour le
- * lanceur courant** (jet + élément × scaling × puissance, hors crit/résistance),
- * puis effet et cible. Pour les sorts spéciaux (multi-coups, dé, projectiles),
- * on s'appuie sur la description.
- */
-function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
-  let principal = "";
-  if (acteur) {
-    const se = statsEffectives(acteur);
-    if (s.type === "soin") {
-      if (s.soinComplet)
-        principal = `<span class="tip-val soin">♥ Soin complet</span>`;
-      else if (s.baseMax > 0) {
-        const m = multSoin(se);
-        principal = `<span class="tip-val soin">♥ ${Math.round(s.baseMin * m)} – ${Math.round(s.baseMax * m)}</span><span class="tip-unite">PV rendus</span>`;
-      }
-    } else if (
-      s.type === "degats" &&
-      s.baseMax > 0 &&
-      !s.coups &&
-      !s.projectiles &&
-      !s.de
-    ) {
-      const el = elementDeFrappe(acteur);
-      const stat = statElement(se, el);
-      const mult = multOffensif(se);
-      const min = Math.round((s.baseMin + stat * s.scaling) * mult);
-      const max = Math.round((s.baseMax + stat * s.scaling) * mult);
-      principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el el-${el}">${elNom[el]}</span>`;
-    }
-  }
-  // cooldowns : global au sort (cooldownTours) ou par cible (cooldown) + état en cours
-  const cd: string[] = [];
-  if (s.cooldownTours) cd.push(`⏳ recharge ${s.cooldownTours} tour${s.cooldownTours > 1 ? "s" : ""}`);
-  if (s.cooldown) cd.push(`⏳ recharge ${s.cooldown} tour${s.cooldown > 1 ? "s" : ""} par cible`);
-  const restant = acteur?.cooldowns[s.id] ?? 0;
-  if (restant > 0) cd.push(`<b class="tip-cd-actif">en recharge (${restant}t)</b>`);
-  return [
-    `<div class="tip-nom">${escapeHtml(s.nom)}<span class="tip-pa">${s.coutPA} PA</span></div>`,
-    principal ? `<div class="tip-stat">${principal}</div>` : "",
-    s.desc ? `<div class="tip-effet">${escapeHtml(s.desc)}</div>` : "",
-    `<div class="tip-cible">🎯 ${CIBLE_LBL[s.cible] ?? s.cible}${cd.length ? ` · ${cd.join(" · ")}` : ""}</div>`,
-  ]
-    .filter(Boolean)
-    .join("");
 }
 
 /** Tooltip stylé des sorts (survol des boutons d'action). */

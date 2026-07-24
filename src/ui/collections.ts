@@ -1,6 +1,6 @@
 // =============================================================================
 //  ui/collections.ts — Écrans de collections persistantes (Dofus, Bestiaire,
-//  Armurerie) + le petit écran de capture d'Archimonstre.
+//  Armurerie), l'encyclopédie des classes + le petit écran de capture d'Archi.
 // =============================================================================
 import {
   DOFUS,
@@ -9,16 +9,75 @@ import {
   ZONES,
   TRANCHES,
   RARETE_INFO,
+  SORTS,
+  CLASSES,
   butinToile,
   zonesDeTranche,
   monstresDeZone,
   OCRE_PALIERS,
 } from "../data";
-import { A, itemImg, BTN_RETOUR, BTN_CONTINUER } from "./assets";
-import { ecran, escapeHtml } from "./dom";
-import { SLOT_NOM } from "./composants";
-import { paliersOcre } from "../run";
+import { A, itemImg, sortIcon, classe_img, BTN_RETOUR, BTN_CONTINUER } from "./assets";
+import { ecran, escapeHtml, root } from "./dom";
+import { SLOT_NOM, ROLE_CLASSE, sortTooltipHtml } from "./composants";
+import { paliersOcre, classesDisponibles } from "../run";
 import type { Meta } from "../types";
+
+/** Encyclopédie des classes : les persos jouables et leurs kits, en consultation. */
+export function showEncyclopedie(): Promise<void> {
+  return new Promise((res) => {
+    let selection = classesDisponibles()[0];
+
+    const fiche = (classeId: string): string => {
+      const c = CLASSES[classeId];
+      const sorts = c.sorts
+        .map((sid) => {
+          const s = SORTS[sid];
+          if (!s) return "";
+          return `<div class="ency-sort">
+            <span class="ency-sort-icone"><img src="${sortIcon(sid)}" alt="" loading="lazy" onerror="this.remove()" /></span>
+            <div class="ency-sort-detail">${sortTooltipHtml(s, null)}</div>
+          </div>`;
+        })
+        .join("");
+      return `
+        <div class="ency-fiche">
+          <div class="ency-tete">
+            <img class="ency-portrait" src="${classe_img(classeId)}" alt="" onerror="this.remove()" />
+            <div>
+              <h2>${escapeHtml(c.nom)}</h2>
+              <p class="ency-role">${escapeHtml(ROLE_CLASSE[classeId] ?? "")}</p>
+              <p class="ency-bases muet">PV ${c.pvBase} · PA ${c.pa} · Initiative ${c.initiative}</p>
+            </div>
+          </div>
+          <div class="ency-sorts">${sorts}</div>
+        </div>`;
+    };
+
+    const draw = (): void => {
+      const onglets = classesDisponibles()
+        .map((id) => `
+          <button class="ency-onglet${id === selection ? " actif" : ""}" data-classe="${id}" title="${escapeHtml(CLASSES[id].nom)}">
+            <img src="${A(`/assets/class_symbol/${id}.png`)}" alt="" onerror="this.src='${classe_img(id)}'" />
+          </button>`)
+        .join("");
+      ecran(`
+        <h1>📖 Encyclopédie des classes</h1>
+        <p class="sous-titre">Les classes jouables et leurs sorts — les dégâts affichés sont les jets de base, avant caractéristiques.</p>
+        <div class="ency-onglets">${onglets}</div>
+        ${fiche(selection)}
+        <button id="retour" class="btn-img"><img src="${BTN_RETOUR}" alt="Retour" title="Retour" /></button>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".ency-onglet").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selection = btn.dataset.classe!;
+          draw();
+        });
+      });
+      root.querySelector<HTMLButtonElement>("#retour")?.addEventListener("click", () => res());
+    };
+    draw();
+  });
+}
 
 export function showDofus(dofusId: string, totalCopies: number): Promise<void> {
   return new Promise((res) => {

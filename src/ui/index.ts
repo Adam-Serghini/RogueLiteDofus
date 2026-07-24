@@ -25,5 +25,5 @@ export { showRecap, showWipe } from "./fin";
 export { showTaverne, showFormation, showStatPanel, showOtomai } from "./equipe";
 export type { ActionTaverne } from "./equipe";
 export { showInventaire, showDrop, showSettings } from "./inventaire";
-export { showDofus, showBestiaire, showArmurerie, showCapture } from "./collections";
+export { showDofus, showBestiaire, showArmurerie, showCapture, showEncyclopedie } from "./collections";
 export { showHDV, showForgemagie } from "./boutique";
