@@ -178,10 +178,10 @@
   "cadran_de_xelor": {
     "baseMax": 0,
     "baseMin": 0,
-    "cible": "allie",
+    "cible": "soi",
     "cooldownTours": 4,
     "coutPA": 4,
-    "desc": "La rangée de l'allié gagne +2 PA à chacun de ses tours pendant 2 tours.",
+    "desc": "La rangée du Xélor gagne +2 PA à chacun de ses tours pendant 2 tours.",
     "id": "cadran_de_xelor",
     "nom": "Cadran de Xelor",
     "paParTourLigne": {
@@ -1284,14 +1284,14 @@
     "type": "degats"
   },
   "rayon_de_wakfu": {
-    "baseMax": 9,
-    "baseMin": 6,
+    "baseMax": 7,
+    "baseMin": 4,
     "cible": "ennemi_ligne",
     "coutPA": 3,
     "desc": "Balaye la rangée avant : les dégâts infligés soignent d'autant les alliés de la rangée avant.",
     "id": "rayon_de_wakfu",
     "nom": "Rayon de Wakfu",
-    "scaling": 0.3,
+    "scaling": 0.25,
     "soinLigneAvantRatio": 1,
     "type": "degats",
     "zoneLigne": true
@@ -1491,12 +1491,8 @@
     "cible": "ennemi_ligne",
     "cooldownTours": 2,
     "coutPA": 4,
-    "desc": "Dégâts sur TOUTE la ligne la plus proche ; tibias brisés : les cibles infligent −10 % de dégâts pendant 1 tour. Confère 1 Rage.",
-    "effet": {
-      "duree": 1,
-      "stat": "degatsInfliges",
-      "valeur": -0.1
-    },
+    "deplaceCible": "arriere",
+    "desc": "Balaye toute la rangée de la cible et repousse la cible principale en ligne arrière.",
     "id": "tibias",
     "nom": "Tibias",
     "rage": true,

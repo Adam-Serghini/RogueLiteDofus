@@ -209,7 +209,13 @@ describe("Rayon Obscur", () => {
 });
 
 describe("Cadran de Xelor", () => {
-  it("crédite +2 PA à chaque tour pendant 2 tours à TOUTE la rangée de l'allié ciblé, pas l'autre rangée", () => {
+  it("est auto-résolu (cible soi) : le clic du sort buffe directement la rangée du Xélor", () => {
+    // Retour de playtest : le ciblage d'un allié était une étape de trop —
+    // le sort se résout comme Coalition, sur la rangée du lanceur.
+    expect(SORTS.cadran_de_xelor.cible).toBe("soi");
+  });
+
+  it("crédite +2 PA à chaque tour pendant 2 tours à TOUTE la rangée du Xélor, pas l'autre rangée", () => {
     const x = xelor();
     x.position = 0; // avant
     const alliéAvant = equipeCombattante(nouvelleRun(["iop"]))[0];

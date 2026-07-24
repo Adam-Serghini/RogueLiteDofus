@@ -154,16 +154,37 @@ describe("Dépouille", () => {
 });
 
 describe("Tibias", () => {
-  it("frappe TOUTE la ligne la plus proche et brise les tibias (−10 % dégâts, 1 tour)", () => {
+  it("frappe TOUTE la ligne et repousse la cible PRINCIPALE en rangée arrière (sans débuff)", () => {
     const oug = ouginak();
     const pack = ennemis(); // 3 en ligne avant + éventuel arrière
     const devant = pack.filter((e) => e.position < 4);
     const cs = [oug, ...pack];
-    lancerSort(oug, SORTS.tibias, devant[0].ref, cs, ctx());
+    const principale = devant[0];
+    const autres = devant.slice(1).map((e) => [e, e.position] as const);
+    lancerSort(oug, SORTS.tibias, principale.ref, cs, ctx());
     for (const e of devant) {
       expect(e.pvActuels).toBeLessThan(500); // toute la ligne a été touchée
-      expect(e.effets.some((x) => x.stat === "degatsInfliges" && x.valeur === -0.1)).toBe(true);
+      expect(e.effets.some((x) => x.stat === "degatsInfliges")).toBe(false); // plus de débuff
     }
+    expect(principale.position).toBeGreaterThanOrEqual(4); // poussée en rangée arrière
+    for (const [e, pos] of autres) expect(e.position).toBe(pos); // les secondaires ne bougent pas
     expect(oug.rage).toBe(1);
+  });
+
+  it("ne pousse pas si la rangée arrière ennemie est pleine (échec silencieux)", () => {
+    const oug = ouginak();
+    const pack = ennemis();
+    const devant = pack.filter((e) => e.position < 4);
+    // remplit la rangée arrière ennemie (cases 4-7)
+    const arriere = [4, 5, 6, 7].map((p) => {
+      const e = fabriquerEnnemis("combat_1")[0];
+      e.ref = `bloc_${p}`; e.position = p; e.pvActuels = 500; e.pvMax = 500;
+      return e;
+    });
+    const cs = [oug, ...devant, ...arriere];
+    const principale = devant[0];
+    const posAvant = principale.position;
+    lancerSort(oug, SORTS.tibias, principale.ref, cs, ctx());
+    expect(principale.position).toBe(posAvant); // aucune case libre : reste en avant
   });
 });
