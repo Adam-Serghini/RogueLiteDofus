@@ -65,7 +65,7 @@ export function showEncyclopedie(): Promise<void> {
         <p class="sous-titre">Les classes jouables et leurs sorts — les dégâts affichés sont les jets de base, avant caractéristiques.</p>
         <div class="ency-onglets">${onglets}</div>
         ${fiche(selection)}
-        <button id="retour" class="btn-img"><img src="${BTN_RETOUR}" alt="Retour" title="Retour" /></button>
+        <div class="boutons-ecran"><button id="retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
       root.querySelectorAll<HTMLButtonElement>(".ency-onglet").forEach((btn) => {
         btn.addEventListener("click", () => {
