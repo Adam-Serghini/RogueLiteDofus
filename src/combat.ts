@@ -674,17 +674,24 @@ function retirerPA(cible: Combatant, n: number, ctx: CombatCtx): void {
  * Effets de début de tour. Renvoie true si le combattant n'agit pas
  * (passe son tour, ou est mort d'un poison).
  */
+/** Effets dont la durée se décompte AU TICK de début de tour (dans effetsDebutTour),
+ *  pas au décrément générique de fin de tour : un effet posé sur SOI-MÊME pendant son
+ *  propre tour serait sinon décrémenté avant d'avoir jamais tické (le lanceur d'un
+ *  Cadran perdait un tour de PA ; même chose pour un HoT auto-lancé). */
+const EFFETS_TICK_DEBUT: EffetStat[] = ["paParTour", "hot"];
+
 export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatCtx): boolean {
-  // gain de PA (Mot d'ivation)
+  // gain de PA différé (Mot d'ivation, Prémonition, Coalition, Tarot…)
   if (acteur.paBonusNextTurn > 0) {
     acteur.paActuels += acteur.paBonusNextTurn;
-    ctx.log(`${acteur.nom} gagne ${acteur.paBonusNextTurn} PA (Mot d'ivation).`);
+    ctx.log(`${acteur.nom} gagne ${acteur.paBonusNextTurn} PA.`);
     acteur.paBonusNextTurn = 0;
   }
   // PA par tour (Cadran…) : crédite tant que l'effet dure (posé par paParTourLigne)
   for (const e of acteur.effets.filter((x) => x.stat === "paParTour")) {
     acteur.paActuels += e.valeur;
     ctx.log(`${acteur.nom} gagne ${e.valeur} PA (effet de ligne).`);
+    e.toursRestants -= 1; // durée au tick (cf. EFFETS_TICK_DEBUT)
   }
   // poison (DoT) — peut tuer, et se transmet alors au combattant derrière
   for (const e of acteur.effets.filter((x) => x.stat === "poison")) {
@@ -703,14 +710,17 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
     }
     return true;
   }
-  // HoT (soin sur la durée) — bloqué par la friction
-  if (!aFriction(acteur)) {
-    for (const e of acteur.effets.filter((x) => x.stat === "hot")) {
+  // HoT (soin sur la durée) — le soin est bloqué par la friction, mais le tick
+  // consomme la durée dans tous les cas (comportement historique conservé)
+  for (const e of acteur.effets.filter((x) => x.stat === "hot")) {
+    if (!aFriction(acteur)) {
       const avant = acteur.pvActuels;
       acteur.pvActuels = Math.min(acteur.pvMax, acteur.pvActuels + e.valeur);
       if (acteur.pvActuels > avant) ctx.log(`${acteur.nom} régénère ${acteur.pvActuels - avant} PV.`);
     }
+    e.toursRestants -= 1; // durée au tick (cf. EFFETS_TICK_DEBUT)
   }
+  acteur.effets = acteur.effets.filter((e) => !(EFFETS_TICK_DEBUT.includes(e.stat) && e.toursRestants <= 0));
   // passe le tour (Colère)
   if (acteur.passeProchainTour) {
     acteur.passeProchainTour = false;
@@ -723,6 +733,7 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
 function decrementerEffets(acteur: Combatant): void {
   let toucheVitalite = false;
   acteur.effets.forEach((e) => {
+    if (EFFETS_TICK_DEBUT.includes(e.stat)) return; // durée décomptée au tick de début de tour
     e.toursRestants -= 1;
     if (e.toursRestants <= 0 && e.stat === "vitalite") toucheVitalite = true;
   });

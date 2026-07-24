@@ -225,6 +225,44 @@ describe("Cadran de Xelor", () => {
     }
     expect(alliéArriere.effets.some((ef) => ef.stat === "paParTour")).toBe(false);
   });
+
+  it("le LANCEUR profite lui aussi des 2 ticks (l'effet posé pendant son tour ne doit pas expirer prématurément)", async () => {
+    // Bug remonté en jeu : l'effet était décrémenté à la fin du tour où il était posé,
+    // avant d'avoir tické — le Xélor ne gagnait ses PA qu'UNE fois au lieu de deux.
+    const { runCombat } = await import("./combat");
+    const run = nouvelleRun(["xelor", "iop"]);
+    const [x, iop] = equipeCombattante(run);
+    x.position = 0; iop.position = 1;
+    x.initiative = 99; iop.initiative = 50; // le Xélor joue en premier
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.pvActuels = 9999; ennemi.pvMax = 9999; ennemi.initiative = 1;
+    ennemi.stats = { ...ennemi.stats, force: 0, intelligence: 0, agilite: 0, chance: 0 };
+
+    let caste = false;
+    let rounds = 0;
+    const ticks: Record<string, number> = {};
+    const gagne = /^(.+) gagne 2 PA/;
+    await runCombat([x, iop, ennemi], {
+      controllers: {
+        joueur: (acteur) => {
+          if (acteur.ref === x.ref && !caste) { caste = true; return { sort: SORTS.cadran_de_xelor, cibleRef: x.ref }; }
+          return null;
+        },
+        ennemi: () => {
+          // on borne à 4 rounds puis on tue l'ennemi pour terminer le combat
+          if (++rounds >= 4) ennemi.pvActuels = 0;
+          return null;
+        },
+      },
+      log: (m) => {
+        const match = gagne.exec(m);
+        if (match && m.includes("effet de ligne")) ticks[match[1]] = (ticks[match[1]] ?? 0) + 1;
+      },
+      rng: () => 0.5,
+    });
+    expect(ticks["Iop"]).toBe(2); // l'allié touchait déjà ses 2 ticks
+    expect(ticks["Xélor"]).toBe(2); // le lanceur doit les toucher AUSSI
+  });
 });
 
 describe("Prémonition", () => {
