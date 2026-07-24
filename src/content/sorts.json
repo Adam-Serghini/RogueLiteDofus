@@ -1072,8 +1072,8 @@
     "type": "buff"
   },
   "oeil_de_taupe": {
-    "baseMax": 9,
-    "baseMin": 6,
+    "baseMax": 6,
+    "baseMin": 4,
     "cible": "ennemi_tous",
     "cooldownTours": 2,
     "coutPA": 3,
@@ -1085,7 +1085,7 @@
     },
     "id": "oeil_de_taupe",
     "nom": "Œil de Taupe",
-    "scaling": 0.25,
+    "scaling": 0.15,
     "type": "degats",
     "zoneLigne": true
   },
