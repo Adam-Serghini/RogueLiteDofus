@@ -40,6 +40,32 @@ describe("compteur de runs", () => {
   });
 });
 
+describe("philtres d'Otomai (taux d'archimonstre)", () => {
+  it("taux effectif = ARCHI.chance × (1 + philtres bus)", async () => {
+    const { chanceArchi, nouvelleRun } = await import("./run");
+    const { ARCHI } = await import("./data");
+    const run = nouvelleRun(["iop"]);
+    expect(run.philtres).toBe(0);
+    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance); // base 0,8 %
+    run.philtres = 1;
+    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance * 2); // 1,6 %
+    run.philtres = 2;
+    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance * 3); // 2,4 %
+  });
+
+  it("le compteur survit à la sauvegarde ; une vieille save sans le champ charge à 0", async () => {
+    const { nouvelleRun, sauverRunEnCours, chargerRunEnCours } = await import("./run");
+    const run = nouvelleRun(["iop"]);
+    run.philtres = 2;
+    sauverRunEnCours(0, run);
+    expect(chargerRunEnCours()!.run.philtres).toBe(2);
+    const brut = JSON.parse(localStorage.getItem("rld_run_v0")!);
+    delete brut.run.philtres; // save d'avant la mécanique
+    localStorage.setItem("rld_run_v0", JSON.stringify(brut));
+    expect(chargerRunEnCours()!.run.philtres).toBe(0);
+  });
+});
+
 describe("bonus d'équipe (Dofus) appliqués aux combattants", () => {
   it("le bonus de vitalité du Dofawa ne RESSUSCITE pas un héros mort (bug du 1 PV)", async () => {
     const { appliquerBonusEquipeCombat, equipeCombattante, nouvelleRun } = await import("./run");

@@ -49,7 +49,7 @@ const NODE_ICON: Record<NodeType, string> = {
   combat: "⚔️",
   combat_dur: "💀",
   taverne: "🍺",
-  otomai: "🔄",
+  otomai: "🧪",
   zaap: "🌀",
   donjon: "🐉",
   hdv: "🪙",
@@ -102,6 +102,7 @@ export function showCarte(
   inventaire: ItemInstance[] = [],
   kamas = 0,
   ascension = 0,
+  philtres = 0,
 ): Promise<MapNode | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   return new Promise((res) => {
     const draw = () => {
@@ -200,7 +201,7 @@ Butin au taux donjon.`)}"` : "";
       root.innerHTML = `
         <div class="carte-ecran map-layout">
           <header class="map-topbar">
-            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension — ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}</h2>
+            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension — ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}${philtres >= 1 ? `<span class="asc-badge" title="Philtres d'Otomai bus — les archimonstres apparaissent plus souvent">🧪 ×${philtres}</span>` : ""}</h2>
             <div class="topbar-actions">
               <button id="carte-persos" class="aside-icone" title="Caractéristiques${points ? ` · ${points} pts à dépenser` : ""}"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" />${points ? `<span class="aside-compte">${points}</span>` : ""}</button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>

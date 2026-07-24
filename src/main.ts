@@ -4,7 +4,6 @@
 import "./style.css";
 import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, TRANCHES, zonesDeTranche, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
-import { restat } from "./progression";
 import { genererCarte } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
@@ -12,7 +11,7 @@ import {
   tavernePctAscension, tauxDofusAscension, enregistrerAscension,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
-  appliquerArchimonstres, capturerArchi, verifierSucces, type RunState,
+  appliquerArchimonstres, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
 } from "./run";
@@ -66,7 +65,7 @@ async function resoudreCombat(
     derniereZone: opts.derniereZone,
     rng: Math.random,
   });
-  appliquerArchimonstres(ennemis, Math.random); // chance qu'un ennemi pop en Archimonstre
+  appliquerArchimonstres(ennemis, Math.random, chanceArchi(run)); // taux de base + philtres d'Otomai
   // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
   const bonus = bonusEquipe(meta);
   appliquerBonusEquipeCombat(equipe, bonus); // un héros mort reste mort (pas de résurrection Dofawa)
@@ -180,11 +179,11 @@ async function resoudreType(
       return "continue";
     }
     case "otomai": {
-      const cible = await ui.showOtomai(run.persos);
-      if (cible) {
-        restat(cible.progression);
-        await ui.showStatPanel([cible], "🔄 Otomai", `Points de ${CLASSES[cible.classeId].nom} remboursés — réattribue-les librement.`, false, meta);
-      }
+      run.philtres += 1;
+      await ui.showTransition(
+        "🧪 Otomai",
+        `L'alchimiste te prépare un philtre d'archimonstre : les archis apparaissent plus souvent pour le reste de la run (${Math.round(chanceArchi(run) * 1000) / 10} %).`,
+      );
       return "continue";
     }
     case "donjon": {
@@ -231,7 +230,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniere
     sauverRunEnCours(zoneIdx, run);
   }
   for (;;) {
-    const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas, run.ascension);
+    const node = await ui.showCarte(run.carte!, run.persos, meta, zone.nom, run.inventaire, run.kamas, run.ascension, run.philtres);
     if (node === "accueil") return "accueil"; // la run reste sauvegardée → « Reprendre »
     if (node === "recommencer-memes" || node === "recommencer-choix") return node;
 

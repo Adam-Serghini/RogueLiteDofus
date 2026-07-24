@@ -387,27 +387,3 @@ export function showStatPanel(
   });
 }
 
-/**
- * Otomai : explique l'effet et propose de réinitialiser UN seul personnage.
- * Renvoie le perso choisi (à restater), ou null si le joueur passe.
- */
-export function showOtomai(persos: PersoState[]): Promise<PersoState | null> {
-  return new Promise((res) => {
-    ecran(`
-      <h1>🔄 Fontaine d'Otomai</h1>
-      <p class="sous-titre">La fontaine <b>réinitialise les caractéristiques d'un seul personnage</b> : tous ses points investis lui sont rendus, à toi de les réattribuer (changer d'élément, corriger un build…). Les autres ne sont pas touchés. Choisis qui plonger dans la fontaine.</p>
-      <div class="choix-grille">${persos.map((p) => carteClasse(p.classeId, false, "data-otomai")).join("")}</div>
-      <div class="boutons-ecran"><button id="otomai-skip" class="secondaire">Ne rien faire</button></div>
-    `);
-    root
-      .querySelectorAll<HTMLButtonElement>(".classe-carte")
-      .forEach((btn) =>
-        btn.addEventListener("click", () =>
-          res(persos.find((p) => p.classeId === btn.dataset.otomai) ?? null),
-        ),
-      );
-    document
-      .getElementById("otomai-skip")
-      ?.addEventListener("click", () => res(null));
-  });
-}

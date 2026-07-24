@@ -44,6 +44,7 @@ export interface RunState {
   kamas: number; // monnaie de la run (perdue à la mort)
   choixDepart?: string[]; // roster choisi au départ (pour « recommencer avec les mêmes héros »)
   ascension: number; // palier d'Ascension de la run (0 = jeu de base)
+  philtres: number; // philtres d'Otomai bus : chaque philtre ajoute +1 × ARCHI.chance au taux d'archi
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -138,7 +139,7 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0): Run
     if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
   });
-  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension };
+  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension, philtres: 0 };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------
@@ -641,6 +642,11 @@ export function effetsAscension(palier: number): EffetsAscension {
   return eff;
 }
 
+/** Taux d'apparition d'archimonstre effectif : base + 1 × ARCHI.chance par philtre d'Otomai bu. */
+export function chanceArchi(run: RunState): number {
+  return ARCHI.chance * (1 + (run.philtres ?? 0));
+}
+
 /** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */
 export function appliquerArchimonstres(enemies: Combatant[], rng: () => number, chance = ARCHI.chance): void {
   for (const e of enemies) {
@@ -699,7 +705,8 @@ export function chargerRunEnCours(): RunSauvee | null {
     }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
-    s.run.ascension = s.run.ascension ?? 0; // rétro-compat : anciennes saves sans ascension
+    s.run.ascension = s.run.ascension ?? 0;
+    s.run.philtres = s.run.philtres ?? 0; // rétro-compat : saves d'avant les philtres
     // rétro-compat : ancien champ scalaire eliteModif → tableau eliteModifs
     for (const n of s.run.carte?.noeuds ?? []) {
       const legacy = (n as { eliteModif?: string }).eliteModif;

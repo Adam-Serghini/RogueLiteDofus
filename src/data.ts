@@ -244,7 +244,7 @@ export const MODIFICATEURS_ELITE: ModificateurElite[] = [
 // --- Archimonstres & Dofus Ocre ----------------------------------------------
 /** Paramètres des Archimonstres (variante rare et boostée, capturable). */
 export const ARCHI = {
-  chance: 0.01, // probabilité par ennemi d'apparaître en Archimonstre
+  chance: 0.008, // probabilité de BASE par ennemi (chaque philtre d'Otomai ajoute +1× ce taux, cf. chanceArchi)
 
   pvMult: 2, // multiplicateur de PV
   statMult: 1.5, // multiplicateur des caractéristiques
