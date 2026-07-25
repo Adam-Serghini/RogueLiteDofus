@@ -17,7 +17,6 @@ import {
   MENU_RESTART,
   MENU_RESTART_PERSO,
   CASE_DEPART,
-  FOND_TOILE,
 } from "./assets";
 import { classSymbol, pastillesElements, kamasHtml } from "./composants";
 import { pvMaxPerso, type PersoState } from "../run";
@@ -221,7 +220,7 @@ Butin au taux donjon.`)}"` : "";
               <button id="carte-restart-choix" class="aside-icone" title="Recommencer en choisissant d'autres héros (abandonne la run en cours)"><img src="${MENU_RESTART_PERSO}" alt="Recommencer (autres héros)" onerror="this.remove()" /></button>
             </div>
           </header>
-          <div class="map-scroll"><div class="map-zone" style="width:${W}px;height:${HAUTEUR_CARTE}px;background:url('${FOND_TOILE}') center / cover no-repeat">
+          <div class="map-scroll"><div class="map-zone" style="width:${W}px;height:${HAUTEUR_CARTE}px">
             <svg class="map-svg" width="${W}" height="${HAUTEUR_CARTE}">${departSvg}${lignesSvg}</svg>
             ${boutons}
             <div class="map-depart" style="left:${departPos.x}px;top:${departPos.y}px">
