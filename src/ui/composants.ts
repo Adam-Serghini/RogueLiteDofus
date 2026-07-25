@@ -359,6 +359,7 @@ export function itemStatsHtml(inst: ItemInstance): string {
   if (it?.retraitPA) chips.push(`<span class="ichip ichip-pa" title="L'attaque a 30 % de chance de retirer ${it.retraitPA} PA à la cible">⛓ retrait ${it.retraitPA} PA (30 %)</span>`);
   if (it?.elementLibre) chips.push(`<span class="ichip ichip-adapt" title="Le porteur peut frapper dans N'IMPORTE quel élément (plus limité à ses 2 plus forts)">🌈 élément libre</span>`);
   if (it?.renaissance) chips.push(`<span class="ichip ichip-adapt" title="À la mort du porteur : renaît UNE fois par combat à ${Math.round(it.renaissance * 100)} % de ses PV">🥚 renaissance (${Math.round(it.renaissance * 100)} % PV)</span>`);
+  if (it?.panoplie) chips.push(`<span class="ichip ichip-pano" title="Panoplie ${escapeHtml(it.panoplie)} : +1 PA quand les 4 pièces sont portées par le même héros">⬡ ${escapeHtml(it.panoplie)}</span>`);
   return `<span class="ichips">${chips.join("")}</span>`;
 }
 
