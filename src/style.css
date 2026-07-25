@@ -3260,7 +3260,7 @@ body.avec-fond .map-zone {
 }
 /* Halos d'état en drop-shadow sur la TUILE (épouse sa silhouette, aucun cadre). */
 .map-node.courant .case-img {
-  filter: drop-shadow(0 0 3px var(--cyan)) drop-shadow(0 0 6px var(--cyan));
+  filter: drop-shadow(0 0 3px #cbc7bf) drop-shadow(0 0 6px #cbc7bf);
 }
 .map-node.t-donjon .case-img {
   filter: drop-shadow(0 0 3px #e8b54e) drop-shadow(0 0 6px #e8b54eaa);
@@ -3319,10 +3319,10 @@ body.avec-fond .map-zone {
 @keyframes pulse-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 3px #cbc7bfd0);
+    filter: drop-shadow(0 0 4px #cbc7bf) drop-shadow(0 0 7px #cbc7bf80);
   }
   50% {
-    filter: drop-shadow(0 0 5px #cbc7bf) drop-shadow(0 0 10px #cbc7bf90);
+    filter: drop-shadow(0 0 6px #cbc7bf) drop-shadow(0 0 13px #cbc7bfc0);
   }
 }
 @keyframes pulse-glow-or {
