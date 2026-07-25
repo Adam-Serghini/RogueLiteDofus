@@ -3165,11 +3165,11 @@ body.avec-fond .map-zone {
   pointer-events: none;
 }
 .arete {
-  stroke: #8a6d42;
+  stroke: #1c150c;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-dasharray: 1 8;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 .arete-actif {
   stroke: var(--cyan);
@@ -3319,10 +3319,10 @@ body.avec-fond .map-zone {
 @keyframes pulse-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 2px #ef7d1a) drop-shadow(0 0 4px #ef7d1acc);
+    filter: drop-shadow(0 0 2px #ffffffb0);
   }
   50% {
-    filter: drop-shadow(0 0 4px #ef7d1a) drop-shadow(0 0 9px #ef7d1a);
+    filter: drop-shadow(0 0 4px #ffffffd8) drop-shadow(0 0 7px #ffffff70);
   }
 }
 @keyframes pulse-glow-or {
