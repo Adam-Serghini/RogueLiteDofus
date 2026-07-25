@@ -414,6 +414,8 @@ button.item-carte:disabled {
 .ichip.ichip-adapt { color: var(--or-texte); border-color: var(--or); font-weight: 900; }
 .ichip.ichip-arme { color: var(--txt); border-color: var(--bord); }
 .ichip.malus { color: var(--danger) !important; border-color: #b23b2e88; }
+/* appartenance à une panoplie : discret (info, pas une stat) */
+.ichip.ichip-pano { color: var(--muet); border-color: transparent; background: none; font-weight: 700; font-style: italic; }
 .ichip.ichip-res.elem-terre { color: var(--terre); }
 .ichip.ichip-res.elem-feu { color: var(--feu); }
 .ichip.ichip-res.elem-eau { color: #3aa0e6; }
@@ -2179,6 +2181,14 @@ kbd {
   font-size: 0.55rem;
   opacity: 0.85;
 }
+/* variante statique du cœur pour la barre d'équipe de la carte (pas d'absolu) */
+.pv-gem-aside {
+  position: static;
+  transform: none;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
 .pv-gem.ko {
   filter: grayscale(0.7) brightness(0.7);
 }
@@ -2999,7 +3009,7 @@ kbd {
   /* même bandeau parchemin que la barre d'équipe en bas */
   padding: 6px 10px;
   background: var(--panel-solide);
-  border: 1px solid var(--bord);
+  border: 1px solid #1c150c;
   border-radius: 14px;
 }
 .topbar-sep {
@@ -3016,7 +3026,7 @@ kbd {
   gap: 14px;
   padding: 10px 14px;
   background: var(--panel-solide);
-  border: 1px solid var(--bord);
+  border: 1px solid #1c150c;
   border-radius: 14px;
 }
 .equipe-bar {
@@ -3145,7 +3155,7 @@ kbd {
     radial-gradient(120% 90% at 50% -10%, #dcc89c, transparent 70%),
     radial-gradient(80% 70% at 50% 120%, #b89a64, transparent 70%),
     linear-gradient(180deg, #d2bd90, #c0a878);
-  border: 1px solid var(--bord);
+  border: 1px solid #1c150c;
   box-shadow:
     inset 0 0 80px #0009,
     0 12px 34px #000a;
@@ -3172,7 +3182,7 @@ body.avec-fond .map-zone {
   opacity: 0.7;
 }
 .arete-actif {
-  stroke: #cbc7bf; /* même gris que le halo des cases atteignables */
+  stroke: #ffffff; /* même blanc que le halo des cases atteignables */
   stroke-width: 4;
   opacity: 1;
   stroke-dasharray: 1 7;
@@ -3260,7 +3270,7 @@ body.avec-fond .map-zone {
 }
 /* Halos d'état en drop-shadow sur la TUILE (épouse sa silhouette, aucun cadre). */
 .map-node.courant .case-img {
-  filter: drop-shadow(0 0 3px #cbc7bf) drop-shadow(0 0 6px #cbc7bf);
+  filter: drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 6px #ffffff);
 }
 .map-node.t-donjon .case-img {
   filter: drop-shadow(0 0 3px #e8b54e) drop-shadow(0 0 6px #e8b54eaa);
@@ -3319,10 +3329,10 @@ body.avec-fond .map-zone {
 @keyframes pulse-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 4px #cbc7bf) drop-shadow(0 0 7px #cbc7bf80);
+    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 8px #ffffff90);
   }
   50% {
-    filter: drop-shadow(0 0 6px #cbc7bf) drop-shadow(0 0 13px #cbc7bfc0);
+    filter: drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #ffffffd0);
   }
 }
 @keyframes pulse-glow-or {

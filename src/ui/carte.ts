@@ -17,6 +17,7 @@ import {
   MENU_RESTART,
   MENU_RESTART_PERSO,
   CASE_DEPART,
+  COEUR_PLEIN,
 } from "./assets";
 import { classSymbol, pastillesElements, kamasHtml } from "./composants";
 import { pvMaxPerso, type PersoState } from "../run";
@@ -187,16 +188,19 @@ Butin au taux donjon.`)}"` : "";
           const classe = CLASSES[p.classeId];
           const pvMax = pvMaxPerso(p); // équipement (vita + PV plats) inclus
           const pct = Math.max(0, Math.round((p.pvActuels / pvMax) * 100));
+          const pv = Math.max(0, Math.round(p.pvActuels));
           return `
             <div class="aside-perso ${p.flashNiveau ? "flash-niv" : ""}">
               ${p.flashNiveau ? `<span class="niv-flash">⬆ Niveau ${p.progression.niveau} !</span>` : ""}
               <img class="aside-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
+              <span class="pv-gem pv-gem-aside ${pv <= 0 ? "ko" : ""}" title="${pv} / ${pvMax} PV" style="--pv-pct:${pct}%">
+                <img class="pv-vide" src="${COEUR_PLEIN}" alt="" onerror="this.remove()" />
+                <img class="pv-plein" src="${COEUR_PLEIN}" alt="" onerror="this.remove()" />
+                <b class="pv-num">${pv}<span>/${pvMax}</span></b>
+              </span>
               <div class="aside-info">
-                <div class="aside-nom">${escapeHtml(classe.nom)}<span class="aside-niv">Niv.${p.progression.niveau}</span>${pastillesElements(p)}</div>
-                <div class="barre-pv mini">
-                  <div class="barre-pv-rempli" style="transform:scaleX(${pct / 100})"></div>
-                  <span class="pv-txt">${Math.max(0, Math.round(p.pvActuels))} / ${pvMax}</span>
-                </div>
+                <div class="aside-nom">${escapeHtml(classe.nom)}${pastillesElements(p)}</div>
+                <div class="aside-niv">Niv.${p.progression.niveau}</div>
               </div>
             </div>`;
         })
