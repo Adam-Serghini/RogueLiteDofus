@@ -64,6 +64,14 @@ body {
     linear-gradient(180deg, var(--bg), var(--bg-2));
 }
 
+/* Fond in-run (image de la tranche, posée par setFond) : voile sombre léger
+   pour que les panneaux parchemin ressortent, image fixe au scroll. */
+body.avec-fond {
+  background:
+    linear-gradient(rgba(42, 31, 16, 0.32), rgba(42, 31, 16, 0.42)),
+    var(--fond-run) center / cover no-repeat fixed #2a1f10;
+}
+
 #app {
   max-width: 1060px;
   margin: 0 auto;

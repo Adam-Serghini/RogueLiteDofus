@@ -267,38 +267,44 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[], ascen
     if (!choix) return null; // retour à l'accueil depuis la sélection
     run = nouvelleRun(choix, ascension);
   }
-  const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!); // une run = une tranche
-  for (let z = depart; z < zones.length; z++) {
-    const zone = zones[z];
-    const issue = await jouerZone(run, zone, z, z === zones.length - 1);
-    if (issue === "accueil") return null; // run sauvegardée, retour au lobby
-    if (issue === "recommencer-memes" || issue === "recommencer-choix") {
-      effacerRunEnCours();
-      enregistrerRun(meta, false); // recommencer = abandonner (run échouée)
-      return {
-        relancer: issue === "recommencer-memes" ? (run.choixDepart ?? run.persos.slice(0, 2).map((p) => p.classeId)) : "selection",
-        ascension: run.ascension, // le palier de la run abandonnée est conservé pour la relance
-      };
+  const tranche = TRANCHES.find((t) => t.active)!;
+  const zones = zonesDeTranche(tranche); // une run = une tranche
+  ui.setFondTranche(tranche.id); // fond d'écran de la tranche, retiré au retour à l'accueil
+  try {
+    for (let z = depart; z < zones.length; z++) {
+      const zone = zones[z];
+      const issue = await jouerZone(run, zone, z, z === zones.length - 1);
+      if (issue === "accueil") return null; // run sauvegardée, retour au lobby
+      if (issue === "recommencer-memes" || issue === "recommencer-choix") {
+        effacerRunEnCours();
+        enregistrerRun(meta, false); // recommencer = abandonner (run échouée)
+        return {
+          relancer: issue === "recommencer-memes" ? (run.choixDepart ?? run.persos.slice(0, 2).map((p) => p.classeId)) : "selection",
+          ascension: run.ascension, // le palier de la run abandonnée est conservé pour la relance
+        };
+      }
+      if (issue === "wipe") {
+        effacerRunEnCours();
+        enregistrerRun(meta, false); // run terminée : échec
+        await ui.showRecap(run, false, verifierSucces(meta, run, false)); // mort : Meta conservée
+        return null;
+      }
+      soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
+      run.stats.zones += 1;
+      run.carte = null; // la zone est finie : la prochaine génère son plateau
+      if (z < zones.length - 1) {
+        sauverRunEnCours(z + 1, run); // reprise en début de zone suivante
+        await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${zones[z + 1].nom}.`);
+      }
     }
-    if (issue === "wipe") {
-      effacerRunEnCours();
-      enregistrerRun(meta, false); // run terminée : échec
-      await ui.showRecap(run, false, verifierSucces(meta, run, false)); // mort : Meta conservée
-      return null;
-    }
-    soignerEquipe(run, 1); // boss de zone vaincu → équipe soignée à 100 % pour la zone suivante
-    run.stats.zones += 1;
-    run.carte = null; // la zone est finie : la prochaine génère son plateau
-    if (z < zones.length - 1) {
-      sauverRunEnCours(z + 1, run); // reprise en début de zone suivante
-      await ui.showTransition(`${zone.nom} — vaincu !`, `Équipe soignée à 100 %. Tu pénètres dans ${zones[z + 1].nom}.`);
-    }
+    effacerRunEnCours();
+    enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
+    enregistrerAscension(meta, tranche.id, run.ascension); // record d'Ascension de la tranche
+    await ui.showRecap(run, true, verifierSucces(meta, run, true));
+    return null;
+  } finally {
+    ui.setFondTranche(null);
   }
-  effacerRunEnCours();
-  enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
-  enregistrerAscension(meta, TRANCHES.find((t) => t.active)!.id, run.ascension); // record d'Ascension de la tranche
-  await ui.showRecap(run, true, verifierSucces(meta, run, true));
-  return null;
 }
 
 async function boucle(): Promise<void> {

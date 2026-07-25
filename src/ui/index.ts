@@ -5,7 +5,7 @@
 import { setRoot } from "./dom";
 export { A } from "./assets";
 import { initDofusTooltip, initAideTooltip } from "./composants";
-export { renderDofusRack } from "./composants";
+export { renderDofusRack, setFondTranche } from "./composants";
 import { initSortTooltip, initControlesClavier } from "./combat";
 export { beginCombat, onUpdate, fxEvent, playerController, log } from "./combat";
 

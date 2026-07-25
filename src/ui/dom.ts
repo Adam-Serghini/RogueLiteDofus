@@ -26,6 +26,18 @@ export function masquerTooltips(): void {
   for (const t of tipsFlottants) t.style.display = "none";
 }
 
+// --- Fond d'écran ------------------------------------------------------------
+/** Pose (ou retire avec null) une image de fond plein écran sur le <body>. */
+export function setFond(url: string | null): void {
+  if (url) {
+    document.body.classList.add("avec-fond");
+    document.body.style.setProperty("--fond-run", `url("${url}")`);
+  } else {
+    document.body.classList.remove("avec-fond");
+    document.body.style.removeProperty("--fond-run");
+  }
+}
+
 // --- Écrans ------------------------------------------------------------------
 export function ecran(html: string): void {
   masquerTooltips(); // l'élément survolé disparaît sans mouseout : pas d'infobulle orpheline

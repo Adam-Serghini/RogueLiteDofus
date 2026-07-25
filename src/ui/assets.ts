@@ -40,6 +40,11 @@ export const ICON_VITA = A("/assets/divers/coeur.png");
 
 export const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
 
+/** Fond d'écran in-run par tranche — tranche absente : fond parchemin par défaut. */
+export const FOND_TRANCHE: Record<string, string> = {
+  t1: A("/assets/fonds/incarnam.png"),
+};
+
 // Icônes de stats secondaires (cf. maquette de carte)
 export const ICON_CRIT = A("/assets/elements/critique.png");
 export const ICON_DMGCRIT = A("/assets/elements/dmgCritique.png");

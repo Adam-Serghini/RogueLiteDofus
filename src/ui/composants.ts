@@ -8,8 +8,13 @@ import { ELEMENTS, chanceCrit, bonusDegatsCrit, statsEffectives, elementDeFrappe
 import { statsFinales, multSoin, multOffensif, pctRembPA as rembPA } from "../progression";
 import { bonusEquipement, STAT_PAR_ELEMENT, type PersoState } from "../run";
 import type { Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
-import { A, elementAsset, classe_img, ICON_KAMAS } from "./assets";
-import { escapeHtml, tipsFlottants } from "./dom";
+import { A, elementAsset, classe_img, ICON_KAMAS, FOND_TRANCHE } from "./assets";
+import { escapeHtml, tipsFlottants, setFond } from "./dom";
+
+/** Fond d'écran de la tranche en cours (null = retour au parchemin de l'accueil). */
+export function setFondTranche(trancheId: string | null): void {
+  setFond(trancheId ? (FOND_TRANCHE[trancheId] ?? null) : null);
+}
 
 /**
  * Contenu du tooltip d'un sort : fourchette de dégâts/soin **calculée pour le
