@@ -71,6 +71,14 @@ body.avec-fond {
     linear-gradient(rgba(42, 31, 16, 0.32), rgba(42, 31, 16, 0.42)),
     var(--fond-run) center / cover no-repeat fixed #2a1f10;
 }
+/* Glassmorphisme in-run : les panneaux laissent transparaître le fond de tranche
+   (flou renforcé pour garder le texte lisible sur l'image). */
+body.avec-fond .ecran,
+body.avec-fond .verre {
+  background: rgba(237, 226, 198, 0.68);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+}
 
 #app {
   max-width: 1060px;
