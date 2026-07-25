@@ -1794,6 +1794,13 @@ kbd {
   font-weight: 800;
   margin: 6px 0;
 }
+.forge-filtres {
+  margin: 8px 0 12px;
+}
+.forge-filtres button {
+  font-size: 0.82rem;
+  padding: 6px 12px;
+}
 
 /* Blocs « monde » (Bestiaire & Armurerie groupés par tranche, zones dans l'ordre de jeu) */
 .monde-bloc {

@@ -101,10 +101,11 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
 export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
   return new Promise((res) => {
     let message = ""; // résultat de la dernière forge (réussite / échec)
+    let equipesSeul = false; // filtre : n'afficher que les objets portés par l'équipe
     const draw = () => {
       // tous les exemplaires forgeables : inventaire + équipement de chaque héros
       const entrees: { inst: ItemInstance; ou: string }[] = [
-        ...run.inventaire.map((inst) => ({ inst, ou: "Inventaire" })),
+        ...(equipesSeul ? [] : run.inventaire.map((inst) => ({ inst, ou: "Inventaire" }))),
         ...run.persos.flatMap((p) =>
           Object.values(p.equipement)
             .filter((i): i is ItemInstance => !!i)
@@ -130,11 +131,12 @@ export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
             </div>`;
           })
           .join("")
-        : `<p class="muet">Rien à forger — tout ton équipement à rareté est déjà au maximum.</p>`;
+        : `<p class="muet">${equipesSeul ? "Rien à forger parmi les objets équipés." : "Rien à forger — tout ton équipement à rareté est déjà au maximum."}</p>`;
       ecran(`
         <h1>🔨 Forgemagie</h1>
         <p class="sous-titre">Le Forgemage monte un objet au palier de rareté supérieur — même équipé. Son apprenti téméraire fait moitié prix… mais rate ${Math.round(KAMAS.forgeTemeraire.pEchec * 100)} % de ses forges.</p>
         <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
+        <div class="forge-filtres"><button id="forge-filtre" class="${equipesSeul ? "primaire" : "secondaire"}" title="${equipesSeul ? "Afficher aussi l'inventaire" : "N'afficher que les objets équipés par l'équipe"}">⚔️ Équipés seulement</button></div>
         ${message ? `<p class="forge-message">${message}</p>` : ""}
         <div class="equip-inv forge-liste">${cartes}</div>
         <div class="boutons-ecran"><button id="forge-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
@@ -155,6 +157,10 @@ export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
         btn.addEventListener("click", () => forger(Number(btn.dataset.forge), false)));
       root.querySelectorAll<HTMLButtonElement>("[data-temeraire]").forEach((btn) =>
         btn.addEventListener("click", () => forger(Number(btn.dataset.temeraire), true)));
+      document.getElementById("forge-filtre")?.addEventListener("click", () => {
+        equipesSeul = !equipesSeul;
+        draw();
+      });
       document.getElementById("forge-retour")?.addEventListener("click", () => res());
     };
     draw();
