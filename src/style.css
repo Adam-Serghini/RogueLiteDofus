@@ -3172,7 +3172,7 @@ body.avec-fond .map-zone {
   opacity: 0.7;
 }
 .arete-actif {
-  stroke: var(--cyan);
+  stroke: #cbc7bf; /* même gris que le halo des cases atteignables */
   stroke-width: 4;
   opacity: 1;
   stroke-dasharray: 1 7;
@@ -3319,10 +3319,10 @@ body.avec-fond .map-zone {
 @keyframes pulse-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 2px #ffffffb0);
+    filter: drop-shadow(0 0 3px #cbc7bfd0);
   }
   50% {
-    filter: drop-shadow(0 0 4px #ffffffd8) drop-shadow(0 0 7px #ffffff70);
+    filter: drop-shadow(0 0 5px #cbc7bf) drop-shadow(0 0 10px #cbc7bf90);
   }
 }
 @keyframes pulse-glow-or {
