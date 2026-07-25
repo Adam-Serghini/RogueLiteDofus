@@ -128,23 +128,28 @@ export function showCarte(
         carte.courant === nid ||
         (carte.courant === null && noeud(carte, nid)?.ligne === 0);
 
+      // Les pointillés s'arrêtent au bord des tuiles (56×64 + padding) au lieu
+      // de passer dessous — sinon ils transparaissent sous les cases.
+      const RETRAIT_ARETE = 42;
+      const arete = (a: { x: number; y: number }, b: { x: number; y: number }, actif: boolean) => {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const d = Math.hypot(dx, dy);
+        if (d <= RETRAIT_ARETE * 2) return ""; // cases trop proches : rien à tracer
+        const r = RETRAIT_ARETE / d;
+        return `<line x1="${a.x + dx * r}" y1="${a.y + dy * r}" x2="${b.x - dx * r}" y2="${b.y - dy * r}" class="arete ${actif ? "arete-actif" : ""}"/>`;
+      };
+
       const lignesSvg = carte.noeuds
         .flatMap((n) =>
-          n.suivants.map((s) => {
-            const a = pos.get(n.id)!;
-            const b = pos.get(s)!;
-            const actif = reach.has(s) && depuisCourant(n.id);
-            return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="arete ${actif ? "arete-actif" : ""}"/>`;
-          }),
+          n.suivants.map((s) =>
+            arete(pos.get(n.id)!, pos.get(s)!, reach.has(s) && depuisCourant(n.id)),
+          ),
         )
         .join("");
 
       // chemins du Départ vers les nœuds de la 1ʳᵉ rangée
       const departSvg = carte.depart
-        .map((id) => {
-          const b = pos.get(id)!;
-          return `<line x1="${departPos.x}" y1="${departPos.y}" x2="${b.x}" y2="${b.y}" class="arete ${carte.courant === null ? "arete-actif" : ""}"/>`;
-        })
+        .map((id) => arete(departPos, pos.get(id)!, carte.courant === null))
         .join("");
 
       const boutons = carte.noeuds
