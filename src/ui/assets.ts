@@ -44,6 +44,8 @@ export const elementAsset = (el: string): string => A(`/assets/elements/${el}.pn
 export const FOND_TRANCHE: Record<string, string> = {
   t1: A("/assets/fonds/incarnam.png"),
 };
+/** Texture du plateau de la carte (remplace le verre de .map-zone). */
+export const FOND_TOILE = A("/assets/fonds/toile.png");
 
 // Icônes de stats secondaires (cf. maquette de carte)
 export const ICON_CRIT = A("/assets/elements/critique.png");
