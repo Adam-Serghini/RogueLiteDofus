@@ -2989,6 +2989,11 @@ kbd {
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  /* même bandeau parchemin que la barre d'équipe en bas */
+  padding: 6px 10px;
+  background: var(--panel-solide);
+  border: 1px solid var(--bord);
+  border-radius: 14px;
 }
 .topbar-sep {
   width: 1px;
