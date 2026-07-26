@@ -41,16 +41,17 @@ describe("compteur de runs", () => {
 });
 
 describe("philtres d'Otomai (taux d'archimonstre)", () => {
-  it("taux effectif = ARCHI.chance × (1 + philtres bus)", async () => {
+  it("taux effectif = ARCHI.chance + ARCHI.philtre par philtre bu", async () => {
     const { chanceArchi, nouvelleRun } = await import("./run");
     const { ARCHI } = await import("./data");
     const run = nouvelleRun(["iop"]);
     expect(run.philtres).toBe(0);
     expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance); // base 0,8 %
     run.philtres = 1;
-    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance * 2); // 1,6 %
+    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance + ARCHI.philtre); // 1,2 %
     run.philtres = 2;
-    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance * 3); // 2,4 %
+    expect(chanceArchi(run)).toBeCloseTo(ARCHI.chance + 2 * ARCHI.philtre); // 1,6 %
+    expect(ARCHI.philtre).toBeCloseTo(ARCHI.chance / 2); // nerf : demi-taux par philtre
   });
 
   it("le compteur survit à la sauvegarde ; une vieille save sans le champ charge à 0", async () => {

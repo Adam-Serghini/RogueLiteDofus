@@ -44,7 +44,7 @@ export interface RunState {
   kamas: number; // monnaie de la run (perdue à la mort)
   choixDepart?: string[]; // roster choisi au départ (pour « recommencer avec les mêmes héros »)
   ascension: number; // palier d'Ascension de la run (0 = jeu de base)
-  philtres: number; // philtres d'Otomai bus : chaque philtre ajoute +1 × ARCHI.chance au taux d'archi
+  philtres: number; // philtres d'Otomai bus : chaque philtre ajoute +ARCHI.philtre au taux d'archi
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -642,9 +642,9 @@ export function effetsAscension(palier: number): EffetsAscension {
   return eff;
 }
 
-/** Taux d'apparition d'archimonstre effectif : base + 1 × ARCHI.chance par philtre d'Otomai bu. */
+/** Taux d'apparition d'archimonstre effectif : base + ARCHI.philtre par philtre d'Otomai bu. */
 export function chanceArchi(run: RunState): number {
-  return ARCHI.chance * (1 + (run.philtres ?? 0));
+  return ARCHI.chance + ARCHI.philtre * (run.philtres ?? 0);
 }
 
 /** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */
