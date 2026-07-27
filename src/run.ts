@@ -790,10 +790,15 @@ export function toileDeZone(zoneId: string, tranches: TrancheDef[] = TRANCHES): 
   return loc ? offsetToile(loc.tranche.id, tranches) + loc.index + 1 : 1;
 }
 
-/** Toile d'origine d'un objet (pool de toile). */
-export function toileDeItem(itemId: string): number {
-  for (let t = 1; t <= TRANCHES[0].zones.length; t++) {
-    if (itemsDeToile(butinToile(TRANCHES[0].zones[t - 1])).includes(itemId)) return t;
+/** Toile d'origine d'un objet (pool de toile) — parcourt TOUTES les tranches,
+ *  numérotation continue ; 1 par défaut si l'objet n'est trouvé nulle part. */
+export function toileDeItem(itemId: string, tranches: TrancheDef[] = TRANCHES): number {
+  for (const tranche of tranches) {
+    for (let i = 0; i < tranche.zones.length; i++) {
+      if (itemsDeToile(butinToile(tranche.zones[i])).includes(itemId)) {
+        return offsetToile(tranche.id, tranches) + i + 1;
+      }
+    }
   }
   return 1;
 }

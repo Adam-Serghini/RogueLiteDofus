@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { trancheDe, localiserZone, offsetToile, type TrancheDef } from "./data";
-import { toileDeZone } from "./run";
+import { toileDeZone, toileDeItem } from "./run";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
 const FAUSSES: TrancheDef[] = [
@@ -46,5 +46,22 @@ describe("toile d'une zone", () => {
   it("table réelle : T1 va de la toile 1 à la toile 12", () => {
     expect(toileDeZone("incarnam")).toBe(1);
     expect(toileDeZone("kwakwa")).toBe(12);
+  });
+});
+
+describe("toile d'origine d'un objet", () => {
+  it("table réelle : un objet de la première toile renvoie 1, un objet de la douzième renvoie 12", () => {
+    expect(toileDeItem("chapeau_de_l_aventurier")).toBe(1); // toile 1 (Incarnam)
+    expect(toileDeItem("kwakwaffe")).toBe(12); // toile 12 (Nid du Kwakwa), pool boss
+    expect(toileDeItem("objet_inexistant")).toBe(1); // repli prudent
+  });
+
+  it("la borne de parcours dérive du total des zones de TOUTES les tranches passées, pas de TRANCHES[0] en dur", () => {
+    // FAUSSES ne totalise que 5 zones (3 + 2 + 0) : un objet de la toile réelle
+    // 8 (Scarafeuilles) est hors de cette plage fictive et doit retomber sur le
+    // repli 1 — l'ancienne implémentation ignorait le paramètre `tranches` et
+    // parcourait toujours TRANCHES[0].zones.length (12), donc le trouvait à
+    // tort en toile 8.
+    expect(toileDeItem("scaracoiffe_noire", FAUSSES)).toBe(1);
   });
 });
