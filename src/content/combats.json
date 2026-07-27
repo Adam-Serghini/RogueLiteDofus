@@ -191,12 +191,8 @@
         "position": 1
       },
       {
-        "monstre": "blop_indigo",
-        "position": 4
-      },
-      {
         "monstre": "blopignon",
-        "position": 5
+        "position": 4
       }
     ],
     "nom": "Les gros bras du Clos"
