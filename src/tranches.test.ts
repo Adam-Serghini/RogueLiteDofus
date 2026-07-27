@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { trancheDe, localiserZone, offsetToile, type TrancheDef } from "./data";
-import { toileDeZone, toileDeItem } from "./run";
+import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours } from "./run";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
 const FAUSSES: TrancheDef[] = [
@@ -63,5 +63,48 @@ describe("toile d'origine d'un objet", () => {
     // parcourait toujours TRANCHES[0].zones.length (12), donc le trouvait à
     // tort en toile 8.
     expect(toileDeItem("scaracoiffe_noire", FAUSSES)).toBe(1);
+  });
+});
+
+describe("cap de niveau par tranche", () => {
+  // mock localStorage (l'environnement de test n'en a pas)
+  const store = new Map<string, string>();
+  (globalThis as Record<string, unknown>).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  };
+
+  it("le cap vient de la tranche demandée", () => {
+    expect(niveauMaxTranche("t1")).toBe(50);
+    expect(niveauMaxTranche("t2")).toBe(100);
+    expect(niveauMaxTranche("nawak")).toBe(50); // défaut t1
+  });
+
+  it("une run neuve porte sa tranche et démarre au niveau de départ de celle-ci", () => {
+    const t1 = nouvelleRun(["iop"]);
+    expect(t1.trancheId).toBe("t1");
+    expect(t1.persos[0].progression.niveau).toBe(1);
+
+    const t2 = nouvelleRun(["iop"], 0, "t2");
+    expect(t2.trancheId).toBe("t2");
+    expect(t2.persos[0].progression.niveau).toBe(50);
+  });
+
+  it("gagnerXPPerso plafonne au cap de la tranche passée", () => {
+    const run = nouvelleRun(["iop"], 0, "t1");
+    gagnerXPPerso(run.persos[0], 10_000_000, "t1");
+    expect(run.persos[0].progression.niveau).toBe(50);
+    gagnerXPPerso(run.persos[0], 10_000_000, "t2"); // même perso, cap plus haut
+    expect(run.persos[0].progression.niveau).toBe(100);
+  });
+
+  it("une run sauvegardée sans trancheId se recharge en t1", () => {
+    const run = nouvelleRun(["iop"]);
+    sauverRunEnCours(0, run);
+    const brut = JSON.parse(localStorage.getItem("rld_run_v0")!);
+    delete brut.run.trancheId; // save d'avant le multi-tranches
+    localStorage.setItem("rld_run_v0", JSON.stringify(brut));
+    expect(chargerRunEnCours()!.run.trancheId).toBe("t1");
   });
 });

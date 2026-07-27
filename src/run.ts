@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, type TrancheDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
@@ -45,6 +45,7 @@ export interface RunState {
   choixDepart?: string[]; // roster choisi au départ (pour « recommencer avec les mêmes héros »)
   ascension: number; // palier d'Ascension de la run (0 = jeu de base)
   philtres: number; // philtres d'Otomai bus : chaque philtre ajoute +ARCHI.philtre au taux d'archi
+  trancheId: string; // tranche jouée par cette run (cap de niveau, zones, toile)
 }
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
@@ -75,11 +76,11 @@ export function appliquerElement(perso: PersoState, choix: Allocation | null): v
  * XP d'un perso : monte de niveau ; si un élément est choisi, alloue
  * automatiquement les points gagnés dans sa stat. Renvoie les niveaux gagnés.
  */
-/** Niveau maximum de la tranche active (cap d'XP). */
-export const niveauMaxTranche = (): number => (TRANCHES.find((t) => t.active) ?? TRANCHES[0]).niveaux[1];
+/** Niveau maximum (cap d'XP) de la tranche donnée. */
+export const niveauMaxTranche = (trancheId: string): number => trancheDe(trancheId).niveaux[1];
 
-export function gagnerXPPerso(perso: PersoState, gain: number): number {
-  const niveaux = gagnerXP(perso.progression, gain, niveauMaxTranche());
+export function gagnerXPPerso(perso: PersoState, gain: number, trancheId: string): number {
+  const niveaux = gagnerXP(perso.progression, gain, niveauMaxTranche(trancheId));
   // rétro-compat : les saves d'avant statAuto ne portent que elementChoisi
   const stat = perso.statAuto ?? (perso.elementChoisi ? STAT_PAR_ELEMENT[perso.elementChoisi] : undefined);
   if (stat) investirN(perso.progression, stat, Infinity);
@@ -121,25 +122,27 @@ function cellulesPour(ids: string[]): Record<string, number> {
   return cells;
 }
 
-export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0): RunState {
+/** Perso neuf à un niveau donné, avec les points de caractéristique cumulés. */
+export function persoAuNiveau(classeId: string, niveau: number, position: number): PersoState {
+  const progression = progressionInitiale();
+  progression.niveau = niveau;
+  progression.pointsDispo = (niveau - 1) * POINTS_PAR_NIVEAU;
+  return { classeId, progression, pvActuels: pvMaxFor(CLASSES[classeId], progression), position, equipement: {} };
+}
+
+export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, trancheId = "t1"): RunState {
   const cells = cellulesPour(choix);
   const elemsPref = chargerConfig().elements; // élément préféré par classe (préréglages)
   const eff = effetsAscension(ascension);
+  const niveauDepart = trancheDe(trancheId).niveaux[0];
   const persos: PersoState[] = choix.map((classeId) => {
-    const progression = progressionInitiale();
-    const perso: PersoState = {
-      classeId,
-      progression,
-      pvActuels: pvMaxFor(CLASSES[classeId], progression),
-      position: cells[classeId],
-      equipement: {},
-    };
+    const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
     const pref = elemsPref[classeId]; // préréglage (absent = Libre)
     if (pref) appliquerElement(perso, pref);
     if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
   });
-  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension, philtres: 0 };
+  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension, philtres: 0, trancheId };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------
@@ -707,6 +710,7 @@ export function chargerRunEnCours(): RunSauvee | null {
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
     s.run.ascension = s.run.ascension ?? 0;
     s.run.philtres = s.run.philtres ?? 0; // rétro-compat : saves d'avant les philtres
+    s.run.trancheId = s.run.trancheId ?? "t1"; // rétro-compat : saves d'avant le multi-tranches
     // rétro-compat : ancien champ scalaire eliteModif → tableau eliteModifs
     for (const n of s.run.carte?.noeuds ?? []) {
       const legacy = (n as { eliteModif?: string }).eliteModif;

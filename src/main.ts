@@ -102,7 +102,7 @@ async function recompenserXP(run: RunState, gain: number): Promise<void> {
   // On n'ouvre le panneau que si un héros en mode MANUEL a des points à dépenser.
   let manuelAvecPoints = false;
   for (const p of run.persos) {
-    if (gagnerXPPerso(p, gain) > 0) p.flashNiveau = true; // pour l'animation dans le panneau d'équipe
+    if (gagnerXPPerso(p, gain, run.trancheId) > 0) p.flashNiveau = true; // pour l'animation dans le panneau d'équipe
     if (!p.elementChoisi && p.progression.pointsDispo > 0) manuelAvecPoints = true;
   }
   if (manuelAvecPoints) {

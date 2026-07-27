@@ -142,9 +142,9 @@ export const TRANCHES: TrancheDef[] = [
     // ordre de jeu = niveau officiel des donjons (cf. PLAN-CONTENU.md §4)
     zones: ["incarnam", "astrub", "tainela", "tofus", "akademie", "kankreblath",
       "maison_fantome", "scarafeuilles", "forgerons", "larves", "grotte_hesque", "kwakwa"] },
-  { id: "t2", nom: "Tranche 2", niveaux: [51, 100], active: false, zones: [] },
-  { id: "t3", nom: "Tranche 3", niveaux: [101, 150], active: false, zones: [] },
-  { id: "t4", nom: "Tranche 4", niveaux: [151, 199], active: false, zones: [] },
+  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], active: false, zones: [] },
+  { id: "t3", nom: "Tranche 3", niveaux: [100, 150], active: false, zones: [] },
+  { id: "t4", nom: "Tranche 4", niveaux: [150, 199], active: false, zones: [] },
   { id: "t5", nom: "Tranche 5", niveaux: [200, 200], active: false, zones: [] },
 ];
 
