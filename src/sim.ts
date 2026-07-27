@@ -15,7 +15,8 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, XP_PAR_TYPE, xpEffective, SORTS, butinToile,
+  TRANCHES, zonesDeTranche, offsetToile, COMBATS, MONSTRES, CLASSES, ITEMS, XP_PAR_TYPE, xpEffective, SORTS, butinToile,
+  type TrancheDef, type ZoneDef,
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
@@ -27,9 +28,11 @@ import {
 } from "./run";
 import type { ItemInstance, Rarete, Stats } from "./types";
 
-// Zones de la tranche mesurée (t1, seule pourvue de contenu), dans l'ORDRE DE JEU
-// (la courbe d'XP en dépend).
-const ZONES_SIM = zonesDeTranche(TRANCHES[0]);
+// Tranches mesurées par le banc, dans l'ordre d'affichage du rapport. T1 doit
+// TOUJOURS rester mesurée en premier et à l'identique (garde-fou anti-régression :
+// ses chiffres ne doivent jamais bouger d'un run de sim à l'autre) ; ajouter d'autres
+// ids ici pour les faire apparaître à la suite (ex. T2 pour mesurer le Clos des Blops).
+const TRANCHES_MESUREES: TrancheDef[] = [TRANCHES[0], TRANCHES[1]];
 
 // --- Paramètres du sim (tunables) --------------------------------------------
 // Les classes ont 0 stat offensive de base → l'élément vient des points investis.
@@ -102,18 +105,25 @@ function meilleurItemToile(pool: string[], slot: string, stat: keyof Stats): str
   return candidats.sort((a, b) => score(b) - score(a))[0];
 }
 
-/** Niveaux attendus par zone : à l'ENTRÉE (normales/élites) et en FIN de zone
- *  (le donjon se joue après les combats de la zone — mesurer le boss au niveau
- *  d'entrée le rendait artificiellement injouable en début de tranche). */
-function courbeNiveaux(): { entree: number[]; fin: number[] } {
+/** Niveaux attendus par zone d'une tranche donnée : à l'ENTRÉE (normales/élites)
+ *  et en FIN de zone (le donjon se joue après les combats de la zone — mesurer le
+ *  boss au niveau d'entrée le rendait artificiellement injouable en début de
+ *  tranche). Départ/cap/xpMult viennent tous de `TrancheDef` — mêmes formules que
+ *  le jeu réel (`xpEffective`, partagée), la numérotation de toile continue d'une
+ *  tranche à l'autre via `offsetToile`. Pour t1 (départ niveau 1, xpMult absent,
+ *  offset 0) ceci reproduit EXACTEMENT l'ancien calcul figé sur "t1"/cap 50. */
+function courbeNiveaux(tranche: TrancheDef, zones: ZoneDef[]): { entree: number[]; fin: number[] } {
   const p = progressionInitiale();
+  p.niveau = tranche.niveaux[0];
+  const niveauMax = tranche.niveaux[1];
+  const offset = offsetToile(tranche.id);
   const entree: number[] = [];
   const fin: number[] = [];
-  for (let z = 0; z < ZONES_SIM.length; z++) {
+  for (let z = 0; z < zones.length; z++) {
     entree.push(p.niveau);
-    const toile = z + 1;
-    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat, toile, "t1"), 50);
-    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat_dur, toile, "t1"), 50);
+    const toile = offset + z + 1;
+    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat, toile, tranche.id), niveauMax);
+    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat_dur, toile, tranche.id), niveauMax);
     fin.push(p.niveau);
   }
   return { entree, fin };
@@ -218,12 +228,16 @@ function drapeaux(type: string, nu: Bilan, mi: Bilan, set: Bilan): string {
 // --- Rapport -----------------------------------------------------------------
 describe("équilibrage — simulation par rencontre", () => {
   it("rapport", async () => {
-    const { entree: niveaux, fin: niveauxFin } = courbeNiveaux();
     const out: string[] = [];
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
     out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${ELEM_DE_STAT[t.stat as string]})`).join(" ")}`);
-    out.push(`Niveau attendu/zone: ${ZONES_SIM.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
     out.push(`Colonnes — NU (sans stuff) | MI (2 pièces, toile commun) | SET (4 pièces, toile commun) : win% · tours · PV%restant(sur victoire)\n`);
+
+    for (const tranche of TRANCHES_MESUREES) {
+    const ZONES_SIM = zonesDeTranche(tranche);
+    const { entree: niveaux, fin: niveauxFin } = courbeNiveaux(tranche, ZONES_SIM);
+    out.push(`\n### ${tranche.nom} ###`);
+    out.push(`Niveau attendu/zone: ${ZONES_SIM.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
 
     for (let z = 0; z < ZONES_SIM.length; z++) {
       const zone = ZONES_SIM[z];
@@ -265,9 +279,10 @@ describe("équilibrage — simulation par rencontre", () => {
       }
       out.push("");
     }
-    // eslint-disable-next-line no-console
-    console.log(out.join("\n"));
     expect(niveaux.length).toBe(ZONES_SIM.length);
     expect(niveauxFin.length).toBe(ZONES_SIM.length);
+    }
+    // eslint-disable-next-line no-console
+    console.log(out.join("\n"));
   });
 });

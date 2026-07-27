@@ -180,7 +180,7 @@
     "initiative": 11,
     "nom": "Blop Coco Royal",
     "pa": 8,
-    "pv": 620,
+    "pv": 300,
     "resistances": {
       "air": 0.5,
       "eau": 0.1,
@@ -233,7 +233,7 @@
     "initiative": 11,
     "nom": "Blop Griotte Royal",
     "pa": 8,
-    "pv": 620,
+    "pv": 300,
     "resistances": {
       "air": 0.1,
       "eau": 0.1,
@@ -286,7 +286,7 @@
     "initiative": 11,
     "nom": "Blop Indigo Royal",
     "pa": 8,
-    "pv": 620,
+    "pv": 300,
     "resistances": {
       "air": 0.1,
       "eau": 0.5,
@@ -339,7 +339,7 @@
     "initiative": 11,
     "nom": "Blop Reinette Royal",
     "pa": 8,
-    "pv": 620,
+    "pv": 300,
     "resistances": {
       "air": 0.1,
       "eau": 0.1,
