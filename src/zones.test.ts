@@ -33,14 +33,9 @@ describe("intégrité des zones", () => {
         }
       });
 
-      it("a un pool de butin à toile dont les objets existent (sauf zone dont la panoplie n'est pas encore livrée)", () => {
+      it("a un pool de butin à toile dont les objets existent", () => {
         const pools = butinToile(zone.id);
-        if (!pools) {
-          // TODO(panoplie toile 13) : le Clos des Blops n'a pas encore sa panoplie
-          // (chantier séparé) — aucune AUTRE zone ne doit se retrouver sans butin.
-          expect(zone.id, `${zone.id} sans pool de butin`).toBe("clos_des_blops");
-          return;
-        }
+        expect(pools, `${zone.id} sans pool de butin`).toBeTruthy();
         for (const id of itemsDeToile(pools)) expect(ITEMS[id], `objet ${id}`).toBeDefined();
       });
     });

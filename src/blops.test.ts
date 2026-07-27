@@ -3,8 +3,8 @@
 //  signatures des Blops Royaux, salles de boss et butin.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, offsetToile } from "./data";
-import { toileDeZone } from "./run";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, offsetToile, ITEMS, butinToile, itemsDeToile } from "./data";
+import { toileDeZone, instanceDuTier } from "./run";
 
 const COULEURS = ["griotte", "indigo", "reinette", "coco"] as const;
 const STAT_DE_COULEUR = { griotte: "intelligence", indigo: "chance", reinette: "force", coco: "agilite" } as const;
@@ -124,5 +124,41 @@ describe("zone Clos des Blops", () => {
       const royaux = COMBATS[id].ennemis.filter((e) => e.monstre.endsWith("_royal"));
       for (const r of royaux) expect(MONSTRES[r.monstre].dofus).toBe("dofus_pourpre");
     }
+  });
+});
+
+describe("panoplie Blop (toile 13)", () => {
+  const PIECES = { blopanneau: "anneau", blopronne: "coiffe", blopcape: "cape", blopee: "arme" } as const;
+
+  it("les 4 pièces existent, aux 4 raretés, dans la même panoplie", () => {
+    for (const [id, slot] of Object.entries(PIECES)) {
+      const it = ITEMS[id];
+      expect(it, `${id} manquant`).toBeTruthy();
+      expect(it.slot).toBe(slot);
+      expect(it.panoplie).toBe("Panoplie du Blop");
+      for (const r of ["commun", "rare", "epique", "legendaire"] as const) {
+        expect(it.tiers?.[r], `${id} sans palier ${r}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("le pool de la toile 13 est celui du Clos des Blops", () => {
+    const pool = butinToile("clos_des_blops");
+    expect(pool).toBeTruthy();
+    expect(itemsDeToile(pool)).toEqual(expect.arrayContaining(Object.keys(PIECES)));
+  });
+
+  it("un commun de toile 13 bat un commun de toile 12 sur le même slot", () => {
+    const t13 = instanceDuTier("blopronne", "commun")!;
+    const t12 = instanceDuTier("kwakoiffe_de_flammes", "commun")!;
+    const score = (i: typeof t13) => (i.adaptatif ?? 0) + (i.stats.vitalite ?? 0);
+    expect(score(t13)).toBeGreaterThan(score(t12));
+  });
+
+  it("l'arme de la panoplie porte un profil d'attaque", () => {
+    const arme = ITEMS.blopee.tiers!.commun!.attaque;
+    expect(arme).toBeTruthy();
+    expect(arme!.coutPA).toBeGreaterThan(0);
+    expect(arme!.baseMax).toBeGreaterThan(arme!.baseMin);
   });
 });
