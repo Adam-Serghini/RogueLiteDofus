@@ -1477,41 +1477,49 @@
       "commun": {
         "adaptatif": 9,
         "resistances": {
+          "air": 0.02,
           "eau": 0.02,
-          "feu": 0.02
+          "feu": 0.02,
+          "terre": 0.02
         },
         "stats": {
-          "vitalite": 10
+          "vitalite": 12
         }
       },
       "epique": {
         "adaptatif": 15,
         "resistances": {
-          "eau": 0.04,
-          "feu": 0.04
+          "air": 0.03,
+          "eau": 0.03,
+          "feu": 0.03,
+          "terre": 0.03
         },
         "stats": {
-          "vitalite": 20
+          "vitalite": 22
         }
       },
       "legendaire": {
         "adaptatif": 19,
         "resistances": {
-          "eau": 0.05,
-          "feu": 0.05
+          "air": 0.04,
+          "eau": 0.04,
+          "feu": 0.04,
+          "terre": 0.04
         },
         "stats": {
-          "vitalite": 27
+          "vitalite": 29
         }
       },
       "rare": {
         "adaptatif": 11,
         "resistances": {
-          "eau": 0.03,
-          "feu": 0.03
+          "air": 0.02,
+          "eau": 0.02,
+          "feu": 0.02,
+          "terre": 0.02
         },
         "stats": {
-          "vitalite": 14
+          "vitalite": 16
         }
       }
     }

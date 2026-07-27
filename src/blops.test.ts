@@ -148,11 +148,30 @@ describe("panoplie Blop (toile 13)", () => {
     expect(itemsDeToile(pool)).toEqual(expect.arrayContaining(Object.keys(PIECES)));
   });
 
-  it("un commun de toile 13 bat un commun de toile 12 sur le même slot", () => {
-    const t13 = instanceDuTier("blopronne", "commun")!;
-    const t12 = instanceDuTier("kwakoiffe_de_flammes", "commun")!;
-    const score = (i: typeof t13) => (i.adaptatif ?? 0) + (i.stats.vitalite ?? 0);
-    expect(score(t13)).toBeGreaterThan(score(t12));
+  it("un commun de toile 13 bat un commun de toile 12, slot par slot (adaptatif, vitalité, AUCUNE résistance en régression)", () => {
+    const PAIRES: [string, string][] = [
+      ["blopronne", "kwakoiffe_de_flammes"],
+      ["blopcape", "kwape_de_glace"],
+      ["blopanneau", "kwakanneau_de_terre"],
+      ["blopee", "kwaklame_de_vent"],
+    ];
+    const ELEMENTS = ["air", "eau", "feu", "terre"] as const;
+    for (const [id13, id12] of PAIRES) {
+      const t13 = instanceDuTier(id13, "commun")!;
+      const t12 = instanceDuTier(id12, "commun")!;
+      expect(t13.adaptatif ?? 0, `${id13} : adaptatif doit dépasser ${id12}`).toBeGreaterThan(t12.adaptatif ?? 0);
+      expect(t13.stats.vitalite ?? 0, `${id13} : vitalité ne doit pas régresser vs ${id12}`)
+        .toBeGreaterThanOrEqual(t12.stats.vitalite ?? 0);
+      for (const e of ELEMENTS) {
+        expect(t13.resistances?.[e] ?? 0, `${id13} : résistance ${e} ne doit pas régresser vs ${id12}`)
+          .toBeGreaterThanOrEqual(t12.resistances?.[e] ?? 0);
+      }
+    }
+    // l'arme : les dégâts de base progressent aussi
+    const armeT13 = ITEMS.blopee.tiers!.commun!.attaque!;
+    const armeT12 = ITEMS.kwaklame_de_vent.tiers!.commun!.attaque!;
+    expect(armeT13.baseMin).toBeGreaterThan(armeT12.baseMin);
+    expect(armeT13.baseMax).toBeGreaterThan(armeT12.baseMax);
   });
 
   it("l'arme de la panoplie porte un profil d'attaque", () => {
