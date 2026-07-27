@@ -20,7 +20,7 @@ const bossDe = (combatId: string): Combatant =>
 describe("signatures des boss", () => {
   it("chaque boss a exactement un sort signature en tête de kit (sauf le Kwakwa : mue moteur)", () => {
     for (const zone of ZONES) {
-      const boss = bossDe(zone.pools.boss);
+      const boss = bossDe(zone.pools.boss[0]);
       const m = MONSTRES[boss.monstreId!];
       const aSignatureSort = !["kwakwa", "directeur_grunob"].includes(m.id); // mue moteur / passif de ligne
       if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.06);

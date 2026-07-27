@@ -83,12 +83,12 @@ describe("appliquerAscensionEnnemis", () => {
     expect(donjon.length).toBe(monte().length);
   });
   it("bossEnrage marque le boss (donjon), bossFinalPaBonus seulement en dernière zone", () => {
-    const donjon = fabriquerEnnemis(ZONES[0].pools.boss);
+    const donjon = fabriquerEnnemis(ZONES[0].pools.boss[0]);
     appliquerAscensionEnnemis(donjon, { bossEnrage: 0.1, bossFinalPaBonus: 2 }, { type: "donjon", derniereZone: false, rng: () => 0 });
     const boss = donjon.find((e) => MONSTRES[e.monstreId!]?.boss)!;
     const paAvant = boss.paMax;
     expect(boss.enrage).toBeCloseTo(0.1);
-    const donjon2 = fabriquerEnnemis(ZONES[0].pools.boss);
+    const donjon2 = fabriquerEnnemis(ZONES[0].pools.boss[0]);
     appliquerAscensionEnnemis(donjon2, { bossFinalPaBonus: 2 }, { type: "donjon", derniereZone: true, rng: () => 0 });
     const boss2 = donjon2.find((e) => MONSTRES[e.monstreId!]?.boss)!;
     expect(boss2.paMax).toBe(paAvant + 2);

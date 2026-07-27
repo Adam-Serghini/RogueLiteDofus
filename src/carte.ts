@@ -47,7 +47,7 @@ function enrichir(rng: Rng, node: MapNode, pools: ZonePools, nbModifsElite: numb
       node.eliteModifs = tirerDistincts(rng, MODIFICATEURS_ELITE, nbModifsElite).map((m) => m.id);
       break;
     case "donjon":
-      node.combatId = pools.boss;
+      node.combatId = pick(rng, pools.boss);
       break;
     // taverne / otomai / zaap : pas de combatId fixe (zaap résolu à l'entrée)
   }

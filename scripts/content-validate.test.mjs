@@ -7,7 +7,7 @@ const base = () => ({
   classes: { iop: { id: "iop", nom: "Iop", pvBase: 60, stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0 }, pa: 6, initiative: 8, sorts: ["morsure"] } },
   monstres: { bouftou: { id: "bouftou", nom: "Bouftou", pv: 20, stats: { force: 10, intelligence: 0, agilite: 2, vitalite: 5 }, pa: 4, initiative: 7, resistances: {}, sorts: ["morsure"], ia: "agressif" } },
   combats: { c1: { nom: "Troupeau", ennemis: [{ monstre: "bouftou", position: 0 }] } },
-  zones_pools: { tainela: { normales: ["c1"], elite: ["c1"], boss: "c1" } },
+  zones_pools: { tainela: { normales: ["c1"], elite: ["c1"], boss: ["c1"] } },
   items: { anneau_test: { id: "anneau_test", nom: "Anneau Test", slot: "anneau", tiers: { commun: { stats: { vitalite: 4 } }, rare: { stats: { vitalite: 6 } } } } },
   butin_toiles: { "1": { normales: ["anneau_test"], elites: [], boss: [] } },
 });
@@ -64,7 +64,7 @@ describe("passe 2 — références croisées", () => {
     expect(validerContenu(modif((c) => { c.combats.c1.ennemis[0].monstre = "fantome"; }), base())).not.toEqual([]);
   });
   it("refuse un combat inexistant dans un pool de zone", () => {
-    expect(validerContenu(modif((c) => { c.zones_pools.tainela.boss = "c99"; }), base())).not.toEqual([]);
+    expect(validerContenu(modif((c) => { c.zones_pools.tainela.boss = ["c99"]; }), base())).not.toEqual([]);
   });
   it("refuse un item inexistant dans un butin de toile", () => {
     expect(validerContenu(modif((c) => { c.butin_toiles["1"].normales = ["item_fantome"]; }), base())).not.toEqual([]);
@@ -92,7 +92,7 @@ describe("passe 3 — lecture seule / numérique", () => {
     expect(err.some((e) => e.includes("[zones_pools: tainela]") && e.includes("supprimée"))).toBe(true);
   });
   it("refuse l'ajout d'une zone à zones_pools", () => {
-    const err = validerContenu(modif((c) => { c.zones_pools.nouvelle_zone = { normales: ["c1"], boss: "c1" }; }), base());
+    const err = validerContenu(modif((c) => { c.zones_pools.nouvelle_zone = { normales: ["c1"], boss: ["c1"] }; }), base());
     expect(err.some((e) => e.includes("[zones_pools: nouvelle_zone]") && e.includes("ajoutée"))).toBe(true);
   });
 });

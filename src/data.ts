@@ -99,7 +99,7 @@ export interface CombatDef {
 }
 
 // --- Zones (mondes traversés successivement durant une run) ------------------
-export interface ZonePools { normales: string[]; elite: string[]; boss: string; }
+export interface ZonePools { normales: string[]; elite: string[]; boss: string[]; }
 export interface ZoneDef {
   id: string;
   nom: string;
@@ -336,7 +336,7 @@ export const SORT_DOSSIER: Record<string, string> = (() => {
 
 /** Espèces de monstres apparaissant dans une zone (uniques) — pour l'encyclopédie. */
 export function monstresDeZone(zone: ZoneDef): string[] {
-  const combatIds = [...zone.pools.normales, ...zone.pools.elite, zone.pools.boss];
+  const combatIds = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
   const ids = new Set<string>();
   for (const cid of combatIds) {
     for (const e of COMBATS[cid]?.ennemis ?? []) ids.add(e.monstre);

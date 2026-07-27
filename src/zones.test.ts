@@ -8,7 +8,7 @@ import { ZONES, COMBATS, MONSTRES, ITEMS, TRANCHES, zonesDeTranche, butinToile, 
 describe("intégrité des zones", () => {
   for (const zone of ZONES) {
     describe(zone.nom, () => {
-      const combatIds = [...zone.pools.normales, ...zone.pools.elite, zone.pools.boss];
+      const combatIds = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
 
       it("référence des combats existants", () => {
         for (const id of combatIds) expect(COMBATS[id], `combat ${id}`).toBeDefined();
@@ -22,9 +22,11 @@ describe("intégrité des zones", () => {
         }
       });
 
-      it("le combat de donjon contient exactement un boss", () => {
-        const boss = COMBATS[zone.pools.boss].ennemis.filter((e) => MONSTRES[e.monstre]?.boss);
-        expect(boss.length, `${zone.pools.boss} doit avoir 1 boss`).toBe(1);
+      it("chaque combat de donjon du pool contient exactement un boss", () => {
+        for (const combatId of zone.pools.boss) {
+          const boss = COMBATS[combatId].ennemis.filter((e) => MONSTRES[e.monstre]?.boss);
+          expect(boss.length, `${combatId} doit avoir 1 boss`).toBe(1);
+        }
       });
 
       it("a un pool de butin à toile dont les objets existent", () => {
@@ -62,10 +64,12 @@ describe("distribution des Dofus (un par groupe de zones)", () => {
     const zones = TRANCHES[0].zones;
     zones.forEach((zoneId, i) => {
       const zone = ZONES.find((z) => z.id === zoneId)!;
-      const boss = COMBATS[zone.pools.boss].ennemis
-        .map((e) => MONSTRES[e.monstre])
-        .find((m) => m.boss)!;
-      expect(boss.dofus, `${zone.nom} : son boss doit lâcher un Dofus`).toBe(i < 6 ? "dofawa" : "dofus_argente");
+      for (const combatId of zone.pools.boss) {
+        const boss = COMBATS[combatId].ennemis
+          .map((e) => MONSTRES[e.monstre])
+          .find((m) => m.boss)!;
+        expect(boss.dofus, `${zone.nom} (${combatId}) : son boss doit lâcher un Dofus`).toBe(i < 6 ? "dofawa" : "dofus_argente");
+      }
     });
   });
 });

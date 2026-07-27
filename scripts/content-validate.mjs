@@ -92,7 +92,8 @@ export function validerContenu(contenu, base) {
     if (!Array.isArray(z.normales) || z.normales.length === 0) E("zones_pools", id, "normales doit être une liste non vide");
     if (z.elite !== undefined && (!Array.isArray(z.elite) || !z.elite.every((e) => typeof e === "string")))
       E("zones_pools", id, "elite doit être une liste d'identifiants de combats");
-    if (typeof z.boss !== "string" || !z.boss) E("zones_pools", id, "boss manquant");
+    if (!Array.isArray(z.boss) || !z.boss.length || z.boss.some((c) => typeof c !== "string" || !c))
+      E("zones_pools", id, "boss manquant (liste non vide de combats attendue)");
   }
 
   // ---- Passe 2 : références croisées --------------------------------------
@@ -112,7 +113,7 @@ export function validerContenu(contenu, base) {
     const combatsRef = [
       ...(Array.isArray(z.normales) ? z.normales : []),
       ...(Array.isArray(z.elite) ? z.elite : []),
-      ...(typeof z.boss === "string" ? [z.boss] : []),
+      ...(Array.isArray(z.boss) ? z.boss : []),
     ].filter(Boolean);
     for (const cId of combatsRef)
       if (!contenu.combats[cId]) E("zones_pools", id, `le combat « ${cId} » n'existe pas`);

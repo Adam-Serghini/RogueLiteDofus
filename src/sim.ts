@@ -235,7 +235,7 @@ describe("équilibrage — simulation par rencontre", () => {
       const lignes: Array<{ id: string; type: string }> = [
         ...zone.pools.normales.map((id) => ({ id, type: "normale" })),
         ...zone.pools.elite.map((id) => ({ id, type: "élite" })),
-        { id: zone.pools.boss, type: "boss" },
+        ...zone.pools.boss.map((id) => ({ id, type: "boss" as const })),
       ];
       // le donjon se joue en FIN de zone : équipes de boss au niveau de sortie
       const runNuBoss = equipeReference(niveauxFin[z]);

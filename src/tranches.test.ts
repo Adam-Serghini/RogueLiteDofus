@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { CLASSES, trancheDe, localiserZone, offsetToile, xpEffective, XP_PAR_TYPE, XP_PAR_TOILE, type TrancheDef } from "./data";
+import { genererCarte } from "./carte";
+import { CLASSES, ZONES, trancheDe, localiserZone, offsetToile, xpEffective, XP_PAR_TYPE, XP_PAR_TOILE, type TrancheDef } from "./data";
 import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable, archiverEquipe, heritagePour, runDepuisHeritage, rollItem, chargerMeta, sauverMeta, pvMaxPerso, archiveDe } from "./run";
 import { progressionInitiale, pvMaxFor } from "./progression";
 import { chargerConfig, sauverConfig, type AllocationPref } from "./config";
@@ -268,5 +269,26 @@ describe("héritage d'une tranche à l'autre", () => {
     delete brut.heritage;
     localStorage.setItem("rld_meta_v0", JSON.stringify(brut));
     expect(chargerMeta().heritage).toEqual({});
+  });
+});
+
+describe("pool de boss en liste", () => {
+  it("le nœud donjon tire sa rencontre dans le pool de boss de la zone", () => {
+    const zone = ZONES.find((z) => z.id === "incarnam")!;
+    expect(Array.isArray(zone.pools.boss)).toBe(true);
+    let rng = 0.99; // rng constant : tirage déterministe
+    const carte = genererCarte(() => rng, zone.pools);
+    const donjon = carte.noeuds.find((n) => n.type === "donjon")!;
+    expect(zone.pools.boss).toContain(donjon.combatId);
+  });
+
+  it("un pool à plusieurs rencontres les tire toutes selon le rng", () => {
+    const pools = { normales: ["inc_1"], elite: ["inc_elite"], boss: ["inc_boss", "kwa_boss"] };
+    const tires = new Set<string>();
+    for (const r of [0.1, 0.9]) {
+      const carte = genererCarte(() => r, pools);
+      tires.add(carte.noeuds.find((n) => n.type === "donjon")!.combatId!);
+    }
+    expect(tires.size).toBe(2); // les deux rencontres sont atteignables
   });
 });

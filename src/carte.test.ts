@@ -34,7 +34,7 @@ function accessibles(carte: GameMap): Set<string> {
 }
 
 // pools de test (les ids historiques existent toujours dans data.ts)
-const POOLS = { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: "boss" };
+const POOLS = { normales: ["combat_1", "combat_2", "combat_3"], elite: ["combat_elite"], boss: ["boss"] };
 
 // 30 graines variées : les invariants doivent tenir pour toutes.
 const cartes = Array.from({ length: 30 }, (_, i) => genererCarte(mulberry32(i * 2654435761), POOLS));
