@@ -179,7 +179,7 @@
     "img": "/assets/monstres/blop_coco_royal.png",
     "initiative": 11,
     "nom": "Blop Coco Royal",
-    "pa": 8,
+    "pa": 6,
     "pv": 300,
     "resistances": {
       "air": 0.5,
@@ -193,7 +193,7 @@
       "morsure"
     ],
     "stats": {
-      "agilite": 34,
+      "agilite": 80,
       "chance": 16,
       "force": 16,
       "intelligence": 16,
@@ -232,7 +232,7 @@
     "img": "/assets/monstres/blop_griotte_royal.png",
     "initiative": 11,
     "nom": "Blop Griotte Royal",
-    "pa": 8,
+    "pa": 6,
     "pv": 300,
     "resistances": {
       "air": 0.1,
@@ -249,7 +249,7 @@
       "agilite": 16,
       "chance": 16,
       "force": 16,
-      "intelligence": 34,
+      "intelligence": 80,
       "vitalite": 150
     }
   },
@@ -285,7 +285,7 @@
     "img": "/assets/monstres/blop_indigo_royal.png",
     "initiative": 11,
     "nom": "Blop Indigo Royal",
-    "pa": 8,
+    "pa": 6,
     "pv": 300,
     "resistances": {
       "air": 0.1,
@@ -300,7 +300,7 @@
     ],
     "stats": {
       "agilite": 16,
-      "chance": 34,
+      "chance": 80,
       "force": 16,
       "intelligence": 16,
       "vitalite": 150
@@ -338,7 +338,7 @@
     "img": "/assets/monstres/blop_reinette_royal.png",
     "initiative": 11,
     "nom": "Blop Reinette Royal",
-    "pa": 8,
+    "pa": 6,
     "pv": 300,
     "resistances": {
       "air": 0.1,
@@ -354,7 +354,7 @@
     "stats": {
       "agilite": 16,
       "chance": 16,
-      "force": 34,
+      "force": 80,
       "intelligence": 16,
       "vitalite": 150
     }
@@ -375,7 +375,7 @@
       "morsure"
     ],
     "stats": {
-      "agilite": 70,
+      "agilite": 46,
       "chance": 14,
       "force": 14,
       "intelligence": 14,
@@ -1023,7 +1023,7 @@
     "stats": {
       "agilite": 14,
       "chance": 14,
-      "force": 70,
+      "force": 46,
       "intelligence": 14,
       "vitalite": 130
     }
@@ -2205,7 +2205,7 @@
     "initiative": 6,
     "nom": "Tronkoblop",
     "pa": 6,
-    "pv": 190,
+    "pv": 215,
     "resistances": {
       "eau": -0.15,
       "feu": 0.2
@@ -2218,8 +2218,8 @@
       "agilite": 14,
       "chance": 14,
       "force": 14,
-      "intelligence": 45,
-      "vitalite": 140
+      "intelligence": 58,
+      "vitalite": 118
     }
   },
   "vampire": {

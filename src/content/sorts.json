@@ -160,8 +160,8 @@
     "type": "degats"
   },
   "bourrasque_de_pollen": {
-    "baseMax": 22,
-    "baseMin": 16,
+    "baseMax": 19,
+    "baseMin": 14,
     "cible": "ennemi_ligne",
     "cooldownTours": 2,
     "coutPA": 6,
@@ -169,7 +169,7 @@
     "desc": "Blop Coco Royal — souffle une bourrasque de pollen : dégâts et repousse la cible en rangée arrière.",
     "id": "bourrasque_de_pollen",
     "nom": "Bourrasque de pollen",
-    "scaling": 0.45,
+    "scaling": 0.4,
     "type": "degats"
   },
   "bulle": {
@@ -1228,15 +1228,15 @@
     "type": "degats"
   },
   "pluie_de_pommes": {
-    "baseMax": 21,
-    "baseMin": 15,
+    "baseMax": 23,
+    "baseMin": 17,
     "cible": "ennemi_ligne",
     "cooldownTours": 2,
     "coutPA": 6,
     "desc": "Blop Reinette Royal — fait pleuvoir les pommes sur toute la rangée ciblée.",
     "id": "pluie_de_pommes",
     "nom": "Pluie de pommes",
-    "scaling": 0.42,
+    "scaling": 0.48,
     "type": "degats",
     "zoneLigne": true
   },

@@ -41,12 +41,15 @@ describe("bestiaire du Clos des Blops", () => {
     }
   });
 
-  it("les 4 Royaux sont des boss à 8 PA qui résistent fortement dans leur couleur", () => {
+  it("les 4 Royaux sont des boss à 6 PA qui résistent fortement dans leur couleur", () => {
     for (const c of COULEURS) {
       const r = MONSTRES[`blop_${c}_royal`];
       expect(r, `blop_${c}_royal manquant`).toBeTruthy();
       expect(r.boss).toBe(true);
-      expect(r.pa).toBe(8); // salle à DEUX boss : 8 PA et non 10
+      // salle à DEUX boss : 6 PA et non 10 — et 6 exactement, parce qu'un Royal
+      // ne lance QU'UN sort par tour (signature ou charge, 6 PA chacun) :
+      // les 8 PA d'origine laissaient 2 PA morts, indépassables.
+      expect(r.pa).toBe(6);
       expect(r.resistances?.[ELEM_DE_COULEUR[c]]).toBeGreaterThanOrEqual(0.5);
       expect(r.archiNom).toBeUndefined();
     }
@@ -68,8 +71,29 @@ describe("signatures des Blops Royaux", () => {
       expect(r.sorts[0], `blop_${c}_royal : signature pas en tête`).toBe(sig);
       expect(SORTS[sig].coutPA).toBe(6);
       expect(SORTS[sig].cooldownTours).toBeGreaterThanOrEqual(2);
-      // 8 PA = signature (6) + une action du kit commun (2) : le kit doit être là
-      expect(r.sorts.length).toBeGreaterThan(1);
+      // 6 PA = EXACTEMENT une action par tour : la signature quand elle est
+      // prête, `charge` (6 PA aussi) pendant sa recharge. Le repli doit exister.
+      expect(r.sorts).toContain("charge");
+      expect(SORTS.charge.coutPA).toBe(6);
+    }
+  });
+
+  it("les Royaux frappent nettement plus fort que leurs escortes (fiction de boss)", () => {
+    // `charge` (6 PA, scaling 0.72) est le sort de référence des deux camps de
+    // la salle : on compare le coup type d'un Royal à celui de son escorte.
+    const coupType = (id: string, stat: string, sort: string) => {
+      const s = SORTS[sort];
+      const st = MONSTRES[id].stats as unknown as Record<string, number>;
+      return (s.baseMin + s.baseMax) / 2 + st[stat] * (s.scaling ?? 0);
+    };
+    const glouto = coupType("gloutoblop", "force", "charge");
+    const blopignon = coupType("blopignon", "agilite", "morsure");
+    for (const c of COULEURS) {
+      const royal = coupType(`blop_${c}_royal`, STAT_DE_COULEUR[c], "charge");
+      expect(royal, `blop_${c}_royal doit dominer le Gloutoblop`).toBeGreaterThan(glouto * 1.25);
+      expect(royal, `blop_${c}_royal doit dominer le Blopignon`).toBeGreaterThan(blopignon * 1.25);
+      // ... et le Blop normal de sa propre couleur
+      expect(royal).toBeGreaterThan(coupType(`blop_${c}`, STAT_DE_COULEUR[c], "morsure") * 1.25);
     }
   });
 
