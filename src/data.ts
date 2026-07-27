@@ -148,9 +148,37 @@ export const TRANCHES: TrancheDef[] = [
   { id: "t5", nom: "Tranche 5", niveaux: [200, 200], active: false, zones: [] },
 ];
 
-/** Zones (dans l'ordre de jeu) de la tranche active. */
+/** Zones (dans l'ordre de jeu) d'une tranche. */
 export function zonesDeTranche(tranche: TrancheDef): ZoneDef[] {
   return tranche.zones.map((id) => ZONES.find((z) => z.id === id)!);
+}
+
+/** Tranche par id — t1 par défaut si l'id est inconnu (rétro-compat des saves). */
+export function trancheDe(trancheId: string, tranches: TrancheDef[] = TRANCHES): TrancheDef {
+  return tranches.find((t) => t.id === trancheId) ?? tranches[0];
+}
+
+/** Localise une zone : sa tranche et son index (0-based) dans l'ordre de jeu. */
+export function localiserZone(
+  zoneId: string,
+  tranches: TrancheDef[] = TRANCHES,
+): { tranche: TrancheDef; index: number } | null {
+  for (const tranche of tranches) {
+    const index = tranche.zones.indexOf(zoneId);
+    if (index >= 0) return { tranche, index };
+  }
+  return null;
+}
+
+/** Toiles consommées par les tranches PRÉCÉDENTES (t1 → 0, t2 → 12) : la
+ *  numérotation des toiles est continue d'une tranche à l'autre. */
+export function offsetToile(trancheId: string, tranches: TrancheDef[] = TRANCHES): number {
+  let total = 0;
+  for (const t of tranches) {
+    if (t.id === trancheId) return total;
+    total += t.zones.length;
+  }
+  return 0;
 }
 
 /** Récompense d'XP par type de nœud de combat (tunable), multipliée par
