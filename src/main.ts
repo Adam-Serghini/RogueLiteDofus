@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, zonesDeTranche, trancheDe, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, zonesDeTranche, trancheDe, TRANCHES, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
 import { genererCarte } from "./carte";
 import {
@@ -14,6 +14,7 @@ import {
   appliquerArchimonstres, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
+  archiverEquipe, heritagePour, runDepuisHeritage,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -268,6 +269,19 @@ async function jouerRun(
   if (reprise) {
     run = reprise.run;
     depart = reprise.zoneIdx;
+  } else if (tranche.id !== TRANCHES[0].id) {
+    // tranche ≠ première : départ hérité ou équipe neuve au niveau de la tranche
+    const arch = heritagePour(meta, tranche.id);
+    if (!arch) return null; // sécurité : pas d'archive → retour à l'accueil
+    const choixDepart = await ui.showDepartTranche(tranche, arch);
+    if (!choixDepart) return null;
+    if (choixDepart === "neuve") {
+      const choix = choixImpose ?? (await ui.showChoixEquipe());
+      if (!choix) return null;
+      run = nouvelleRun(choix, ascension, tranche.id);
+    } else {
+      run = runDepuisHeritage(arch, choixDepart === "heritage-stuff", tranche.id, ascension);
+    }
   } else {
     const choix = choixImpose ?? (await ui.showChoixEquipe());
     if (!choix) return null; // retour à l'accueil depuis la sélection
@@ -306,7 +320,7 @@ async function jouerRun(
     effacerRunEnCours();
     enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
     enregistrerAscension(meta, tranche.id, run.ascension); // record d'Ascension de la tranche
-    await ui.showRecap(run, true, verifierSucces(meta, run, true));
+    await ui.showRecap(run, true, verifierSucces(meta, run, true), () => archiverEquipe(meta, tranche.id, run));
     return null;
   } finally {
     ui.setFondTranche(null);

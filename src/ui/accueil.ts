@@ -1,7 +1,7 @@
 // =============================================================================
 //  ui/accueil.ts — écrans d'accueil : démarrage, choix d'équipe, succès, Dofus.
 // =============================================================================
-import { DOFUS, TRANCHES, ASCENSION, ASCENSION_MAX } from "../data";
+import { DOFUS, TRANCHES, ASCENSION, ASCENSION_MAX, CLASSES, type TrancheDef } from "../data";
 import { escapeHtml, ecran, root } from "./dom";
 import {
   LOGO,
@@ -19,7 +19,7 @@ import { renderDofusRack, carteClasse } from "./composants";
 import { classesDisponibles, SUCCES, recordAscension, trancheDeverrouillee, trancheJouable } from "../run";
 import { showSettings } from "./inventaire";
 import { showBestiaire, showArmurerie, showEncyclopedie } from "./collections";
-import type { Meta } from "../types";
+import type { Meta, HeritageEquipe } from "../types";
 
 // --- Écrans ------------------------------------------------------------------
 /** Infos affichées pour proposer la reprise d'une run sauvegardée. */
@@ -208,6 +208,32 @@ export function showChoixEquipe(): Promise<string[] | null> {
       document.getElementById("choix-retour")?.addEventListener("click", () => res(null));
     };
     draw();
+  });
+}
+
+/** Écran de départ d'une tranche ≠ 1 : reprendre l'équipe archivée (avec/sans stuff) ou en composer une neuve. */
+export function showDepartTranche(
+  tranche: TrancheDef, arch: HeritageEquipe,
+): Promise<"heritage-stuff" | "heritage-nu" | "neuve" | null> {
+  return new Promise((res) => {
+    const equipe = arch.persos
+      .map((p) => `${escapeHtml(CLASSES[p.classeId].nom)} <small>Niv. ${p.progression.niveau}</small>`)
+      .join(" · ");
+    const pieces = arch.persos.reduce((n, p) => n + Object.values(p.equipement).filter(Boolean).length, 0);
+    ecran(`
+      <h1>${escapeHtml(tranche.nom)}</h1>
+      <p class="sous-titre">Niveaux ${tranche.niveaux[0]}–${tranche.niveaux[1]}. Comment veux-tu partir ?</p>
+      <div class="depart-options">
+        <button id="dep-stuff" class="primaire">Reprendre l'équipe archivée<small>${equipe} — avec son équipement (${pieces} pièce(s))</small></button>
+        <button id="dep-nu" class="secondaire">Reprendre l'équipe, sans l'équipement<small>Mêmes héros, mêmes niveaux, nus</small></button>
+        <button id="dep-neuve" class="secondaire">Composer une équipe neuve<small>2 classes au choix, niveau ${tranche.niveaux[0]}, sans équipement</small></button>
+      </div>
+      <div class="boutons-ecran"><button id="dep-retour" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+    `);
+    document.getElementById("dep-stuff")?.addEventListener("click", () => res("heritage-stuff"));
+    document.getElementById("dep-nu")?.addEventListener("click", () => res("heritage-nu"));
+    document.getElementById("dep-neuve")?.addEventListener("click", () => res("neuve"));
+    document.getElementById("dep-retour")?.addEventListener("click", () => res(null));
   });
 }
 

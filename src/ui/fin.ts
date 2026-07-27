@@ -8,7 +8,9 @@ import { classSymbol, kamasHtml } from "./composants";
 import type { RunState, Succes } from "../run";
 
 /** Récap de fin de run (victoire ou wipe) : dégâts par héros, MVP, compteurs. */
-export function showRecap(run: RunState, victoire: boolean, nouveauxSucces: Succes[] = []): Promise<void> {
+export function showRecap(
+  run: RunState, victoire: boolean, nouveauxSucces: Succes[] = [], onArchiver?: () => void,
+): Promise<void> {
   return new Promise((res) => {
     const st = run.stats;
     const maxDegats = Math.max(1, ...Object.values(st.degats));
@@ -24,6 +26,12 @@ export function showRecap(run: RunState, victoire: boolean, nouveauxSucces: Succ
         </div>`;
       })
       .join("");
+    const archiveHtml = (victoire && onArchiver)
+      ? `<div class="recap-archive">
+           <p>Cette équipe peut poursuivre son voyage dans la tranche suivante — son équipement porté la suivra.</p>
+           <button id="btn-archiver" class="primaire">Archiver cette équipe</button>
+         </div>`
+      : "";
     ecran(`
       <h1 class="${victoire ? "" : "defaite"}">${victoire ? "🏆 Krosmoz traversé !" : "Équipe anéantie"}</h1>
       ${run.ascension >= 1 ? `<p class="asc-record">Ascension <span class="asc-badge">A${run.ascension}</span></p>` : ""}
@@ -37,8 +45,15 @@ export function showRecap(run: RunState, victoire: boolean, nouveauxSucces: Succ
       </div>
       <div class="recap-degats">${barres}</div>
       ${nouveauxSucces.length ? `<div class="recap-succes">${nouveauxSucces.map((su) => `<span class="succes-chip nouveau" title="${escapeHtml(su.desc)}">🏆 ${escapeHtml(su.nom)}</span>`).join("")}</div>` : ""}
+      ${archiveHtml}
       <div class="boutons-ecran"><button id="recap-retour" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
     `);
+    document.getElementById("btn-archiver")?.addEventListener("click", (e) => {
+      onArchiver!();
+      const btn = e.currentTarget as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Équipe archivée ✓"; // remplace l'archive précédente de cette tranche
+    });
     document.getElementById("recap-retour")?.addEventListener("click", () => res());
   });
 }
