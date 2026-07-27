@@ -383,6 +383,20 @@ export interface Progression {
   pointsInvestis: Stats; // points dépensés par stat, au-dessus de la base de classe
 }
 
+/** Héros archivé à la victoire d'une tranche (départ de la tranche suivante). */
+export interface HeritagePerso {
+  classeId: string;
+  progression: Progression;
+  elementChoisi?: Element;
+  statAuto?: keyof Stats;
+  position: number;
+  equipement: Partial<Record<EquipSlot, ItemInstance>>; // équipement PORTÉ uniquement
+}
+export interface HeritageEquipe {
+  trancheId: string; // tranche VAINCUE qui a produit cette archive
+  persos: HeritagePerso[];
+}
+
 /** État persistant — la seule chose qui survit à la mort. */
 export interface Meta {
   dofus: string[]; // ids des Dofus possédés (peut contenir des doublons)
@@ -392,6 +406,7 @@ export interface Meta {
   succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
   collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue
   ascension?: Record<string, number>; // record par tranche : plus haut palier VAINCU (absent = tranche jamais finie)
+  heritage?: Record<string, HeritageEquipe>; // archive par tranche vaincue (départ de la suivante)
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

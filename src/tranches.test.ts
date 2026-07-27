@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { trancheDe, localiserZone, offsetToile, type TrancheDef } from "./data";
-import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable } from "./run";
+import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable, archiverEquipe, heritagePour, runDepuisHeritage, rollItem, chargerMeta, sauverMeta } from "./run";
 import type { Meta } from "./types";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
@@ -127,5 +127,80 @@ describe("déverrouillage des tranches", () => {
     meta.ascension = { t1: 0 };
     expect(trancheJouable(meta, "t1")).toBe(true);
     expect(trancheJouable(meta, "t2")).toBe(false); // t2 n'a pas encore de contenu
+  });
+});
+
+describe("héritage d'une tranche à l'autre", () => {
+  it("archive les héros, leur niveau et leur équipement porté — mais ni l'inventaire ni les kamas", () => {
+    const meta = metaVide();
+    const run = nouvelleRun(["iop", "cra"]);
+    run.persos[0].progression.niveau = 50;
+    run.persos[0].equipement.coiffe = rollItem("chapeau_de_l_aventurier", () => 0.5)!;
+    run.inventaire.push(rollItem("chapeau_de_l_aventurier", () => 0.5)!);
+    run.kamas = 5000;
+
+    archiverEquipe(meta, "t1", run);
+    const arch = meta.heritage!.t1;
+    expect(arch.persos.map((p) => p.classeId)).toEqual(["iop", "cra"]);
+    expect(arch.persos[0].progression.niveau).toBe(50);
+    expect(arch.persos[0].equipement.coiffe).toBeTruthy();
+    expect(JSON.stringify(arch)).not.toContain("5000"); // pas de kamas dans l'archive
+    expect(arch.persos[1].equipement.coiffe).toBeUndefined();
+
+    // instantané profond : modifier la run après coup ne change pas l'archive
+    run.persos[0].progression.niveau = 1;
+    expect(meta.heritage!.t1.persos[0].progression.niveau).toBe(50);
+  });
+
+  it("heritagePour lit l'archive de la tranche PRÉCÉDENTE", () => {
+    const meta = metaVide();
+    archiverEquipe(meta, "t1", nouvelleRun(["iop"]));
+    expect(heritagePour(meta, "t2")).not.toBeNull();
+    expect(heritagePour(meta, "t1")).toBeNull(); // rien avant t1
+    expect(heritagePour(meta, "t3")).toBeNull(); // t2 jamais vaincue
+  });
+
+  it("runDepuisHeritage rend les mêmes héros, et sans stuff sur demande", () => {
+    const meta = metaVide();
+    const source = nouvelleRun(["iop", "cra"]);
+    source.persos[0].progression.niveau = 50;
+    source.persos[0].equipement.coiffe = rollItem("chapeau_de_l_aventurier", () => 0.5)!;
+    archiverEquipe(meta, "t1", source);
+    const arch = heritagePour(meta, "t2")!;
+
+    const avec = runDepuisHeritage(arch, true, "t2");
+    expect(avec.trancheId).toBe("t2");
+    expect(avec.persos[0].progression.niveau).toBe(50);
+    expect(avec.persos[0].equipement.coiffe).toBeTruthy();
+    expect(avec.kamas).toBe(0);
+    expect(avec.inventaire).toEqual([]);
+
+    const sans = runDepuisHeritage(arch, false, "t2");
+    expect(sans.persos[0].equipement).toEqual({});
+    expect(sans.persos[0].progression.niveau).toBe(50); // le niveau, lui, reste
+  });
+
+  it("les trois départs possibles produisent une run cohérente pour t2", () => {
+    const meta = metaVide();
+    const source = nouvelleRun(["iop", "cra"]);
+    source.persos.forEach((p) => { p.progression.niveau = 50; });
+    archiverEquipe(meta, "t1", source);
+    const arch = heritagePour(meta, "t2")!;
+    for (const avecStuff of [true, false]) {
+      const run = runDepuisHeritage(arch, avecStuff, "t2");
+      expect(run.trancheId).toBe("t2");
+      expect(run.persos.length).toBe(2);
+    }
+    const neuve = nouvelleRun(["xelor", "feca"], 0, "t2");
+    expect(neuve.persos.every((p) => p.progression.niveau === 50)).toBe(true);
+  });
+
+  it("une Meta d'avant l'héritage se charge sans le champ", () => {
+    const meta = metaVide();
+    sauverMeta(meta);
+    const brut = JSON.parse(localStorage.getItem("rld_meta_v0")!);
+    delete brut.heritage;
+    localStorage.setItem("rld_meta_v0", JSON.stringify(brut));
+    expect(chargerMeta().heritage).toEqual({});
   });
 });
