@@ -1083,19 +1083,28 @@ export function trancheDeverrouillee(meta: Meta, trancheId: string): boolean {
   return recordAscension(meta, TRANCHES[idx - 1].id) !== undefined;
 }
 
-/** Jouable = déverrouillée ET pourvue de zones (t2 attend encore son contenu). */
+/** Jouable = déverrouillée ET pourvue de zones (t3-t5 attendent leur contenu). */
 export function trancheJouable(meta: Meta, trancheId: string): boolean {
   return trancheDeverrouillee(meta, trancheId) && trancheDe(trancheId).zones.length > 0;
 }
 
-/** Multiplicateur de dégâts d'équipe issu des Dofus possédés (cumulable). */
+/** Multiplicateur de dégâts d'équipe issu des Dofus possédés (cumulable, PLAFONNÉ
+ *  à `maxCopies` PAR relique — sans quoi le farm d'un même boss cumulerait sans
+ *  borne un bonus permanent, et `Meta.dofus` n'est pas révocable). */
 export function bonusDegatsDofus(meta: Meta): number {
   let bonus = 1;
-  for (const id of meta.dofus) {
+  for (const [id, n] of Object.entries(comptesDofus(meta))) {
     const d = DOFUS[id];
-    if (d) bonus += d.bonusDegatsParCopie;
+    if (d) bonus += d.bonusDegatsParCopie * Math.min(n, d.maxCopies ?? Infinity);
   }
   return bonus;
+}
+
+/** Nombre de copies possédées, par relique. */
+function comptesDofus(meta: Meta): Record<string, number> {
+  const copies: Record<string, number> = {};
+  for (const id of meta.dofus) copies[id] = (copies[id] ?? 0) + 1;
+  return copies;
 }
 
 // Armurerie : rang des paliers de collection, dérivé de l'ordre canonique RARETES
@@ -1141,8 +1150,7 @@ export function paliersOcre(meta: Meta): { tier: number; paBonus: number; degats
 export function bonusEquipe(meta: Meta): { damageMult: number; paBonus: number; vitaBonus: number; resAllBonus: number } {
   const ocre = paliersOcre(meta);
   // effets « par copie, plafonnés à maxCopies » (Dofawa vita, Argenté résistance)
-  const copies: Record<string, number> = {};
-  for (const id of meta.dofus) copies[id] = (copies[id] ?? 0) + 1;
+  const copies = comptesDofus(meta);
   let vitaBonus = 0, resAllBonus = 0;
   for (const [id, n] of Object.entries(copies)) {
     const d = DOFUS[id];

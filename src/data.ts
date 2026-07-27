@@ -57,7 +57,7 @@ const CATALOGUE_DOFUS: Array<[string, string]> = [
 // Effets des Dofus dotés (les autres restent « à débloquer »).
 type DofusEffet = Partial<Omit<DofusDef, "id" | "nom" | "img">>;
 const DOFUS_EFFETS: Record<string, DofusEffet> = {
-  dofus_pourpre: { desc: "+15 % de dégâts pour toute l'équipe (cumulable).", bonusDegatsParCopie: 0.15 },
+  dofus_pourpre: { desc: "+15 % de dégâts pour toute l'équipe par copie (max 10).", bonusDegatsParCopie: 0.15, maxCopies: 10 },
   dofawa: { desc: "+1 Vitalité à toute l'équipe par copie (max 10).", vitaParCopie: 1, maxCopies: 10 },
   dofus_argente: { desc: "+1 % de résistance à tous les éléments par copie, pour l'équipe (max 10).", resAllParCopie: 0.01, maxCopies: 10 },
 };
