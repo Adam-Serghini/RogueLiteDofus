@@ -22,16 +22,25 @@ describe("intégrité des zones", () => {
         }
       });
 
-      it("chaque combat de donjon du pool contient exactement un boss", () => {
+      it("chaque combat de donjon du pool contient le nombre de boss attendu (1, ou 2 pour une salle à Royaux jumelés)", () => {
+        // Le Clos des Blops est la seule zone à salles de boss JUMELÉS (2 Blops
+        // Royaux distincts par salle, cf. blops.test.ts) ; toutes les autres
+        // gardent l'invariant historique d'un unique boss par salle.
+        const attendu = zone.id === "clos_des_blops" ? 2 : 1;
         for (const combatId of zone.pools.boss) {
           const boss = COMBATS[combatId].ennemis.filter((e) => MONSTRES[e.monstre]?.boss);
-          expect(boss.length, `${combatId} doit avoir 1 boss`).toBe(1);
+          expect(boss.length, `${combatId} doit avoir ${attendu} boss`).toBe(attendu);
         }
       });
 
-      it("a un pool de butin à toile dont les objets existent", () => {
+      it("a un pool de butin à toile dont les objets existent (sauf zone dont la panoplie n'est pas encore livrée)", () => {
         const pools = butinToile(zone.id);
-        expect(pools, `butin de ${zone.id}`).not.toBeNull();
+        if (!pools) {
+          // TODO(panoplie toile 13) : le Clos des Blops n'a pas encore sa panoplie
+          // (chantier séparé) — aucune AUTRE zone ne doit se retrouver sans butin.
+          expect(zone.id, `${zone.id} sans pool de butin`).toBe("clos_des_blops");
+          return;
+        }
         for (const id of itemsDeToile(pools)) expect(ITEMS[id], `objet ${id}`).toBeDefined();
       });
     });
@@ -52,10 +61,12 @@ describe("intégrité des tranches", () => {
     }
   });
 
-  it("exactement une tranche a du contenu, et elle couvre toutes les ZONES", () => {
+  it("les tranches pourvues de contenu couvrent ensemble toutes les ZONES, sans chevauchement", () => {
     const peuplees = TRANCHES.filter((t) => t.zones.length > 0);
-    expect(peuplees.length).toBe(1);
-    expect(new Set(peuplees[0].zones)).toEqual(new Set(ZONES.map((z) => z.id)));
+    expect(peuplees.length).toBeGreaterThan(0);
+    const toutesZones = peuplees.flatMap((t) => t.zones);
+    expect(new Set(toutesZones).size, "aucune zone ne doit appartenir à deux tranches").toBe(toutesZones.length);
+    expect(new Set(toutesZones)).toEqual(new Set(ZONES.map((z) => z.id)));
   });
 });
 

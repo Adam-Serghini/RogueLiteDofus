@@ -25,6 +25,24 @@
       "combat_3"
     ]
   },
+  "clos_des_blops": {
+    "boss": [
+      "blp_boss_griotte_indigo",
+      "blp_boss_griotte_reinette",
+      "blp_boss_griotte_coco",
+      "blp_boss_indigo_reinette",
+      "blp_boss_indigo_coco",
+      "blp_boss_reinette_coco"
+    ],
+    "elite": [
+      "blp_elite"
+    ],
+    "normales": [
+      "blp_1",
+      "blp_2",
+      "blp_3"
+    ]
+  },
   "forgerons": {
     "boss": [
       "frg_boss"

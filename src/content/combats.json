@@ -1,4 +1,206 @@
 {
+  "blp_1": {
+    "ennemis": [
+      {
+        "monstre": "blop_griotte",
+        "position": 0
+      },
+      {
+        "monstre": "blop_indigo",
+        "position": 1
+      }
+    ],
+    "nom": "Deux couleurs qui s'ignorent"
+  },
+  "blp_2": {
+    "ennemis": [
+      {
+        "monstre": "biblop_coco",
+        "position": 0
+      },
+      {
+        "monstre": "biblop_reinette",
+        "position": 1
+      },
+      {
+        "monstre": "blop_coco",
+        "position": 4
+      }
+    ],
+    "nom": "Nichée de Blops"
+  },
+  "blp_3": {
+    "ennemis": [
+      {
+        "monstre": "biblop_griotte",
+        "position": 0
+      },
+      {
+        "monstre": "biblop_indigo",
+        "position": 1
+      },
+      {
+        "monstre": "biblop_reinette",
+        "position": 2
+      },
+      {
+        "monstre": "blop_reinette",
+        "position": 4
+      },
+      {
+        "monstre": "blop_griotte",
+        "position": 5
+      }
+    ],
+    "nom": "La marmaille en avant"
+  },
+  "blp_boss_griotte_coco": {
+    "ennemis": [
+      {
+        "monstre": "blop_griotte_royal",
+        "position": 0
+      },
+      {
+        "monstre": "blop_coco_royal",
+        "position": 1
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Blops Royaux Griotte & Coco"
+  },
+  "blp_boss_griotte_indigo": {
+    "ennemis": [
+      {
+        "monstre": "blop_griotte_royal",
+        "position": 0
+      },
+      {
+        "monstre": "blop_indigo_royal",
+        "position": 1
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Blops Royaux Griotte & Indigo"
+  },
+  "blp_boss_griotte_reinette": {
+    "ennemis": [
+      {
+        "monstre": "blop_griotte_royal",
+        "position": 0
+      },
+      {
+        "monstre": "blop_reinette_royal",
+        "position": 1
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Blops Royaux Griotte & Reinette"
+  },
+  "blp_boss_indigo_coco": {
+    "ennemis": [
+      {
+        "monstre": "blop_indigo_royal",
+        "position": 0
+      },
+      {
+        "monstre": "blop_coco_royal",
+        "position": 1
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Blops Royaux Indigo & Coco"
+  },
+  "blp_boss_indigo_reinette": {
+    "ennemis": [
+      {
+        "monstre": "blop_indigo_royal",
+        "position": 0
+      },
+      {
+        "monstre": "blop_reinette_royal",
+        "position": 1
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Blops Royaux Indigo & Reinette"
+  },
+  "blp_boss_reinette_coco": {
+    "ennemis": [
+      {
+        "monstre": "blop_reinette_royal",
+        "position": 0
+      },
+      {
+        "monstre": "blop_coco_royal",
+        "position": 1
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Blops Royaux Reinette & Coco"
+  },
+  "blp_elite": {
+    "ennemis": [
+      {
+        "monstre": "tronkoblop",
+        "position": 0
+      },
+      {
+        "monstre": "gloutoblop",
+        "position": 1
+      },
+      {
+        "monstre": "blop_indigo",
+        "position": 4
+      },
+      {
+        "monstre": "blopignon",
+        "position": 5
+      }
+    ],
+    "nom": "Les gros bras du Clos"
+  },
   "boss": {
     "ennemis": [
       {

@@ -183,9 +183,10 @@ describe("déverrouillage des tranches", () => {
 
   it("une tranche sans zone est déverrouillable mais pas jouable", () => {
     const meta = metaVide();
-    meta.ascension = { t1: 0 };
+    meta.ascension = { t1: 0, t2: 0 };
     expect(trancheJouable(meta, "t1")).toBe(true);
-    expect(trancheJouable(meta, "t2")).toBe(false); // t2 n'a pas encore de contenu
+    expect(trancheJouable(meta, "t2")).toBe(true); // t2 a désormais son contenu (Clos des Blops)
+    expect(trancheJouable(meta, "t3")).toBe(false); // t3 n'a pas encore de contenu
   });
 });
 
