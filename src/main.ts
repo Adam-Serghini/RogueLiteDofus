@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, zonesDeTranche, trancheDe, TRANCHES, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, xpEffective, zonesDeTranche, trancheDe, TRANCHES, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
 import { genererCarte } from "./carte";
 import {
@@ -152,7 +152,7 @@ async function resoudreType(
       if (!gagne) return "wipe";
       const toile = zoneId ? toileDeZone(zoneId) : 1;
       crediterKamas(run, Math.round(gainKamas(type, toile, Math.random) * multKamasEquipe(run)));
-      await recompenserXP(run, Math.round(xp * (1 + XP_PAR_TOILE * (toile - 1))));
+      await recompenserXP(run, xpEffective(xp, toile, run.trancheId));
       // combat dur → butin au TAUX donjon (la prise de risque paie), mais le pool
       // exclusif reste celui des élites (les objets boss ne tombent qu'au donjon)
       await recompenserButin(run, zoneId, type, type === "combat_dur" ? "donjon" : undefined);

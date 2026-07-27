@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { trancheDe, localiserZone, offsetToile, type TrancheDef } from "./data";
+import { trancheDe, localiserZone, offsetToile, xpEffective, XP_PAR_TYPE, XP_PAR_TOILE, type TrancheDef } from "./data";
 import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable, archiverEquipe, heritagePour, runDepuisHeritage, rollItem, chargerMeta, sauverMeta } from "./run";
 import type { Meta } from "./types";
 
@@ -32,6 +32,29 @@ describe("résolution de tranche", () => {
     expect(offsetToile("t3", FAUSSES)).toBe(5);
     expect(offsetToile("t1")).toBe(0);
     expect(offsetToile("t2")).toBe(12); // T1 = 12 zones → T2 démarre à la toile 13
+  });
+});
+
+describe("xpEffective (multiplicateur d'XP par tranche)", () => {
+  it("une tranche sans xpMult (t1) ne modifie pas le calcul toile seul", () => {
+    const base = XP_PAR_TYPE.combat;
+    const attendu = Math.round(base * (1 + XP_PAR_TOILE * (5 - 1)));
+    expect(xpEffective(base, 5, "t1")).toBe(attendu);
+  });
+
+  it("t2 applique son multiplicateur xpMult au-dessus du calcul toile", () => {
+    const base = XP_PAR_TYPE.combat_dur;
+    const toile = 13;
+    const sansMult = base * (1 + XP_PAR_TOILE * (toile - 1));
+    const attendu = Math.round(sansMult * trancheDe("t2").xpMult!);
+    expect(trancheDe("t2").xpMult).toBeDefined();
+    expect(trancheDe("t2").xpMult).not.toBe(1);
+    expect(xpEffective(base, toile, "t2")).toBe(attendu);
+  });
+
+  it("toile 1 : le multiplicateur de toile est neutre, seul xpMult (s'il existe) joue", () => {
+    const base = 200;
+    expect(xpEffective(base, 1, "t1")).toBe(base); // t1 : ni toile ni xpMult ne bougent rien
   });
 });
 

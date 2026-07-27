@@ -134,6 +134,11 @@ export interface TrancheDef {
   nom: string;
   niveaux: [number, number]; // fourchette de niveaux affichée (fiction Dofus)
   zones: string[]; // ids de ZONES, dans l'ordre de jeu
+  /** Multiplicateur d'XP de la tranche — compense la croissance linéaire de
+   *  `xpRequis` (le multiplicateur de toile, lui, ne croît que de 0,3/toile) ;
+   *  absent = 1. NE PAS le mettre sur t1 : son absence garantit que la
+   *  tranche 1, éprouvée en jeu réel, ne bouge pas. */
+  xpMult?: number;
 }
 
 export const TRANCHES: TrancheDef[] = [
@@ -141,7 +146,7 @@ export const TRANCHES: TrancheDef[] = [
     // ordre de jeu = niveau officiel des donjons (cf. PLAN-CONTENU.md §4)
     zones: ["incarnam", "astrub", "tainela", "tofus", "akademie", "kankreblath",
       "maison_fantome", "scarafeuilles", "forgerons", "larves", "grotte_hesque", "kwakwa"] },
-  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], zones: [] },
+  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], zones: [], xpMult: 1.35 },
   { id: "t3", nom: "Tranche 3", niveaux: [100, 150], zones: [] },
   { id: "t4", nom: "Tranche 4", niveaux: [150, 199], zones: [] },
   { id: "t5", nom: "Tranche 5", niveaux: [200, 200], zones: [] },
@@ -184,6 +189,15 @@ export function offsetToile(trancheId: string, tranches: TrancheDef[] = TRANCHES
  *  1 + XP_PAR_TOILE × (toile − 1) : calibrée pour finir la tranche ~niveau 50. */
 export const XP_PAR_TYPE = { combat: 110, combat_dur: 195 } as const;
 export const XP_PAR_TOILE = 0.3;
+
+/** XP réellement accordée pour un gain de base à une toile donnée, dans une
+ *  tranche donnée : applique le multiplicateur de toile puis le multiplicateur
+ *  d'XP éventuel de la tranche (`TrancheDef.xpMult`, absent = 1). Fonction pure,
+ *  partagée par le jeu (`main.ts`) et le banc d'équilibrage (`sim.ts`). */
+export function xpEffective(xpBase: number, toile: number, trancheId: string): number {
+  const mult = 1 + XP_PAR_TOILE * (toile - 1);
+  return Math.round(xpBase * mult * (trancheDe(trancheId).xpMult ?? 1));
+}
 
 /** Fraction de PV max rendue par la Taverne. */
 export const TAVERNE_PCT = 0.5;

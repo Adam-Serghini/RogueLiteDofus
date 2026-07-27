@@ -15,7 +15,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, XP_PAR_TYPE, XP_PAR_TOILE, SORTS, butinToile,
+  TRANCHES, zonesDeTranche, COMBATS, MONSTRES, CLASSES, ITEMS, XP_PAR_TYPE, xpEffective, SORTS, butinToile,
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
@@ -111,9 +111,9 @@ function courbeNiveaux(): { entree: number[]; fin: number[] } {
   const fin: number[] = [];
   for (let z = 0; z < ZONES_SIM.length; z++) {
     entree.push(p.niveau);
-    const mult = 1 + XP_PAR_TOILE * z; // toile = z+1
-    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, Math.round(XP_PAR_TYPE.combat * mult), 50);
-    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, Math.round(XP_PAR_TYPE.combat_dur * mult), 50);
+    const toile = z + 1;
+    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat, toile, "t1"), 50);
+    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat_dur, toile, "t1"), 50);
     fin.push(p.niveau);
   }
   return { entree, fin };
