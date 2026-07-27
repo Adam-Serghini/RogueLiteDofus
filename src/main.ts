@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, TRANCHES, zonesDeTranche, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, XP_PAR_TOILE, zonesDeTranche, trancheDe, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
 import { genererCarte } from "./carte";
 import {
@@ -254,9 +254,15 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniere
 }
 
 /** Ce que la boucle doit faire après une run : rien, ou en relancer une. */
-type SuiteRun = null | { relancer: string[] | "selection"; ascension: number };
+type SuiteRun = null | { relancer: string[] | "selection"; ascension: number; trancheId: string };
 
-async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[], ascension = 0): Promise<SuiteRun> {
+async function jouerRun(
+  reprise: RunSauvee | null,
+  choixImpose?: string[],
+  ascension = 0,
+  trancheId = "t1",
+): Promise<SuiteRun> {
+  const tranche = trancheDe(reprise ? reprise.run.trancheId : trancheId);
   let run: RunState;
   let depart = 0;
   if (reprise) {
@@ -265,9 +271,8 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[], ascen
   } else {
     const choix = choixImpose ?? (await ui.showChoixEquipe());
     if (!choix) return null; // retour à l'accueil depuis la sélection
-    run = nouvelleRun(choix, ascension);
+    run = nouvelleRun(choix, ascension, tranche.id);
   }
-  const tranche = TRANCHES.find((t) => t.active)!;
   const zones = zonesDeTranche(tranche); // une run = une tranche
   ui.setFondTranche(tranche.id); // fond d'écran de la tranche, retiré au retour à l'accueil
   try {
@@ -281,6 +286,7 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[], ascen
         return {
           relancer: issue === "recommencer-memes" ? (run.choixDepart ?? run.persos.slice(0, 2).map((p) => p.classeId)) : "selection",
           ascension: run.ascension, // le palier de la run abandonnée est conservé pour la relance
+          trancheId: tranche.id, // idem pour la tranche
         };
       }
       if (issue === "wipe") {
@@ -310,20 +316,20 @@ async function jouerRun(reprise: RunSauvee | null, choixImpose?: string[], ascen
 async function boucle(): Promise<void> {
   for (;;) {
     const reprise = chargerRunEnCours();
-    const zones = zonesDeTranche(TRANCHES.find((t) => t.active)!);
+    const zones = zonesDeTranche(trancheDe(reprise?.run.trancheId ?? "t1"));
     const repriseInfo = reprise
-      ? { zoneNom: zones[reprise.zoneIdx]?.nom ?? "?", zoneNum: reprise.zoneIdx + 1, nbZones: zones.length, ascension: reprise.run.ascension }
+      ? { zoneNom: zones[reprise.zoneIdx]?.nom ?? "?", zoneNum: reprise.zoneIdx + 1, nbZones: zones.length, ascension: reprise.run.ascension, trancheId: reprise.run.trancheId }
       : null;
-    const { action, ascension } = await ui.showStart(meta, () => reinitialiserMeta(meta), repriseInfo);
+    const { action, ascension, trancheId } = await ui.showStart(meta, () => reinitialiserMeta(meta), repriseInfo);
     if (action === "abandonner") {
       effacerRunEnCours();
       enregistrerRun(meta, false); // l'abandon compte comme une run échouée
       continue; // retour à l'accueil
     }
-    let suite = await jouerRun(action === "reprendre" ? reprise : null, undefined, ascension);
+    let suite = await jouerRun(action === "reprendre" ? reprise : null, undefined, ascension, trancheId);
     // redémarrages en chaîne (bouton ↻ de la carte), sans repasser par l'accueil
     while (suite?.relancer) {
-      suite = await jouerRun(null, suite.relancer === "selection" ? undefined : suite.relancer, suite.ascension);
+      suite = await jouerRun(null, suite.relancer === "selection" ? undefined : suite.relancer, suite.ascension, suite.trancheId);
     }
   }
 }

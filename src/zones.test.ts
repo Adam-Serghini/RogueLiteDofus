@@ -50,10 +50,10 @@ describe("intégrité des tranches", () => {
     }
   });
 
-  it("exactement une tranche active, et elle couvre toutes les ZONES", () => {
-    const actives = TRANCHES.filter((t) => t.active);
-    expect(actives.length).toBe(1);
-    expect(new Set(actives[0].zones)).toEqual(new Set(ZONES.map((z) => z.id)));
+  it("exactement une tranche a du contenu, et elle couvre toutes les ZONES", () => {
+    const peuplees = TRANCHES.filter((t) => t.zones.length > 0);
+    expect(peuplees.length).toBe(1);
+    expect(new Set(peuplees[0].zones)).toEqual(new Set(ZONES.map((z) => z.id)));
   });
 });
 

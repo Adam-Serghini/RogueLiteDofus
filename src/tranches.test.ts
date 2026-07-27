@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { trancheDe, localiserZone, offsetToile, type TrancheDef } from "./data";
-import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours } from "./run";
+import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable } from "./run";
+import type { Meta } from "./types";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
 const FAUSSES: TrancheDef[] = [
-  { id: "t1", nom: "Tranche 1", niveaux: [1, 50], zones: ["a", "b", "c"], active: true },
-  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], zones: ["d", "e"], active: true },
-  { id: "t3", nom: "Tranche 3", niveaux: [100, 150], zones: [], active: true },
+  { id: "t1", nom: "Tranche 1", niveaux: [1, 50], zones: ["a", "b", "c"] },
+  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], zones: ["d", "e"] },
+  { id: "t3", nom: "Tranche 3", niveaux: [100, 150], zones: [] },
 ];
 
 describe("résolution de tranche", () => {
@@ -106,5 +107,25 @@ describe("cap de niveau par tranche", () => {
     delete brut.run.trancheId; // save d'avant le multi-tranches
     localStorage.setItem("rld_run_v0", JSON.stringify(brut));
     expect(chargerRunEnCours()!.run.trancheId).toBe("t1");
+  });
+});
+
+const metaVide = (): Meta => ({ dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} });
+
+describe("déverrouillage des tranches", () => {
+  it("t1 est toujours ouverte, t2 exige une victoire en t1", () => {
+    const meta = metaVide();
+    expect(trancheDeverrouillee(meta, "t1")).toBe(true);
+    expect(trancheDeverrouillee(meta, "t2")).toBe(false);
+    meta.ascension = { t1: 0 }; // une victoire en A0 suffit
+    expect(trancheDeverrouillee(meta, "t2")).toBe(true);
+    expect(trancheDeverrouillee(meta, "t3")).toBe(false);
+  });
+
+  it("une tranche sans zone est déverrouillable mais pas jouable", () => {
+    const meta = metaVide();
+    meta.ascension = { t1: 0 };
+    expect(trancheJouable(meta, "t1")).toBe(true);
+    expect(trancheJouable(meta, "t2")).toBe(false); // t2 n'a pas encore de contenu
   });
 });

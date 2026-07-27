@@ -16,7 +16,7 @@ import {
   BTN_RETOUR,
 } from "./assets";
 import { renderDofusRack, carteClasse } from "./composants";
-import { classesDisponibles, SUCCES, recordAscension } from "../run";
+import { classesDisponibles, SUCCES, recordAscension, trancheDeverrouillee, trancheJouable } from "../run";
 import { showSettings } from "./inventaire";
 import { showBestiaire, showArmurerie, showEncyclopedie } from "./collections";
 import type { Meta } from "../types";
@@ -28,6 +28,7 @@ export interface RepriseInfo {
   zoneNum: number;
   nbZones: number;
   ascension: number;
+  trancheId: string;
 }
 
 export type StartAction = "nouvelle" | "reprendre" | "abandonner";
@@ -36,15 +37,15 @@ export function showStart(
   meta: Meta,
   onReset: () => void,
   reprise: RepriseInfo | null = null,
-): Promise<{ action: StartAction; ascension: number }> {
+): Promise<{ action: StartAction; ascension: number; trancheId: string }> {
   return new Promise((res) => {
     const nbUniques = new Set(meta.dofus).size;
     const total = Object.keys(DOFUS).length;
-    const trancheActive = TRANCHES.find((t) => t.active);
-    const record = trancheActive ? recordAscension(meta, trancheActive.id) : undefined;
+    let trancheSel = reprise?.trancheId ?? "t1"; // tranche choisie (figée pendant une reprise)
     let sel = 0; // palier d'Ascension sélectionné (nouvelle run uniquement)
 
     const draw = () => {
+      const record = recordAscension(meta, trancheSel);
       // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
       const boutons = reprise
         ? `<button id="btn-reprendre" class="btn-jouer btn-reprendre" title="Reprendre la run — Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}"><img src="${BTN_JOUER}" alt="Reprendre" onerror="this.remove()" /></button>
@@ -85,12 +86,22 @@ export function showStart(
         <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
         ${reprise ? `<p class="accueil-reprise">⚔ Run en cours — <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b>${reprise.ascension >= 1 ? ` <span class="asc-badge" title="Palier d'Ascension de cette run">A${reprise.ascension}</span>` : ""}</p>` : ""}
         <div class="tranches-rack">
-          ${TRANCHES.map((t) => `
-            <div class="tranche-carte ${t.active ? "active" : "locked"}" title="${t.active ? `${t.zones.length} zones` : "Bientôt disponible"}">
+          ${TRANCHES.map((t) => {
+            const ouverte = trancheDeverrouillee(meta, t.id);
+            const jouable = trancheJouable(meta, t.id);
+            const cls = [
+              "tranche-carte",
+              t.id === trancheSel ? "active" : "",
+              ouverte ? "" : "locked",
+              ouverte && !jouable ? "chantier" : "",
+            ].filter(Boolean).join(" ");
+            const detail = !ouverte ? "🔒 Verrouillé" : jouable ? `${t.zones.length} zones` : "🚧 En construction";
+            return `<div class="${cls}" ${jouable && !reprise ? `data-tranche="${t.id}"` : ""} title="${escapeHtml(detail)}">
               <span class="tranche-nom">${escapeHtml(t.nom)}</span>
               <span class="tranche-niveaux">Niv. ${t.niveaux[0]}${t.niveaux[1] !== t.niveaux[0] ? `–${t.niveaux[1]}` : ""}</span>
-              <span class="tranche-detail">${t.active ? `${t.zones.length} zones` : "🔒 Verrouillé"}</span>
-            </div>`).join("")}
+              <span class="tranche-detail">${detail}</span>
+            </div>`;
+          }).join("")}
         </div>
         ${ascensionHtml}
         <div class="boutons-ecran">
@@ -142,15 +153,17 @@ export function showStart(
             draw();
           });
         });
+      root.querySelectorAll<HTMLElement>("[data-tranche]").forEach((el) =>
+        el.addEventListener("click", () => { trancheSel = el.dataset.tranche!; sel = 0; draw(); }));
       document
         .getElementById("btn-start")
-        ?.addEventListener("click", () => res({ action: "nouvelle", ascension: sel }));
+        ?.addEventListener("click", () => res({ action: "nouvelle", ascension: sel, trancheId: trancheSel }));
       document
         .getElementById("btn-reprendre")
-        ?.addEventListener("click", () => res({ action: "reprendre", ascension: 0 }));
+        ?.addEventListener("click", () => res({ action: "reprendre", ascension: 0, trancheId: reprise!.trancheId }));
       document
         .getElementById("btn-abandon")
-        ?.addEventListener("click", () => res({ action: "abandonner", ascension: 0 }));
+        ?.addEventListener("click", () => res({ action: "abandonner", ascension: 0, trancheId: reprise!.trancheId }));
       document.getElementById("btn-reset")?.addEventListener("click", () => {
         onReset();
         draw();

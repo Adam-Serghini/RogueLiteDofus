@@ -134,18 +134,17 @@ export interface TrancheDef {
   nom: string;
   niveaux: [number, number]; // fourchette de niveaux affichée (fiction Dofus)
   zones: string[]; // ids de ZONES, dans l'ordre de jeu
-  active: boolean; // false = affichée verrouillée à l'accueil (pas encore jouable)
 }
 
 export const TRANCHES: TrancheDef[] = [
-  { id: "t1", nom: "Tranche 1", niveaux: [1, 50], active: true,
+  { id: "t1", nom: "Tranche 1", niveaux: [1, 50],
     // ordre de jeu = niveau officiel des donjons (cf. PLAN-CONTENU.md §4)
     zones: ["incarnam", "astrub", "tainela", "tofus", "akademie", "kankreblath",
       "maison_fantome", "scarafeuilles", "forgerons", "larves", "grotte_hesque", "kwakwa"] },
-  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], active: false, zones: [] },
-  { id: "t3", nom: "Tranche 3", niveaux: [100, 150], active: false, zones: [] },
-  { id: "t4", nom: "Tranche 4", niveaux: [150, 199], active: false, zones: [] },
-  { id: "t5", nom: "Tranche 5", niveaux: [200, 200], active: false, zones: [] },
+  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], zones: [] },
+  { id: "t3", nom: "Tranche 3", niveaux: [100, 150], zones: [] },
+  { id: "t4", nom: "Tranche 4", niveaux: [150, 199], zones: [] },
+  { id: "t5", nom: "Tranche 5", niveaux: [200, 200], zones: [] },
 ];
 
 /** Zones (dans l'ordre de jeu) d'une tranche. */

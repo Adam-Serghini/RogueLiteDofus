@@ -540,6 +540,8 @@ button.item-carte:disabled {
   opacity: 0.45;
   filter: grayscale(1);
 }
+.tranche-carte.chantier { opacity: 0.75; }
+.tranche-carte[data-tranche] { cursor: pointer; }
 
 /* Sélecteur d'Ascension (accueil) */
 .asc-section {

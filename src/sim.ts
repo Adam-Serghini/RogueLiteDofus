@@ -27,8 +27,9 @@ import {
 } from "./run";
 import type { ItemInstance, Rarete, Stats } from "./types";
 
-// Zones de la tranche active, dans l'ORDRE DE JEU (la courbe d'XP en dépend).
-const ZONES_SIM = zonesDeTranche(TRANCHES.find((t) => t.active)!);
+// Zones de la tranche mesurée (t1, seule pourvue de contenu), dans l'ORDRE DE JEU
+// (la courbe d'XP en dépend).
+const ZONES_SIM = zonesDeTranche(TRANCHES[0]);
 
 // --- Paramètres du sim (tunables) --------------------------------------------
 // Les classes ont 0 stat offensive de base → l'élément vient des points investis.

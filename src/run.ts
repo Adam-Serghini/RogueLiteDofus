@@ -172,11 +172,7 @@ export function propositionsRecrutement(run: RunState, rng: () => number): strin
 
 /** Crée un nouveau perso au niveau de l'équipe (avec points à dépenser). */
 function nouveauPerso(run: RunState, classeId: string, position: number): PersoState {
-  const niveau = niveauMoyen(run);
-  const progression = progressionInitiale();
-  progression.niveau = niveau;
-  progression.pointsDispo = (niveau - 1) * POINTS_PAR_NIVEAU; // points cumulés des montées de niveau
-  return { classeId, progression, pvActuels: pvMaxFor(CLASSES[classeId], progression), position, equipement: {} };
+  return persoAuNiveau(classeId, niveauMoyen(run), position);
 }
 
 /** Recrute une classe : l'ajoute (équipe < 4) ou remplace un membre (équipe pleine). */
@@ -1019,6 +1015,19 @@ export function recordAscension(meta: Meta, trancheId: string): number | undefin
 export function enregistrerAscension(meta: Meta, trancheId: string, palier: number): void {
   meta.ascension = { ...(meta.ascension ?? {}), [trancheId]: Math.max(meta.ascension?.[trancheId] ?? 0, palier) };
   sauverMeta(meta);
+}
+
+/** Une tranche est déverrouillée si la PRÉCÉDENTE a été vaincue au moins une fois
+ *  (Meta.ascension[id] n'est renseigné qu'à la victoire). t1 est toujours ouverte. */
+export function trancheDeverrouillee(meta: Meta, trancheId: string): boolean {
+  const idx = TRANCHES.findIndex((t) => t.id === trancheId);
+  if (idx <= 0) return idx === 0;
+  return recordAscension(meta, TRANCHES[idx - 1].id) !== undefined;
+}
+
+/** Jouable = déverrouillée ET pourvue de zones (t2 attend encore son contenu). */
+export function trancheJouable(meta: Meta, trancheId: string): boolean {
+  return trancheDeverrouillee(meta, trancheId) && trancheDe(trancheId).zones.length > 0;
 }
 
 /** Multiplicateur de dégâts d'équipe issu des Dofus possédés (cumulable). */
