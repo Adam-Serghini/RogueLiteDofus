@@ -51,6 +51,337 @@
       "vitalite": 110
     }
   },
+  "biblop_coco": {
+    "archiNom": "Bilvoezé le Bonimenteur",
+    "ia": "agressif",
+    "id": "biblop_coco",
+    "img": "/assets/monstres/biblop_coco.png",
+    "initiative": 12,
+    "nom": "Biblop Coco",
+    "pa": 5,
+    "pv": 90,
+    "resistances": {
+      "air": 0.25,
+      "terre": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 45,
+      "chance": 8,
+      "force": 8,
+      "intelligence": 8,
+      "vitalite": 50
+    }
+  },
+  "biblop_griotte": {
+    "archiNom": "Bi le Partageur",
+    "ia": "agressif",
+    "id": "biblop_griotte",
+    "img": "/assets/monstres/biblop_griotte.png",
+    "initiative": 12,
+    "nom": "Biblop Griotte",
+    "pa": 5,
+    "pv": 90,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "chance": 8,
+      "force": 8,
+      "intelligence": 45,
+      "vitalite": 50
+    }
+  },
+  "biblop_indigo": {
+    "archiNom": "Bistou le Quêteur",
+    "ia": "agressif",
+    "id": "biblop_indigo",
+    "img": "/assets/monstres/biblop_indigo.png",
+    "initiative": 12,
+    "nom": "Biblop Indigo",
+    "pa": 5,
+    "pv": 90,
+    "resistances": {
+      "eau": 0.25,
+      "feu": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "chance": 45,
+      "force": 8,
+      "intelligence": 8,
+      "vitalite": 50
+    }
+  },
+  "biblop_reinette": {
+    "archiNom": "Bistou le Rieur",
+    "ia": "agressif",
+    "id": "biblop_reinette",
+    "img": "/assets/monstres/biblop_reinette.png",
+    "initiative": 12,
+    "nom": "Biblop Reinette",
+    "pa": 5,
+    "pv": 90,
+    "resistances": {
+      "air": -0.2,
+      "terre": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 8,
+      "chance": 8,
+      "force": 45,
+      "intelligence": 8,
+      "vitalite": 50
+    }
+  },
+  "blop_coco": {
+    "archiNom": "Blorie l'Assourdissante",
+    "ia": "agressif",
+    "id": "blop_coco",
+    "img": "/assets/monstres/blop_coco.png",
+    "initiative": 9,
+    "nom": "Blop Coco",
+    "pa": 6,
+    "pv": 165,
+    "resistances": {
+      "air": 0.25,
+      "terre": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 62,
+      "chance": 12,
+      "force": 12,
+      "intelligence": 12,
+      "vitalite": 95
+    }
+  },
+  "blop_coco_royal": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "blop_coco_royal",
+    "img": "/assets/monstres/blop_coco_royal.png",
+    "initiative": 11,
+    "nom": "Blop Coco Royal",
+    "pa": 8,
+    "pv": 620,
+    "resistances": {
+      "air": 0.5,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "bourrasque_de_pollen",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 34,
+      "chance": 16,
+      "force": 16,
+      "intelligence": 16,
+      "vitalite": 150
+    }
+  },
+  "blop_griotte": {
+    "archiNom": "Blordur l'Infect",
+    "ia": "agressif",
+    "id": "blop_griotte",
+    "img": "/assets/monstres/blop_griotte.png",
+    "initiative": 9,
+    "nom": "Blop Griotte",
+    "pa": 6,
+    "pv": 165,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 12,
+      "force": 12,
+      "intelligence": 62,
+      "vitalite": 95
+    }
+  },
+  "blop_griotte_royal": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "blop_griotte_royal",
+    "img": "/assets/monstres/blop_griotte_royal.png",
+    "initiative": 11,
+    "nom": "Blop Griotte Royal",
+    "pa": 8,
+    "pv": 620,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.5,
+      "terre": 0.1
+    },
+    "sorts": [
+      "confiture_bouillante",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 16,
+      "intelligence": 34,
+      "vitalite": 150
+    }
+  },
+  "blop_indigo": {
+    "archiNom": "Bloporte le Veule",
+    "ia": "agressif",
+    "id": "blop_indigo",
+    "img": "/assets/monstres/blop_indigo.png",
+    "initiative": 9,
+    "nom": "Blop Indigo",
+    "pa": 6,
+    "pv": 165,
+    "resistances": {
+      "eau": 0.25,
+      "feu": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 62,
+      "force": 12,
+      "intelligence": 12,
+      "vitalite": 95
+    }
+  },
+  "blop_indigo_royal": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "blop_indigo_royal",
+    "img": "/assets/monstres/blop_indigo_royal.png",
+    "initiative": 11,
+    "nom": "Blop Indigo Royal",
+    "pa": 8,
+    "pv": 620,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.5,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "maree_d_encre",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 34,
+      "force": 16,
+      "intelligence": 16,
+      "vitalite": 150
+    }
+  },
+  "blop_reinette": {
+    "archiNom": "Blof l'Apathique",
+    "ia": "agressif",
+    "id": "blop_reinette",
+    "img": "/assets/monstres/blop_reinette.png",
+    "initiative": 9,
+    "nom": "Blop Reinette",
+    "pa": 6,
+    "pv": 165,
+    "resistances": {
+      "air": -0.2,
+      "terre": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 12,
+      "force": 62,
+      "intelligence": 12,
+      "vitalite": 95
+    }
+  },
+  "blop_reinette_royal": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "blop_reinette_royal",
+    "img": "/assets/monstres/blop_reinette_royal.png",
+    "initiative": 11,
+    "nom": "Blop Reinette Royal",
+    "pa": 8,
+    "pv": 620,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.5
+    },
+    "sorts": [
+      "pluie_de_pommes",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 34,
+      "intelligence": 16,
+      "vitalite": 150
+    }
+  },
+  "blopignon": {
+    "ia": "agressif",
+    "id": "blopignon",
+    "img": "/assets/monstres/blopignon.png",
+    "initiative": 14,
+    "nom": "Blopignon",
+    "pa": 7,
+    "pv": 150,
+    "resistances": {
+      "air": 0.2,
+      "terre": -0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 70,
+      "chance": 14,
+      "force": 14,
+      "intelligence": 14,
+      "vitalite": 70
+    }
+  },
   "boostache": {
     "boss": true,
     "dofus": "dofus_argente",
@@ -671,6 +1002,30 @@
       "force": 28,
       "intelligence": 10,
       "vitalite": 54
+    }
+  },
+  "gloutoblop": {
+    "ia": "agressif",
+    "id": "gloutoblop",
+    "img": "/assets/monstres/gloutoblop.png",
+    "initiative": 7,
+    "nom": "Gloutoblop",
+    "pa": 6,
+    "pv": 240,
+    "resistances": {
+      "air": -0.15,
+      "terre": 0.2
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 14,
+      "chance": 14,
+      "force": 70,
+      "intelligence": 14,
+      "vitalite": 130
     }
   },
   "gob_trotteur": {
@@ -1841,6 +2196,30 @@
       "force": 12,
       "intelligence": 34,
       "vitalite": 36
+    }
+  },
+  "tronkoblop": {
+    "ia": "agressif",
+    "id": "tronkoblop",
+    "img": "/assets/monstres/tronkoblop.png",
+    "initiative": 6,
+    "nom": "Tronkoblop",
+    "pa": 6,
+    "pv": 260,
+    "resistances": {
+      "eau": -0.15,
+      "feu": 0.2
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 14,
+      "chance": 14,
+      "force": 14,
+      "intelligence": 66,
+      "vitalite": 140
     }
   },
   "vampire": {

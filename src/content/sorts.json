@@ -159,6 +159,19 @@
     "scaling": 0,
     "type": "degats"
   },
+  "bourrasque_de_pollen": {
+    "baseMax": 22,
+    "baseMin": 16,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "deplaceCible": "arriere",
+    "desc": "Blop Coco Royal — souffle une bourrasque de pollen : dégâts et repousse la cible en rangée arrière.",
+    "id": "bourrasque_de_pollen",
+    "nom": "Bourrasque de pollen",
+    "scaling": 0.45,
+    "type": "degats"
+  },
   "bulle": {
     "baseMax": 7,
     "baseMin": 4,
@@ -271,6 +284,22 @@
     },
     "id": "colere_royale",
     "nom": "Colère royale",
+    "scaling": 0.45,
+    "type": "degats"
+  },
+  "confiture_bouillante": {
+    "baseMax": 24,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Blop Griotte Royal — asperge de confiture bouillante : dégâts et brûlure persistante.",
+    "id": "confiture_bouillante",
+    "nom": "Confiture bouillante",
+    "poison": {
+      "degats": 9,
+      "duree": 2
+    },
     "scaling": 0.45,
     "type": "degats"
   },
@@ -889,6 +918,23 @@
     "scaling": 0.48,
     "type": "degats"
   },
+  "maree_d_encre": {
+    "baseMax": 23,
+    "baseMin": 17,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Blop Indigo Royal — noie la cible d'encre : dégâts et −15 % de dégâts infligés (2t).",
+    "effet": {
+      "duree": 2,
+      "stat": "degatsInfliges",
+      "valeur": -0.15
+    },
+    "id": "maree_d_encre",
+    "nom": "Marée d'encre",
+    "scaling": 0.45,
+    "type": "degats"
+  },
   "mise_a_mort": {
     "baseMax": 46,
     "baseMin": 32,
@@ -1180,6 +1226,19 @@
     "nom": "Piqué fulgurant",
     "scaling": 0.45,
     "type": "degats"
+  },
+  "pluie_de_pommes": {
+    "baseMax": 21,
+    "baseMin": 15,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Blop Reinette Royal — fait pleuvoir les pommes sur toute la rangée ciblée.",
+    "id": "pluie_de_pommes",
+    "nom": "Pluie de pommes",
+    "scaling": 0.42,
+    "type": "degats",
+    "zoneLigne": true
   },
   "ponte_larvaire": {
     "baseMax": 0,

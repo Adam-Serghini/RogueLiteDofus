@@ -60,6 +60,22 @@ const MONSTRES = {
   kwak_de_vent: "Kwak de Vent",
   kwakere_de_terre: "Kwakere de Terre",
   kwakwa: "Kwakwa",
+  // Clos des Blops (Tranche 2, gfxId relevés directement sur DofusDB)
+  blop_coco: 162,
+  blop_indigo: 163,
+  blop_griotte: 164,
+  blop_reinette: 165,
+  biblop_indigo: 166,
+  biblop_coco: 167,
+  biblop_griotte: 168,
+  biblop_reinette: 169,
+  gloutoblop: 642,
+  blopignon: 643,
+  tronkoblop: 644,
+  blop_coco_royal: 645,
+  blop_griotte_royal: 646,
+  blop_indigo_royal: 647,
+  blop_reinette_royal: 648,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
