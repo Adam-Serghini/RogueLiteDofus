@@ -2205,7 +2205,7 @@
     "initiative": 6,
     "nom": "Tronkoblop",
     "pa": 6,
-    "pv": 260,
+    "pv": 190,
     "resistances": {
       "eau": -0.15,
       "feu": 0.2
@@ -2218,7 +2218,7 @@
       "agilite": 14,
       "chance": 14,
       "force": 14,
-      "intelligence": 66,
+      "intelligence": 45,
       "vitalite": 140
     }
   },
