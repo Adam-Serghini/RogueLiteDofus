@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { trancheDe, localiserZone, offsetToile, type TrancheDef } from "./data";
+import { toileDeZone } from "./run";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
 const FAUSSES: TrancheDef[] = [
@@ -30,5 +31,20 @@ describe("résolution de tranche", () => {
     expect(offsetToile("t3", FAUSSES)).toBe(5);
     expect(offsetToile("t1")).toBe(0);
     expect(offsetToile("t2")).toBe(12); // T1 = 12 zones → T2 démarre à la toile 13
+  });
+});
+
+describe("toile d'une zone", () => {
+  it("numérote en continu à travers les tranches", () => {
+    expect(toileDeZone("a", FAUSSES)).toBe(1);
+    expect(toileDeZone("c", FAUSSES)).toBe(3);
+    expect(toileDeZone("d", FAUSSES)).toBe(4); // 1re zone de t2 = juste après les 3 de t1
+    expect(toileDeZone("e", FAUSSES)).toBe(5);
+    expect(toileDeZone("inconnue", FAUSSES)).toBe(1); // défaut prudent
+  });
+
+  it("table réelle : T1 va de la toile 1 à la toile 12", () => {
+    expect(toileDeZone("incarnam")).toBe(1);
+    expect(toileDeZone("kwakwa")).toBe(12);
   });
 });

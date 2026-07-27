@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
@@ -784,10 +784,10 @@ export function verifierSucces(meta: Meta, run?: RunState, victoire?: boolean): 
 }
 
 // --- Kamas & Hôtel de vente ------------------------------------------------------
-/** Toile (1-based) d'une zone dans l'ordre de jeu de la tranche active ; 1 par défaut. */
-export function toileDeZone(zoneId: string): number {
-  const idx = TRANCHES[0].zones.indexOf(zoneId);
-  return idx >= 0 ? idx + 1 : 1;
+/** Toile (1-based) d'une zone — numérotation continue entre tranches ; 1 par défaut. */
+export function toileDeZone(zoneId: string, tranches: TrancheDef[] = TRANCHES): number {
+  const loc = localiserZone(zoneId, tranches);
+  return loc ? offsetToile(loc.tranche.id, tranches) + loc.index + 1 : 1;
 }
 
 /** Toile d'origine d'un objet (pool de toile). */
@@ -833,11 +833,12 @@ export interface ArticleHDV {
  *  paraissent qu'en épique/légendaire (l'excellence locale — le commun/rare
  *  se gagne au combat), ceux de la toile SUIVANTE dès le rare (avant-première). */
 export function genererStockHDV(zoneId: string, rng: () => number): ArticleHDV[] {
-  const t = toileDeZone(zoneId);
-  const zones = TRANCHES[0].zones;
+  const loc = localiserZone(zoneId);
+  const zones = loc ? loc.tranche.zones : TRANCHES[0].zones;
+  const idx = loc ? loc.index : 0; // index DANS SA TRANCHE (l'ancien code lisait toile-1)
   const tout = (z?: string) => itemsDeToile(z ? butinToile(z) : null);
-  const poolCourante = tout(zones[t - 1]);
-  const poolSuivante = t < zones.length ? tout(zones[t]) : [];
+  const poolCourante = tout(zones[idx]);
+  const poolSuivante = tout(zones[idx + 1]);
   const stock: ArticleHDV[] = [];
   for (let i = 0; i < KAMAS.tailleStock; i++) {
     // ~40 % d'avant-première quand la toile suivante existe

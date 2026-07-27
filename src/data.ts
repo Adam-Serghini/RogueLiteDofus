@@ -213,9 +213,9 @@ export const ITEMS: Record<string, Item> = ITEMS_TOILES;
 
 /** Pools d'objets à rareté d'une zone, par source de drop ; null = zone inconnue (hors tranche). */
 export function butinToile(zoneId: string): PoolsToile | null {
-  const idx = TRANCHES[0].zones.indexOf(zoneId);
-  if (idx < 0) return null;
-  return BUTIN_TOILES[idx + 1] ?? null;
+  const loc = localiserZone(zoneId);
+  if (!loc) return null;
+  return BUTIN_TOILES[offsetToile(loc.tranche.id) + loc.index + 1] ?? null;
 }
 
 /** Tous les objets d'un pool de toile, sources confondues (normales + élite + boss). */
