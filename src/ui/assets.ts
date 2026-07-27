@@ -29,6 +29,7 @@ export const MENU_BESTIAIRE = A("/assets/menu/bestiaires.png");
 export const MENU_ARMURERIE = A("/assets/menu/armurerie.png"); // absent : fallback 🛡️ dans le bouton
 export const MENU_PARAM = A("/assets/menu/parametres.png");
 export const MENU_SUCCES = A("/assets/menu/succes.png");
+export const MENU_ENCYCLOPEDIE = A("/assets/menu/encyclopedie.png"); // absent : fallback 📖 dans le bouton
 export const MENU_ACCUEIL = A("/assets/menu/Menu.png");
 export const MENU_RESTART = A("/assets/menu/Recommencer.png");
 export const MENU_TERMINER = A("/assets/menu/Terminer.png");
@@ -40,10 +41,11 @@ export const ICON_VITA = A("/assets/divers/coeur.png");
 
 export const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
 
-/** Fond d'écran in-run par tranche — tranche absente : fond parchemin par défaut. */
+/** Fond d'écran in-run par tranche — tranche absente : fond de l'accueil. */
 export const FOND_TRANCHE: Record<string, string> = {
   t1: A("/assets/fonds/incarnam.png"),
 };
+export const FOND_ACCUEIL = A("/assets/fonds/accueil.png");
 
 // Icônes de stats secondaires (cf. maquette de carte)
 export const ICON_CRIT = A("/assets/elements/critique.png");

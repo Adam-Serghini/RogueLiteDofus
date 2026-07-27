@@ -4,13 +4,14 @@
 // =============================================================================
 import { setRoot } from "./dom";
 export { A } from "./assets";
-import { initDofusTooltip, initAideTooltip } from "./composants";
+import { initDofusTooltip, initAideTooltip, setFondTranche } from "./composants";
 export { renderDofusRack, setFondTranche } from "./composants";
 import { initSortTooltip, initControlesClavier } from "./combat";
 export { beginCombat, onUpdate, fxEvent, playerController, log } from "./combat";
 
 export function init(el: HTMLElement): void {
   setRoot(el);
+  setFondTranche(null); // fond de l'accueil dès le lancement
   initDofusTooltip();
   initSortTooltip();
   initAideTooltip();
