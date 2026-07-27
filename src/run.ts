@@ -139,6 +139,9 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
     const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
     const pref = elemsPref[classeId]; // préréglage (absent = Libre)
     if (pref) appliquerElement(perso, pref);
+    // `persoAuNiveau` a figé les PV AVANT l'auto-investissement des points de la
+    // tranche : on resynchronise sur le vrai maximum (tranche ≠ 1 = niveau > 1).
+    perso.pvActuels = pvMaxPerso(perso);
     if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
   });
@@ -214,6 +217,12 @@ export function archiverEquipe(meta: Meta, trancheId: string, run: RunState): vo
   }));
   meta.heritage = { ...(meta.heritage ?? {}), [trancheId]: { trancheId, persos } };
   sauverMeta(meta);
+}
+
+/** Archive DÉJÀ enregistrée pour cette tranche (celle qu'un nouvel archivage
+ *  remplacerait) — sert à demander confirmation au récap. */
+export function archiveDe(meta: Meta, trancheId: string): HeritageEquipe | null {
+  return meta.heritage?.[trancheId] ?? null;
 }
 
 /** Archive permettant de DÉMARRER `trancheId` : celle de la tranche précédente. */

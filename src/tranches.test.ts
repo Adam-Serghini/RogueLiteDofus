@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { trancheDe, localiserZone, offsetToile, xpEffective, XP_PAR_TYPE, XP_PAR_TOILE, type TrancheDef } from "./data";
-import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable, archiverEquipe, heritagePour, runDepuisHeritage, rollItem, chargerMeta, sauverMeta } from "./run";
+import { CLASSES, trancheDe, localiserZone, offsetToile, xpEffective, XP_PAR_TYPE, XP_PAR_TOILE, type TrancheDef } from "./data";
+import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable, archiverEquipe, heritagePour, runDepuisHeritage, rollItem, chargerMeta, sauverMeta, pvMaxPerso, archiveDe } from "./run";
+import { progressionInitiale, pvMaxFor } from "./progression";
+import { chargerConfig, sauverConfig, type AllocationPref } from "./config";
 import type { Meta } from "./types";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
@@ -133,6 +135,39 @@ describe("cap de niveau par tranche", () => {
   });
 });
 
+describe("PV de départ d'une équipe neuve", () => {
+  // La config joueur est lue par `nouvelleRun` via `chargerConfig()` : on l'écrit
+  // dans le localStorage simulé pour rendre les préréglages déterministes.
+  const avecPreregleges = <T>(elements: Record<string, AllocationPref>, fn: () => T): T => {
+    const avant = localStorage.getItem("rld_settings_v0");
+    sauverConfig({ ...chargerConfig(), elements });
+    try {
+      return fn();
+    } finally {
+      if (avant === null) localStorage.removeItem("rld_settings_v0");
+      else localStorage.setItem("rld_settings_v0", avant);
+    }
+  };
+
+  it("t2 : les héros naissent au niveau de la tranche avec leurs PV au maximum réel", () => {
+    const run = avecPreregleges({ iop: "vitalite", cra: "terre" }, () => nouvelleRun(["iop", "cra"], 0, "t2"));
+    for (const perso of run.persos) {
+      expect(perso.progression.niveau).toBe(50);
+      expect(perso.progression.pointsDispo).toBe(0); // tous auto-investis par le préréglage
+      expect(perso.pvActuels).toBe(pvMaxPerso(perso));
+    }
+    // le préréglage vitalité gonfle bel et bien le max : sans resynchronisation, les
+    // PV courants resteraient à la valeur de base d'avant l'investissement
+    const iop = run.persos[0];
+    expect(pvMaxPerso(iop)).toBeGreaterThan(pvMaxFor(CLASSES.iop, progressionInitiale()));
+  });
+
+  it("t1 : rien ne change (niveau 1 = aucun point à investir)", () => {
+    const run = avecPreregleges({ iop: "vitalite" }, () => nouvelleRun(["iop"], 0, "t1"));
+    expect(run.persos[0].pvActuels).toBe(pvMaxPerso(run.persos[0]));
+  });
+});
+
 const metaVide = (): Meta => ({ dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} });
 
 describe("déverrouillage des tranches", () => {
@@ -181,6 +216,14 @@ describe("héritage d'une tranche à l'autre", () => {
     expect(heritagePour(meta, "t2")).not.toBeNull();
     expect(heritagePour(meta, "t1")).toBeNull(); // rien avant t1
     expect(heritagePour(meta, "t3")).toBeNull(); // t2 jamais vaincue
+  });
+
+  it("archiveDe rend l'archive de CETTE tranche (celle qu'un nouvel archivage écraserait)", () => {
+    const meta = metaVide();
+    expect(archiveDe(meta, "t1")).toBeNull(); // rien encore archivé → pas de confirmation à demander
+    archiverEquipe(meta, "t1", nouvelleRun(["iop"]));
+    expect(archiveDe(meta, "t1")!.persos.map((p) => p.classeId)).toEqual(["iop"]);
+    expect(archiveDe(meta, "t2")).toBeNull();
   });
 
   it("runDepuisHeritage rend les mêmes héros, et sans stuff sur demande", () => {

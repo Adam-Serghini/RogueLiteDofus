@@ -14,7 +14,7 @@ import {
   appliquerArchimonstres, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
-  archiverEquipe, heritagePour, runDepuisHeritage,
+  archiverEquipe, heritagePour, runDepuisHeritage, archiveDe,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -264,6 +264,14 @@ async function jouerRun(
   trancheId = "t1",
 ): Promise<SuiteRun> {
   const tranche = trancheDe(reprise ? reprise.run.trancheId : trancheId);
+  const zones = zonesDeTranche(tranche); // une run = une tranche
+  if (!zones.length) {
+    // Tranche déverrouillée mais sans contenu : on n'entre PAS dans la boucle
+    // (sinon la victoire serait accordée sans le moindre combat). L'UI garde déjà
+    // le clic, mais la reprise d'une save portant cette tranche passe aussi ici.
+    await ui.showTransition("🚧 En construction", `${tranche.nom} n'a pas encore de zone : son contenu arrive dans un prochain chantier.`);
+    return null; // aucun enregistrement de run, d'Ascension ni de succès
+  }
   let run: RunState;
   let depart = 0;
   if (reprise) {
@@ -272,22 +280,28 @@ async function jouerRun(
   } else if (tranche.id !== TRANCHES[0].id) {
     // tranche ≠ première : départ hérité ou équipe neuve au niveau de la tranche
     const arch = heritagePour(meta, tranche.id);
-    if (!arch) return null; // sécurité : pas d'archive → retour à l'accueil
-    const choixDepart = await ui.showDepartTranche(tranche, arch);
-    if (!choixDepart) return null;
-    if (choixDepart === "neuve") {
+    if (!arch) {
+      // Pas d'archive (tranche déverrouillée par la victoire, équipe non archivée) :
+      // rien à hériter → départ « équipe neuve » au niveau de départ de la tranche.
       const choix = choixImpose ?? (await ui.showChoixEquipe());
       if (!choix) return null;
       run = nouvelleRun(choix, ascension, tranche.id);
     } else {
-      run = runDepuisHeritage(arch, choixDepart === "heritage-stuff", tranche.id, ascension);
+      const choixDepart = await ui.showDepartTranche(tranche, arch);
+      if (!choixDepart) return null;
+      if (choixDepart === "neuve") {
+        const choix = choixImpose ?? (await ui.showChoixEquipe());
+        if (!choix) return null;
+        run = nouvelleRun(choix, ascension, tranche.id);
+      } else {
+        run = runDepuisHeritage(arch, choixDepart === "heritage-stuff", tranche.id, ascension);
+      }
     }
   } else {
     const choix = choixImpose ?? (await ui.showChoixEquipe());
     if (!choix) return null; // retour à l'accueil depuis la sélection
     run = nouvelleRun(choix, ascension, tranche.id);
   }
-  const zones = zonesDeTranche(tranche); // une run = une tranche
   ui.setFondTranche(tranche.id); // fond d'écran de la tranche, retiré au retour à l'accueil
   try {
     for (let z = depart; z < zones.length; z++) {
@@ -320,7 +334,14 @@ async function jouerRun(
     effacerRunEnCours();
     enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
     enregistrerAscension(meta, tranche.id, run.ascension); // record d'Ascension de la tranche
-    await ui.showRecap(run, true, verifierSucces(meta, run, true), () => archiverEquipe(meta, tranche.id, run));
+    // l'archive déjà en place (s'il y en a une) est passée à l'écran pour qu'il
+    // demande confirmation avant de la remplacer — l'UI ne lit jamais la Meta
+    const deja = archiveDe(meta, tranche.id);
+    await ui.showRecap(
+      run, true, verifierSucces(meta, run, true),
+      () => archiverEquipe(meta, tranche.id, run),
+      deja?.persos.map((p) => ({ classeId: p.classeId, niveau: p.progression.niveau })),
+    );
     return null;
   } finally {
     ui.setFondTranche(null);
