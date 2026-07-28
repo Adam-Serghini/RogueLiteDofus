@@ -79,7 +79,7 @@ describe("bonus de panoplie (4 pièces de la même panoplie = +1 PA)", () => {
     for (const it of Object.values(ITEMS)) {
       if (it.panoplie) (parPano[it.panoplie] ??= []).push(it.id);
     }
-    expect(Object.keys(parPano).length).toBe(13); // t1 (12 zones) + Panoplie du Blop (toile 13)
+    expect(Object.keys(parPano).length).toBe(12); // une par zone de t1 (la toile 13 attend ses objets)
     for (const [nom, ids] of Object.entries(parPano)) {
       expect(ids.length, nom).toBe(4);
       const slots = new Set(ids.map((id) => ITEMS[id].slot));

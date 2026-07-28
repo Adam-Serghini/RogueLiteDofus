@@ -35,7 +35,12 @@ describe("intégrité des zones", () => {
 
       it("a un pool de butin à toile dont les objets existent", () => {
         const pools = butinToile(zone.id);
-        expect(pools, `${zone.id} sans pool de butin`).toBeTruthy();
+        if (!pools) {
+          // Seule exception tolérée, NOMMÉMENT : le Clos des Blops attend encore
+          // ses objets de toile 13. Toute autre zone sans butin est un bug.
+          expect(zone.id).toBe("clos_des_blops");
+          return;
+        }
         for (const id of itemsDeToile(pools)) expect(ITEMS[id], `objet ${id}`).toBeDefined();
       });
     });

@@ -183,15 +183,5 @@
       "kwakanneau_de_terre",
       "kwaklame_de_vent"
     ]
-  },
-  "13": {
-    "boss": [],
-    "elites": [],
-    "normales": [
-      "blopronne",
-      "blopcape",
-      "blopanneau",
-      "blopee"
-    ]
   }
 }

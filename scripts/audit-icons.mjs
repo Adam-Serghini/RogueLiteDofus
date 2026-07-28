@@ -28,10 +28,11 @@ const SURCHARGES = {
   vegaton: 4041, // Racine Sauvageonne (la Racine Hécouane n'est pas sur DofusDB)
   dagues_aj_deh_la: 5019, // « Dagues Aj'Deh'Là » (accent)
   ann_or: 9043, // vrai nom : Kwakanneau (variante de Flammes, la dorée)
-  blopanneau: 9149, // « Blopanneau Griotte » (la vraie famille n'existe qu'en variantes colorées)
-  blopronne: 16223, // « Blopronne Royale » (seule Blopronne officielle)
-  blopcape: 17047, // Gelocape (cousine gélatineuse : les Gelées sont la famille voisine des Blops)
-  blopee: 6102, // Épée Tillante (pas d'épée Blop officielle ; nom à jeu de mots comme la famille)
+  // Toile 13 (Clos des Blops) : objets en attente, à ressaisir quand le contenu
+  // arrivera. Correspondances déjà trouvées, à réutiliser telles quelles —
+  // blopanneau 9149 (« Blopanneau Griotte », la vraie famille n'existe qu'en
+  // variantes colorées), blopronne 16223 (« Blopronne Royale »), blopcape 17047
+  // (Gelocape, cousine gélatineuse), blopee 6102 (Épée Tillante).
 };
 
 const items = Object.values(JSON.parse(readFileSync("src/content/items.json", "utf-8")))

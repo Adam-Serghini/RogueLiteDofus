@@ -3,8 +3,8 @@
 //  signatures des Blops Royaux, salles de boss et butin.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, offsetToile, ITEMS, butinToile, itemsDeToile } from "./data";
-import { toileDeZone, instanceDuTier } from "./run";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, offsetToile } from "./data";
+import { toileDeZone } from "./run";
 
 const COULEURS = ["griotte", "indigo", "reinette", "coco"] as const;
 const STAT_DE_COULEUR = { griotte: "intelligence", indigo: "chance", reinette: "force", coco: "agilite" } as const;
@@ -151,57 +151,6 @@ describe("zone Clos des Blops", () => {
   });
 });
 
-describe("panoplie Blop (toile 13)", () => {
-  const PIECES = { blopanneau: "anneau", blopronne: "coiffe", blopcape: "cape", blopee: "arme" } as const;
-
-  it("les 4 pièces existent, aux 4 raretés, dans la même panoplie", () => {
-    for (const [id, slot] of Object.entries(PIECES)) {
-      const it = ITEMS[id];
-      expect(it, `${id} manquant`).toBeTruthy();
-      expect(it.slot).toBe(slot);
-      expect(it.panoplie).toBe("Panoplie du Blop");
-      for (const r of ["commun", "rare", "epique", "legendaire"] as const) {
-        expect(it.tiers?.[r], `${id} sans palier ${r}`).toBeTruthy();
-      }
-    }
-  });
-
-  it("le pool de la toile 13 est celui du Clos des Blops", () => {
-    const pool = butinToile("clos_des_blops");
-    expect(pool).toBeTruthy();
-    expect(itemsDeToile(pool)).toEqual(expect.arrayContaining(Object.keys(PIECES)));
-  });
-
-  it("un commun de toile 13 bat un commun de toile 12, slot par slot (adaptatif, vitalité, AUCUNE résistance en régression)", () => {
-    const PAIRES: [string, string][] = [
-      ["blopronne", "kwakoiffe_de_flammes"],
-      ["blopcape", "kwape_de_glace"],
-      ["blopanneau", "kwakanneau_de_terre"],
-      ["blopee", "kwaklame_de_vent"],
-    ];
-    const ELEMENTS = ["air", "eau", "feu", "terre"] as const;
-    for (const [id13, id12] of PAIRES) {
-      const t13 = instanceDuTier(id13, "commun")!;
-      const t12 = instanceDuTier(id12, "commun")!;
-      expect(t13.adaptatif ?? 0, `${id13} : adaptatif doit dépasser ${id12}`).toBeGreaterThan(t12.adaptatif ?? 0);
-      expect(t13.stats.vitalite ?? 0, `${id13} : vitalité ne doit pas régresser vs ${id12}`)
-        .toBeGreaterThanOrEqual(t12.stats.vitalite ?? 0);
-      for (const e of ELEMENTS) {
-        expect(t13.resistances?.[e] ?? 0, `${id13} : résistance ${e} ne doit pas régresser vs ${id12}`)
-          .toBeGreaterThanOrEqual(t12.resistances?.[e] ?? 0);
-      }
-    }
-    // l'arme : les dégâts de base progressent aussi
-    const armeT13 = ITEMS.blopee.tiers!.commun!.attaque!;
-    const armeT12 = ITEMS.kwaklame_de_vent.tiers!.commun!.attaque!;
-    expect(armeT13.baseMin).toBeGreaterThan(armeT12.baseMin);
-    expect(armeT13.baseMax).toBeGreaterThan(armeT12.baseMax);
-  });
-
-  it("l'arme de la panoplie porte un profil d'attaque", () => {
-    const arme = ITEMS.blopee.tiers!.commun!.attaque;
-    expect(arme).toBeTruthy();
-    expect(arme!.coutPA).toBeGreaterThan(0);
-    expect(arme!.baseMax).toBeGreaterThan(arme!.baseMin);
-  });
-});
+// La panoplie de la toile 13 est retirée en attendant que le contenu d'objets
+// soit fourni : le Clos des Blops ne lâche donc rien pour l'instant, et sa toile
+// n'a pas de pool. Les tests de butin de cette zone reviendront avec les objets.
