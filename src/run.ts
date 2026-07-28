@@ -1023,8 +1023,13 @@ export function chargerMeta(): Meta {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const m = JSON.parse(raw) as Partial<Meta>;
-      // rétro-compat : les vieux saves n'ont ni compteurs ni archis ni ascension
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: m.ascension, heritage: m.heritage ?? {} };
+      // rétro-compat : les vieux saves n'ont ni compteurs ni archis ni ascension.
+      // `Meta.ascension` n'existe que depuis le mode Ascension, or c'est lui qui
+      // prouve le clear d'une tranche (et déverrouille la suivante) : une save
+      // qui a remporté la T1 AVANT cette fonctionnalité ne porte que `victoires`.
+      // On lui crédite donc un clear de t1 en A0 — seule tranche qui existait.
+      const ascension = m.ascension ?? ((m.victoires ?? 0) > 0 ? { t1: 0 } : undefined);
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension, heritage: m.heritage ?? {} };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */

@@ -181,6 +181,32 @@ describe("déverrouillage des tranches", () => {
     expect(trancheDeverrouillee(meta, "t3")).toBe(false);
   });
 
+  it("une vieille save qui a gagné AVANT le mode Ascension déverrouille quand même t2", async () => {
+    // `Meta.ascension` n'existe que depuis le mode Ascension : une save qui a
+    // remporté la T1 avant ne porte que le compteur `victoires`. Sans ce
+    // rattrapage, un joueur ayant fini la T1 resterait bloqué devant la T2.
+    const { chargerMeta, sauverMeta, trancheDeverrouillee } = await import("./run");
+    sauverMeta({ ...metaVide(), runs: 4, victoires: 1 });
+    const brut = JSON.parse(localStorage.getItem("rld_meta_v0")!);
+    delete brut.ascension; // save d'avant l'Ascension
+    localStorage.setItem("rld_meta_v0", JSON.stringify(brut));
+    const meta = chargerMeta();
+    expect(meta.ascension).toEqual({ t1: 0 });
+    expect(trancheDeverrouillee(meta, "t2")).toBe(true);
+    expect(trancheDeverrouillee(meta, "t3")).toBe(false); // rien ne s'invente au-delà
+  });
+
+  it("une vieille save SANS victoire ne déverrouille rien", async () => {
+    const { chargerMeta, sauverMeta, trancheDeverrouillee } = await import("./run");
+    sauverMeta({ ...metaVide(), runs: 7, victoires: 0 });
+    const brut = JSON.parse(localStorage.getItem("rld_meta_v0")!);
+    delete brut.ascension;
+    localStorage.setItem("rld_meta_v0", JSON.stringify(brut));
+    const meta = chargerMeta();
+    expect(meta.ascension).toBeUndefined();
+    expect(trancheDeverrouillee(meta, "t2")).toBe(false);
+  });
+
   it("une tranche sans zone est déverrouillable mais pas jouable", () => {
     const meta = metaVide();
     meta.ascension = { t1: 0, t2: 0 };
