@@ -4,7 +4,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, butinToile } from "./data";
-import { toileDeZone } from "./run";
+import { toileDeZone, fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { controllerIA } from "./combat";
+import type { Combatant } from "./types";
 
 /** Élément de chaque espèce → statistique dominante et résistance attendues. */
 const ELEMENT_DE = {
@@ -61,6 +63,31 @@ describe("la leçon de la zone : la rangée arrière n'est plus un abri", () => 
     }
   });
 
+  // Porter le sort ne suffit pas : l'IA agressive joue le sort de dégâts le PLUS CHER
+  // ciblable, donc un sort d'artillerie moins coûteux qu'un `charge` du kit standard
+  // ne sortirait jamais (piège des PA orphelins déjà vu sur les Blops Royaux).
+  it("les deux artilleurs LANCENT réellement leur sort d'artillerie, tour après tour", async () => {
+    const heros = fabriquerEquipe();
+    for (const [i, h] of heros.entries()) h.position = i < 2 ? i : i + 2; // 2 devant, 2 derrière
+    const artilleurs: Combatant[] = [
+      fabriquerEnnemis("arc_elite").find((c) => c.monstreId === "canondorf")!,
+      fabriquerEnnemis("arc_1").find((c) => c.monstreId === "sparo")!,
+    ];
+    for (const a of artilleurs) {
+      const cs = [a, ...heros];
+      for (let tour = 0; tour < 3; tour++) {
+        a.paActuels = a.paMax;
+        a.cooldowns = {};
+        a.lancersCeTour = {};
+        const action = await controllerIA(a, cs);
+        expect(action, `${a.monstreId} : aucune action au tour ${tour + 1}`).toBeTruthy();
+        expect(action!.sort.cible,
+          `${a.monstreId} joue ${action!.sort.id} au tour ${tour + 1} au lieu d'un sort qui lève la règle de ligne`,
+        ).toBe("ennemi_tous");
+      }
+    }
+  });
+
   it("la Bordée de Gourlo ignore la ligne ET frappe toute la rangée visée", () => {
     const s = SORTS.bordee;
     expect(s, "sort bordee manquant").toBeTruthy();
@@ -104,15 +131,30 @@ describe("zone Cale de l'Arche", () => {
     const zone = ZONES.find((z) => z.id === "cale_de_l_arche")!;
     const dansNormales = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
     const gardesAvecArchi = ["boomba", "nakunbra", "canondorf"].filter((id) => MONSTRES[id].archiNom);
-    expect(gardesAvecArchi.some((id) => dansNormales.has(id)),
-      "aucun garde n'apparaît en combat normal : leurs archis seraient enfermés dans les nœuds élite").toBe(true);
+    // CHACUN des trois, pas « au moins un » : un garde absent des packs normaux verrait
+    // son archi enfermé dans les nœuds élite, bien plus rares.
+    for (const id of gardesAvecArchi) {
+      expect(dansNormales.has(id),
+        `${id} n'apparaît dans aucun pack normal : son archi serait enfermé dans les nœuds élite`).toBe(true);
+    }
   });
 
-  it("un artilleur est présent dès les packs normaux (la leçon de la zone)", () => {
+  it("un artilleur est présent dans CHAQUE pack normal (la leçon de la zone)", () => {
     const zone = ZONES.find((z) => z.id === "cale_de_l_arche")!;
-    const especes = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
-    const artilleurs = [...especes].filter((id) => MONSTRES[id]?.sorts.some((s) => SORTS[s]?.cible === "ennemi_tous"));
-    expect(artilleurs.length).toBeGreaterThan(0);
+    for (const packId of zone.pools.normales) {
+      const artilleurs = COMBATS[packId].ennemis
+        .map((e) => e.monstre)
+        .filter((id) => MONSTRES[id]?.sorts.some((s) => SORTS[s]?.cible === "ennemi_tous"));
+      expect(artilleurs.length, `${packId} n'aligne aucun artilleur`).toBeGreaterThan(0);
+    }
+  });
+
+  it("les six espèces non-boss apparaissent toutes en combat normal", () => {
+    const zone = ZONES.find((z) => z.id === "cale_de_l_arche")!;
+    const dansNormales = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of ["le_flib", "sparo", "barbroussa", "boomba", "nakunbra", "canondorf"]) {
+      expect(dansNormales.has(id), `${id} n'apparaît dans aucun pack normal`).toBe(true);
+    }
   });
 
   it("la zone n'a pas encore de butin (les objets de la toile 14 viendront plus tard)", () => {

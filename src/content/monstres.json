@@ -674,7 +674,6 @@
     },
     "sorts": [
       "tir_courbe",
-      "charge",
       "morsure"
     ],
     "stats": {
@@ -1244,7 +1243,7 @@
       "agilite": 18,
       "chance": 18,
       "force": 18,
-      "intelligence": 62,
+      "intelligence": 90,
       "vitalite": 200
     }
   },
