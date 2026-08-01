@@ -25,6 +25,19 @@
       "combat_3"
     ]
   },
+  "cale_de_l_arche": {
+    "boss": [
+      "arc_boss"
+    ],
+    "elite": [
+      "arc_elite"
+    ],
+    "normales": [
+      "arc_1",
+      "arc_2",
+      "arc_3"
+    ]
+  },
   "clos_des_blops": {
     "boss": [
       "blp_boss_griotte_indigo",

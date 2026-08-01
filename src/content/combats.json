@@ -1,4 +1,89 @@
 {
+  "arc_1": {
+    "ennemis": [
+      {
+        "monstre": "le_flib",
+        "position": 0
+      },
+      {
+        "monstre": "sparo",
+        "position": 4
+      }
+    ],
+    "nom": "Quart de nuit"
+  },
+  "arc_2": {
+    "ennemis": [
+      {
+        "monstre": "barbroussa",
+        "position": 0
+      },
+      {
+        "monstre": "le_flib",
+        "position": 1
+      },
+      {
+        "monstre": "sparo",
+        "position": 4
+      }
+    ],
+    "nom": "L'équipage sur le pont"
+  },
+  "arc_3": {
+    "ennemis": [
+      {
+        "monstre": "barbroussa",
+        "position": 0
+      },
+      {
+        "monstre": "nakunbra",
+        "position": 1
+      },
+      {
+        "monstre": "le_flib",
+        "position": 2
+      },
+      {
+        "monstre": "sparo",
+        "position": 4
+      }
+    ],
+    "nom": "Renfort de la cale"
+  },
+  "arc_boss": {
+    "ennemis": [
+      {
+        "monstre": "gourlo_le_terrible",
+        "position": 0
+      },
+      {
+        "monstre": "boomba",
+        "position": 1
+      },
+      {
+        "monstre": "canondorf",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Gourlo le Terrible"
+  },
+  "arc_elite": {
+    "ennemis": [
+      {
+        "monstre": "boomba",
+        "position": 0
+      },
+      {
+        "monstre": "nakunbra",
+        "position": 1
+      },
+      {
+        "monstre": "canondorf",
+        "position": 4
+      }
+    ],
+    "nom": "Les gardes de la cale"
+  },
   "blp_1": {
     "ennemis": [
       {

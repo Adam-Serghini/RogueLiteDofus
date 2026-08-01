@@ -3,7 +3,8 @@
 //  archis, artillerie qui ignore la ligne, salle de Gourlo et zone.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, butinToile } from "./data";
+import { toileDeZone } from "./run";
 
 /** Élément de chaque espèce → statistique dominante et résistance attendues. */
 const ELEMENT_DE = {
@@ -78,5 +79,43 @@ describe("Gourlo le Terrible", () => {
     expect(g.dofus).toBe("dofus_pourpre");
     expect(g.sorts[0]).toBe("bordee"); // l'IA agressive joue le plus cher, à égalité l'ordre de la liste
     expect(g.sorts).toContain("morsure"); // les 4 PA restants trouvent preneur
+  });
+});
+
+describe("zone Cale de l'Arche", () => {
+  it("est la 2ᵉ zone de la Tranche 2 et porte la toile 14", () => {
+    const t2 = TRANCHES.find((t) => t.id === "t2")!;
+    expect(t2.zones[1]).toBe("cale_de_l_arche");
+    expect(zonesDeTranche(t2)[1].nom).toBe("Cale de l'Arche d'Otomaï");
+    expect(localiserZone("cale_de_l_arche")!.tranche.id).toBe("t2");
+    expect(toileDeZone("cale_de_l_arche")).toBe(14); // T1 = toiles 1-12, Clos = 13
+  });
+
+  it("a une seule salle de boss, tenue par Gourlo escorté", () => {
+    const zone = ZONES.find((z) => z.id === "cale_de_l_arche")!;
+    expect(zone.pools.boss.length).toBe(1);
+    const ennemis = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(ennemis).toContain("gourlo_le_terrible");
+    expect(ennemis.filter((m) => MONSTRES[m]?.boss).length).toBe(1); // salle à boss UNIQUE
+    expect(ennemis.length).toBeGreaterThan(1); // il est escorté
+  });
+
+  it("les archis des gardes sont chassables hors élite", () => {
+    const zone = ZONES.find((z) => z.id === "cale_de_l_arche")!;
+    const dansNormales = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    const gardesAvecArchi = ["boomba", "nakunbra", "canondorf"].filter((id) => MONSTRES[id].archiNom);
+    expect(gardesAvecArchi.some((id) => dansNormales.has(id)),
+      "aucun garde n'apparaît en combat normal : leurs archis seraient enfermés dans les nœuds élite").toBe(true);
+  });
+
+  it("un artilleur est présent dès les packs normaux (la leçon de la zone)", () => {
+    const zone = ZONES.find((z) => z.id === "cale_de_l_arche")!;
+    const especes = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    const artilleurs = [...especes].filter((id) => MONSTRES[id]?.sorts.some((s) => SORTS[s]?.cible === "ennemi_tous"));
+    expect(artilleurs.length).toBeGreaterThan(0);
+  });
+
+  it("la zone n'a pas encore de butin (les objets de la toile 14 viendront plus tard)", () => {
+    expect(butinToile("cale_de_l_arche")).toBeNull();
   });
 });
