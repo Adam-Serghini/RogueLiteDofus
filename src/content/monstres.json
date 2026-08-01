@@ -22,6 +22,31 @@
       "vitalite": 56
     }
   },
+  "barbroussa": {
+    "archiNom": "Barebourd le Comte",
+    "ia": "agressif",
+    "id": "barbroussa",
+    "img": "/assets/monstres/barbroussa.png",
+    "initiative": 9,
+    "nom": "Barbroussa",
+    "pa": 6,
+    "pv": 260,
+    "resistances": {
+      "air": -0.15,
+      "terre": 0.2
+    },
+    "sorts": [
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 14,
+      "chance": 14,
+      "force": 72,
+      "intelligence": 14,
+      "vitalite": 145
+    }
+  },
   "batofu": {
     "boss": true,
     "dofus": "dofawa",
@@ -382,6 +407,31 @@
       "vitalite": 70
     }
   },
+  "boomba": {
+    "archiNom": "Boombata le Garde",
+    "ia": "agressif",
+    "id": "boomba",
+    "img": "/assets/monstres/boomba.png",
+    "initiative": 7,
+    "nom": "Boomba",
+    "pa": 6,
+    "pv": 320,
+    "resistances": {
+      "air": -0.15,
+      "terre": 0.25
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 15,
+      "chance": 15,
+      "force": 60,
+      "intelligence": 15,
+      "vitalite": 180
+    }
+  },
   "boostache": {
     "boss": true,
     "dofus": "dofus_argente",
@@ -607,6 +657,32 @@
       "force": 8,
       "intelligence": 10,
       "vitalite": 46
+    }
+  },
+  "canondorf": {
+    "archiNom": "Caboume l'Artilleur",
+    "ia": "agressif",
+    "id": "canondorf",
+    "img": "/assets/monstres/canondorf.png",
+    "initiative": 8,
+    "nom": "Canondorf",
+    "pa": 6,
+    "pv": 230,
+    "resistances": {
+      "eau": -0.15,
+      "feu": 0.25
+    },
+    "sorts": [
+      "tir_courbe",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 15,
+      "chance": 15,
+      "force": 15,
+      "intelligence": 74,
+      "vitalite": 130
     }
   },
   "ceglumen": {
@@ -1143,6 +1219,35 @@
       "vitalite": 50
     }
   },
+  "gourlo_le_terrible": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "gourlo_le_terrible",
+    "img": "/assets/monstres/gourlo_le_terrible.png",
+    "initiative": 12,
+    "nom": "Gourlo le Terrible",
+    "pa": 10,
+    "pv": 900,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.3,
+      "terre": 0.15
+    },
+    "sorts": [
+      "bordee",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 18,
+      "chance": 18,
+      "force": 18,
+      "intelligence": 62,
+      "vitalite": 200
+    }
+  },
   "kankreblath": {
     "boss": true,
     "dofus": "dofawa",
@@ -1536,6 +1641,29 @@
       "vitalite": 54
     }
   },
+  "le_flib": {
+    "ia": "agressif",
+    "id": "le_flib",
+    "img": "/assets/monstres/le_flib.png",
+    "initiative": 11,
+    "nom": "Le Flib",
+    "pa": 6,
+    "pv": 150,
+    "resistances": {
+      "eau": 0.2,
+      "feu": -0.15
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 55,
+      "force": 12,
+      "intelligence": 12,
+      "vitalite": 85
+    }
+  },
   "mineur_sombre": {
     "archiNom": "Minsinistre l'Elu",
     "ia": "agressif",
@@ -1579,6 +1707,31 @@
       "force": 6,
       "intelligence": 30,
       "vitalite": 40
+    }
+  },
+  "nakunbra": {
+    "archiNom": "Nakuneuye le Borgne",
+    "ia": "agressif",
+    "id": "nakunbra",
+    "img": "/assets/monstres/nakunbra.png",
+    "initiative": 15,
+    "nom": "Nakunbra",
+    "pa": 7,
+    "pv": 240,
+    "resistances": {
+      "air": 0.25,
+      "terre": -0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 78,
+      "chance": 15,
+      "force": 15,
+      "intelligence": 15,
+      "vitalite": 135
     }
   },
   "palmifleur_malibout": {
@@ -1970,6 +2123,31 @@
       "force": 14,
       "intelligence": 14,
       "vitalite": 176
+    }
+  },
+  "sparo": {
+    "archiNom": "Sparoket le Lanceur",
+    "ia": "agressif",
+    "id": "sparo",
+    "img": "/assets/monstres/sparo.png",
+    "initiative": 13,
+    "nom": "Sparo",
+    "pa": 6,
+    "pv": 175,
+    "resistances": {
+      "air": 0.2,
+      "terre": -0.15
+    },
+    "sorts": [
+      "tir_courbe",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 66,
+      "chance": 13,
+      "force": 13,
+      "intelligence": 13,
+      "vitalite": 100
     }
   },
   "tofoune": {

@@ -159,6 +159,19 @@
     "scaling": 0,
     "type": "degats"
   },
+  "bordee": {
+    "baseMax": 22,
+    "baseMin": 16,
+    "cible": "ennemi_tous",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Gourlo le Terrible — lâche une bordée de canon : frappe toute la rangée de la cible, même la rangée arrière.",
+    "id": "bordee",
+    "nom": "Bordée",
+    "scaling": 0.45,
+    "type": "degats",
+    "zoneLigne": true
+  },
   "bourrasque_de_pollen": {
     "baseMax": 19,
     "baseMin": 14,

@@ -76,6 +76,14 @@ const MONSTRES = {
   blop_griotte_royal: 646,
   blop_indigo_royal: 647,
   blop_reinette_royal: 648,
+  // Cale de l'Arche d'Otomaï (Tranche 2, gfxId relevés directement sur DofusDB)
+  boomba: 124,
+  nakunbra: 125,
+  canondorf: 127,
+  sparo: 572,
+  barbroussa: 573,
+  le_flib: 574,
+  gourlo_le_terrible: 575,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
