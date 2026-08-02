@@ -1079,6 +1079,217 @@
       "vitalite": 54
     }
   },
+  "gelee_bleuet": {
+    "archiNom": "Gelanal le Huileux",
+    "ia": "agressif",
+    "id": "gelee_bleuet",
+    "img": "/assets/monstres/gelee_bleuet.png",
+    "initiative": 6,
+    "nom": "Gelée Bleuet",
+    "pa": 4,
+    "pv": 210,
+    "resistances": {
+      "eau": 0.25,
+      "feu": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 13,
+      "chance": 60,
+      "force": 13,
+      "intelligence": 13,
+      "vitalite": 120
+    }
+  },
+  "gelee_citron": {
+    "ia": "agressif",
+    "id": "gelee_citron",
+    "img": "/assets/monstres/gelee_citron.png",
+    "initiative": 6,
+    "nom": "Gelée Citron",
+    "pa": 4,
+    "pv": 210,
+    "resistances": {
+      "air": -0.2,
+      "terre": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 13,
+      "chance": 13,
+      "force": 60,
+      "intelligence": 13,
+      "vitalite": 120
+    }
+  },
+  "gelee_fraise": {
+    "archiNom": "Gelaviv le Glaçon",
+    "ia": "agressif",
+    "id": "gelee_fraise",
+    "img": "/assets/monstres/gelee_fraise.png",
+    "initiative": 6,
+    "nom": "Gelée Fraise",
+    "pa": 4,
+    "pv": 210,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 13,
+      "chance": 13,
+      "force": 13,
+      "intelligence": 60,
+      "vitalite": 120
+    }
+  },
+  "gelee_menthe": {
+    "archiNom": "Geloliaine l'Aérien",
+    "ia": "agressif",
+    "id": "gelee_menthe",
+    "img": "/assets/monstres/gelee_menthe.png",
+    "initiative": 6,
+    "nom": "Gelée Menthe",
+    "pa": 4,
+    "pv": 210,
+    "resistances": {
+      "air": 0.25,
+      "terre": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 60,
+      "chance": 13,
+      "force": 13,
+      "intelligence": 13,
+      "vitalite": 120
+    }
+  },
+  "gelee_royale_bleuet": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "gelee_royale_bleuet",
+    "img": "/assets/monstres/gelee_royale_bleuet.png",
+    "initiative": 8,
+    "nom": "Gelée Royale Bleuet",
+    "pa": 6,
+    "pv": 340,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "gelification",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 17,
+      "chance": 78,
+      "force": 17,
+      "intelligence": 17,
+      "vitalite": 170
+    }
+  },
+  "gelee_royale_citron": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "gelee_royale_citron",
+    "img": "/assets/monstres/gelee_royale_citron.png",
+    "initiative": 8,
+    "nom": "Gelée Royale Citron",
+    "pa": 6,
+    "pv": 340,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "gelification",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 17,
+      "chance": 17,
+      "force": 78,
+      "intelligence": 17,
+      "vitalite": 170
+    }
+  },
+  "gelee_royale_fraise": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "gelee_royale_fraise",
+    "img": "/assets/monstres/gelee_royale_fraise.png",
+    "initiative": 8,
+    "nom": "Gelée Royale Fraise",
+    "pa": 6,
+    "pv": 340,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "gelification",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 17,
+      "chance": 17,
+      "force": 17,
+      "intelligence": 78,
+      "vitalite": 170
+    }
+  },
+  "gelee_royale_menthe": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "gelee_royale_menthe",
+    "img": "/assets/monstres/gelee_royale_menthe.png",
+    "initiative": 8,
+    "nom": "Gelée Royale Menthe",
+    "pa": 6,
+    "pv": 340,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "gelification",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 78,
+      "chance": 17,
+      "force": 17,
+      "intelligence": 17,
+      "vitalite": 170
+    }
+  },
   "gloutoblop": {
     "ia": "agressif",
     "id": "gloutoblop",

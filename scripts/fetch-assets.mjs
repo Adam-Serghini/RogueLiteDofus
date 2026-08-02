@@ -84,6 +84,15 @@ const MONSTRES = {
   barbroussa: 573,
   le_flib: 574,
   gourlo_le_terrible: 575,
+  // Gelaxième Dimension (Tranche 2, gfxId relevés directement sur DofusDB)
+  gelee_bleuet: 17,
+  gelee_menthe: 18,
+  gelee_fraise: 19,
+  gelee_citron: 231,
+  gelee_royale_bleuet: 20,
+  gelee_royale_menthe: 38,
+  gelee_royale_fraise: 39,
+  gelee_royale_citron: 232,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

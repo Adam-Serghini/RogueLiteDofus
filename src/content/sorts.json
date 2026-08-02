@@ -741,6 +741,19 @@
     "scaling": 0.5,
     "type": "degats"
   },
+  "gelification": {
+    "baseMax": 21,
+    "baseMin": 15,
+    "bouclierRatioDegats": 0.4,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Gelée Royale — se gélifie en frappant : gagne un bouclier valant 40 % des dégâts infligés.",
+    "id": "gelification",
+    "nom": "Gélification",
+    "scaling": 0.45,
+    "type": "degats"
+  },
   "glyphe_agressif": {
     "baseMax": 7,
     "baseMin": 4,
