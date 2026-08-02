@@ -334,6 +334,22 @@
     "scaling": 0,
     "type": "degats"
   },
+  "contagion": {
+    "baseMax": 20,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Kolérat — maladie contagieuse : poison (10 par tour, 3 tours) qui passe au combattant derrière si la cible en meurt.",
+    "id": "contagion",
+    "nom": "Contagion",
+    "poison": {
+      "degats": 10,
+      "duree": 3,
+      "transmet": true
+    },
+    "scaling": 0.42,
+    "type": "degats"
+  },
   "coup_de_bec": {
     "baseMax": 12,
     "baseMin": 7,
@@ -421,6 +437,21 @@
     "maxParTour": 1,
     "nom": "Dagues Boomerang",
     "scaling": 0.4,
+    "type": "degats"
+  },
+  "dard_venimeux": {
+    "baseMax": 20,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Inocule un venin de laboratoire : dégâts et poison (8 par tour, 2 tours).",
+    "id": "dard_venimeux",
+    "nom": "Dard venimeux",
+    "poison": {
+      "degats": 8,
+      "duree": 2
+    },
+    "scaling": 0.42,
     "type": "degats"
   },
   "deferlante": {
@@ -1626,6 +1657,23 @@
     },
     "scaling": 0,
     "type": "buff"
+  },
+  "vapeurs_corrosives": {
+    "baseMax": 24,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Nelween — libère les vapeurs du laboratoire : frappe toute la rangée ciblée et l'empoisonne (12 par tour, 2 tours).",
+    "id": "vapeurs_corrosives",
+    "nom": "Vapeurs corrosives",
+    "poison": {
+      "degats": 12,
+      "duree": 2
+    },
+    "scaling": 0.5,
+    "type": "degats",
+    "zoneLigne": true
   },
   "vigueur_bois": {
     "baseMax": 0,

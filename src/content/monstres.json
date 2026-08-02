@@ -904,6 +904,54 @@
       "vitalite": 175
     }
   },
+  "croc_gland": {
+    "archiNom": "Cromikay le Néophyte",
+    "ia": "agressif",
+    "id": "croc_gland",
+    "img": "/assets/monstres/croc_gland.png",
+    "initiative": 10,
+    "nom": "Croc Gland",
+    "pa": 4,
+    "pv": 280,
+    "resistances": {
+      "air": -0.2,
+      "terre": 0.25
+    },
+    "sorts": [
+      "dard_venimeux"
+    ],
+    "stats": {
+      "agilite": 15,
+      "chance": 15,
+      "force": 90,
+      "intelligence": 15,
+      "vitalite": 155
+    }
+  },
+  "crowneille": {
+    "archiNom": "Crognan le Barbare",
+    "ia": "agressif",
+    "id": "crowneille",
+    "img": "/assets/monstres/crowneille.png",
+    "initiative": 10,
+    "nom": "Crowneille",
+    "pa": 4,
+    "pv": 280,
+    "resistances": {
+      "air": 0.25,
+      "terre": -0.2
+    },
+    "sorts": [
+      "dard_venimeux"
+    ],
+    "stats": {
+      "agilite": 90,
+      "chance": 15,
+      "force": 15,
+      "intelligence": 15,
+      "vitalite": 155
+    }
+  },
   "crustorail_kouracao": {
     "archiNom": "Crustterus l'Organique",
     "ia": "agressif",
@@ -1516,6 +1564,31 @@
       "vitalite": 55
     }
   },
+  "kolerat": {
+    "archiNom": "Kolforthe l'Indécollable",
+    "ia": "agressif",
+    "id": "kolerat",
+    "img": "/assets/monstres/kolerat.png",
+    "initiative": 13,
+    "nom": "Kolérat",
+    "pa": 8,
+    "pv": 340,
+    "resistances": {
+      "eau": 0.25,
+      "feu": -0.2
+    },
+    "sorts": [
+      "contagion",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 15,
+      "chance": 88,
+      "force": 15,
+      "intelligence": 15,
+      "vitalite": 185
+    }
+  },
   "kwak_d_eau": {
     "archiNom": "Kwakwatique le Trempé",
     "ia": "agressif",
@@ -1874,6 +1947,29 @@
       "vitalite": 85
     }
   },
+  "macien": {
+    "ia": "agressif",
+    "id": "macien",
+    "img": "/assets/monstres/macien.png",
+    "initiative": 9,
+    "nom": "Macien",
+    "pa": 4,
+    "pv": 300,
+    "resistances": {
+      "air": -0.2,
+      "terre": 0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 15,
+      "chance": 15,
+      "force": 90,
+      "intelligence": 15,
+      "vitalite": 165
+    }
+  },
   "mineur_sombre": {
     "archiNom": "Minsinistre l'Elu",
     "ia": "agressif",
@@ -1942,6 +2038,35 @@
       "force": 15,
       "intelligence": 15,
       "vitalite": 135
+    }
+  },
+  "nelween": {
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "nelween",
+    "img": "/assets/monstres/nelween.png",
+    "initiative": 12,
+    "nom": "Nelween",
+    "pa": 10,
+    "pv": 1000,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.3,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "vapeurs_corrosives",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 18,
+      "chance": 105,
+      "force": 18,
+      "intelligence": 18,
+      "vitalite": 260
     }
   },
   "palmifleur_malibout": {
@@ -2282,6 +2407,30 @@
       "force": 34,
       "intelligence": 6,
       "vitalite": 48
+    }
+  },
+  "scorbute": {
+    "archiNom": "Scorpitène l'Enflammé",
+    "ia": "agressif",
+    "id": "scorbute",
+    "img": "/assets/monstres/scorbute.png",
+    "initiative": 10,
+    "nom": "Scorbute",
+    "pa": 4,
+    "pv": 280,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.25
+    },
+    "sorts": [
+      "dard_venimeux"
+    ],
+    "stats": {
+      "agilite": 15,
+      "chance": 15,
+      "force": 15,
+      "intelligence": 90,
+      "vitalite": 155
     }
   },
   "sergent_chafer": {

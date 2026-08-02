@@ -93,6 +93,13 @@ const MONSTRES = {
   gelee_royale_menthe: 38,
   gelee_royale_fraise: 39,
   gelee_royale_citron: 232,
+  // Laboratoire de Brumen Tinctorias (Tranche 2, gfxId relevés directement sur DofusDB)
+  scorbute: 186,
+  croc_gland: 187,
+  kolerat: 188,
+  macien: 189,
+  crowneille: 673,
+  nelween: 856,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
