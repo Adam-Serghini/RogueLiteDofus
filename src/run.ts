@@ -699,9 +699,10 @@ export function effetsAscension(palier: number): EffetsAscension {
   return eff;
 }
 
-/** Taux d'apparition d'archimonstre effectif : base + ARCHI.philtre par philtre d'Otomai bu. */
+/** Taux d'apparition d'archimonstre effectif : base + ARCHI.philtre par philtre
+ *  d'Otomai bu, le cumul saturant à `ARCHI.philtresMax` philtres. */
 export function chanceArchi(run: RunState): number {
-  return ARCHI.chance + ARCHI.philtre * (run.philtres ?? 0);
+  return ARCHI.chance + ARCHI.philtre * Math.min(run.philtres ?? 0, ARCHI.philtresMax);
 }
 
 /** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */

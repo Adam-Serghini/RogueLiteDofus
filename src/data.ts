@@ -295,6 +295,12 @@ export const MODIFICATEURS_ELITE: ModificateurElite[] = [
 export const ARCHI = {
   chance: 0.008, // probabilité de BASE par ennemi
   philtre: 0.004, // bonus par philtre d'Otomai bu (cf. chanceArchi — nerf : +0,8 %/philtre laissait finir la run à ~10 %)
+  /** Nombre de philtres au-delà duquel boire n'apporte plus rien. Sans ce plafond,
+   *  un joueur qui détourne son chemin vers chaque Otomai en ramassait ~11 par run
+   *  (mesuré) et finissait à 5,2 % par ennemi, soit ~8 archis par run : le bestiaire
+   *  se remplissait en quelques runs alors que les paliers du Dofus Ocre visent le
+   *  long terme. Plafonné, l'Otomai cesse d'être un détour toujours rentable. */
+  philtresMax: 4,
 
   pvMult: 2, // multiplicateur de PV
   statMult: 1.5, // multiplicateur des caractéristiques

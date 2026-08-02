@@ -54,6 +54,24 @@ describe("philtres d'Otomai (taux d'archimonstre)", () => {
     expect(ARCHI.philtre).toBeCloseTo(ARCHI.chance / 2); // nerf : demi-taux par philtre
   });
 
+  it("le cumul sature à ARCHI.philtresMax : au-delà, boire n'apporte plus rien", async () => {
+    // Sans plafond, un joueur qui détourne son chemin vers chaque Otomai finissait
+    // à ~5,2 % par ennemi (6,5× le taux de base) et remplissait le bestiaire en
+    // quelques runs. Le plafond rend les Otomai suivants inutiles, donc le détour
+    // redevient un arbitrage au lieu d'être toujours rentable.
+    const { chanceArchi, nouvelleRun } = await import("./run");
+    const { ARCHI } = await import("./data");
+    const run = nouvelleRun(["iop"]);
+    const plafond = ARCHI.chance + ARCHI.philtre * ARCHI.philtresMax;
+    run.philtres = ARCHI.philtresMax;
+    expect(chanceArchi(run)).toBeCloseTo(plafond);
+    run.philtres = ARCHI.philtresMax + 1;
+    expect(chanceArchi(run)).toBeCloseTo(plafond); // un philtre de trop n'ajoute rien
+    run.philtres = 50; // et le cumul ne repart jamais
+    expect(chanceArchi(run)).toBeCloseTo(plafond);
+    expect(plafond).toBeLessThan(0.03); // garde-fou : le plafond reste sous 3 %
+  });
+
   it("le compteur survit à la sauvegarde ; une vieille save sans le champ charge à 0", async () => {
     const { nouvelleRun, sauverRunEnCours, chargerRunEnCours } = await import("./run");
     const run = nouvelleRun(["iop"]);
