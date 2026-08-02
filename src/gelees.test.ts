@@ -3,7 +3,10 @@
 //  absorption des Gelées Royales, budget de PA, salles de boss et zone.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, butinToile } from "./data";
+import { toileDeZone, fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { controllerIA } from "./combat";
+import type { Combatant } from "./types";
 
 const COULEURS = ["fraise", "bleuet", "menthe", "citron"] as const;
 const ELEM_DE_COULEUR = { fraise: "feu", bleuet: "eau", menthe: "air", citron: "terre" } as const;
@@ -74,5 +77,96 @@ describe("l'absorption : la leçon propre à cette zone", () => {
     expect(s.bouclierRatioDegats).toBeGreaterThan(0);
     expect(s.coutPA).toBe(6);
     expect(s.cooldownTours).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("zone Gelaxième Dimension", () => {
+  const zone = () => ZONES.find((z) => z.id === "gelaxieme_dimension")!;
+
+  it("est la 3ᵉ zone de la Tranche 2 et porte la toile 15", () => {
+    const t2 = TRANCHES.find((t) => t.id === "t2")!;
+    expect(t2.zones[2]).toBe("gelaxieme_dimension");
+    expect(zonesDeTranche(t2)[2].nom).toBe("Gelaxième Dimension");
+    expect(localiserZone("gelaxieme_dimension")!.tranche.id).toBe("t2");
+    expect(toileDeZone("gelaxieme_dimension")).toBe(15); // T1 = 1-12, Clos = 13, Cale = 14
+  });
+
+  it("propose 6 salles de boss, chacune avec DEUX Royales distinctes et deux Gelées d'escorte", () => {
+    const paires = new Set<string>();
+    expect(zone().pools.boss.length).toBe(6);
+    for (const id of zone().pools.boss) {
+      const ennemis = COMBATS[id].ennemis.map((e) => e.monstre);
+      const royales = ennemis.filter((m) => MONSTRES[m]?.boss);
+      expect(royales.length, `${id} : il faut exactement 2 Royales`).toBe(2);
+      expect(new Set(royales).size, `${id} : les 2 Royales doivent être distinctes`).toBe(2);
+      expect(ennemis.length, `${id} : salle 4v4`).toBe(4);
+      expect(new Set(ennemis).size, `${id} : pas deux fois la même espèce`).toBe(4);
+      paires.add([...royales].sort().join("+"));
+    }
+    expect(paires.size, "les 6 paires doivent être différentes").toBe(6);
+  });
+
+  it("les trois Gelées à archimonstre sont chassables en combat normal", () => {
+    const dansNormales = new Set(zone().pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const c of ["fraise", "bleuet", "menthe"]) {
+      expect(dansNormales.has(`gelee_${c}`), `gelee_${c} n'apparaît dans aucun pack normal`).toBe(true);
+    }
+  });
+
+  it("la zone n'a pas encore de butin (les objets de la toile 15 viendront plus tard)", () => {
+    expect(butinToile("gelaxieme_dimension")).toBeNull();
+  });
+});
+
+describe("jouabilité : les Gelées dépensent tout leur budget de PA", () => {
+  /** Rejoue un tour complet de l'IA et renvoie les PA laissés sur la table. */
+  async function paOrphelins(c: Combatant, cs: Combatant[]): Promise<number> {
+    c.paActuels = c.paMax;
+    c.cooldowns = {};
+    c.lancersCeTour = {};
+    for (let garde = 0; garde < 10; garde++) {
+      const action = await controllerIA(c, cs);
+      if (!action || action.sort.coutPA <= 0) break;
+      c.paActuels -= action.sort.coutPA;
+    }
+    return c.paActuels;
+  }
+
+  const heros = () => {
+    const h = fabriquerEquipe();
+    for (const [i, x] of h.entries()) x.position = i < 2 ? i : i + 2; // 2 devant, 2 derrière
+    return h;
+  };
+
+  // Deux fois de suite (Blops Royaux, puis Canondorf), un monstre s'est retrouvé avec
+  // des PA inutilisables faute de sort assez bon marché. On le vérifie désormais.
+  it("aucune espèce de la zone ne laisse de PA sur la table", async () => {
+    const equipe = heros();
+    for (const c of ["fraise", "bleuet", "menthe", "citron"]) {
+      const normale = fabriquerEnnemis("gel_3").find((x) => x.monstreId === `gelee_${c}`);
+      if (normale) {
+        expect(await paOrphelins(normale, [normale, ...equipe]), `gelee_${c} laisse des PA`).toBe(0);
+      }
+      const royale = fabriquerEnnemis(`gel_boss_fraise_bleuet`).find((x) => x.monstreId === `gelee_royale_${c}`);
+      if (royale) {
+        expect(await paOrphelins(royale, [royale, ...equipe]), `gelee_royale_${c} laisse des PA`).toBe(0);
+      }
+    }
+  });
+
+  // Porter la signature ne suffit pas : l'IA agressive joue le sort le PLUS CHER
+  // ciblable, donc une signature moins coûteuse qu'un `charge` ne sortirait jamais.
+  it("une Royale LANCE réellement sa Gélification", async () => {
+    const equipe = heros();
+    const royale = fabriquerEnnemis("gel_boss_fraise_bleuet").find((x) => x.monstreId === "gelee_royale_fraise")!;
+    const cs = [royale, ...equipe];
+    for (let tour = 0; tour < 3; tour++) {
+      royale.paActuels = royale.paMax;
+      royale.cooldowns = {};
+      royale.lancersCeTour = {};
+      const action = await controllerIA(royale, cs);
+      expect(action, `aucune action au tour ${tour + 1}`).toBeTruthy();
+      expect(action!.sort.id, `la Royale joue ${action!.sort.id} au lieu de sa signature`).toBe("gelification");
+    }
   });
 });

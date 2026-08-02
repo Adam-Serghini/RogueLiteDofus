@@ -23,10 +23,11 @@ describe("intégrité des zones", () => {
       });
 
       it("chaque combat de donjon du pool contient le nombre de boss attendu (1, ou 2 pour une salle à Royaux jumelés)", () => {
-        // Le Clos des Blops est la seule zone à salles de boss JUMELÉS (2 Blops
-        // Royaux distincts par salle, cf. blops.test.ts) ; toutes les autres
-        // gardent l'invariant historique d'un unique boss par salle.
-        const attendu = zone.id === "clos_des_blops" ? 2 : 1;
+        // Le Clos des Blops et la Gelaxième Dimension sont les seules zones à
+        // salles de boss JUMELÉS (2 Royaux/Royales distincts par salle, cf.
+        // blops.test.ts et gelees.test.ts) ; toutes les autres gardent
+        // l'invariant historique d'un unique boss par salle.
+        const attendu = ["clos_des_blops", "gelaxieme_dimension"].includes(zone.id) ? 2 : 1;
         for (const combatId of zone.pools.boss) {
           const boss = COMBATS[combatId].ennemis.filter((e) => MONSTRES[e.monstre]?.boss);
           expect(boss.length, `${combatId} doit avoir ${attendu} boss`).toBe(attendu);
@@ -37,7 +38,7 @@ describe("intégrité des zones", () => {
         // Zones dont les objets sont attendus (Adam fournira le contenu) : elles
         // ne lâchent rien pour l'instant. Liste NOMMÉE — toute autre zone sans
         // butin est un bug.
-        const SANS_BUTIN_POUR_LINSTANT = ["clos_des_blops", "cale_de_l_arche"];
+        const SANS_BUTIN_POUR_LINSTANT = ["clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension"];
         const pools = butinToile(zone.id);
         if (!pools) {
           expect(SANS_BUTIN_POUR_LINSTANT).toContain(zone.id);

@@ -124,6 +124,7 @@ const ZONES_DEFS: ZoneDefSansPools[] = [
   { id: "kwakwa", nom: "Nid du Kwakwa" },
   { id: "clos_des_blops", nom: "Clos des Blops" },
   { id: "cale_de_l_arche", nom: "Cale de l'Arche d'Otomaï" },
+  { id: "gelaxieme_dimension", nom: "Gelaxième Dimension" },
 ];
 
 export const ZONES: ZoneDef[] = ZONES_DEFS.map((z) => ({ ...z, pools: ZONES_POOLS[z.id]! }));
@@ -148,7 +149,7 @@ export const TRANCHES: TrancheDef[] = [
     // ordre de jeu = niveau officiel des donjons (cf. PLAN-CONTENU.md §4)
     zones: ["incarnam", "astrub", "tainela", "tofus", "akademie", "kankreblath",
       "maison_fantome", "scarafeuilles", "forgerons", "larves", "grotte_hesque", "kwakwa"] },
-  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], xpMult: 1.35, zones: ["clos_des_blops", "cale_de_l_arche"] },
+  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], xpMult: 1.35, zones: ["clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension"] },
   { id: "t3", nom: "Tranche 3", niveaux: [100, 150], zones: [] },
   { id: "t4", nom: "Tranche 4", niveaux: [150, 199], zones: [] },
   { id: "t5", nom: "Tranche 5", niveaux: [200, 200], zones: [] },

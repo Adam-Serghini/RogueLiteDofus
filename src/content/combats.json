@@ -541,6 +541,204 @@
     ],
     "nom": "Forge en fusion (dur)"
   },
+  "gel_1": {
+    "ennemis": [
+      {
+        "monstre": "gelee_fraise",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_bleuet",
+        "position": 1
+      }
+    ],
+    "nom": "Deux saveurs"
+  },
+  "gel_2": {
+    "ennemis": [
+      {
+        "monstre": "gelee_menthe",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_citron",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_fraise",
+        "position": 4
+      }
+    ],
+    "nom": "Le buffet"
+  },
+  "gel_3": {
+    "ennemis": [
+      {
+        "monstre": "gelee_bleuet",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_menthe",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_citron",
+        "position": 2
+      },
+      {
+        "monstre": "gelee_fraise",
+        "position": 4
+      }
+    ],
+    "nom": "Dégustation forcée"
+  },
+  "gel_boss_bleuet_citron": {
+    "ennemis": [
+      {
+        "monstre": "gelee_royale_bleuet",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_royale_citron",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_fraise",
+        "position": 4
+      },
+      {
+        "monstre": "gelee_menthe",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Gelées Royales Bleuet & Citron"
+  },
+  "gel_boss_bleuet_menthe": {
+    "ennemis": [
+      {
+        "monstre": "gelee_royale_bleuet",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_royale_menthe",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_fraise",
+        "position": 4
+      },
+      {
+        "monstre": "gelee_citron",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Gelées Royales Bleuet & Menthe"
+  },
+  "gel_boss_fraise_bleuet": {
+    "ennemis": [
+      {
+        "monstre": "gelee_royale_fraise",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_royale_bleuet",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_menthe",
+        "position": 4
+      },
+      {
+        "monstre": "gelee_citron",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Gelées Royales Fraise & Bleuet"
+  },
+  "gel_boss_fraise_citron": {
+    "ennemis": [
+      {
+        "monstre": "gelee_royale_fraise",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_royale_citron",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_bleuet",
+        "position": 4
+      },
+      {
+        "monstre": "gelee_menthe",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Gelées Royales Fraise & Citron"
+  },
+  "gel_boss_fraise_menthe": {
+    "ennemis": [
+      {
+        "monstre": "gelee_royale_fraise",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_royale_menthe",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_bleuet",
+        "position": 4
+      },
+      {
+        "monstre": "gelee_citron",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Gelées Royales Fraise & Menthe"
+  },
+  "gel_boss_menthe_citron": {
+    "ennemis": [
+      {
+        "monstre": "gelee_royale_menthe",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_royale_citron",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_fraise",
+        "position": 4
+      },
+      {
+        "monstre": "gelee_bleuet",
+        "position": 5
+      }
+    ],
+    "nom": "Donjon — Gelées Royales Menthe & Citron"
+  },
+  "gel_elite": {
+    "ennemis": [
+      {
+        "monstre": "gelee_fraise",
+        "position": 0
+      },
+      {
+        "monstre": "gelee_bleuet",
+        "position": 1
+      },
+      {
+        "monstre": "gelee_menthe",
+        "position": 2
+      },
+      {
+        "monstre": "gelee_citron",
+        "position": 4
+      }
+    ],
+    "nom": "Toutes les saveurs"
+  },
   "gob_1": {
     "ennemis": [
       {

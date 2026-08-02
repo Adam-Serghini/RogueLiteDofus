@@ -69,6 +69,24 @@
       "frg_3"
     ]
   },
+  "gelaxieme_dimension": {
+    "boss": [
+      "gel_boss_fraise_bleuet",
+      "gel_boss_fraise_menthe",
+      "gel_boss_fraise_citron",
+      "gel_boss_bleuet_menthe",
+      "gel_boss_bleuet_citron",
+      "gel_boss_menthe_citron"
+    ],
+    "elite": [
+      "gel_elite"
+    ],
+    "normales": [
+      "gel_1",
+      "gel_2",
+      "gel_3"
+    ]
+  },
   "grotte_hesque": {
     "boss": [
       "hsk_boss"
