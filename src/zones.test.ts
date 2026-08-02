@@ -38,7 +38,7 @@ describe("intégrité des zones", () => {
         // Zones dont les objets sont attendus (Adam fournira le contenu) : elles
         // ne lâchent rien pour l'instant. Liste NOMMÉE — toute autre zone sans
         // butin est un bug.
-        const SANS_BUTIN_POUR_LINSTANT = ["clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension"];
+        const SANS_BUTIN_POUR_LINSTANT = ["clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension", "laboratoire_brumen"];
         const pools = butinToile(zone.id);
         if (!pools) {
           expect(SANS_BUTIN_POUR_LINSTANT).toContain(zone.id);

@@ -139,6 +139,19 @@
       "kwa_3"
     ]
   },
+  "laboratoire_brumen": {
+    "boss": [
+      "lab_boss"
+    ],
+    "elite": [
+      "lab_elite"
+    ],
+    "normales": [
+      "lab_1",
+      "lab_2",
+      "lab_3"
+    ]
+  },
   "larves": {
     "boss": [
       "lrv_boss"

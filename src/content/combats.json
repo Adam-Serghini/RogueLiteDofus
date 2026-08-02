@@ -1156,6 +1156,91 @@
     ],
     "nom": "Les quatre vents (dur)"
   },
+  "lab_1": {
+    "ennemis": [
+      {
+        "monstre": "scorbute",
+        "position": 0
+      },
+      {
+        "monstre": "croc_gland",
+        "position": 1
+      }
+    ],
+    "nom": "Cobayes échappés"
+  },
+  "lab_2": {
+    "ennemis": [
+      {
+        "monstre": "macien",
+        "position": 0
+      },
+      {
+        "monstre": "crowneille",
+        "position": 1
+      },
+      {
+        "monstre": "scorbute",
+        "position": 4
+      }
+    ],
+    "nom": "Paillasse renversée"
+  },
+  "lab_3": {
+    "ennemis": [
+      {
+        "monstre": "macien",
+        "position": 0
+      },
+      {
+        "monstre": "kolerat",
+        "position": 1
+      },
+      {
+        "monstre": "croc_gland",
+        "position": 2
+      },
+      {
+        "monstre": "crowneille",
+        "position": 4
+      }
+    ],
+    "nom": "Fuite de cultures"
+  },
+  "lab_boss": {
+    "ennemis": [
+      {
+        "monstre": "nelween",
+        "position": 0
+      },
+      {
+        "monstre": "kolerat",
+        "position": 1
+      },
+      {
+        "monstre": "croc_gland",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Nelween"
+  },
+  "lab_elite": {
+    "ennemis": [
+      {
+        "monstre": "kolerat",
+        "position": 0
+      },
+      {
+        "monstre": "scorbute",
+        "position": 1
+      },
+      {
+        "monstre": "crowneille",
+        "position": 4
+      }
+    ],
+    "nom": "Le vecteur"
+  },
   "lrv_1": {
     "ennemis": [
       {
