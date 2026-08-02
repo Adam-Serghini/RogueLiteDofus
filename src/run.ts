@@ -1088,9 +1088,11 @@ export function trancheDeverrouillee(meta: Meta, trancheId: string): boolean {
   return recordAscension(meta, TRANCHES[idx - 1].id) !== undefined;
 }
 
-/** Jouable = déverrouillée ET pourvue de zones (t3-t5 attendent leur contenu). */
+/** Jouable = déverrouillée, pourvue de zones (t3-t5 attendent leur contenu) et
+ *  hors chantier (t2 a du contenu mais son équilibrage n'est pas fini). */
 export function trancheJouable(meta: Meta, trancheId: string): boolean {
-  return trancheDeverrouillee(meta, trancheId) && trancheDe(trancheId).zones.length > 0;
+  const tranche = trancheDe(trancheId);
+  return trancheDeverrouillee(meta, trancheId) && tranche.zones.length > 0 && !tranche.enChantier;
 }
 
 /** Multiplicateur de dégâts d'équipe issu des Dofus possédés (cumulable, PLAFONNÉ

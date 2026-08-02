@@ -207,11 +207,25 @@ describe("déverrouillage des tranches", () => {
     expect(trancheDeverrouillee(meta, "t2")).toBe(false);
   });
 
+  it("une tranche EN CHANTIER reste déverrouillable mais n'est pas lançable", async () => {
+    // t2 a du contenu mais son équilibrage n'est pas fini : on la laisse visible
+    // et mesurable au banc, sans permettre de la lancer. Le drapeau se retire
+    // quand la tranche est prête, sans autre changement.
+    const { TRANCHES, trancheDe } = await import("./data");
+    const meta = metaVide();
+    meta.ascension = { t1: 0 };
+    expect(trancheDe("t2").enChantier, "t2 doit être marquée en chantier").toBe(true);
+    expect(trancheDeverrouillee(meta, "t2")).toBe(true); // le clear de t1 la déverrouille toujours
+    expect(trancheJouable(meta, "t2")).toBe(false); // mais elle ne se lance pas
+    // le drapeau ne doit pas fuiter sur les autres tranches
+    expect(trancheDe("t1").enChantier).toBeUndefined();
+    expect(TRANCHES.filter((t) => t.enChantier).map((t) => t.id)).toEqual(["t2"]);
+  });
+
   it("une tranche sans zone est déverrouillable mais pas jouable", () => {
     const meta = metaVide();
     meta.ascension = { t1: 0, t2: 0 };
     expect(trancheJouable(meta, "t1")).toBe(true);
-    expect(trancheJouable(meta, "t2")).toBe(true); // t2 a désormais son contenu (Clos des Blops)
     expect(trancheJouable(meta, "t3")).toBe(false); // t3 n'a pas encore de contenu
   });
 });

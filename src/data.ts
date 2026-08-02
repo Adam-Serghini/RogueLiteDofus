@@ -137,6 +137,11 @@ export interface TrancheDef {
   nom: string;
   niveaux: [number, number]; // fourchette de niveaux affichée (fiction Dofus)
   zones: string[]; // ids de ZONES, dans l'ordre de jeu
+  /** Tranche dont le contenu existe mais dont l'équilibrage n'est pas terminé :
+   *  elle reste visible, déverrouillable et mesurée par `npm run sim`, mais ne
+   *  peut pas être lancée (l'accueil l'affiche « en construction »). Retirer le
+   *  drapeau suffit à l'ouvrir, sans autre changement. */
+  enChantier?: boolean;
   /** Multiplicateur d'XP de la tranche — compense la croissance linéaire de
    *  `xpRequis` (le multiplicateur de toile, lui, ne croît que de 0,3/toile) ;
    *  absent = 1. NE PAS le mettre sur t1 : son absence garantit que la
@@ -149,7 +154,7 @@ export const TRANCHES: TrancheDef[] = [
     // ordre de jeu = niveau officiel des donjons (cf. PLAN-CONTENU.md §4)
     zones: ["incarnam", "astrub", "tainela", "tofus", "akademie", "kankreblath",
       "maison_fantome", "scarafeuilles", "forgerons", "larves", "grotte_hesque", "kwakwa"] },
-  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], xpMult: 1.35, zones: ["clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension"] },
+  { id: "t2", nom: "Tranche 2", niveaux: [50, 100], xpMult: 1.35, enChantier: true, zones: ["clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension"] },
   { id: "t3", nom: "Tranche 3", niveaux: [100, 150], zones: [] },
   { id: "t4", nom: "Tranche 4", niveaux: [150, 199], zones: [] },
   { id: "t5", nom: "Tranche 5", niveaux: [200, 200], zones: [] },
