@@ -341,6 +341,7 @@
     "coutPA": 4,
     "desc": "Kolérat — maladie contagieuse : poison (10 par tour, 3 tours) qui passe au combattant derrière si la cible en meurt.",
     "id": "contagion",
+    "maxParTour": 1,
     "nom": "Contagion",
     "poison": {
       "degats": 10,

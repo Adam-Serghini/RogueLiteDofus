@@ -20,12 +20,25 @@ const ARCHIS = {
   kolerat: "Kolforthe l'Indécollable",
 } as const;
 
+/** Union des espèces des trois pools de la zone — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "laboratoire_brumen")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
 const dominante = (id: string): string => {
   const stats = MONSTRES[id].stats as unknown as Record<string, number>;
   return Object.entries(stats).filter(([k]) => k !== "vitalite").sort((a, b) => b[1] - a[1])[0][0];
 };
 
 describe("bestiaire du Laboratoire", () => {
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    // Garde-fou : une espèce ajoutée à un pack sans être déclarée dans ELEMENT_DE
+    // échapperait sinon à tous les contrôles d'élément, de résistance et d'archi.
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
   it("les 6 espèces existent et frappent dans leur élément", () => {
     for (const [id, element] of Object.entries(ELEMENT_DE)) {
       const m = MONSTRES[id];
@@ -39,8 +52,11 @@ describe("bestiaire du Laboratoire", () => {
     for (const [id, nom] of Object.entries(ARCHIS)) {
       expect(MONSTRES[id].archiNom, `${id}`).toBe(nom);
     }
-    expect(MONSTRES.macien.archiNom).toBeUndefined();
-    expect(MONSTRES.nelween.archiNom).toBeUndefined();
+    // dérivé, pas énuméré : toute espèce hors table doit être sans archi
+    for (const id of especesDeLaZone()) {
+      if (id in ARCHIS) continue;
+      expect(MONSTRES[id].archiNom, `${id} porte un archi non déclaré`).toBeUndefined();
+    }
     // Metamob attribue « Crognan le Barbare » à Croc Gland ET à Crowneille : on
     // donne à Croc Gland son autre archi référencé pour que le Bestiaire n'affiche
     // pas deux fois le même nom.
@@ -139,6 +155,8 @@ describe("comportement des créatures du Laboratoire", () => {
       const action = await controllerIA(c, cs);
       if (!action || action.sort.coutPA <= 0) break;
       c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {}); // cf. `maxParTour`, incrémenté par le moteur au lancement
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
     }
     return c.paActuels;
   }
@@ -160,7 +178,9 @@ describe("comportement des créatures du Laboratoire", () => {
     throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
   };
 
-  const ESPECES = ["scorbute", "croc_gland", "crowneille", "macien", "kolerat", "nelween"];
+  // Dérivé des pools de la zone : une 7ᵉ espèce ajoutée demain à un pack est
+  // automatiquement soumise à tous les contrôles ci-dessous.
+  const ESPECES = [...especesDeLaZone()];
 
   // Deux fois dans ce projet, un monstre a gaspillé des PA faute de sort assez bon
   // marché (Blops Royaux, puis Canondorf qui ne tirait jamais son canon).
@@ -180,17 +200,41 @@ describe("comportement des créatures du Laboratoire", () => {
     expect(await paOrphelins(n, [n, ...equipe], { vapeurs_corrosives: 1 })).toBe(0);
   });
 
+  /** Rejoue les `n` premières actions d'un tour et renvoie la séquence de sorts joués. */
+  async function sequenceDuTour(c: Combatant, cs: Combatant[], n: number): Promise<string[]> {
+    c.paActuels = c.paMax;
+    c.cooldowns = {};
+    c.lancersCeTour = {};
+    const jouees: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const action = await controllerIA(c, cs);
+      if (!action) break;
+      jouees.push(action.sort.id);
+      c.paActuels -= action.sort.coutPA;
+      // le moteur incrémente ce compteur au lancement : on le reproduit ici,
+      // sinon `maxParTour` ne pourrait jamais bloquer un second lancer.
+      const l = (c.lancersCeTour ??= {});
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return jouees;
+  }
+
   it("le Kolérat lance sa Contagion et Nelween ses Vapeurs", async () => {
     const equipe = heros();
     for (const [espece, attendu] of [["kolerat", "contagion"], ["nelween", "vapeurs_corrosives"]] as const) {
       const c = trouver(espece);
-      c.paActuels = c.paMax;
-      c.cooldowns = {};
-      c.lancersCeTour = {};
-      const action = await controllerIA(c, [c, ...equipe]);
-      expect(action, `${espece} : aucune action`).toBeTruthy();
-      expect(action!.sort.id, `${espece} joue ${action!.sort.id}`).toBe(attendu);
+      expect((await sequenceDuTour(c, [c, ...equipe], 1))[0], `${espece}`).toBe(attendu);
     }
+  });
+
+  // `contagion` et `morsure` coûtent 4 PA : sans `maxParTour: 1`, le tri stable de
+  // `iaAgressif` laissait le Kolérat rejouer sa Contagion avec ses 8 PA — `morsure`
+  // devenait du contenu mort et le poison s'empilait en DEUX stacks de 10/tour.
+  it("le Kolérat enchaîne Contagion PUIS Morsure — il ne rejoue pas sa Contagion", async () => {
+    const equipe = heros();
+    const k = trouver("kolerat");
+    expect(SORTS.contagion.maxParTour, "contagion doit être limitée à un lancer par tour").toBe(1);
+    expect(await sequenceDuTour(k, [k, ...equipe], 2)).toEqual(["contagion", "morsure"]);
   });
 
   // Erreur commise deux fois : au Clos les Blops Royaux, à la Cale Gourlo, étaient
@@ -199,17 +243,33 @@ describe("comportement des créatures du Laboratoire", () => {
     const zone = ZONES.find((z) => z.id === "laboratoire_brumen")!;
     /** Dégâts par tour estimés : l'IA dépense son budget en jouant le plus cher
      *  d'abord ; on moyenne le tour « signature » et le tour « signature en
-     *  recharge ». Modèle de conception, pas une simulation du moteur. */
-    const degatsParTour = (id: string): number => {
+     *  recharge ». Modèle de conception, pas une simulation du moteur.
+     *
+     *  Le POISON est compté (dégâts engagés = degats × duree) : dans une zone dont
+     *  toute l'identité est un dégât plat qui ignore boucliers ET résistances, un
+     *  modèle qui ne somme que les coups directs mesure la seule grandeur qui n'est
+     *  pas en jeu. `zoneLigne` est compté sur `cibles` cibles ; on évalue le cas le
+     *  plus défavorable au boss, `cibles = 1` (un seul héros en rangée avant,
+     *  formation parfaitement légitime face à des sorts `ennemi_ligne`). */
+    const degatsParTour = (id: string, cibles: number): number => {
       const m = MONSTRES[id];
       const stats = m.stats as unknown as Record<string, number>;
       const dom = Math.max(stats.force ?? 0, stats.intelligence ?? 0, stats.agilite ?? 0, stats.chance ?? 0);
       const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
-      const coup = (s: string) => ((SORTS[s].baseMin + SORTS[s].baseMax) / 2 + dom * SORTS[s].scaling) * mult;
+      const coup = (s: string) => {
+        const sort = SORTS[s];
+        const direct = ((sort.baseMin + sort.baseMax) / 2 + dom * sort.scaling) * mult;
+        const poison = sort.poison ? sort.poison.degats * sort.poison.duree : 0;
+        return (direct + poison) * (sort.zoneLigne ? cibles : 1);
+      };
       const cycle = (dispo: string[]) => {
         let pa = m.pa, total = 0;
+        const lances: Record<string, number> = {};
         for (const s of [...dispo].sort((a, b) => SORTS[b].coutPA - SORTS[a].coutPA)) {
-          while (pa >= SORTS[s].coutPA) { total += coup(s); pa -= SORTS[s].coutPA; }
+          const max = SORTS[s].maxParTour ?? Infinity; // un sort limité ne se rejoue pas dans le tour
+          while (pa >= SORTS[s].coutPA && (lances[s] ?? 0) < max) {
+            total += coup(s); pa -= SORTS[s].coutPA; lances[s] = (lances[s] ?? 0) + 1;
+          }
         }
         return total;
       };
@@ -217,10 +277,14 @@ describe("comportement des créatures du Laboratoire", () => {
       const avec = cycle(m.sorts);
       return m.sorts.length === enRecharge.length ? avec : (avec + cycle(enRecharge)) / 2;
     };
-    const boss = degatsParTour("nelween");
-    for (const e of COMBATS[zone.pools.boss[0]].ennemis.map((x) => x.monstre).filter((m) => m !== "nelween")) {
-      expect(boss, `Nelween (${boss.toFixed(0)}) doit dépasser ${e} (${degatsParTour(e).toFixed(0)})`)
-        .toBeGreaterThan(degatsParTour(e));
+    const escortes = COMBATS[zone.pools.boss[0]].ennemis.map((x) => x.monstre).filter((m) => m !== "nelween");
+    for (const cibles of [1, 2]) {
+      const boss = degatsParTour("nelween", cibles);
+      for (const e of escortes) {
+        const esc = degatsParTour(e, cibles);
+        expect(boss, `à ${cibles} cible(s) : Nelween (${boss.toFixed(0)}) doit dépasser ${e} (${esc.toFixed(0)})`)
+          .toBeGreaterThan(esc);
+      }
     }
   });
 });
