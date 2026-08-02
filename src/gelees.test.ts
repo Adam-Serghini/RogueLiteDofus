@@ -138,35 +138,53 @@ describe("jouabilité : les Gelées dépensent tout leur budget de PA", () => {
     return h;
   };
 
+  /** Trouve une Royale d'une couleur donnée dans la première salle de boss qui la contient réellement. */
+  const trouverRoyale = (couleur: string): Combatant => {
+    const monstreId = `gelee_royale_${couleur}`;
+    for (const combatId of ZONES.find((z) => z.id === "gelaxieme_dimension")!.pools.boss) {
+      const trouve = fabriquerEnnemis(combatId).find((x) => x.monstreId === monstreId);
+      if (trouve) return trouve;
+    }
+    throw new Error(`${monstreId} : introuvable dans les 6 salles de boss de la zone`);
+  };
+
   // Deux fois de suite (Blops Royaux, puis Canondorf), un monstre s'est retrouvé avec
   // des PA inutilisables faute de sort assez bon marché. On le vérifie désormais.
+  // Correction ronde 1 : le test précédent cherchait les 4 Royales dans UNE seule
+  // salle (gel_boss_fraise_bleuet) ; Menthe et Citron n'y figurent pas, donc leur
+  // assertion ne s'exécutait jamais (échec silencieux). On dérive la bonne salle
+  // par couleur et on fait échouer bruyamment toute espèce introuvable.
   it("aucune espèce de la zone ne laisse de PA sur la table", async () => {
     const equipe = heros();
     for (const c of ["fraise", "bleuet", "menthe", "citron"]) {
       const normale = fabriquerEnnemis("gel_3").find((x) => x.monstreId === `gelee_${c}`);
-      if (normale) {
-        expect(await paOrphelins(normale, [normale, ...equipe]), `gelee_${c} laisse des PA`).toBe(0);
-      }
-      const royale = fabriquerEnnemis(`gel_boss_fraise_bleuet`).find((x) => x.monstreId === `gelee_royale_${c}`);
-      if (royale) {
-        expect(await paOrphelins(royale, [royale, ...equipe]), `gelee_royale_${c} laisse des PA`).toBe(0);
-      }
+      expect(normale, `gelee_${c} introuvable dans gel_3`).toBeTruthy();
+      expect(await paOrphelins(normale!, [normale!, ...equipe]), `gelee_${c} laisse des PA`).toBe(0);
+
+      const royale = trouverRoyale(c);
+      expect(await paOrphelins(royale, [royale, ...equipe]), `gelee_royale_${c} laisse des PA`).toBe(0);
     }
   });
 
   // Porter la signature ne suffit pas : l'IA agressive joue le sort le PLUS CHER
   // ciblable, donc une signature moins coûteuse qu'un `charge` ne sortirait jamais.
-  it("une Royale LANCE réellement sa Gélification", async () => {
+  // Correction ronde 1 : étendu aux 4 Royales (pas seulement Fraise) — identiques
+  // aujourd'hui, elles ne le resteront pas forcément.
+  it("chaque Royale LANCE réellement sa Gélification", async () => {
     const equipe = heros();
-    const royale = fabriquerEnnemis("gel_boss_fraise_bleuet").find((x) => x.monstreId === "gelee_royale_fraise")!;
-    const cs = [royale, ...equipe];
-    for (let tour = 0; tour < 3; tour++) {
-      royale.paActuels = royale.paMax;
-      royale.cooldowns = {};
-      royale.lancersCeTour = {};
-      const action = await controllerIA(royale, cs);
-      expect(action, `aucune action au tour ${tour + 1}`).toBeTruthy();
-      expect(action!.sort.id, `la Royale joue ${action!.sort.id} au lieu de sa signature`).toBe("gelification");
+    for (const c of ["fraise", "bleuet", "menthe", "citron"]) {
+      const royale = trouverRoyale(c);
+      const cs = [royale, ...equipe];
+      for (let tour = 0; tour < 3; tour++) {
+        royale.paActuels = royale.paMax;
+        royale.cooldowns = {};
+        royale.lancersCeTour = {};
+        const action = await controllerIA(royale, cs);
+        expect(action, `gelee_royale_${c} : aucune action au tour ${tour + 1}`).toBeTruthy();
+        expect(action!.sort.id,
+          `gelee_royale_${c} joue ${action!.sort.id} au tour ${tour + 1} au lieu de sa signature`,
+        ).toBe("gelification");
+      }
     }
   });
 });
