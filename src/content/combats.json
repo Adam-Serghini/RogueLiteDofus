@@ -584,10 +584,6 @@
       {
         "monstre": "gelee_citron",
         "position": 2
-      },
-      {
-        "monstre": "gelee_fraise",
-        "position": 4
       }
     ],
     "nom": "Dégustation forcée"

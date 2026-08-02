@@ -119,10 +119,13 @@ describe("zone Gelaxième Dimension", () => {
 });
 
 describe("jouabilité : les Gelées dépensent tout leur budget de PA", () => {
-  /** Rejoue un tour complet de l'IA et renvoie les PA laissés sur la table. */
-  async function paOrphelins(c: Combatant, cs: Combatant[]): Promise<number> {
+  /**
+   * Rejoue un tour complet de l'IA et renvoie les PA laissés sur la table.
+   * `cooldowns` permet de tester l'état « signature en recharge » (repli).
+   */
+  async function paOrphelins(c: Combatant, cs: Combatant[], cooldowns: Record<string, number> = {}): Promise<number> {
     c.paActuels = c.paMax;
-    c.cooldowns = {};
+    c.cooldowns = { ...cooldowns };
     c.lancersCeTour = {};
     for (let garde = 0; garde < 10; garde++) {
       const action = await controllerIA(c, cs);
@@ -138,15 +141,26 @@ describe("jouabilité : les Gelées dépensent tout leur budget de PA", () => {
     return h;
   };
 
-  /** Trouve une Royale d'une couleur donnée dans la première salle de boss qui la contient réellement. */
-  const trouverRoyale = (couleur: string): Combatant => {
-    const monstreId = `gelee_royale_${couleur}`;
-    for (const combatId of ZONES.find((z) => z.id === "gelaxieme_dimension")!.pools.boss) {
+  const pools = () => ZONES.find((z) => z.id === "gelaxieme_dimension")!.pools;
+
+  /** Trouve un monstre dans la première rencontre du pool qui le contient réellement. */
+  const trouverDans = (combatIds: string[], monstreId: string, ou: string): Combatant => {
+    for (const combatId of combatIds) {
       const trouve = fabriquerEnnemis(combatId).find((x) => x.monstreId === monstreId);
       if (trouve) return trouve;
     }
-    throw new Error(`${monstreId} : introuvable dans les 6 salles de boss de la zone`);
+    // Échec BRUYANT : une espèce absente de son pool est un bug de contenu, pas
+    // une raison de sauter l'assertion.
+    throw new Error(`${monstreId} : introuvable dans ${ou} (${combatIds.join(", ")})`);
   };
+
+  /** Trouve une Royale d'une couleur donnée dans la première salle de boss qui la contient réellement. */
+  const trouverRoyale = (couleur: string): Combatant =>
+    trouverDans(pools().boss, `gelee_royale_${couleur}`, "les salles de boss de la zone");
+
+  /** Idem pour une Gelée normale : les packs normaux ne contiennent pas tous les 4 couleurs. */
+  const trouverNormale = (couleur: string): Combatant =>
+    trouverDans(pools().normales, `gelee_${couleur}`, "les packs normaux de la zone");
 
   // Deux fois de suite (Blops Royaux, puis Canondorf), un monstre s'est retrouvé avec
   // des PA inutilisables faute de sort assez bon marché. On le vérifie désormais.
@@ -154,15 +168,18 @@ describe("jouabilité : les Gelées dépensent tout leur budget de PA", () => {
   // salle (gel_boss_fraise_bleuet) ; Menthe et Citron n'y figurent pas, donc leur
   // assertion ne s'exécutait jamais (échec silencieux). On dérive la bonne salle
   // par couleur et on fait échouer bruyamment toute espèce introuvable.
+  // Correction ronde 2 : même trou côté Gelées normales, qui étaient cherchées en
+  // dur dans `gel_3` — or `gel_3` n'aligne plus les 4 couleurs depuis que l'élite
+  // a cessé d'en être le doublon exact. On dérive aussi le pack par couleur.
   it("aucune espèce de la zone ne laisse de PA sur la table", async () => {
     const equipe = heros();
     for (const c of ["fraise", "bleuet", "menthe", "citron"]) {
-      const normale = fabriquerEnnemis("gel_3").find((x) => x.monstreId === `gelee_${c}`);
-      expect(normale, `gelee_${c} introuvable dans gel_3`).toBeTruthy();
-      expect(await paOrphelins(normale!, [normale!, ...equipe]), `gelee_${c} laisse des PA`).toBe(0);
+      const normale = trouverNormale(c);
+      expect(await paOrphelins(normale, [normale, ...equipe]), `gelee_${c} laisse des PA`).toBe(0);
 
       const royale = trouverRoyale(c);
       expect(await paOrphelins(royale, [royale, ...equipe]), `gelee_royale_${c} laisse des PA`).toBe(0);
+      // L'état « signature en recharge » est couvert par le test de repli ci-dessous.
     }
   });
 
@@ -185,6 +202,28 @@ describe("jouabilité : les Gelées dépensent tout leur budget de PA", () => {
           `gelee_royale_${c} joue ${action!.sort.id} au tour ${tour + 1} au lieu de sa signature`,
         ).toBe("gelification");
       }
+    }
+  });
+
+  // Correction ronde 2 : la boucle ci-dessus remet `cooldowns = {}` à chaque tour,
+  // donc elle rejoue trois fois le MÊME état et ne voit jamais le repli. Ici la
+  // signature est explicitement en recharge : c'est `charge` qui doit sortir, et
+  // tout le budget de PA doit y passer.
+  it("chaque Royale se replie sur charge quand sa Gélification recharge, sans PA orphelin", async () => {
+    const equipe = heros();
+    for (const c of ["fraise", "bleuet", "menthe", "citron"]) {
+      const royale = trouverRoyale(c);
+      const cs = [royale, ...equipe];
+      royale.paActuels = royale.paMax;
+      royale.cooldowns = { gelification: 1 };
+      royale.lancersCeTour = {};
+      const action = await controllerIA(royale, cs);
+      expect(action, `gelee_royale_${c} : aucune action avec la signature en recharge`).toBeTruthy();
+      expect(action!.sort.id, `gelee_royale_${c} : repli inattendu`).toBe("charge");
+      expect(
+        await paOrphelins(royale, cs, { gelification: 1 }),
+        `gelee_royale_${c} : PA orphelins avec la signature en recharge`,
+      ).toBe(0);
     }
   });
 });

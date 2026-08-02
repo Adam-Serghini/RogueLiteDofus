@@ -1087,7 +1087,7 @@
     "initiative": 6,
     "nom": "Gelée Bleuet",
     "pa": 4,
-    "pv": 210,
+    "pv": 250,
     "resistances": {
       "eau": 0.25,
       "feu": -0.2
@@ -1097,10 +1097,10 @@
     ],
     "stats": {
       "agilite": 13,
-      "chance": 60,
+      "chance": 84,
       "force": 13,
       "intelligence": 13,
-      "vitalite": 120
+      "vitalite": 140
     }
   },
   "gelee_citron": {
@@ -1110,7 +1110,7 @@
     "initiative": 6,
     "nom": "Gelée Citron",
     "pa": 4,
-    "pv": 210,
+    "pv": 250,
     "resistances": {
       "air": -0.2,
       "terre": 0.25
@@ -1121,9 +1121,9 @@
     "stats": {
       "agilite": 13,
       "chance": 13,
-      "force": 60,
+      "force": 84,
       "intelligence": 13,
-      "vitalite": 120
+      "vitalite": 140
     }
   },
   "gelee_fraise": {
@@ -1134,7 +1134,7 @@
     "initiative": 6,
     "nom": "Gelée Fraise",
     "pa": 4,
-    "pv": 210,
+    "pv": 250,
     "resistances": {
       "eau": -0.2,
       "feu": 0.25
@@ -1146,8 +1146,8 @@
       "agilite": 13,
       "chance": 13,
       "force": 13,
-      "intelligence": 60,
-      "vitalite": 120
+      "intelligence": 84,
+      "vitalite": 140
     }
   },
   "gelee_menthe": {
@@ -1158,7 +1158,7 @@
     "initiative": 6,
     "nom": "Gelée Menthe",
     "pa": 4,
-    "pv": 210,
+    "pv": 250,
     "resistances": {
       "air": 0.25,
       "terre": -0.2
@@ -1167,11 +1167,11 @@
       "morsure"
     ],
     "stats": {
-      "agilite": 60,
+      "agilite": 84,
       "chance": 13,
       "force": 13,
       "intelligence": 13,
-      "vitalite": 120
+      "vitalite": 140
     }
   },
   "gelee_royale_bleuet": {
@@ -1183,7 +1183,7 @@
     "initiative": 8,
     "nom": "Gelée Royale Bleuet",
     "pa": 6,
-    "pv": 340,
+    "pv": 480,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -1197,10 +1197,10 @@
     ],
     "stats": {
       "agilite": 17,
-      "chance": 78,
+      "chance": 100,
       "force": 17,
       "intelligence": 17,
-      "vitalite": 170
+      "vitalite": 240
     }
   },
   "gelee_royale_citron": {
@@ -1212,7 +1212,7 @@
     "initiative": 8,
     "nom": "Gelée Royale Citron",
     "pa": 6,
-    "pv": 340,
+    "pv": 480,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -1227,9 +1227,9 @@
     "stats": {
       "agilite": 17,
       "chance": 17,
-      "force": 78,
+      "force": 100,
       "intelligence": 17,
-      "vitalite": 170
+      "vitalite": 240
     }
   },
   "gelee_royale_fraise": {
@@ -1241,7 +1241,7 @@
     "initiative": 8,
     "nom": "Gelée Royale Fraise",
     "pa": 6,
-    "pv": 340,
+    "pv": 480,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -1257,8 +1257,8 @@
       "agilite": 17,
       "chance": 17,
       "force": 17,
-      "intelligence": 78,
-      "vitalite": 170
+      "intelligence": 100,
+      "vitalite": 240
     }
   },
   "gelee_royale_menthe": {
@@ -1270,7 +1270,7 @@
     "initiative": 8,
     "nom": "Gelée Royale Menthe",
     "pa": 6,
-    "pv": 340,
+    "pv": 480,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -1283,11 +1283,11 @@
       "morsure"
     ],
     "stats": {
-      "agilite": 78,
+      "agilite": 100,
       "chance": 17,
       "force": 17,
       "intelligence": 17,
-      "vitalite": 170
+      "vitalite": 240
     }
   },
   "gloutoblop": {
