@@ -22,8 +22,12 @@ describe("signatures des boss", () => {
     for (const zone of ZONES) {
       const boss = bossDe(zone.pools.boss[0]);
       const m = MONSTRES[boss.monstreId!];
-      const aSignatureSort = !["kwakwa", "directeur_grunob"].includes(m.id); // mue moteur / passif de ligne
+      // mue moteur / passifs de ligne : ces boss n'ont PAS de sort signature, leur
+      // identité est un passif lu par le moteur. La liste est nommée exprès — un boss
+      // sans signature doit être un choix déclaré, jamais un oubli.
+      const aSignatureSort = !["kwakwa", "directeur_grunob", "kharnozor"].includes(m.id);
       if (m.id === "directeur_grunob") expect(m.bonusParAllieLigne).toBe(0.06);
+      if (m.id === "kharnozor") expect(m.bonusParAllieLigne).toBe(0.1);
       if (aSignatureSort) {
         const premier = SORTS[m.sorts[0]];
         expect(premier.desc, `${m.nom} : signature en tête de kit`).toContain(m.nom.split(" ")[0]);

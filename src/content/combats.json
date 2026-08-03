@@ -1164,6 +1164,99 @@
     ],
     "nom": "Nid de la vermine (dur)"
   },
+  "khz_1": {
+    "ennemis": [
+      {
+        "monstre": "dragoeuf_calcaire",
+        "position": 0
+      },
+      {
+        "monstre": "dragoss_proteiforme",
+        "position": 4
+      }
+    ],
+    "nom": "Couvée surveillée"
+  },
+  "khz_2": {
+    "ennemis": [
+      {
+        "monstre": "dragoss_ardoise",
+        "position": 0
+      },
+      {
+        "monstre": "dragoeuf_ardoise",
+        "position": 1
+      },
+      {
+        "monstre": "dragoss_proteiforme",
+        "position": 4
+      }
+    ],
+    "nom": "L'adulte et l'œuf"
+  },
+  "khz_3": {
+    "ennemis": [
+      {
+        "monstre": "dragoss_charbon",
+        "position": 0
+      },
+      {
+        "monstre": "dragoeuf_charbon",
+        "position": 1
+      },
+      {
+        "monstre": "dragoeuf_argile",
+        "position": 2
+      },
+      {
+        "monstre": "dragoss_proteiforme",
+        "position": 4
+      }
+    ],
+    "nom": "Le nid de charbon"
+  },
+  "khz_boss": {
+    "ennemis": [
+      {
+        "monstre": "kharnozor",
+        "position": 0
+      },
+      {
+        "monstre": "draegnerys",
+        "position": 1
+      },
+      {
+        "monstre": "dragoss_proteiforme",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Kharnozor & Draegnerys"
+  },
+  "khz_elite": {
+    "ennemis": [
+      {
+        "monstre": "dragoss_ardoise",
+        "position": 0
+      },
+      {
+        "monstre": "dragoss_charbon",
+        "position": 1
+      },
+      {
+        "monstre": "dragoeuf_calcaire",
+        "position": 2
+      },
+      {
+        "monstre": "dragoeuf_argile",
+        "position": 4
+      },
+      {
+        "monstre": "dragoss_proteiforme",
+        "position": 5
+      }
+    ],
+    "nom": "La ponte gardée"
+  },
   "kwa_1": {
     "ennemis": [
       {

@@ -217,6 +217,19 @@
       "roc_3"
     ]
   },
+  "repaire_kharnozor": {
+    "boss": [
+      "khz_boss"
+    ],
+    "elite": [
+      "khz_elite"
+    ],
+    "normales": [
+      "khz_1",
+      "khz_2",
+      "khz_3"
+    ]
+  },
   "scarafeuilles": {
     "boss": [
       "scr_boss"

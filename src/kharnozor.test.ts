@@ -3,7 +3,7 @@
 //  le premier soigneur ennemi de la tranche, et un boss qui grandit avec ses alliés.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 
 const ELEMENT_DE = {
   dragoeuf_calcaire: "terre", dragoeuf_argile: "terre",
@@ -121,5 +121,71 @@ describe("les sorts de la zone", () => {
     expect(s.zoneLigne).toBe(true);
     expect(s.coutPA).toBe(6);
     expect(s.cooldownTours).toBe(2);
+  });
+});
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
+describe("la zone Repaire du Kharnozor", () => {
+  it("est la 9e zone de la Tranche 2, sur la toile 21", () => {
+    expect(TRANCHES.find((t) => t.id === "t2")!.zones[8]).toBe("repaire_kharnozor");
+    const loc = localiserZone("repaire_kharnozor")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(21); // 12 toiles consommées par la t1
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale aligne les DEUX boss et le soigneur", () => {
+    const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle.filter((m) => MONSTRES[m].boss).sort()).toEqual(["draegnerys", "kharnozor"]);
+    expect(salle, "le soigneur doit être dans la salle finale").toContain("dragoss_proteiforme");
+    for (const id of ["kharnozor", "draegnerys"]) expect(MONSTRES[id].dofus).toBe("dofus_turquoise");
+  });
+
+  it("le soigneur est dans les TROIS packs normaux", () => {
+    // La leçon s'apprend sur un petit ennemi avant de se payer devant les boss.
+    const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+    for (const id of zone.pools.normales) {
+      const especes = COMBATS[id].ennemis.map((e) => e.monstre);
+      expect(especes, `${id} n'enseigne pas la leçon`).toContain("dragoss_proteiforme");
+    }
+  });
+
+  it("l'élite n'est le doublon d'aucun pack normal", () => {
+    const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+    const cle = (id: string) => [...COMBATS[id].ennemis.map((e) => e.monstre)].sort().join("+");
+    const elites = zone.pools.elite.map(cle);
+    for (const n of zone.pools.normales.map(cle)) expect(elites).not.toContain(n);
+  });
+
+  it("aucune rencontre ne double une espèce, ni ne dépasse 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const e = COMBATS[id].ennemis.map((x) => x.monstre);
+      expect(new Set(e).size, `${id} double une espèce`).toBe(e.length);
+      expect(e.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("les 4 espèces capturables apparaissent toutes en pack NORMAL", () => {
+    const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
+  });
+
+  it("la toile 21 ne lâche rien pour l'instant", () => {
+    expect(butinToile("repaire_kharnozor")).toBeNull();
   });
 });

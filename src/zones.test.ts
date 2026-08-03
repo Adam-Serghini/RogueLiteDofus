@@ -23,14 +23,15 @@ describe("intégrité des zones", () => {
       });
 
       it("chaque combat de donjon du pool contient le nombre de boss attendu (1, ou 2 pour une salle à Royaux jumelés)", () => {
-        // Quatre zones ont une salle de boss JUMELÉE : le Clos des Blops et la
+        // Cinq zones ont une salle de boss JUMELÉE : le Clos des Blops et la
         // Gelaxième Dimension (2 Royaux/Royales distincts par salle, cf.
         // blops.test.ts et gelees.test.ts), le Terrier du Wa Wabbit (Wa Wabbit
-        // + Wa Wobot, cf. wabbit.test.ts) et le Bateau du Chouque (Le Chouque +
-        // Kanniboul Ebil, cf. kanniboul.test.ts) ; toutes les autres gardent
-        // l'invariant historique d'un unique boss par salle.
-        const attendu = ["clos_des_blops", "gelaxieme_dimension", "terrier_wa_wabbit", "bateau_du_chouque"]
-          .includes(zone.id) ? 2 : 1;
+        // + Wa Wobot, cf. wabbit.test.ts), le Bateau du Chouque (Le Chouque +
+        // Kanniboul Ebil, cf. kanniboul.test.ts) et le Repaire du Kharnozor
+        // (Kharnozor + Draegnerys, cf. kharnozor.test.ts) ; toutes les autres
+        // gardent l'invariant historique d'un unique boss par salle.
+        const attendu = ["clos_des_blops", "gelaxieme_dimension", "terrier_wa_wabbit",
+          "bateau_du_chouque", "repaire_kharnozor"].includes(zone.id) ? 2 : 1;
         for (const combatId of zone.pools.boss) {
           const boss = COMBATS[combatId].ennemis.filter((e) => MONSTRES[e.monstre]?.boss);
           expect(boss.length, `${combatId} doit avoir ${attendu} boss`).toBe(attendu);
@@ -44,6 +45,7 @@ describe("intégrité des zones", () => {
         const SANS_BUTIN_POUR_LINSTANT = [
           "clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension", "laboratoire_brumen",
           "terrier_wa_wabbit", "pitons_rocheux", "bateau_du_chouque", "antre_dragon_cochon",
+          "repaire_kharnozor",
         ];
         const pools = butinToile(zone.id);
         if (!pools) {
