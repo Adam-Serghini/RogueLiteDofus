@@ -138,7 +138,7 @@ fois ; les toiles sont continues depuis la T1, donc zone *n* = toile *12 + n*.
 | 3 | 15 | Gelaxième Dimension | double Gelée Royale (6 paires) | ✅ livrée |
 | 4 | 16 | Laboratoire de Brumen Tinctorias | Nelween | ✅ livrée |
 | 5 | 17 | Terrier du Wa Wabbit | Wa Wabbit + Wa Wobot | ✅ livrée |
-| 6 | 18 | Pitons Rocheux des Craqueleurs | — | à faire |
+| 6 | 18 | Pitons Rocheux des Craqueleurs | Craqueleur Légendaire | ✅ livrée |
 | 7 | 19 | Bateau du Chouque + Village Kanniboul | double | à faire |
 | 8 | 20 | Antre du Dragon Cochon | — | à faire |
 | 9 | 21 | Repaire du Kharnozor + Épreuve de Draegnerys | double | à faire |
