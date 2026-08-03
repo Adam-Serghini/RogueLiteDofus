@@ -1450,6 +1450,31 @@
       "vitalite": 118
     }
   },
+  "domoizelle": {
+    "ia": "agressif",
+    "id": "domoizelle",
+    "img": "/assets/monstres/domoizelle.png",
+    "initiative": 15,
+    "nom": "Domoizelle",
+    "pa": 6,
+    "pv": 600,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 38,
+      "chance": 145,
+      "force": 38,
+      "intelligence": 38,
+      "vitalite": 330
+    }
+  },
   "don_dorgan": {
     "ia": "agressif",
     "id": "don_dorgan",
@@ -1498,6 +1523,31 @@
       "force": 22,
       "intelligence": 22,
       "vitalite": 209
+    }
+  },
+  "dostrogo": {
+    "ia": "agressif",
+    "id": "dostrogo",
+    "img": "/assets/monstres/dostrogo.png",
+    "initiative": 15,
+    "nom": "Dostrogo",
+    "pa": 4,
+    "pv": 500,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "souffle_capricieux"
+    ],
+    "stats": {
+      "agilite": 145,
+      "chance": 38,
+      "force": 38,
+      "intelligence": 38,
+      "vitalite": 275
     }
   },
   "draegnerys": {
@@ -1786,6 +1836,32 @@
       "vitalite": 66
     }
   },
+  "fourbasse": {
+    "archiNom": "Fourapin le Chaud",
+    "ia": "agressif",
+    "id": "fourbasse",
+    "img": "/assets/monstres/fourbasse.png",
+    "initiative": 15,
+    "nom": "Fourbasse",
+    "pa": 8,
+    "pv": 540,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 100,
+      "chance": 38,
+      "force": 38,
+      "intelligence": 38,
+      "vitalite": 297
+    }
+  },
   "gardienne_champetre": {
     "ia": "soutien",
     "id": "gardienne_champetre",
@@ -2068,6 +2144,32 @@
       "force": 46,
       "intelligence": 14,
       "vitalite": 130
+    }
+  },
+  "gloutovore": {
+    "archiNom": "Gloubibou le Gars",
+    "ia": "agressif",
+    "id": "gloutovore",
+    "img": "/assets/monstres/gloutovore.png",
+    "initiative": 15,
+    "nom": "Gloutovore",
+    "pa": 6,
+    "pv": 620,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 38,
+      "chance": 145,
+      "force": 38,
+      "intelligence": 38,
+      "vitalite": 341
     }
   },
   "gob_trotteur": {
@@ -3065,6 +3167,35 @@
       "vitalite": 40
     }
   },
+  "moon": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "moon",
+    "img": "/assets/monstres/moon.png",
+    "initiative": 13,
+    "nom": "Moon",
+    "pa": 10,
+    "pv": 1800,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.2
+    },
+    "sorts": [
+      "sortilege_lunaire",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 40,
+      "chance": 40,
+      "force": 190,
+      "intelligence": 40,
+      "vitalite": 990
+    }
+  },
   "mulou": {
     "archiNom": "Muloufok l'Hilarant",
     "ia": "agressif",
@@ -4059,6 +4190,32 @@
       "force": 14,
       "intelligence": 58,
       "vitalite": 118
+    }
+  },
+  "trukikol": {
+    "archiNom": "Trukul le Lent",
+    "ia": "agressif",
+    "id": "trukikol",
+    "img": "/assets/monstres/trukikol.png",
+    "initiative": 15,
+    "nom": "Trukikol",
+    "pa": 4,
+    "pv": 540,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 38,
+      "chance": 38,
+      "force": 145,
+      "intelligence": 38,
+      "vitalite": 297
     }
   },
   "vampire": {

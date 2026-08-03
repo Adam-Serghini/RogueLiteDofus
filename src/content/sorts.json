@@ -1743,6 +1743,71 @@
     "scaling": 0,
     "type": "soin"
   },
+  "sortilege_lunaire": {
+    "baseMax": 44,
+    "baseMin": 34,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Moon — sortilège changeant : désenvoûte, bloque les soins, coupe l'arrière ou empoisonne.",
+    "id": "sortilege_lunaire",
+    "nom": "Sortilège lunaire",
+    "procAleatoire": [
+      {
+        "dissipePositifs": true
+      },
+      {
+        "effet": {
+          "duree": 2,
+          "stat": "friction",
+          "valeur": 1
+        }
+      },
+      {
+        "effet": {
+          "duree": 1,
+          "stat": "tetanise",
+          "valeur": 1
+        }
+      },
+      {
+        "effet": {
+          "duree": 2,
+          "stat": "poison",
+          "valeur": 30
+        }
+      }
+    ],
+    "scaling": 0.66,
+    "type": "degats"
+  },
+  "souffle_capricieux": {
+    "baseMax": 27,
+    "baseMin": 21,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Dostrogo — souffle imprévisible : bloque les soins OU coupe la rangée arrière.",
+    "id": "souffle_capricieux",
+    "nom": "Souffle capricieux",
+    "procAleatoire": [
+      {
+        "effet": {
+          "duree": 1,
+          "stat": "friction",
+          "valeur": 1
+        }
+      },
+      {
+        "effet": {
+          "duree": 1,
+          "stat": "tetanise",
+          "valeur": 1
+        }
+      }
+    ],
+    "scaling": 0.42,
+    "type": "degats"
+  },
   "souffle_draconique": {
     "baseMax": 34,
     "baseMin": 26,

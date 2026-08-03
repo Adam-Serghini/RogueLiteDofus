@@ -171,6 +171,14 @@ const MONSTRES = {
   arapex: 1262,
   nefileuse: 1264,
   reine_nyee: 1267,
+  // Arbre de Moon (Tranche 2, gfxId relevés sur DofusDB — donjon 92 ; roster
+  // strictement fidèle, rien à écarter ni à élargir)
+  trukikol: 114,
+  gloutovore: 115,
+  fourbasse: 116,
+  moon: 123,
+  dostrogo: 1325,
+  domoizelle: 1326,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
