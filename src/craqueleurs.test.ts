@@ -3,7 +3,7 @@
 //  armure native (réduction PLATE des dégâts subis), bestiaire, budget de PA.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { SORTS } from "./data";
+import { MONSTRES, SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { lancerSort } from "./combat";
 import type { Combatant } from "./types";
@@ -102,5 +102,67 @@ describe("socle : l'armure native retranche un montant PLAT", () => {
     const natif = degatsCumules(c, "morsure", 20);
     c.effets.push({ stat: "armure", valeur: 15, toursRestants: 99 });
     expect(degatsCumules(c, "morsure", 20)).toBeLessThan(natif);
+  });
+});
+
+const ELEMENT_DE = {
+  craqueleur: "terre", craqueleur_des_plaines: "eau", craqueboule: "air",
+  craquelourd: "terre", craqueleur_legendaire: "feu",
+} as const;
+const STAT_DE_ELEMENT = { terre: "force", feu: "intelligence", air: "agilite", eau: "chance" } as const;
+const ARCHIS = {
+  craqueleur: "Crakmitaine le Faucheur",
+  craqueleur_des_plaines: "Cramikaz le Suicidaire",
+  craqueboule: "Craquetuss le Piquant",
+  craquelourd: "Craquecrac l'Endurant",
+} as const;
+
+const dominante = (id: string): string => {
+  const stats = MONSTRES[id].stats as unknown as Record<string, number>;
+  return Object.entries(stats).filter(([k]) => k !== "vitalite").sort((a, b) => b[1] - a[1])[0][0];
+};
+
+describe("bestiaire des Pitons Rocheux", () => {
+  it("les 5 espèces existent et frappent dans leur élément", () => {
+    for (const [id, element] of Object.entries(ELEMENT_DE)) {
+      expect(MONSTRES[id], `${id} manquant`).toBeTruthy();
+      expect(dominante(id), `${id} doit dominer en ${element}`).toBe(STAT_DE_ELEMENT[element]);
+    }
+  });
+
+  it("4 espèces sur 5 sont capturables, avec des archis distincts", () => {
+    const avecArchi = Object.keys(ELEMENT_DE).filter((id) => MONSTRES[id].archiNom);
+    expect(avecArchi.sort()).toEqual(Object.keys(ARCHIS).sort());
+    for (const [id, nom] of Object.entries(ARCHIS)) expect(MONSTRES[id].archiNom).toBe(nom);
+    const noms = avecArchi.map((id) => MONSTRES[id].archiNom);
+    expect(new Set(noms).size, "deux espèces ne peuvent pas partager un archi").toBe(noms.length);
+  });
+
+  it("toute la zone est blindée, et le boss plus que ses escortes", () => {
+    for (const id of Object.keys(ELEMENT_DE)) {
+      expect(MONSTRES[id].armure ?? 0, `${id} doit porter une armure native`).toBeGreaterThan(0);
+    }
+    const boss = MONSTRES.craqueleur_legendaire.armure!;
+    for (const id of Object.keys(ARCHIS)) expect(boss).toBeGreaterThan(MONSTRES[id].armure!);
+  });
+
+  it("la pierre ne rejoue PAS le puzzle élémentaire du Clos des Blops", () => {
+    // L'identité de la zone est l'armure plate. Un pic de résistance ramènerait
+    // la leçon des couleurs, déjà donnée à la toile 13.
+    for (const id of Object.keys(ELEMENT_DE)) {
+      const r = MONSTRES[id].resistances ?? {};
+      for (const el of ["terre", "feu", "air", "eau"] as const) {
+        expect(Math.abs(r[el] ?? 0), `${id} : résistance ${el} trop marquée`).toBeLessThanOrEqual(0.15);
+      }
+    }
+  });
+
+  it("le durcissement empile de l'armure sur son lanceur", () => {
+    const s = SORTS.durcissement;
+    expect(s.type).toBe("degats"); // sinon `iaAgressif` ne le jouerait jamais
+    expect(s.effetLanceur?.stat).toBe("armure");
+    expect(s.cooldownTours).toBe(2);
+    // la durée doit dépasser le cooldown, sinon l'armure ne s'accumule jamais
+    expect(s.effetLanceur!.duree).toBeGreaterThan(s.cooldownTours!);
   });
 });

@@ -112,6 +112,13 @@ const MONSTRES = {
   wobot: 102,
   wa_wobot: 1006,
   tiwobot: 1018,
+  // Pitons Rocheux des Craqueleurs (Tranche 2, gfxId relevés sur DofusDB ; le
+  // Craquelourd vient de la famille élargie, pas du donjon 18 — cf. CLAUDE.md)
+  craqueleur: 4,
+  craqueleur_des_plaines: 181,
+  craqueleur_legendaire: 183,
+  craqueboule: 268,
+  craquelourd: 694,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

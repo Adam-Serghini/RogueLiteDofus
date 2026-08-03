@@ -927,6 +927,144 @@
       "vitalite": 175
     }
   },
+  "craqueboule": {
+    "archiNom": "Craquetuss le Piquant",
+    "armure": 8,
+    "ia": "agressif",
+    "id": "craqueboule",
+    "img": "/assets/monstres/craqueboule.png",
+    "initiative": 9,
+    "nom": "Craqueboule",
+    "pa": 8,
+    "pv": 280,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 96,
+      "chance": 18,
+      "force": 18,
+      "intelligence": 18,
+      "vitalite": 155
+    }
+  },
+  "craqueleur": {
+    "archiNom": "Crakmitaine le Faucheur",
+    "armure": 16,
+    "ia": "agressif",
+    "id": "craqueleur",
+    "img": "/assets/monstres/craqueleur.png",
+    "initiative": 9,
+    "nom": "Craqueleur",
+    "pa": 4,
+    "pv": 340,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 18,
+      "chance": 18,
+      "force": 96,
+      "intelligence": 18,
+      "vitalite": 190
+    }
+  },
+  "craqueleur_des_plaines": {
+    "archiNom": "Cramikaz le Suicidaire",
+    "armure": 14,
+    "ia": "agressif",
+    "id": "craqueleur_des_plaines",
+    "img": "/assets/monstres/craqueleur_des_plaines.png",
+    "initiative": 9,
+    "nom": "Craqueleur des Plaines",
+    "pa": 6,
+    "pv": 360,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 18,
+      "chance": 96,
+      "force": 18,
+      "intelligence": 18,
+      "vitalite": 200
+    }
+  },
+  "craqueleur_legendaire": {
+    "armure": 30,
+    "boss": true,
+    "dofus": "dofus_pourpre",
+    "ia": "agressif",
+    "id": "craqueleur_legendaire",
+    "img": "/assets/monstres/craqueleur_legendaire.png",
+    "initiative": 8,
+    "nom": "Craqueleur Légendaire",
+    "pa": 10,
+    "pv": 1250,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "durcissement",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 20,
+      "chance": 20,
+      "force": 20,
+      "intelligence": 130,
+      "vitalite": 690
+    }
+  },
+  "craquelourd": {
+    "archiNom": "Craquecrac l'Endurant",
+    "armure": 24,
+    "ia": "agressif",
+    "id": "craquelourd",
+    "img": "/assets/monstres/craquelourd.png",
+    "initiative": 9,
+    "nom": "Craquelourd",
+    "pa": 6,
+    "pv": 520,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 18,
+      "chance": 18,
+      "force": 96,
+      "intelligence": 18,
+      "vitalite": 290
+    }
+  },
   "croc_gland": {
     "archiNom": "Cromikay le Néophyte",
     "ia": "agressif",
