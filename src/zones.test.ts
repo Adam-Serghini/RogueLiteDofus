@@ -45,7 +45,7 @@ describe("intégrité des zones", () => {
         const SANS_BUTIN_POUR_LINSTANT = [
           "clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension", "laboratoire_brumen",
           "terrier_wa_wabbit", "pitons_rocheux", "bateau_du_chouque", "antre_dragon_cochon",
-          "repaire_kharnozor",
+          "repaire_kharnozor", "taniere_meulou",
         ];
         const pools = butinToile(zone.id);
         if (!pools) {

@@ -3,7 +3,7 @@
 //  annulations par tour (les N premiers coups reçus font zéro), bestiaire, PA.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { lancerSort, effetsDebutTour } from "./combat";
 import type { Combatant } from "./types";
@@ -170,5 +170,77 @@ describe("bestiaire de la Tanière du Meulou", () => {
     // sort-signature, contrairement au Kharnozor, pour ne pas allonger d'une seconde
     // entrée d'affilée la liste nommée des boss sans signature.
     expect(s.desc).toContain("Meulou");
+  });
+});
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
+describe("la zone Tanière du Meulou", () => {
+  it("est la 10e zone de la Tranche 2, sur la toile 22", () => {
+    expect(TRANCHES.find((t) => t.id === "t2")!.zones[9]).toBe("taniere_meulou");
+    const loc = localiserZone("taniere_meulou")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(22); // 12 toiles consommées par la t1
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale a UN boss, qui lâche le Turquoise", () => {
+    const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["meulou"]);
+    expect(MONSTRES.meulou.dofus).toBe("dofus_turquoise");
+  });
+
+  it("le compteur d'annulations est armé dès la fabrication", () => {
+    // Pendant du test de socle, cette fois sur le vrai contenu : sans armement à la
+    // fabrication, un héros plus rapide frapperait avant le premier tour du Meulou.
+    const meulou = fabriquerEnnemis("mlo_boss").find((x) => x.monstreId === "meulou")!;
+    expect(meulou.coupsAnnulesRestants).toBe(3);
+  });
+
+  it("chaque pack normal contient un porteur d'annulation", () => {
+    // Le joueur apprend à gaspiller un coup avant d'en gaspiller trois devant le boss.
+    const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+    for (const id of zone.pools.normales) {
+      const porte = COMBATS[id].ennemis.some((e) => MONSTRES[e.monstre].nullifieParTour);
+      expect(porte, `${id} n'enseigne pas l'annulation`).toBe(true);
+    }
+  });
+
+  it("l'élite n'est le doublon d'aucun pack normal", () => {
+    const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+    const cle = (id: string) => [...COMBATS[id].ennemis.map((e) => e.monstre)].sort().join("+");
+    const elites = zone.pools.elite.map(cle);
+    for (const n of zone.pools.normales.map(cle)) expect(elites).not.toContain(n);
+  });
+
+  it("aucune rencontre ne double une espèce, ni ne dépasse 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const e = COMBATS[id].ennemis.map((x) => x.monstre);
+      expect(new Set(e).size, `${id} double une espèce`).toBe(e.length);
+      expect(e.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("la seule espèce capturable apparaît en pack NORMAL", () => {
+    const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
+  });
+
+  it("la toile 22 ne lâche rien pour l'instant", () => {
+    expect(butinToile("taniere_meulou")).toBeNull();
   });
 });

@@ -256,6 +256,19 @@
       "tai_3"
     ]
   },
+  "taniere_meulou": {
+    "boss": [
+      "mlo_boss"
+    ],
+    "elite": [
+      "mlo_elite"
+    ],
+    "normales": [
+      "mlo_1",
+      "mlo_2",
+      "mlo_3"
+    ]
+  },
   "terrier_wa_wabbit": {
     "boss": [
       "wab_boss"

@@ -1512,6 +1512,99 @@
     ],
     "nom": "Couvain doré (dur)"
   },
+  "mlo_1": {
+    "ennemis": [
+      {
+        "monstre": "mulou",
+        "position": 0
+      },
+      {
+        "monstre": "mulounoke",
+        "position": 4
+      }
+    ],
+    "nom": "Odeur de sang"
+  },
+  "mlo_2": {
+    "ennemis": [
+      {
+        "monstre": "muloubard",
+        "position": 0
+      },
+      {
+        "monstre": "cocholou",
+        "position": 1
+      },
+      {
+        "monstre": "mulounoke",
+        "position": 4
+      }
+    ],
+    "nom": "Les rabatteurs"
+  },
+  "mlo_3": {
+    "ennemis": [
+      {
+        "monstre": "mergranlou",
+        "position": 0
+      },
+      {
+        "monstre": "mulou",
+        "position": 1
+      },
+      {
+        "monstre": "cocholou",
+        "position": 2
+      },
+      {
+        "monstre": "mulounoke",
+        "position": 4
+      }
+    ],
+    "nom": "La battue"
+  },
+  "mlo_boss": {
+    "ennemis": [
+      {
+        "monstre": "meulou",
+        "position": 0
+      },
+      {
+        "monstre": "muloubard",
+        "position": 1
+      },
+      {
+        "monstre": "mergranlou",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Meulou"
+  },
+  "mlo_elite": {
+    "ennemis": [
+      {
+        "monstre": "muloubard",
+        "position": 0
+      },
+      {
+        "monstre": "cocholou",
+        "position": 1
+      },
+      {
+        "monstre": "mergranlou",
+        "position": 2
+      },
+      {
+        "monstre": "mulou",
+        "position": 4
+      },
+      {
+        "monstre": "mulounoke",
+        "position": 5
+      }
+    ],
+    "nom": "La meute au complet"
+  },
   "por_1": {
     "ennemis": [
       {
