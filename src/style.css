@@ -1676,6 +1676,37 @@ kbd {
   font-weight: 800;
   margin: 4px auto 12px;
 }
+
+/* Onglets par tranche (Bestiaire) : avec 24 zones, la liste d'un seul bloc devenait
+   interminable. Même logique visuelle que .ency-onglet, mais textuelle — ce sont des
+   noms de tranche, pas des icônes. */
+.tranche-onglets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 4px;
+}
+.tranche-onglet {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+  cursor: pointer;
+}
+.tranche-onglet small {
+  margin-left: 6px;
+  font-weight: 800;
+  color: var(--or-texte);
+}
+.tranche-onglet.actif {
+  border-color: var(--or-texte);
+  background: rgba(255, 255, 255, 0.5);
+}
+.tranche-niveaux {
+  margin: 0 auto 12px;
+}
 .archi-zone {
   max-width: 880px;
   margin: 0 auto 14px;

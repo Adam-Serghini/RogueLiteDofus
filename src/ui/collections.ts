@@ -159,17 +159,49 @@ export function showBestiaire(meta: Meta): Promise<void> {
         : `<span class="archi-zone-compte">aucun archi</span>`;
       return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} ${compte}</h3><div class="archi-grid">${cards}</div></div>`;
     };
-    const zonesHtml = TRANCHES.map((t) => mondeBloc(t, zoneHtml)).join("");
-    ecran(`
-      <h1>📖 Bestiaire — Archimonstres</h1>
-      <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
-      <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : <b>palier ${ocre.tier}</b> (${ocreEffetTxt(ocre.paBonus, ocre.degats)})${prochain ? ` · prochain palier à ${prochain.seuil}` : " · max atteint"}</p>
-      ${zonesHtml}
-      <div class="boutons-ecran"><button id="best-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
-    `);
-    document
-      .getElementById("best-retour")
-      ?.addEventListener("click", () => res());
+    // Onglets par tranche : avec 24 zones, la liste d'un seul bloc devenait
+    // interminable. Seules les tranches POURVUES de zones ont un onglet — trois
+    // onglets vides pour t3-t5 seraient du bruit ; une mention discrète suffit.
+    const pourvues = TRANCHES.filter((t) => t.zones.length > 0);
+    const aVenir = TRANCHES.filter((t) => t.zones.length === 0);
+    /** Captures / capturables d'une tranche, pour afficher l'avancement dans l'onglet. */
+    const compteTranche = (t: (typeof TRANCHES)[number]): { fait: number; sur: number } => {
+      const ids = new Set(zonesDeTranche(t).flatMap(capturables));
+      return { fait: [...ids].filter((id) => meta.archis.includes(id)).length, sur: ids.size };
+    };
+    let selection = pourvues[0]?.id ?? "";
+
+    const draw = (): void => {
+      const active = pourvues.find((t) => t.id === selection) ?? pourvues[0];
+      const onglets = pourvues
+        .map((t) => {
+          const { fait, sur } = compteTranche(t);
+          return `<button class="tranche-onglet${t.id === active?.id ? " actif" : ""}" data-tranche="${t.id}"
+            title="${escapeHtml(t.nom)} — niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
+            ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
+          </button>`;
+        })
+        .join("");
+      const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") : "";
+      ecran(`
+        <h1>📖 Bestiaire — Archimonstres</h1>
+        <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
+        <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : <b>palier ${ocre.tier}</b> (${ocreEffetTxt(ocre.paBonus, ocre.degats)})${prochain ? ` · prochain palier à ${prochain.seuil}` : " · max atteint"}</p>
+        <div class="tranche-onglets">${onglets}</div>
+        ${active ? `<p class="muet tranche-niveaux">Niveaux ${active.niveaux[0]}–${active.niveaux[1]} · ${zonesDeTranche(active).length} zones</p>` : ""}
+        ${corps}
+        ${aVenir.length ? `<p class="muet monde-verrouille">🔒 ${aVenir.map((t) => t.nom).join(", ")} : à venir</p>` : ""}
+        <div class="boutons-ecran"><button id="best-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".tranche-onglet").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selection = btn.dataset.tranche!;
+          draw();
+        });
+      });
+      root.querySelector<HTMLButtonElement>("#best-retour")?.addEventListener("click", () => res());
+    };
+    draw();
   });
 }
 
