@@ -1,4 +1,97 @@
 {
+  "abr_1": {
+    "ennemis": [
+      {
+        "monstre": "abraknyde_venerable",
+        "position": 0
+      },
+      {
+        "monstre": "nefileuse",
+        "position": 4
+      }
+    ],
+    "nom": "Lisière du Domaine"
+  },
+  "abr_2": {
+    "ennemis": [
+      {
+        "monstre": "abraknyde_sombre",
+        "position": 0
+      },
+      {
+        "monstre": "arapex",
+        "position": 1
+      },
+      {
+        "monstre": "nefileuse",
+        "position": 4
+      }
+    ],
+    "nom": "Le fil tendu"
+  },
+  "abr_3": {
+    "ennemis": [
+      {
+        "monstre": "araknotron",
+        "position": 0
+      },
+      {
+        "monstre": "abrakne_sombre",
+        "position": 1
+      },
+      {
+        "monstre": "abraknyde_venerable",
+        "position": 2
+      },
+      {
+        "monstre": "nefileuse",
+        "position": 4
+      }
+    ],
+    "nom": "Sous la canopée"
+  },
+  "abr_boss": {
+    "ennemis": [
+      {
+        "monstre": "reine_nyee",
+        "position": 0
+      },
+      {
+        "monstre": "arapex",
+        "position": 1
+      },
+      {
+        "monstre": "abraknyde_ancestral",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Reine Nyée & Abraknyde Ancestral"
+  },
+  "abr_elite": {
+    "ennemis": [
+      {
+        "monstre": "abraknyde_sombre",
+        "position": 0
+      },
+      {
+        "monstre": "arapex",
+        "position": 1
+      },
+      {
+        "monstre": "araknotron",
+        "position": 2
+      },
+      {
+        "monstre": "abrakne_sombre",
+        "position": 4
+      },
+      {
+        "monstre": "nefileuse",
+        "position": 5
+      }
+    ],
+    "nom": "La nurserie"
+  },
   "arc_1": {
     "ennemis": [
       {

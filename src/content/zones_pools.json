@@ -82,6 +82,19 @@
       "blp_3"
     ]
   },
+  "domaine_ancestral": {
+    "boss": [
+      "abr_boss"
+    ],
+    "elite": [
+      "abr_elite"
+    ],
+    "normales": [
+      "abr_1",
+      "abr_2",
+      "abr_3"
+    ]
+  },
   "forgerons": {
     "boss": [
       "frg_boss"

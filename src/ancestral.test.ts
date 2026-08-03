@@ -3,7 +3,7 @@
 //  la toile coupe l'accès à la rangée arrière (`tetanise` côté ennemi, une première).
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 
 const ELEMENT_DE = {
   abraknyde_venerable: "terre", abraknyde_sombre: "terre",
@@ -115,5 +115,84 @@ describe("les sorts de la toile", () => {
     expect(s.cible).toBe("ennemi_tous");
     expect(s.coutPA).toBe(6);
     expect(s.cooldownTours).toBe(2);
+  });
+});
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
+describe("la zone Domaine Ancestral", () => {
+  it("est la 11e zone de la Tranche 2, sur la toile 23", () => {
+    expect(TRANCHES.find((t) => t.id === "t2")!.zones[10]).toBe("domaine_ancestral");
+    const loc = localiserZone("domaine_ancestral")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(23); // 12 toiles consommées par la t1
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale aligne les DEUX boss, tous deux porteurs du Turquoise", () => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle.filter((m) => MONSTRES[m].boss).sort()).toEqual(["abraknyde_ancestral", "reine_nyee"]);
+    for (const id of ["reine_nyee", "abraknyde_ancestral"]) {
+      expect(MONSTRES[id].dofus).toBe("dofus_turquoise");
+    }
+  });
+
+  it("la salle finale place l'Ancestral DERRIÈRE la Reine — c'est le design", () => {
+    // Tant que la toile tient et que la rangée avant vit, le grand arbre est hors
+    // d'atteinte pendant qu'il frappe : un boss protège l'autre. Inverser les deux
+    // détruirait la leçon sans rien casser d'autre, d'où ce test.
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    const salle = COMBATS[zone.pools.boss[0]].ennemis;
+    const arbre = salle.find((e) => e.monstre === "abraknyde_ancestral")!;
+    const reine = salle.find((e) => e.monstre === "reine_nyee")!;
+    expect(arbre.position, "l'Ancestral doit être en rangée ARRIÈRE").toBeGreaterThanOrEqual(4);
+    expect(reine.position, "la Reine doit être devant lui").toBeLessThan(4);
+  });
+
+  it("chaque pack normal contient une tisseuse", () => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    for (const id of zone.pools.normales) {
+      const porte = COMBATS[id].ennemis.some((e) =>
+        MONSTRES[e.monstre].sorts.some((s) => SORTS[s].effet?.stat === "tetanise"));
+      expect(porte, `${id} n'enseigne pas la toile`).toBe(true);
+    }
+  });
+
+  it("l'élite n'est le doublon d'aucun pack normal", () => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    const cle = (id: string) => [...COMBATS[id].ennemis.map((e) => e.monstre)].sort().join("+");
+    const elites = zone.pools.elite.map(cle);
+    for (const n of zone.pools.normales.map(cle)) expect(elites).not.toContain(n);
+  });
+
+  it("aucune rencontre ne double une espèce, ni ne dépasse 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const e = COMBATS[id].ennemis.map((x) => x.monstre);
+      expect(new Set(e).size, `${id} double une espèce`).toBe(e.length);
+      expect(e.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("les 4 espèces capturables apparaissent toutes en pack NORMAL", () => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
+  });
+
+  it("la toile 23 ne lâche rien pour l'instant", () => {
+    expect(butinToile("domaine_ancestral")).toBeNull();
   });
 });
