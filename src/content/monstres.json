@@ -76,6 +76,32 @@
       "vitalite": 110
     }
   },
+  "berger_porkass": {
+    "archiNom": "Porfavor le Quémandeur",
+    "ia": "agressif",
+    "id": "berger_porkass",
+    "img": "/assets/monstres/berger_porkass.png",
+    "initiative": 12,
+    "nom": "Berger Porkass",
+    "pa": 4,
+    "pv": 400,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 112,
+      "force": 22,
+      "intelligence": 22,
+      "vitalite": 220
+    }
+  },
   "biblop_coco": {
     "archiNom": "Bilvoezé le Bonimenteur",
     "ia": "agressif",
@@ -707,6 +733,32 @@
       "vitalite": 130
     }
   },
+  "cavalier_porkass": {
+    "archiNom": "Cavordemal le Sorcier",
+    "ia": "agressif",
+    "id": "cavalier_porkass",
+    "img": "/assets/monstres/cavalier_porkass.png",
+    "initiative": 12,
+    "nom": "Cavalier Porkass",
+    "pa": 6,
+    "pv": 440,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 112,
+      "chance": 22,
+      "force": 22,
+      "intelligence": 22,
+      "vitalite": 242
+    }
+  },
   "ceglumen": {
     "ia": "agressif",
     "id": "ceglumen",
@@ -841,6 +893,32 @@
       "force": 38,
       "intelligence": 9,
       "vitalite": 64
+    }
+  },
+  "cochon_de_farle": {
+    "archiNom": "Farlon l'Enfant",
+    "ia": "agressif",
+    "id": "cochon_de_farle",
+    "img": "/assets/monstres/cochon_de_farle.png",
+    "initiative": 12,
+    "nom": "Cochon de Farle",
+    "pa": 6,
+    "pv": 460,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 22,
+      "force": 112,
+      "intelligence": 22,
+      "vitalite": 253
     }
   },
   "coffre_forgerons": {
@@ -1188,6 +1266,85 @@
       "force": 18,
       "intelligence": 6,
       "vitalite": 118
+    }
+  },
+  "don_dorgan": {
+    "ia": "agressif",
+    "id": "don_dorgan",
+    "img": "/assets/monstres/don_dorgan.png",
+    "initiative": 12,
+    "nom": "Don Dorgan",
+    "pa": 8,
+    "pv": 380,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 84,
+      "chance": 22,
+      "force": 22,
+      "intelligence": 22,
+      "vitalite": 209
+    }
+  },
+  "don_duss_ang": {
+    "ia": "agressif",
+    "id": "don_duss_ang",
+    "img": "/assets/monstres/don_duss_ang.png",
+    "initiative": 12,
+    "nom": "Don Duss Ang",
+    "pa": 8,
+    "pv": 380,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 84,
+      "chance": 22,
+      "force": 22,
+      "intelligence": 22,
+      "vitalite": 209
+    }
+  },
+  "dragon_cochon": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "dragon_cochon",
+    "img": "/assets/monstres/dragon_cochon.png",
+    "initiative": 11,
+    "nom": "Dragon Cochon",
+    "pa": 10,
+    "pv": 1450,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.2,
+      "terre": 0.15
+    },
+    "sorts": [
+      "goinfrerie",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 24,
+      "chance": 24,
+      "force": 24,
+      "intelligence": 150,
+      "vitalite": 800
     }
   },
   "epouvanteur": {
@@ -1636,6 +1793,31 @@
       "force": 34,
       "intelligence": 6,
       "vitalite": 50
+    }
+  },
+  "gorgouille": {
+    "ia": "agressif",
+    "id": "gorgouille",
+    "img": "/assets/monstres/gorgouille.png",
+    "initiative": 12,
+    "nom": "Gorgouille",
+    "pa": 4,
+    "pv": 380,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure_vorace"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 112,
+      "force": 22,
+      "intelligence": 22,
+      "vitalite": 209
     }
   },
   "gourlo_le_terrible": {
@@ -2559,6 +2741,32 @@
       "force": 12,
       "intelligence": 32,
       "vitalite": 38
+    }
+  },
+  "porsalu": {
+    "archiNom": "Porsalé le Râleur",
+    "ia": "agressif",
+    "id": "porsalu",
+    "img": "/assets/monstres/porsalu.png",
+    "initiative": 12,
+    "nom": "Porsalu",
+    "pa": 4,
+    "pv": 400,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 22,
+      "force": 112,
+      "intelligence": 22,
+      "vitalite": 220
     }
   },
   "pyrasite": {

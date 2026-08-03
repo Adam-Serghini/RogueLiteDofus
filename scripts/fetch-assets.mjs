@@ -130,6 +130,17 @@ const MONSTRES = {
   kanniboul_tam: 1322,
   ricanif: 1323,
   ivremor: 1324,
+  // Antre du Dragon Cochon (Tranche 2, gfxId relevés sur DofusDB — donjon 6 ; les deux
+  // Porkass viennent de la famille élargie ; le Cochon de Lait est écarté, il partage
+  // le gfx 68 de Porsalu)
+  dragon_cochon: 60,
+  porsalu: 68,
+  cavalier_porkass: 191,
+  berger_porkass: 192,
+  don_duss_ang: 332,
+  don_dorgan: 333,
+  cochon_de_farle: 334,
+  gorgouille: 871,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

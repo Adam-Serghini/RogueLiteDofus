@@ -893,6 +893,23 @@
     "scaling": 0,
     "type": "buff"
   },
+  "goinfrerie": {
+    "baseMax": 34,
+    "baseMin": 26,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Dragon Cochon — engloutit vos préparatifs : retire boucliers et bonus de la cible.",
+    "id": "goinfrerie",
+    "nom": "Goinfrerie",
+    "procAleatoire": [
+      {
+        "dissipePositifs": true
+      }
+    ],
+    "scaling": 0.62,
+    "type": "degats"
+  },
   "griffe_joueuse": {
     "baseMax": 13,
     "baseMin": 9,
@@ -1099,6 +1116,22 @@
     "id": "morsure",
     "nom": "Morsure",
     "scaling": 0.4,
+    "type": "degats"
+  },
+  "morsure_vorace": {
+    "baseMax": 23,
+    "baseMin": 17,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Gorgouille — dévore les enchantements : retire boucliers et bonus de la cible.",
+    "id": "morsure_vorace",
+    "nom": "Morsure vorace",
+    "procAleatoire": [
+      {
+        "dissipePositifs": true
+      }
+    ],
+    "scaling": 0.42,
     "type": "degats"
   },
   "mot_alternatif": {
