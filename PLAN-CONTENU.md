@@ -125,7 +125,7 @@ Squelettes (Chafer Rönin, 40), Caverne des Bulbes (Bulbig Brozeur, 40),
 Bworks (Bworkette, 50), Clos des Blops (Blop Royal, 50), Refuge Sylvestre (50) ;
 Nowel (Sapik) réservé à l'événementiel.
 
-### T2 · 51–100 — ordre ARRÊTÉ (Adam, 2026-08-03)
+### T2 · 51–100 — ✅ LES 12 ZONES SONT LIVRÉES (2026-08-03)
 
 Les 12 zones dans l'ordre de jeu. Une entrée « X + Y » désigne une **salle finale à
 deux boss**, comme le Clos des Blops. L'implémentation suit cet ordre, une zone à la
@@ -144,7 +144,7 @@ fois ; les toiles sont continues depuis la T1, donc zone *n* = toile *12 + n*.
 | 9 | 21 | Repaire du Kharnozor + Épreuve de Draegnerys | Kharnozor + Draegnerys | ✅ livrée |
 | 10 | 22 | Tanière du Meulou | Meulou | ✅ livrée |
 | 11 | 23 | Domaine Ancestral + Reine Nyée | Reine Nyée + Abraknyde Ancestral | ✅ livrée |
-| 12 | 24 | Moon | — | à faire |
+| 12 | 24 | Arbre de Moon | Moon | ✅ livrée |
 
 Rappels de méthode pour chaque zone (détail complet dans `CLAUDE.md`, section
 Multi-tranches) : composition et sprites depuis **DofusDB** (`/dungeons/{id}` puis
