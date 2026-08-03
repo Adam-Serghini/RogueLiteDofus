@@ -307,3 +307,109 @@ describe("le soigneur et le passif, prouvés PAR LE MOTEUR", () => {
     expect(entoure, `entouré ${entoure} doit dépasser seul ${seul}`).toBeGreaterThan(seul);
   });
 });
+
+describe("budget de PA et domination", () => {
+  async function paOrphelins(c: Combatant, cs: Combatant[], cooldowns: Record<string, number> = {}): Promise<number> {
+    c.paActuels = c.paMax;
+    c.cooldowns = { ...cooldowns };
+    c.lancersCeTour = {};
+    for (let garde = 0; garde < 10; garde++) {
+      const action = await controllerIA(c, cs);
+      if (!action || action.sort.coutPA <= 0) break;
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {}); // le moteur l'incrémente au lancement
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return c.paActuels;
+  }
+
+  const equipe = () => {
+    const h = fabriquerEquipe();
+    for (const [i, x] of h.entries()) {
+      x.position = i < 2 ? i : i + 2;
+      x.pvBase = 800; x.pvMax = 800; x.pvActuels = 800;
+    }
+    return h;
+  };
+
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "repaire_kharnozor")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  it("aucune des 9 espèces ne laisse de PA sur la table", async () => {
+    const eq = equipe();
+    for (const espece of [...especesDeLaZone()]) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...eq]), `${espece} laisse des PA`).toBe(0);
+    }
+  });
+
+  it("Draegnerys ne gaspille rien quand son souffle recharge", async () => {
+    const eq = equipe();
+    const d = trouver("draegnerys");
+    expect(await paOrphelins(d, [d, ...eq], { souffle_draconique: 1 })).toBe(0);
+  });
+
+  it("le Kharnozor n'a AUCUN sort sous cooldown — donc rien à recharger", () => {
+    // Dit explicitement plutôt qu'omis : son identité est le passif, il n'a pas de
+    // signature, donc le cas « signature en recharge » n'existe pas pour lui. L'omettre
+    // laisserait croire à un oubli de couverture.
+    for (const s of MONSTRES.kharnozor.sorts) {
+      expect(SORTS[s].cooldownTours, `${s}`).toBeUndefined();
+    }
+  });
+
+  /** Dégâts par tour estimés. Modèle de CONCEPTION, pas une simulation du moteur.
+   *
+   *  Le SOIN et le PASSIF sont exclus : l'un n'est pas un dégât, l'autre dépend du
+   *  nombre d'alliés vivants et non du tour joué — comme la friction et le vampirisme
+   *  au Bateau, l'armure aux Pitons, le désenvoûtement à l'Antre. Le Laboratoire avait
+   *  fait l'erreur inverse (son modèle ignorait le poison, l'identité même de la zone)
+   *  et validé une inversion. */
+  const degatsParTour = (id: string, cibles: number): number => {
+    const m = MONSTRES[id];
+    const stats = m.stats as unknown as Record<string, number>;
+    const d = Math.max(stats.force ?? 0, stats.intelligence ?? 0, stats.agilite ?? 0, stats.chance ?? 0);
+    const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
+    const offensifs = m.sorts.filter((s) => SORTS[s].type === "degats");
+    const coup = (s: string) => {
+      const sort = SORTS[s];
+      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      return direct * (sort.zoneLigne ? cibles : 1);
+    };
+    const cycle = (dispo: string[]) => {
+      let pa = m.pa, total = 0;
+      const lances: Record<string, number> = {};
+      for (const s of [...dispo].sort((a, b) => SORTS[b].coutPA - SORTS[a].coutPA)) {
+        const max = SORTS[s].maxParTour ?? Infinity;
+        while (pa >= SORTS[s].coutPA && (lances[s] ?? 0) < max) {
+          total += coup(s); pa -= SORTS[s].coutPA; lances[s] = (lances[s] ?? 0) + 1;
+        }
+      }
+      return total;
+    };
+    const enRecharge = offensifs.filter((s) => !SORTS[s].cooldownTours);
+    const avec = cycle(offensifs);
+    return offensifs.length === enRecharge.length ? avec : (avec + cycle(enRecharge)) / 2;
+  };
+
+  it("chaque boss frappe plus fort que TOUTE espèce non-boss de la zone", () => {
+    const nonBoss = [...especesDeLaZone()].filter((m) => !MONSTRES[m].boss);
+    expect(nonBoss.length).toBeGreaterThan(0);
+    for (const cibles of [1, 2]) {
+      for (const boss of ["kharnozor", "draegnerys"]) {
+        const b = degatsParTour(boss, cibles);
+        for (const e of nonBoss) {
+          const esc = degatsParTour(e, cibles);
+          expect(b, `à ${cibles} cible(s) : ${boss} (${b.toFixed(0)}) doit dépasser ${e} (${esc.toFixed(0)})`)
+            .toBeGreaterThan(esc);
+        }
+      }
+    }
+  });
+});
