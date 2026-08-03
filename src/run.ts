@@ -576,6 +576,10 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
     mueElementaire: m.mueElementaire,
     bonusParAllieLigne: m.bonusParAllieLigne,
     armure: m.armure,
+    nullifieParTour: m.nullifieParTour,
+    // armé dès la fabrication : un héros plus rapide frapperait sinon avant le premier
+    // tour du porteur, et l'annulation ne serait pas encore en place
+    coupsAnnulesRestants: m.nullifieParTour,
     img: m.img,
     ...etatCombatInitial(),
     dofusLache: m.dofus,

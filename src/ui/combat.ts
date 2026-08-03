@@ -400,6 +400,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
   if ((c.portails ?? 0) > 0) badges.push(`🌀 ×${c.portails}`);
   if ((c.rage ?? 0) > 0) badges.push(`🐺 Rage ×${c.rage}`);
   if (c.provoque) badges.push(`🛡 Provoque`);
+  if ((c.coupsAnnulesRestants ?? 0) > 0) badges.push(`🐺 ${c.coupsAnnulesRestants} coup(s) annulé(s)`);
   if (c.bonusOffensifProchain > 0)
     badges.push(`+${Math.round(c.bonusOffensifProchain * 100)} % prochain`);
   if (c.maxRollCharges > 0) badges.push(`Œil affûté ×${c.maxRollCharges}`);

@@ -533,6 +533,15 @@ function infligerDegats(
     dmg = 0;
   }
 
+  // Meulou : compteur d'annulations rechargé à chaque tour du porteur (là où
+  // `nullifieProchainCoup` ci-dessus est un booléen à un seul coup). Même garde :
+  // jamais consommé par la part REDIRIGÉE, ce coup n'était pas adressé au porteur.
+  if (!viaRedirection && dmg > 0 && (cible.coupsAnnulesRestants ?? 0) > 0) {
+    cible.coupsAnnulesRestants! -= 1;
+    ctx?.log(`${cible.nom} encaisse sans broncher (${cible.coupsAnnulesRestants} annulation(s) restante(s)).`);
+    dmg = 0;
+  }
+
   // Redirection (Étreinte) : un allié porteur dévie une fraction des dégâts
   // destinés à un allié en ligne ARRIÈRE (jamais le porteur lui-même). Le bouclier
   // de la VICTIME absorbe D'ABORD (sur le montant plein), puis seul le RESTE est
@@ -1959,6 +1968,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       aJoue.add(acteur.ref);
 
       reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer par tour
+      if (acteur.nullifieParTour) acteur.coupsAnnulesRestants = acteur.nullifieParTour; // Meulou
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       appliquerEnrage(acteur, ctx); // Ascension : boss enragés
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)

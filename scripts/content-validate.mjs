@@ -41,6 +41,10 @@ export function validerContenu(contenu, base) {
     // amplifierait les dégâts reçus au lieu de les réduire, silencieusement.
     if (m.armure !== undefined && (!estNombre(m.armure) || m.armure < 0))
       E("monstres", id, `armure doit être un nombre ≥ 0 (reçu : ${m.armure})`);
+    // nullifieParTour : nombre de coups annulés par tour (Meulou). Un non-entier ou un
+    // négatif donnerait un compteur incohérent, silencieusement.
+    if (m.nullifieParTour !== undefined && (!estEntier(m.nullifieParTour) || m.nullifieParTour < 0))
+      E("monstres", id, `nullifieParTour doit être un entier ≥ 0 (reçu : ${m.nullifieParTour})`);
   }
 
   const validerAttaque = (coll, id, a, ou) => {

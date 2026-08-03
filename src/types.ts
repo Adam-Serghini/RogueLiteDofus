@@ -299,6 +299,11 @@ export interface Monstre {
    *  chaque frappe (plancher à 0). Distincte des résistances, qui sont un
    *  pourcentage : le plat mange les petits coups et laisse passer les gros. */
   armure?: number;
+  /** Meulou : réduit à ZÉRO les N premiers coups directs reçus à chaque tour.
+   *  Distinct de `nullifieProchainCoup` (Roublardise), qui est un booléen à un seul
+   *  coup et non un compteur rechargé. Le poison n'est pas concerné : il ne passe pas
+   *  par `infligerDegats`. */
+  nullifieParTour?: number;
 }
 
 export type Camp = "joueur" | "ennemi";
@@ -341,6 +346,8 @@ export interface Combatant {
   renaissancesRestantes?: number; // compteur de renaissances disponibles ce combat
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant
   armure?: number; // armure NATIVE permanente (Craqueleurs) — s'ajoute aux effets `armure` temporaires
+  nullifieParTour?: number; // allocation par tour (Meulou) — voir Monstre.nullifieParTour
+  coupsAnnulesRestants?: number; // annulations encore disponibles ce tour-ci
   esquiveArriere?: number; // esquive d'équipement (Baguette Rikiki), active si ligne arrière
   soinDegatsRecus?: number; // récupération d'équipement (Goyave) : % des dégâts subis rendus en PV
   bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)
