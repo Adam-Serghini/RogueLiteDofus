@@ -25,6 +25,19 @@
       "combat_3"
     ]
   },
+  "bateau_du_chouque": {
+    "boss": [
+      "cho_boss"
+    ],
+    "elite": [
+      "cho_elite"
+    ],
+    "normales": [
+      "cho_1",
+      "cho_2",
+      "cho_3"
+    ]
+  },
   "cale_de_l_arche": {
     "boss": [
       "arc_boss"

@@ -299,6 +299,99 @@
     ],
     "nom": "Donjon — Tournesol Affamé"
   },
+  "cho_1": {
+    "ennemis": [
+      {
+        "monstre": "kanniboul_ark",
+        "position": 0
+      },
+      {
+        "monstre": "kanniboul_sarbak",
+        "position": 4
+      }
+    ],
+    "nom": "Sentinelles du village"
+  },
+  "cho_2": {
+    "ennemis": [
+      {
+        "monstre": "kanniboul_eth",
+        "position": 0
+      },
+      {
+        "monstre": "kanniboul_jav",
+        "position": 1
+      },
+      {
+        "monstre": "kanniboul_sarbak",
+        "position": 4
+      }
+    ],
+    "nom": "Chasse au long cochon"
+  },
+  "cho_3": {
+    "ennemis": [
+      {
+        "monstre": "kanniboul_tam",
+        "position": 0
+      },
+      {
+        "monstre": "ricanif",
+        "position": 1
+      },
+      {
+        "monstre": "ivremor",
+        "position": 2
+      },
+      {
+        "monstre": "kanniboul_sarbak",
+        "position": 4
+      }
+    ],
+    "nom": "Passerelle du Bateau"
+  },
+  "cho_boss": {
+    "ennemis": [
+      {
+        "monstre": "le_chouque",
+        "position": 0
+      },
+      {
+        "monstre": "kanniboul_ebil",
+        "position": 1
+      },
+      {
+        "monstre": "ivremor",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Le Chouque & Kanniboul Ebil"
+  },
+  "cho_elite": {
+    "ennemis": [
+      {
+        "monstre": "kanniboul_ark",
+        "position": 0
+      },
+      {
+        "monstre": "kanniboul_eth",
+        "position": 1
+      },
+      {
+        "monstre": "kanniboul_jav",
+        "position": 2
+      },
+      {
+        "monstre": "kanniboul_tam",
+        "position": 4
+      },
+      {
+        "monstre": "kanniboul_sarbak",
+        "position": 5
+      }
+    ],
+    "nom": "Le grand tam-tam"
+  },
   "combat_1": {
     "ennemis": [
       {
