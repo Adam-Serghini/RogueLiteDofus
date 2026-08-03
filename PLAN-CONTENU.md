@@ -125,10 +125,33 @@ Squelettes (Chafer Rönin, 40), Caverne des Bulbes (Bulbig Brozeur, 40),
 Bworks (Bworkette, 50), Clos des Blops (Blop Royal, 50), Refuge Sylvestre (50) ;
 Nowel (Sapik) réservé à l'événementiel.
 
-### T2 · 51–100 (esquisse)
+### T2 · 51–100 — ordre ARRÊTÉ (Adam, 2026-08-03)
 
-Cania, Sidimote, Donjon des Blops, **Donjon des Gelées** (→ légendaire **Gelano**),
-Île de Moon, Forêt Maléfique (Chêne Mou), Donjon du Dragon Cochon, Wa Wabbit…
+Les 12 zones dans l'ordre de jeu. Une entrée « X + Y » désigne une **salle finale à
+deux boss**, comme le Clos des Blops. L'implémentation suit cet ordre, une zone à la
+fois ; les toiles sont continues depuis la T1, donc zone *n* = toile *12 + n*.
+
+| # | Toile | Zone | Salle finale | État |
+|---|---|---|---|---|
+| 1 | 13 | Clos des Blops | double Blop Royal (6 paires) | ✅ livrée |
+| 2 | 14 | Cale de l'Arche d'Otomaï | Gourlo le Terrible | ✅ livrée |
+| 3 | 15 | Gelaxième Dimension | double Gelée Royale (6 paires) | ✅ livrée |
+| 4 | 16 | Laboratoire de Brumen Tinctorias | Nelween | ✅ livrée |
+| 5 | 17 | Terrier du Wa Wabbit | Wa Wabbit + Wa Wobot | ✅ livrée |
+| 6 | 18 | Pitons Rocheux des Craqueleurs | — | à faire |
+| 7 | 19 | Bateau du Chouque + Village Kanniboul | double | à faire |
+| 8 | 20 | Antre du Dragon Cochon | — | à faire |
+| 9 | 21 | Repaire du Kharnozor + Épreuve de Draegnerys | double | à faire |
+| 10 | 22 | Tanière du Meulou | — | à faire |
+| 11 | 23 | Domaine Ancestral + Reine Nyée | double | à faire |
+| 12 | 24 | Moon | — | à faire |
+
+Rappels de méthode pour chaque zone (détail complet dans `CLAUDE.md`, section
+Multi-tranches) : composition et sprites depuis **DofusDB** (`/dungeons/{id}` puis
+`/img/monsters/{gfxId}.png`), archimonstres depuis **Metamob** ; une leçon de jeu
+propre à la zone, jamais la redite d'une précédente ; budgets de PA intégralement
+dépensables ; le boss domine sa salle ; toute espèce capturable doit apparaître dans
+un pack **normal**.
 
 ### T3 · 101–150 (esquisse)
 
