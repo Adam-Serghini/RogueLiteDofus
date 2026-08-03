@@ -1698,6 +1698,99 @@
     ],
     "nom": "La meute au complet"
   },
+  "moo_1": {
+    "ennemis": [
+      {
+        "monstre": "trukikol",
+        "position": 0
+      },
+      {
+        "monstre": "dostrogo",
+        "position": 4
+      }
+    ],
+    "nom": "Racines de l'Arbre"
+  },
+  "moo_2": {
+    "ennemis": [
+      {
+        "monstre": "gloutovore",
+        "position": 0
+      },
+      {
+        "monstre": "domoizelle",
+        "position": 1
+      },
+      {
+        "monstre": "dostrogo",
+        "position": 4
+      }
+    ],
+    "nom": "Sève montante"
+  },
+  "moo_3": {
+    "ennemis": [
+      {
+        "monstre": "fourbasse",
+        "position": 0
+      },
+      {
+        "monstre": "trukikol",
+        "position": 1
+      },
+      {
+        "monstre": "gloutovore",
+        "position": 2
+      },
+      {
+        "monstre": "dostrogo",
+        "position": 4
+      }
+    ],
+    "nom": "La haute branche"
+  },
+  "moo_boss": {
+    "ennemis": [
+      {
+        "monstre": "moon",
+        "position": 0
+      },
+      {
+        "monstre": "gloutovore",
+        "position": 1
+      },
+      {
+        "monstre": "fourbasse",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Moon"
+  },
+  "moo_elite": {
+    "ennemis": [
+      {
+        "monstre": "gloutovore",
+        "position": 0
+      },
+      {
+        "monstre": "fourbasse",
+        "position": 1
+      },
+      {
+        "monstre": "domoizelle",
+        "position": 2
+      },
+      {
+        "monstre": "trukikol",
+        "position": 4
+      },
+      {
+        "monstre": "dostrogo",
+        "position": 5
+      }
+    ],
+    "nom": "La canopée"
+  },
   "por_1": {
     "ennemis": [
       {

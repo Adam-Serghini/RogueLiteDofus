@@ -25,6 +25,19 @@
       "por_3"
     ]
   },
+  "arbre_de_moon": {
+    "boss": [
+      "moo_boss"
+    ],
+    "elite": [
+      "moo_elite"
+    ],
+    "normales": [
+      "moo_1",
+      "moo_2",
+      "moo_3"
+    ]
+  },
   "astrub": {
     "boss": [
       "boss"

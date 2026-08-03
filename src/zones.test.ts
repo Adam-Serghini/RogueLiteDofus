@@ -41,12 +41,13 @@ describe("intégrité des zones", () => {
 
       it("a un pool de butin à toile dont les objets existent", () => {
         // Zones dont les objets sont attendus (Adam fournira le contenu) : elles
-        // ne lâchent rien pour l'instant. Liste NOMMÉE — toute autre zone sans
-        // butin est un bug.
+        // ne lâchent rien pour l'instant. Depuis l'Arbre de Moon, la liste couvre
+        // TOUTE la Tranche 2 — mais elle reste NOMMÉE : toute autre zone sans butin
+        // est un bug, et c'est ce qui protège la Tranche 1.
         const SANS_BUTIN_POUR_LINSTANT = [
           "clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension", "laboratoire_brumen",
           "terrier_wa_wabbit", "pitons_rocheux", "bateau_du_chouque", "antre_dragon_cochon",
-          "repaire_kharnozor", "taniere_meulou", "domaine_ancestral",
+          "repaire_kharnozor", "taniere_meulou", "domaine_ancestral", "arbre_de_moon",
         ];
         const pools = butinToile(zone.id);
         if (!pools) {

@@ -3,7 +3,7 @@
 //  la finale est un examen : son sortilège tire une des quatre leçons de la tranche.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 
 const ELEMENT_DE = {
   trukikol: "terre", moon: "terre",
@@ -96,5 +96,81 @@ describe("le sortilège de Moon est un examen de la tranche", () => {
     const signatures = procs.map((p) => p.effet!.stat).sort();
     expect(signatures).toEqual(["friction", "tetanise"]);
     expect(SORTS.souffle_capricieux.coutPA).toBe(4);
+  });
+});
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
+describe("la zone Arbre de Moon", () => {
+  it("est la 12e et DERNIÈRE zone de la Tranche 2, sur la toile 24", () => {
+    const t2 = TRANCHES.find((t) => t.id === "t2")!;
+    expect(t2.zones[11]).toBe("arbre_de_moon");
+    expect(t2.zones, "la Tranche 2 est complète").toHaveLength(12);
+    const loc = localiserZone("arbre_de_moon")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(24); // 12 toiles consommées par la t1
+  });
+
+  it("la Tranche 2 reste EN CHANTIER malgré ses 12 zones", () => {
+    // Le contenu existe, l'équilibrage non : la tranche doit rester non lançable jusqu'à
+    // ce qu'Adam la juge prête. Retirer `enChantier` est un choix, pas un effet de bord
+    // de la complétion du contenu — d'où ce test.
+    expect(TRANCHES.find((t) => t.id === "t2")!.enChantier).toBe(true);
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale a UN boss, qui lâche le Turquoise", () => {
+    const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["moon"]);
+    expect(MONSTRES.moon.dofus).toBe("dofus_turquoise");
+  });
+
+  it("chaque pack normal contient un porteur de proc aléatoire", () => {
+    // Ce n'est pas un effet qu'il faut apprendre ici — les quatre le sont déjà — mais
+    // l'IMPRÉVISIBILITÉ, et elle se découvre sur un petit ennemi.
+    const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+    for (const id of zone.pools.normales) {
+      const porte = COMBATS[id].ennemis.some((e) =>
+        MONSTRES[e.monstre].sorts.some((s) => SORTS[s].procAleatoire?.length));
+      expect(porte, `${id} n'enseigne pas l'imprévisibilité`).toBe(true);
+    }
+  });
+
+  it("l'élite n'est le doublon d'aucun pack normal", () => {
+    const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+    const cle = (id: string) => [...COMBATS[id].ennemis.map((e) => e.monstre)].sort().join("+");
+    const elites = zone.pools.elite.map(cle);
+    for (const n of zone.pools.normales.map(cle)) expect(elites).not.toContain(n);
+  });
+
+  it("aucune rencontre ne double une espèce, ni ne dépasse 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const e = COMBATS[id].ennemis.map((x) => x.monstre);
+      expect(new Set(e).size, `${id} double une espèce`).toBe(e.length);
+      expect(e.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("les 3 espèces capturables apparaissent toutes en pack NORMAL", () => {
+    const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
+  });
+
+  it("la toile 24 ne lâche rien pour l'instant", () => {
+    expect(butinToile("arbre_de_moon")).toBeNull();
   });
 });
