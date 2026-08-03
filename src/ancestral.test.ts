@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
-import { lancerSort, ciblesValides } from "./combat";
+import { lancerSort, ciblesValides, controllerIA } from "./combat";
 import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
@@ -321,5 +321,119 @@ describe("la toile prouvée PAR LE MOTEUR", () => {
     const avant = cible.pvActuels;
     lancerSort(arbre, SORTS.racines_ancestrales, cible.ref, cs, ctx);
     expect(cible.pvActuels, "les racines doivent mordre la rangée arrière").toBeLessThan(avant);
+  });
+});
+
+describe("budget de PA et domination", () => {
+  async function paOrphelins(c: Combatant, cs: Combatant[], cooldowns: Record<string, number> = {}): Promise<number> {
+    c.paActuels = c.paMax;
+    c.cooldowns = { ...cooldowns };
+    c.lancersCeTour = {};
+    for (let garde = 0; garde < 10; garde++) {
+      const action = await controllerIA(c, cs);
+      if (!action || action.sort.coutPA <= 0) break;
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {}); // le moteur l'incrémente au lancement
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return c.paActuels;
+  }
+
+  const equipe = () => {
+    const h = fabriquerEquipe();
+    for (const [i, x] of h.entries()) {
+      x.position = i < 2 ? i : i + 2;
+      x.pvBase = 900; x.pvMax = 900; x.pvActuels = 900;
+    }
+    return h;
+  };
+
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  it("aucune des 8 espèces ne laisse de PA sur la table", async () => {
+    const eq = equipe();
+    for (const espece of [...especesDeLaZone()]) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...eq]), `${espece} laisse des PA`).toBe(0);
+    }
+  });
+
+  it("les deux boss ne gaspillent rien quand leur signature recharge", async () => {
+    const eq = equipe();
+    for (const [espece, signature] of [
+      ["reine_nyee", "toile_gluante"], ["abraknyde_ancestral", "racines_ancestrales"],
+    ] as const) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...eq], { [signature]: 1 }), `${espece} en recharge`).toBe(0);
+    }
+  });
+
+  it("chaque porteur de signature la lance réellement", async () => {
+    const eq = equipe();
+    for (const [espece, attendu] of [
+      ["nefileuse", "fil_collant"], ["reine_nyee", "toile_gluante"],
+      ["abraknyde_ancestral", "racines_ancestrales"],
+    ] as const) {
+      const c = trouver(espece);
+      c.paActuels = c.paMax;
+      c.cooldowns = {};
+      c.lancersCeTour = {};
+      expect((await controllerIA(c, [c, ...eq]))!.sort.id, `${espece}`).toBe(attendu);
+    }
+  });
+
+  /** Dégâts par tour estimés. Modèle de CONCEPTION, pas une simulation du moteur.
+   *
+   *  La `tetanise` est exclue : c'est du contrôle, pas des dégâts — comme l'armure aux
+   *  Pitons, le soin au Repaire, le désenvoûtement à l'Antre et l'annulation à la
+   *  Tanière. Le Laboratoire avait fait l'erreur inverse (son modèle ignorait le poison,
+   *  l'identité même de la zone) et validé une inversion. */
+  const degatsParTour = (id: string, cibles: number): number => {
+    const m = MONSTRES[id];
+    const stats = m.stats as unknown as Record<string, number>;
+    const d = Math.max(stats.force ?? 0, stats.intelligence ?? 0, stats.agilite ?? 0, stats.chance ?? 0);
+    const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
+    const offensifs = m.sorts.filter((s) => SORTS[s].type === "degats");
+    const coup = (s: string) => {
+      const sort = SORTS[s];
+      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      return direct * (sort.zoneLigne ? cibles : 1);
+    };
+    const cycle = (dispo: string[]) => {
+      let pa = m.pa, total = 0;
+      const lances: Record<string, number> = {};
+      for (const s of [...dispo].sort((a, b) => SORTS[b].coutPA - SORTS[a].coutPA)) {
+        const max = SORTS[s].maxParTour ?? Infinity;
+        while (pa >= SORTS[s].coutPA && (lances[s] ?? 0) < max) {
+          total += coup(s); pa -= SORTS[s].coutPA; lances[s] = (lances[s] ?? 0) + 1;
+        }
+      }
+      return total;
+    };
+    const enRecharge = offensifs.filter((s) => !SORTS[s].cooldownTours);
+    const avec = cycle(offensifs);
+    return offensifs.length === enRecharge.length ? avec : (avec + cycle(enRecharge)) / 2;
+  };
+
+  it("chaque boss frappe plus fort que TOUTE espèce non-boss de la zone", () => {
+    const nonBoss = [...especesDeLaZone()].filter((m) => !MONSTRES[m].boss);
+    expect(nonBoss.length).toBeGreaterThan(0);
+    for (const cibles of [1, 2]) {
+      for (const boss of ["reine_nyee", "abraknyde_ancestral"]) {
+        const b = degatsParTour(boss, cibles);
+        for (const e of nonBoss) {
+          const esc = degatsParTour(e, cibles);
+          expect(b, `à ${cibles} cible(s) : ${boss} (${b.toFixed(0)}) doit dépasser ${e} (${esc.toFixed(0)})`)
+            .toBeGreaterThan(esc);
+        }
+      }
+    }
   });
 });

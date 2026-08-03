@@ -143,7 +143,7 @@ fois ; les toiles sont continues depuis la T1, donc zone *n* = toile *12 + n*.
 | 8 | 20 | Antre du Dragon Cochon | Dragon Cochon | ✅ livrée |
 | 9 | 21 | Repaire du Kharnozor + Épreuve de Draegnerys | Kharnozor + Draegnerys | ✅ livrée |
 | 10 | 22 | Tanière du Meulou | Meulou | ✅ livrée |
-| 11 | 23 | Domaine Ancestral + Reine Nyée | double | à faire |
+| 11 | 23 | Domaine Ancestral + Reine Nyée | Reine Nyée + Abraknyde Ancestral | ✅ livrée |
 | 12 | 24 | Moon | — | à faire |
 
 Rappels de méthode pour chaque zone (détail complet dans `CLAUDE.md`, section
