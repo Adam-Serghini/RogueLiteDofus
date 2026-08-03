@@ -4,6 +4,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
+import { fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { controllerIA, lancerSort } from "./combat";
+import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
   wabbit: "terre", black_wabbit: "feu", tiwabbit: "air", tiwabbit_kiafin: "eau",
@@ -169,5 +172,183 @@ describe("la leçon de la zone est enseignée tôt", () => {
     for (const id of Object.keys(ARCHIS)) {
       expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
     }
+  });
+});
+
+describe("budget de PA et jouabilité", () => {
+  /** Rejoue un tour complet et renvoie les PA restés sur la table. */
+  async function paOrphelins(c: Combatant, cs: Combatant[], cooldowns: Record<string, number> = {}): Promise<number> {
+    c.paActuels = c.paMax;
+    c.cooldowns = { ...cooldowns };
+    c.lancersCeTour = {};
+    for (let garde = 0; garde < 10; garde++) {
+      const action = await controllerIA(c, cs);
+      if (!action || action.sort.coutPA <= 0) break;
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {}); // le moteur l'incrémente au lancement
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return c.paActuels;
+  }
+
+  /** Séquence des `n` premières actions d'un tour. */
+  async function sequenceDuTour(c: Combatant, cs: Combatant[], n: number): Promise<string[]> {
+    c.paActuels = c.paMax;
+    c.cooldowns = {};
+    c.lancersCeTour = {};
+    const jouees: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const action = await controllerIA(c, cs);
+      if (!action) break;
+      jouees.push(action.sort.id);
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {});
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return jouees;
+  }
+
+  const heros = () => {
+    const h = fabriquerEquipe();
+    for (const [i, x] of h.entries()) x.position = i < 2 ? i : i + 2; // 2 devant, 2 derrière
+    return h;
+  };
+
+  /** Cherche une espèce dans une rencontre où elle figure VRAIMENT — et jette sinon :
+   *  un test doit échouer bruyamment quand son sujet est introuvable, jamais le sauter. */
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  it("aucune des 10 espèces ne laisse de PA sur la table", async () => {
+    const equipe = heros();
+    for (const espece of [...especesDeLaZone()]) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...equipe]), `${espece} laisse des PA`).toBe(0);
+    }
+  });
+
+  it("les deux boss ne gaspillent rien NON PLUS quand leur signature est en recharge", async () => {
+    const equipe = heros();
+    for (const [espece, signature] of [["wa_wobot", "contre_mesure"], ["wa_wabbit", "caprice_royal"]] as const) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...equipe], { [signature]: 1 }), `${espece} en recharge`).toBe(0);
+    }
+  });
+
+  it("chaque porteur de signature la lance réellement", async () => {
+    const equipe = heros();
+    for (const [espece, attendu] of [
+      ["tiwobot", "riposte_mecanique"], ["wa_wobot", "contre_mesure"], ["wa_wabbit", "caprice_royal"],
+    ] as const) {
+      const c = trouver(espece);
+      expect((await sequenceDuTour(c, [c, ...equipe], 1))[0], `${espece}`).toBe(attendu);
+    }
+  });
+
+  it("le Wobot enchaîne Riposte PUIS Morsure — il n'empile pas deux postures", async () => {
+    const equipe = heros();
+    const w = trouver("wobot");
+    expect(await sequenceDuTour(w, [w, ...equipe], 2)).toEqual(["riposte_mecanique", "morsure"]);
+  });
+
+  // Erreur commise TROIS fois dans ce projet : Blops Royaux, Gourlo, Nelween étaient
+  // moins dangereux que leurs propres escortes. Ici la salle aligne un Grand Pa
+  // Wabbit à 10 PA, soit le même budget que les boss.
+  it("chacun des deux boss frappe plus fort que l'escorte", () => {
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    /** Dégâts par tour estimés. Modèle de CONCEPTION, pas une simulation du moteur.
+     *
+     *  La RIPOSTE n'est PAS comptée : c'est un dégât renvoyé, pas infligé, et son
+     *  montant ne dépend pas du tour joué. La mélanger fausserait la comparaison —
+     *  au Laboratoire, ce même garde-fou mesurait la mauvaise grandeur et validait
+     *  une inversion. `zoneLigne` est évalué sur `cibles` cibles, dont le cas le
+     *  plus défavorable au boss (une seule cible en rangée avant). */
+    const degatsParTour = (id: string, cibles: number): number => {
+      const m = MONSTRES[id];
+      const stats = m.stats as unknown as Record<string, number>;
+      const dom = Math.max(stats.force ?? 0, stats.intelligence ?? 0, stats.agilite ?? 0, stats.chance ?? 0);
+      const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
+      const coup = (s: string) => {
+        const sort = SORTS[s];
+        const direct = ((sort.baseMin + sort.baseMax) / 2 + dom * sort.scaling) * mult;
+        return direct * (sort.zoneLigne ? cibles : 1);
+      };
+      const cycle = (dispo: string[]) => {
+        let pa = m.pa, total = 0;
+        const lances: Record<string, number> = {};
+        for (const s of [...dispo].sort((a, b) => SORTS[b].coutPA - SORTS[a].coutPA)) {
+          const max = SORTS[s].maxParTour ?? Infinity;
+          while (pa >= SORTS[s].coutPA && (lances[s] ?? 0) < max) {
+            total += coup(s); pa -= SORTS[s].coutPA; lances[s] = (lances[s] ?? 0) + 1;
+          }
+        }
+        return total;
+      };
+      const enRecharge = m.sorts.filter((s) => !SORTS[s].cooldownTours);
+      const avec = cycle(m.sorts);
+      return m.sorts.length === enRecharge.length ? avec : (avec + cycle(enRecharge)) / 2;
+    };
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    const escortes = salle.filter((m) => !MONSTRES[m].boss);
+    expect(escortes.length, "la salle doit avoir une escorte à comparer").toBeGreaterThan(0);
+    for (const cibles of [1, 2]) {
+      for (const boss of ["wa_wabbit", "wa_wobot"]) {
+        const b = degatsParTour(boss, cibles);
+        for (const e of escortes) {
+          const esc = degatsParTour(e, cibles);
+          expect(b, `à ${cibles} cible(s) : ${boss} (${b.toFixed(0)}) doit dépasser ${e} (${esc.toFixed(0)})`)
+            .toBeGreaterThan(esc);
+        }
+      }
+    }
+  });
+});
+
+describe("la riposte part vraiment, côté ENNEMI", () => {
+  // Le test décisif de la zone. Tous les autres vérifient des champs de données ;
+  // celui-ci vérifie le moteur. `combat.ts` porte le commentaire « contre/riposteAvant
+  // sont des mécaniques côté joueur uniquement » — il décrivait le contenu existant,
+  // pas une restriction du code, mais toute l'identité du Terrier en dépend.
+  const trouverWobot = (): Combatant => {
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === "wobot");
+      if (c) return c;
+    }
+    throw new Error("wobot introuvable dans les rencontres de la zone");
+  };
+
+  it("un héros qui frappe un Wobot en posture encaisse des dégâts en retour", () => {
+    let graine = 12345;
+    const rng = () => ((graine = (graine * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    const ctx = { rng, log: () => {}, playerDamageBonus: 1 };
+
+    const wobot = trouverWobot();
+    const [heros] = fabriquerEquipe();
+    heros.position = 0;
+    wobot.position = 0;
+    const cs = [heros, wobot];
+
+    // le Wobot frappe et s'arme du même geste (`effetLanceur`)
+    lancerSort(wobot, SORTS.riposte_mecanique, heros.ref, cs, ctx);
+    expect(wobot.effets.some((e) => e.stat === "contre"), "le Wobot doit porter la posture").toBe(true);
+
+    // 300 frappes du héros sur le Wobot armé : la riposte doit partir parfois,
+    // et seulement parfois (c'est un jet à 25 %, pas un effet automatique).
+    let ripostes = 0;
+    for (let i = 0; i < 300; i++) {
+      heros.pvActuels = heros.pvMax;
+      wobot.pvActuels = wobot.pvMax; // on ne veut pas le tuer en cours de route
+      lancerSort(heros, SORTS.morsure, wobot.ref, cs, ctx);
+      if (heros.pvActuels < heros.pvMax) ripostes++;
+    }
+    expect(ripostes, "aucune riposte : le moteur ignore `contre` côté ennemi").toBeGreaterThan(0);
+    expect(ripostes, "riposte systématique : le jet de probabilité n'est pas appliqué").toBeLessThan(300);
   });
 });
