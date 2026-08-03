@@ -1691,6 +1691,31 @@
       "vitalite": 285
     }
   },
+  "ivremor": {
+    "ia": "agressif",
+    "id": "ivremor",
+    "img": "/assets/monstres/ivremor.png",
+    "initiative": 15,
+    "nom": "Ivremor",
+    "pa": 8,
+    "pv": 350,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 20,
+      "chance": 78,
+      "force": 20,
+      "intelligence": 20,
+      "vitalite": 193
+    }
+  },
   "kankreblath": {
     "boss": true,
     "dofus": "dofawa",
@@ -1718,6 +1743,163 @@
       "force": 10,
       "intelligence": 30,
       "vitalite": 126
+    }
+  },
+  "kanniboul_ark": {
+    "archiNom": "Kannibal le Lecteur",
+    "ia": "agressif",
+    "id": "kanniboul_ark",
+    "img": "/assets/monstres/kanniboul_ark.png",
+    "initiative": 15,
+    "nom": "Kanniboul Ark",
+    "pa": 4,
+    "pv": 380,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 20,
+      "chance": 20,
+      "force": 105,
+      "intelligence": 20,
+      "vitalite": 209
+    }
+  },
+  "kanniboul_ebil": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "kanniboul_ebil",
+    "img": "/assets/monstres/kanniboul_ebil.png",
+    "initiative": 16,
+    "nom": "Kanniboul Ebil",
+    "pa": 6,
+    "pv": 900,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "fumee_de_curare",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 140,
+      "force": 22,
+      "intelligence": 22,
+      "vitalite": 495
+    }
+  },
+  "kanniboul_eth": {
+    "archiNom": "Kannisterik le Forcené",
+    "ia": "agressif",
+    "id": "kanniboul_eth",
+    "img": "/assets/monstres/kanniboul_eth.png",
+    "initiative": 15,
+    "nom": "Kanniboul Eth",
+    "pa": 6,
+    "pv": 400,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 20,
+      "chance": 20,
+      "force": 20,
+      "intelligence": 105,
+      "vitalite": 220
+    }
+  },
+  "kanniboul_jav": {
+    "archiNom": "Kapota la Fraise",
+    "ia": "agressif",
+    "id": "kanniboul_jav",
+    "img": "/assets/monstres/kanniboul_jav.png",
+    "initiative": 15,
+    "nom": "Kanniboul Jav",
+    "pa": 8,
+    "pv": 340,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 78,
+      "chance": 20,
+      "force": 20,
+      "intelligence": 20,
+      "vitalite": 187
+    }
+  },
+  "kanniboul_sarbak": {
+    "archiNom": "Kannémik le Maigre",
+    "ia": "agressif",
+    "id": "kanniboul_sarbak",
+    "img": "/assets/monstres/kanniboul_sarbak.png",
+    "initiative": 15,
+    "nom": "Kanniboul Sarbak",
+    "pa": 4,
+    "pv": 300,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "sarbacane_curare"
+    ],
+    "stats": {
+      "agilite": 20,
+      "chance": 105,
+      "force": 20,
+      "intelligence": 20,
+      "vitalite": 165
+    }
+  },
+  "kanniboul_tam": {
+    "ia": "agressif",
+    "id": "kanniboul_tam",
+    "img": "/assets/monstres/kanniboul_tam.png",
+    "initiative": 15,
+    "nom": "Kanniboul Tam",
+    "pa": 6,
+    "pv": 420,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 20,
+      "chance": 20,
+      "force": 105,
+      "intelligence": 20,
+      "vitalite": 231
     }
   },
   "kardorim": {
@@ -2109,6 +2291,34 @@
       "vitalite": 54
     }
   },
+  "le_chouque": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "le_chouque",
+    "img": "/assets/monstres/le_chouque.png",
+    "initiative": 14,
+    "nom": "Le Chouque",
+    "pa": 6,
+    "pv": 950,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "ripaille",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 22,
+      "force": 22,
+      "intelligence": 140,
+      "vitalite": 520
+    }
+  },
   "le_flib": {
     "ia": "agressif",
     "id": "le_flib",
@@ -2371,6 +2581,31 @@
       "force": 8,
       "intelligence": 38,
       "vitalite": 46
+    }
+  },
+  "ricanif": {
+    "ia": "agressif",
+    "id": "ricanif",
+    "img": "/assets/monstres/ricanif.png",
+    "initiative": 15,
+    "nom": "Ricanif",
+    "pa": 4,
+    "pv": 360,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 105,
+      "chance": 20,
+      "force": 20,
+      "intelligence": 20,
+      "vitalite": 198
     }
   },
   "rose_demoniaque": {

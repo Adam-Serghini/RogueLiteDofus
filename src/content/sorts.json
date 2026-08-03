@@ -822,6 +822,24 @@
     "scaling": 0.5,
     "type": "degats"
   },
+  "fumee_de_curare": {
+    "baseMax": 30,
+    "baseMin": 22,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Kanniboul Ebil — enfume la rangée : plus aucun soin ni bouclier pendant 2 tours.",
+    "effet": {
+      "duree": 2,
+      "stat": "friction",
+      "valeur": 1
+    },
+    "id": "fumee_de_curare",
+    "nom": "Fumée de curare",
+    "scaling": 0.55,
+    "type": "degats",
+    "zoneLigne": true
+  },
   "gelification": {
     "baseMax": 21,
     "baseMin": 15,
@@ -1485,6 +1503,19 @@
     "scaling": 0,
     "type": "buff"
   },
+  "ripaille": {
+    "baseMax": 32,
+    "baseMin": 24,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Le Chouque — se repaît de sa victime : rend la moitié des dégâts en PV.",
+    "id": "ripaille",
+    "nom": "Ripaille",
+    "scaling": 0.65,
+    "type": "degats",
+    "vampirismeRatio": 0.5
+  },
   "riposte_mecanique": {
     "baseMax": 20,
     "baseMin": 14,
@@ -1569,6 +1600,22 @@
     "retraitPA": 2,
     "retraitPAChance": 1,
     "scaling": 0.25,
+    "type": "degats"
+  },
+  "sarbacane_curare": {
+    "baseMax": 22,
+    "baseMin": 16,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Kanniboul Sarbak — curare : la cible ne peut plus être soignée ni protégée (2 tours).",
+    "effet": {
+      "duree": 2,
+      "stat": "friction",
+      "valeur": 1
+    },
+    "id": "sarbacane_curare",
+    "nom": "Sarbacane au curare",
+    "scaling": 0.42,
     "type": "degats"
   },
   "sarcasme": {

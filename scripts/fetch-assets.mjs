@@ -119,6 +119,17 @@ const MONSTRES = {
   craqueleur_legendaire: 183,
   craqueboule: 268,
   craquelourd: 694,
+  // Bateau du Chouque & Village Kanniboul (Tranche 2, gfxId relevés sur DofusDB —
+  // donjons 91 et 27 ; Boomba/Nakunbra/Canondorf du 91 sont DÉJÀ à la toile 14)
+  kanniboul_ark: 110,
+  kanniboul_eth: 111,
+  kanniboul_jav: 112,
+  kanniboul_sarbak: 113,
+  le_chouque: 126,
+  kanniboul_ebil: 837,
+  kanniboul_tam: 1322,
+  ricanif: 1323,
+  ivremor: 1324,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
