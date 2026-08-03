@@ -1,4 +1,161 @@
 {
+  "abrakne_sombre": {
+    "archiNom": "Abraklette le Fondant",
+    "ia": "agressif",
+    "id": "abrakne_sombre",
+    "img": "/assets/monstres/abrakne_sombre.png",
+    "initiative": 14,
+    "nom": "Abrakne Sombre",
+    "pa": 4,
+    "pv": 480,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 34,
+      "chance": 135,
+      "force": 34,
+      "intelligence": 34,
+      "vitalite": 264
+    }
+  },
+  "abraknyde_ancestral": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "abraknyde_ancestral",
+    "img": "/assets/monstres/abraknyde_ancestral.png",
+    "initiative": 10,
+    "nom": "Abraknyde Ancestral",
+    "pa": 6,
+    "pv": 1350,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "racines_ancestrales",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 36,
+      "chance": 175,
+      "force": 36,
+      "intelligence": 36,
+      "vitalite": 740
+    }
+  },
+  "abraknyde_sombre": {
+    "archiNom": "Abrakanette l'Encapsulé",
+    "ia": "agressif",
+    "id": "abraknyde_sombre",
+    "img": "/assets/monstres/abraknyde_sombre.png",
+    "initiative": 14,
+    "nom": "Abraknyde Sombre",
+    "pa": 6,
+    "pv": 580,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 34,
+      "chance": 34,
+      "force": 135,
+      "intelligence": 34,
+      "vitalite": 319
+    }
+  },
+  "abraknyde_venerable": {
+    "archiNom": "Abrakildas le Vénérable",
+    "ia": "agressif",
+    "id": "abraknyde_venerable",
+    "img": "/assets/monstres/abraknyde_venerable.png",
+    "initiative": 14,
+    "nom": "Abraknyde Vénérable",
+    "pa": 4,
+    "pv": 500,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 34,
+      "chance": 34,
+      "force": 135,
+      "intelligence": 34,
+      "vitalite": 275
+    }
+  },
+  "araknotron": {
+    "ia": "agressif",
+    "id": "araknotron",
+    "img": "/assets/monstres/araknotron.png",
+    "initiative": 14,
+    "nom": "Araknotron",
+    "pa": 8,
+    "pv": 500,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 95,
+      "chance": 34,
+      "force": 34,
+      "intelligence": 34,
+      "vitalite": 275
+    }
+  },
+  "arapex": {
+    "archiNom": "Arapliké la Calligraphe",
+    "ia": "agressif",
+    "id": "arapex",
+    "img": "/assets/monstres/arapex.png",
+    "initiative": 14,
+    "nom": "Arapex",
+    "pa": 6,
+    "pv": 560,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 135,
+      "chance": 34,
+      "force": 34,
+      "intelligence": 34,
+      "vitalite": 308
+    }
+  },
   "bandit_roublard": {
     "archiNom": "Bandson le Tonitruant",
     "ia": "agressif",
@@ -3010,6 +3167,31 @@
       "vitalite": 135
     }
   },
+  "nefileuse": {
+    "ia": "agressif",
+    "id": "nefileuse",
+    "img": "/assets/monstres/nefileuse.png",
+    "initiative": 14,
+    "nom": "Néfileuse",
+    "pa": 4,
+    "pv": 460,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "fil_collant"
+    ],
+    "stats": {
+      "agilite": 135,
+      "chance": 34,
+      "force": 34,
+      "intelligence": 34,
+      "vitalite": 253
+    }
+  },
   "nelween": {
     "boss": true,
     "dofus": "dofus_pourpre",
@@ -3182,6 +3364,34 @@
       "force": 8,
       "intelligence": 38,
       "vitalite": 46
+    }
+  },
+  "reine_nyee": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "reine_nyee",
+    "img": "/assets/monstres/reine_nyee.png",
+    "initiative": 18,
+    "nom": "Reine Nyée",
+    "pa": 6,
+    "pv": 1150,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "toile_gluante",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 175,
+      "chance": 36,
+      "force": 36,
+      "intelligence": 36,
+      "vitalite": 630
     }
   },
   "ricanif": {

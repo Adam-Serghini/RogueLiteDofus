@@ -161,6 +161,16 @@ const MONSTRES = {
   cocholou: 1592,
   mulounoke: 1593,
   mergranlou: 1594,
+  // Domaine Ancestral & Antre de la Reine Nyée (Tranche 2, gfxId relevés sur DofusDB —
+  // donjons 9 et 89 ; Dardalaine, Saltik et Gargantûl écartés, sans archi)
+  abraknyde_venerable: 13,
+  abraknyde_ancestral: 97,
+  abraknyde_sombre: 144,
+  abrakne_sombre: 346,
+  araknotron: 505,
+  arapex: 1262,
+  nefileuse: 1264,
+  reine_nyee: 1267,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

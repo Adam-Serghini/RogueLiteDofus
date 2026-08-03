@@ -764,6 +764,22 @@
     "scaling": 0,
     "type": "buff"
   },
+  "fil_collant": {
+    "baseMax": 25,
+    "baseMin": 19,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Néfileuse — englue la cible : elle ne peut plus viser la rangée arrière (1 tour).",
+    "effet": {
+      "duree": 1,
+      "stat": "tetanise",
+      "valeur": 1
+    },
+    "id": "fil_collant",
+    "nom": "Fil collant",
+    "scaling": 0.42,
+    "type": "degats"
+  },
   "flasque_empoisonnee": {
     "baseMax": 6,
     "baseMin": 3,
@@ -1496,6 +1512,18 @@
     "scaling": 0,
     "type": "buff"
   },
+  "racines_ancestrales": {
+    "baseMax": 42,
+    "baseMin": 32,
+    "cible": "ennemi_tous",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Abraknyde Ancestral — ses racines atteignent n'importe qui, même en rangée arrière.",
+    "id": "racines_ancestrales",
+    "nom": "Racines ancestrales",
+    "scaling": 0.64,
+    "type": "degats"
+  },
   "racines_voraces": {
     "baseMax": 24,
     "baseMin": 18,
@@ -1825,6 +1853,24 @@
     "nom": "Tir Puissant",
     "scaling": 0,
     "type": "buff"
+  },
+  "toile_gluante": {
+    "baseMax": 36,
+    "baseMin": 28,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Reine Nyée — tisse la rangée entière : plus d'accès à la rangée arrière (1 tour).",
+    "effet": {
+      "duree": 1,
+      "stat": "tetanise",
+      "valeur": 1
+    },
+    "id": "toile_gluante",
+    "nom": "Toile gluante",
+    "scaling": 0.55,
+    "type": "degats",
+    "zoneLigne": true
   },
   "vajra": {
     "baseMax": 0,
