@@ -4,6 +4,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
+import { fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { lancerSort } from "./combat";
+import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
   kanniboul_ark: "terre", kanniboul_eth: "feu", kanniboul_jav: "air",
@@ -165,5 +168,145 @@ describe("la zone Bateau du Chouque", () => {
 
   it("la toile 19 ne lâche rien pour l'instant", () => {
     expect(butinToile("bateau_du_chouque")).toBeNull();
+  });
+});
+
+describe("le curare part vraiment, côté ENNEMI", () => {
+  const ctxNeuf = () => {
+    let g = 24680;
+    const rng = () => ((g = (g * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    return { rng, log: () => {}, playerDamageBonus: 1 };
+  };
+
+  /** Cherche une espèce dans une rencontre où elle figure VRAIMENT — et jette sinon. */
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "bateau_du_chouque")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  /** Une équipe aux PV du niveau OÙ LA ZONE SE JOUE (≈ 73), stats INCHANGÉES.
+   *
+   *  Deux pièges, tous deux rencontrés en écrivant ces tests :
+   *  — `fabriquerEquipe()` sort des héros de niveau 1 à ~60 PV, qu'un coup de
+   *    sarbacane (≈ 60 dégâts) tue net ; or le moteur ne pose un effet que sur une
+   *    cible VIVANTE (`t.pvActuels > 0`), donc le curare n'était jamais appliqué et
+   *    le test mesurait la mort du héros au lieu de la friction. D'où les PV.
+   *  — monter leur agilité leur donnait une grosse ESQUIVE, et un coup esquivé ne
+   *    pose ni dégât ni effet ; avec une graine fixe, l'esquive tombait toujours au
+   *    même endroit et les tests échouaient de façon parfaitement reproductible.
+   *    D'où les stats laissées telles quelles : ici les héros encaissent, ils ne
+   *    frappent pas. */
+  const equipeDeSonde = (): Combatant[] => {
+    const equipe = fabriquerEquipe();
+    for (const h of equipe) {
+      h.pvBase = 600;
+      h.pvMax = 600;
+      h.pvActuels = 600;
+    }
+    return equipe;
+  };
+
+  /** Un Sarbak, une victime en rangée avant, un soigneur derrière. */
+  const scene = () => {
+    const sarbak = trouver("kanniboul_sarbak");
+    const [victime, soigneur] = equipeDeSonde();
+    victime.position = 0;
+    soigneur.position = 4;
+    sarbak.position = 0;
+    return { sarbak, victime, soigneur, cs: [victime, soigneur, sarbak] };
+  };
+
+  it("un héros sous curare ne peut plus être soigné", () => {
+    const ctx = ctxNeuf();
+    const { sarbak, victime, soigneur, cs } = scene();
+    victime.pvActuels = Math.round(victime.pvMax / 2);
+    lancerSort(sarbak, SORTS.sarbacane_curare, victime.ref, cs, ctx);
+    expect(victime.effets.some((e) => e.stat === "friction"), "le curare doit être posé").toBe(true);
+    const avant = victime.pvActuels;
+    lancerSort(soigneur, SORTS.soin_noir, victime.ref, cs, ctx);
+    expect(victime.pvActuels, "le soin doit être refusé").toBe(avant);
+  });
+
+  it("un héros sous curare ne peut plus être protégé non plus", () => {
+    // C'est la moitié oubliée de `friction` : elle bloque les BOUCLIERS autant que
+    // les soins. Une zone qui ne fermerait que les soins laisserait le Féca intact.
+    const ctx = ctxNeuf();
+    const { sarbak, victime, soigneur, cs } = scene();
+    lancerSort(sarbak, SORTS.sarbacane_curare, victime.ref, cs, ctx);
+    const avant = victime.bouclier;
+    lancerSort(soigneur, SORTS.mot_prevention, victime.ref, cs, ctx);
+    expect(victime.bouclier, "le bouclier doit être refusé").toBe(avant);
+  });
+
+  it("un héros SANS curare se soigne et se protège normalement (témoin)", () => {
+    // Sans ce témoin, les deux tests ci-dessus passeraient même si les sorts de
+    // soin étaient cassés pour une raison n'ayant rien à voir avec la friction.
+    const ctx = ctxNeuf();
+    const { victime, soigneur, cs } = scene();
+    const moitie = Math.round(victime.pvMax / 2);
+    victime.pvActuels = moitie;
+    lancerSort(soigneur, SORTS.soin_noir, victime.ref, cs, ctx);
+    expect(victime.pvActuels).toBeGreaterThan(moitie);
+    lancerSort(soigneur, SORTS.mot_prevention, victime.ref, cs, ctx);
+    expect(victime.bouclier).toBeGreaterThan(0);
+  });
+
+  it("le curare EXPIRE : le soin repasse quand l'effet tombe", () => {
+    const ctx = ctxNeuf();
+    const { sarbak, victime, soigneur, cs } = scene();
+    lancerSort(sarbak, SORTS.sarbacane_curare, victime.ref, cs, ctx);
+    // `decrementerEffets` n'est pas exporté : on reproduit sa règle (−1 par tour du
+    // porteur, effet retiré à 0), comme les autres tests reproduisent `lancersCeTour`.
+    const duree = SORTS.sarbacane_curare.effet!.duree;
+    for (let t = 0; t < duree; t++) {
+      victime.effets.forEach((e) => { e.toursRestants -= 1; });
+      victime.effets = victime.effets.filter((e) => e.toursRestants > 0);
+    }
+    expect(victime.effets.some((e) => e.stat === "friction")).toBe(false);
+    const moitie = Math.round(victime.pvMax / 2);
+    victime.pvActuels = moitie;
+    lancerSort(soigneur, SORTS.soin_noir, victime.ref, cs, ctx);
+    expect(victime.pvActuels).toBeGreaterThan(moitie);
+  });
+
+  it("la fumée d'Ebil met TOUTE la rangée sous curare, et elle seule", () => {
+    const ctx = ctxNeuf();
+    const ebil = trouver("kanniboul_ebil");
+    const equipe = equipeDeSonde();
+    for (const [i, h] of equipe.entries()) h.position = i < 3 ? i : 4; // 3 devant, 1 derrière
+    ebil.position = 0;
+    const cs = [...equipe, ebil];
+    const devant = equipe.filter((h) => h.position < 4);
+    expect(devant.length, "il faut plusieurs héros devant pour que le test ait un sens").toBeGreaterThan(1);
+    lancerSort(ebil, SORTS.fumee_de_curare, devant[0].ref, cs, ctx);
+    for (const h of devant) {
+      expect(h.effets.some((e) => e.stat === "friction"), `${h.nom} doit être enfumé`).toBe(true);
+    }
+    const derriere = equipe.find((h) => h.position >= 4)!;
+    expect(derriere.effets.some((e) => e.stat === "friction"), "la rangée arrière est épargnée").toBe(false);
+  });
+
+  it("Le Chouque se nourrit de sa ripaille, et PAS de sa charge", () => {
+    const ctx = ctxNeuf();
+    const chouque = trouver("le_chouque");
+    const [victime] = equipeDeSonde();
+    victime.position = 0;
+    chouque.position = 0;
+    const cs = [victime, chouque];
+
+    chouque.pvActuels = Math.round(chouque.pvMax / 2);
+    const avantRipaille = chouque.pvActuels;
+    lancerSort(chouque, SORTS.ripaille, victime.ref, cs, ctx);
+    expect(chouque.pvActuels, "la ripaille doit le nourrir").toBeGreaterThan(avantRipaille);
+
+    victime.pvActuels = victime.pvMax;
+    chouque.pvActuels = Math.round(chouque.pvMax / 2);
+    const avantCharge = chouque.pvActuels;
+    lancerSort(chouque, SORTS.charge, victime.ref, cs, ctx);
+    expect(chouque.pvActuels, "la charge ne doit rien lui rendre").toBe(avantCharge);
   });
 });
