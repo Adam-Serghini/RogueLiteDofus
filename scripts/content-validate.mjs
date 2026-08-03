@@ -37,6 +37,10 @@ export function validerContenu(contenu, base) {
     if (!IAS.includes(m.ia)) E("monstres", id, `ia doit être « agressif » ou « soutien » (reçu : ${m.ia})`);
     if (!Array.isArray(m.sorts) || m.sorts.length === 0 || m.sorts.some((s) => typeof s !== "string"))
       E("monstres", id, "sorts doit être une liste non vide d'identifiants de sorts");
+    // armure : réduction PLATE des dégâts subis (Craqueleurs). Une valeur négative
+    // amplifierait les dégâts reçus au lieu de les réduire, silencieusement.
+    if (m.armure !== undefined && (!estNombre(m.armure) || m.armure < 0))
+      E("monstres", id, `armure doit être un nombre ≥ 0 (reçu : ${m.armure})`);
   }
 
   const validerAttaque = (coll, id, a, ou) => {

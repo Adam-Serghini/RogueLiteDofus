@@ -295,6 +295,10 @@ export interface Monstre {
   /** Signature de Grunob : +X (fraction) de dégâts infligés par allié vivant
    *  dans sa rangée (avant/arrière), lui exclu. */
   bonusParAllieLigne?: number;
+  /** Craqueleurs : réduction PLATE et PERMANENTE des dégâts subis, retranchée de
+   *  chaque frappe (plancher à 0). Distincte des résistances, qui sont un
+   *  pourcentage : le plat mange les petits coups et laisse passer les gros. */
+  armure?: number;
 }
 
 export type Camp = "joueur" | "ennemi";
@@ -336,6 +340,7 @@ export interface Combatant {
   renaissance?: number; // Kwakwanneau : fraction de PV de la renaissance (une par combat)
   renaissancesRestantes?: number; // compteur de renaissances disponibles ce combat
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant
+  armure?: number; // armure NATIVE permanente (Craqueleurs) — s'ajoute aux effets `armure` temporaires
   esquiveArriere?: number; // esquive d'équipement (Baguette Rikiki), active si ligne arrière
   soinDegatsRecus?: number; // récupération d'équipement (Goyave) : % des dégâts subis rendus en PV
   bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)

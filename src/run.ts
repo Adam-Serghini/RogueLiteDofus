@@ -575,6 +575,7 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
     ia: m.ia,
     mueElementaire: m.mueElementaire,
     bonusParAllieLigne: m.bonusParAllieLigne,
+    armure: m.armure,
     img: m.img,
     ...etatCombatInitial(),
     dofusLache: m.dofus,

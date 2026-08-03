@@ -434,8 +434,9 @@ function degatsAvec(
   // puissance offensive (Intelligence) — s'applique à tout lanceur
   dmg *= multOffensif(se);
 
-  // armure : réduction plate des dégâts subis (Armures)
-  dmg -= sommeEffet(cible, "armure");
+  // armure : réduction plate des dégâts subis (Armures du Féca, temporaire) + armure
+  // NATIVE permanente du combattant (Craqueleurs) — les deux s'additionnent
+  dmg -= sommeEffet(cible, "armure") + (cible.armure ?? 0);
 
   return { dmg: Math.max(0, Math.round(dmg)), esquive: false, crit };
 }

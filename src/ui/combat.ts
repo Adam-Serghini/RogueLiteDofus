@@ -393,6 +393,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
       badges.push(`⚔️ Contre ${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
     else if (e.stat === "proie") badges.push(`🎯 Proie (vol ${Math.round(e.valeur * 100)} %)`);
     else if (e.stat === "tetanise") badges.push(`🦴 Tétanisé (${e.toursRestants})`);
+    else if (e.stat === "armure") badges.push(`🪨 Armure +${e.valeur} (${e.toursRestants})`);
   }
   if ((c.bombes ?? 0) > 0) badges.push(`💣 ×${c.bombes}`);
   if ((c.telefrags ?? 0) > 0) badges.push(`⌛ ×${c.telefrags}`); // ⌛ distinct de ⏳ (badge d'init ci-dessus)
@@ -445,6 +446,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         <span class="ms" title="Soins (Soin + Intelligence)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(se)}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(se)}%</span>
         ${(se.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(se)}%</span>` : ""}
+        ${(c.armure ?? 0) > 0 ? `<span class="ms" title="Armure — retranchée de CHAQUE frappe reçue">🪨 ${c.armure}</span>` : ""}
       </div>`;
       })()}
       ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
