@@ -4,6 +4,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
+import { fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { controllerIA, lancerSort } from "./combat";
+import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
   dragoeuf_calcaire: "terre", dragoeuf_argile: "terre",
@@ -187,5 +190,120 @@ describe("la zone Repaire du Kharnozor", () => {
 
   it("la toile 21 ne lâche rien pour l'instant", () => {
     expect(butinToile("repaire_kharnozor")).toBeNull();
+  });
+});
+
+describe("le soigneur et le passif, prouvés PAR LE MOTEUR", () => {
+  const ctxNeuf = () => {
+    let g = 97531;
+    const rng = () => ((g = (g * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    return { rng, log: () => {}, playerDamageBonus: 1 };
+  };
+
+  /** Une équipe aux PV du niveau OÙ LA ZONE SE JOUE (≈ 81), stats INCHANGÉES.
+   *
+   *  Deux pièges rencontrés au Bateau puis à l'Antre : un héros de niveau 1 (~60 PV)
+   *  meurt du coup qu'on veut observer, et monter son agilité lui donne une esquive qui
+   *  annule dégât ET effet — de façon parfaitement reproductible puisque la graine est
+   *  fixe. Ici les héros encaissent, ils ne frappent pas. */
+  const equipeDeSonde = (): Combatant[] => {
+    const equipe = fabriquerEquipe();
+    for (const h of equipe) {
+      h.pvBase = 800;
+      h.pvMax = 800;
+      h.pvActuels = 800;
+    }
+    return equipe;
+  };
+
+  const heros = () => {
+    const h = equipeDeSonde();
+    for (const [i, x] of h.entries()) x.position = i < 2 ? i : i + 2; // 2 devant, 2 derrière
+    return h;
+  };
+
+  /** Séquence des `n` premières actions d'un tour. */
+  async function sequenceDuTour(c: Combatant, cs: Combatant[], n: number): Promise<string[]> {
+    c.paActuels = c.paMax;
+    c.cooldowns = {};
+    c.lancersCeTour = {};
+    const jouees: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const action = await controllerIA(c, cs);
+      if (!action) break;
+      jouees.push(action.sort.id);
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {});
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return jouees;
+  }
+
+  it("le Protéiforme soigne l'allié blessé, et mord quand personne ne l'est", async () => {
+    // `iaSoutien` cherche un sort `type: "soin"`, cible le PLUS blessé, et retombe sur
+    // `iaAgressif` si l'équipe est intacte — donc il ne gaspille jamais son tour. C'est
+    // ce comportement qu'on vérifie, pas le champ `ia` dans les données.
+    const equipe = heros();
+    const pack = fabriquerEnnemis("khz_3");
+    const soigneur = pack.find((x) => x.monstreId === "dragoss_proteiforme")!;
+    const blesse = pack.find((x) => x.monstreId !== "dragoss_proteiforme")!;
+    const cs = [...pack, ...equipe];
+
+    // personne de blessé → il attaque
+    soigneur.paActuels = soigneur.paMax;
+    expect((await controllerIA(soigneur, cs))!.sort.id).toBe("morsure");
+
+    // un allié blessé → il soigne, et c'est bien lui qu'il cible
+    blesse.pvActuels = Math.round(blesse.pvMax / 4);
+    soigneur.paActuels = soigneur.paMax;
+    const action = (await controllerIA(soigneur, cs))!;
+    expect(action.sort.id).toBe("souffle_regenerant");
+    expect(action.cibleRef).toBe(blesse.ref);
+  });
+
+  it("le soin remonte vraiment les PV", () => {
+    const ctx = ctxNeuf();
+    const pack = fabriquerEnnemis("khz_3");
+    const soigneur = pack.find((x) => x.monstreId === "dragoss_proteiforme")!;
+    const blesse = pack.find((x) => x.monstreId !== "dragoss_proteiforme")!;
+    blesse.pvActuels = Math.round(blesse.pvMax / 4);
+    const avant = blesse.pvActuels;
+    lancerSort(soigneur, SORTS.souffle_regenerant, blesse.ref, pack, ctx);
+    expect(blesse.pvActuels).toBeGreaterThan(avant);
+  });
+
+  it("il ne soigne qu'UNE fois par tour même avec deux blessés", async () => {
+    // Contrôle par exécution, en plus du contrôle sur les données : deux alliés à terre,
+    // une seule action doit sortir avant l'épuisement des PA.
+    const equipe = heros();
+    const pack = fabriquerEnnemis("khz_elite");
+    const soigneur = pack.find((x) => x.monstreId === "dragoss_proteiforme")!;
+    const blesses = pack.filter((x) => x.monstreId !== "dragoss_proteiforme").slice(0, 2);
+    expect(blesses).toHaveLength(2);
+    for (const b of blesses) b.pvActuels = Math.round(b.pvMax / 4);
+    const cs = [...pack, ...equipe];
+    expect(await sequenceDuTour(soigneur, cs, 3)).toEqual(["souffle_regenerant"]);
+  });
+
+  it("le passif du Kharnozor mord : il frappe plus fort entouré", () => {
+    // `bonusParAllieLigne` compte les alliés VIVANTS de sa rangée, lui exclu. Mêmes
+    // jets (graine réinitialisée), une fois seul, une fois entouré de deux alliés.
+    const degats = (compagnons: number): number => {
+      const ctx = ctxNeuf();
+      const boss = fabriquerEnnemis("khz_boss").find((x) => x.monstreId === "kharnozor")!;
+      boss.position = 0;
+      const voisins = fabriquerEnnemis("khz_elite")
+        .filter((x) => x.monstreId !== "kharnozor").slice(0, compagnons);
+      for (const [i, v] of voisins.entries()) v.position = i + 1; // même rangée que le boss
+      const [h] = equipeDeSonde();
+      h.position = 0;
+      const cs = [h, boss, ...voisins];
+      lancerSort(boss, SORTS.charge, h.ref, cs, ctx);
+      return h.pvMax - h.pvActuels;
+    };
+    const seul = degats(0);
+    const entoure = degats(2);
+    expect(seul, "la charge doit porter").toBeGreaterThan(0);
+    expect(entoure, `entouré ${entoure} doit dépasser seul ${seul}`).toBeGreaterThan(seul);
   });
 });
