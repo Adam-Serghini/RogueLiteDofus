@@ -3,7 +3,7 @@
 //  armure native (réduction PLATE des dégâts subis), bestiaire, budget de PA.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { lancerSort } from "./combat";
 import type { Combatant } from "./types";
@@ -164,5 +164,64 @@ describe("bestiaire des Pitons Rocheux", () => {
     expect(s.cooldownTours).toBe(2);
     // la durée doit dépasser le cooldown, sinon l'armure ne s'accumule jamais
     expect(s.effetLanceur!.duree).toBeGreaterThan(s.cooldownTours!);
+  });
+});
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "pitons_rocheux")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
+describe("la zone Pitons Rocheux", () => {
+  it("est la 6e zone de la Tranche 2, sur la toile 18", () => {
+    expect(TRANCHES.find((t) => t.id === "t2")!.zones[5]).toBe("pitons_rocheux");
+    const loc = localiserZone("pitons_rocheux")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(18); // 12 toiles consommées par la t1
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale a UN boss, qui lâche le Dofus Pourpre", () => {
+    const zone = ZONES.find((z) => z.id === "pitons_rocheux")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["craqueleur_legendaire"]);
+    expect(MONSTRES.craqueleur_legendaire.dofus).toBe("dofus_pourpre");
+  });
+
+  it("l'élite n'est le doublon d'aucun pack normal", () => {
+    // La Gelaxième avait livré un `gel_elite` identique à `gel_3` : le nœud élite
+    // n'apportait alors aucune rencontre distincte.
+    const zone = ZONES.find((z) => z.id === "pitons_rocheux")!;
+    const cle = (id: string) => [...COMBATS[id].ennemis.map((e) => e.monstre)].sort().join("+");
+    const elites = zone.pools.elite.map(cle);
+    for (const n of zone.pools.normales.map(cle)) expect(elites).not.toContain(n);
+  });
+
+  it("aucune rencontre ne double une espèce, ni ne dépasse 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "pitons_rocheux")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const e = COMBATS[id].ennemis.map((x) => x.monstre);
+      expect(new Set(e).size, `${id} double une espèce`).toBe(e.length);
+      expect(e.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("les 4 espèces capturables apparaissent toutes en pack NORMAL", () => {
+    // Sinon leur archi est enfermé derrière les nœuds élite, qui sont rares.
+    const zone = ZONES.find((z) => z.id === "pitons_rocheux")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
+  });
+
+  it("la toile 18 ne lâche rien pour l'instant", () => {
+    expect(butinToile("pitons_rocheux")).toBeNull();
   });
 });

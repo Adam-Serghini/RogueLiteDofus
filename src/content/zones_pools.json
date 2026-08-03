@@ -178,6 +178,19 @@
       "fan_3"
     ]
   },
+  "pitons_rocheux": {
+    "boss": [
+      "roc_boss"
+    ],
+    "elite": [
+      "roc_elite"
+    ],
+    "normales": [
+      "roc_1",
+      "roc_2",
+      "roc_3"
+    ]
+  },
   "scarafeuilles": {
     "boss": [
       "scr_boss"

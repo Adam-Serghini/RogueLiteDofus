@@ -1326,6 +1326,91 @@
     ],
     "nom": "Couvain doré (dur)"
   },
+  "roc_1": {
+    "ennemis": [
+      {
+        "monstre": "craqueleur",
+        "position": 0
+      },
+      {
+        "monstre": "craqueboule",
+        "position": 1
+      }
+    ],
+    "nom": "Éboulis"
+  },
+  "roc_2": {
+    "ennemis": [
+      {
+        "monstre": "craqueleur_des_plaines",
+        "position": 0
+      },
+      {
+        "monstre": "craqueboule",
+        "position": 1
+      },
+      {
+        "monstre": "craqueleur",
+        "position": 4
+      }
+    ],
+    "nom": "Plateau venteux"
+  },
+  "roc_3": {
+    "ennemis": [
+      {
+        "monstre": "craquelourd",
+        "position": 0
+      },
+      {
+        "monstre": "craqueleur",
+        "position": 1
+      },
+      {
+        "monstre": "craqueboule",
+        "position": 4
+      }
+    ],
+    "nom": "Le surplomb"
+  },
+  "roc_boss": {
+    "ennemis": [
+      {
+        "monstre": "craqueleur_legendaire",
+        "position": 0
+      },
+      {
+        "monstre": "craquelourd",
+        "position": 1
+      },
+      {
+        "monstre": "craqueleur_des_plaines",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Craqueleur Légendaire"
+  },
+  "roc_elite": {
+    "ennemis": [
+      {
+        "monstre": "craquelourd",
+        "position": 0
+      },
+      {
+        "monstre": "craqueleur",
+        "position": 1
+      },
+      {
+        "monstre": "craqueleur_des_plaines",
+        "position": 2
+      },
+      {
+        "monstre": "craqueboule",
+        "position": 4
+      }
+    ],
+    "nom": "Le piton"
+  },
   "scr_1": {
     "ennemis": [
       {

@@ -41,7 +41,7 @@ describe("intégrité des zones", () => {
         // butin est un bug.
         const SANS_BUTIN_POUR_LINSTANT = [
           "clos_des_blops", "cale_de_l_arche", "gelaxieme_dimension", "laboratoire_brumen",
-          "terrier_wa_wabbit",
+          "terrier_wa_wabbit", "pitons_rocheux",
         ];
         const pools = butinToile(zone.id);
         if (!pools) {
