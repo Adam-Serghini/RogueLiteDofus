@@ -1318,6 +1318,138 @@
       "vitalite": 209
     }
   },
+  "draegnerys": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "draegnerys",
+    "img": "/assets/monstres/draegnerys.png",
+    "initiative": 14,
+    "nom": "Draegnerys",
+    "pa": 6,
+    "pv": 1000,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.2,
+      "terre": 0.15
+    },
+    "sorts": [
+      "souffle_draconique",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 28,
+      "chance": 28,
+      "force": 28,
+      "intelligence": 150,
+      "vitalite": 550
+    }
+  },
+  "dragoeuf_ardoise": {
+    "archiNom": "Dragmoclaiss le Fataliste",
+    "ia": "agressif",
+    "id": "dragoeuf_ardoise",
+    "img": "/assets/monstres/dragoeuf_ardoise.png",
+    "initiative": 13,
+    "nom": "Dragoeuf Ardoise",
+    "pa": 4,
+    "pv": 400,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 120,
+      "chance": 26,
+      "force": 26,
+      "intelligence": 26,
+      "vitalite": 220
+    }
+  },
+  "dragoeuf_argile": {
+    "archiNom": "Dragkouine la Déguisée",
+    "ia": "agressif",
+    "id": "dragoeuf_argile",
+    "img": "/assets/monstres/dragoeuf_argile.png",
+    "initiative": 13,
+    "nom": "Dragoeuf Argile",
+    "pa": 4,
+    "pv": 420,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 26,
+      "chance": 26,
+      "force": 120,
+      "intelligence": 26,
+      "vitalite": 231
+    }
+  },
+  "dragoeuf_calcaire": {
+    "archiNom": "Dragstayr le Fonceur",
+    "ia": "agressif",
+    "id": "dragoeuf_calcaire",
+    "img": "/assets/monstres/dragoeuf_calcaire.png",
+    "initiative": 13,
+    "nom": "Dragoeuf Calcaire",
+    "pa": 4,
+    "pv": 420,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 26,
+      "chance": 26,
+      "force": 120,
+      "intelligence": 26,
+      "vitalite": 231
+    }
+  },
+  "dragoeuf_charbon": {
+    "archiNom": "Dragnostik le Sceptique",
+    "ia": "agressif",
+    "id": "dragoeuf_charbon",
+    "img": "/assets/monstres/dragoeuf_charbon.png",
+    "initiative": 13,
+    "nom": "Dragoeuf Charbon",
+    "pa": 4,
+    "pv": 400,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 26,
+      "chance": 120,
+      "force": 26,
+      "intelligence": 26,
+      "vitalite": 220
+    }
+  },
   "dragon_cochon": {
     "boss": true,
     "dofus": "dofus_turquoise",
@@ -1345,6 +1477,82 @@
       "force": 24,
       "intelligence": 150,
       "vitalite": 800
+    }
+  },
+  "dragoss_ardoise": {
+    "ia": "agressif",
+    "id": "dragoss_ardoise",
+    "img": "/assets/monstres/dragoss_ardoise.png",
+    "initiative": 13,
+    "nom": "Dragoss Ardoise",
+    "pa": 6,
+    "pv": 520,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 120,
+      "chance": 26,
+      "force": 26,
+      "intelligence": 26,
+      "vitalite": 286
+    }
+  },
+  "dragoss_charbon": {
+    "ia": "agressif",
+    "id": "dragoss_charbon",
+    "img": "/assets/monstres/dragoss_charbon.png",
+    "initiative": 13,
+    "nom": "Dragoss Charbon",
+    "pa": 6,
+    "pv": 520,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 26,
+      "chance": 120,
+      "force": 26,
+      "intelligence": 26,
+      "vitalite": 286
+    }
+  },
+  "dragoss_proteiforme": {
+    "ia": "soutien",
+    "id": "dragoss_proteiforme",
+    "img": "/assets/monstres/dragoss_proteiforme.png",
+    "initiative": 13,
+    "nom": "Dragoss Protéiforme",
+    "pa": 4,
+    "pv": 480,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "souffle_regenerant",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 26,
+      "chance": 120,
+      "force": 26,
+      "intelligence": 26,
+      "vitalite": 264
     }
   },
   "epouvanteur": {
@@ -2111,6 +2319,34 @@
       "force": 18,
       "intelligence": 24,
       "vitalite": 55
+    }
+  },
+  "kharnozor": {
+    "bonusParAllieLigne": 0.1,
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "kharnozor",
+    "img": "/assets/monstres/kharnozor.png",
+    "initiative": 12,
+    "nom": "Kharnozor",
+    "pa": 6,
+    "pv": 1050,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 150,
+      "chance": 28,
+      "force": 28,
+      "intelligence": 28,
+      "vitalite": 580
     }
   },
   "kolerat": {

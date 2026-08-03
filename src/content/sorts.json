@@ -1703,6 +1703,30 @@
     "scaling": 0,
     "type": "soin"
   },
+  "souffle_draconique": {
+    "baseMax": 34,
+    "baseMin": 26,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Draegnerys — embrase toute la rangée ciblée.",
+    "id": "souffle_draconique",
+    "nom": "Souffle draconique",
+    "scaling": 0.6,
+    "type": "degats",
+    "zoneLigne": true
+  },
+  "souffle_regenerant": {
+    "baseMax": 75,
+    "baseMin": 55,
+    "cible": "allie",
+    "coutPA": 4,
+    "desc": "Dragoss Protéiforme — régénère l'allié le plus blessé.",
+    "id": "souffle_regenerant",
+    "nom": "Souffle régénérant",
+    "scaling": 0,
+    "type": "soin"
+  },
   "tarot": {
     "baseMax": 20,
     "baseMin": 12,

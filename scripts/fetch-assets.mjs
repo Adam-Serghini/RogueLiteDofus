@@ -141,6 +141,18 @@ const MONSTRES = {
   don_dorgan: 333,
   cochon_de_farle: 334,
   gorgouille: 871,
+  // Repaire du Kharnozor & Épreuve de Draegnerys (Tranche 2, gfxId relevés sur DofusDB
+  // — donjons 115 et 116 ; Dragoss Calcaire/Argile et Dragoeuf Albâtre sont écartés,
+  // sans archi et la zone en aligne déjà neuf)
+  dragoeuf_calcaire: 31,
+  dragoeuf_argile: 40,
+  dragoeuf_ardoise: 41,
+  dragoeuf_charbon: 42,
+  dragoss_charbon: 481,
+  dragoss_ardoise: 490,
+  kharnozor: 1911,
+  dragoss_proteiforme: 1912,
+  draegnerys: 1915,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
