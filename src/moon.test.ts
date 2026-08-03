@@ -4,6 +4,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
+import { fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { lancerSort } from "./combat";
+import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
   trukikol: "terre", moon: "terre",
@@ -172,5 +175,89 @@ describe("la zone Arbre de Moon", () => {
 
   it("la toile 24 ne lâche rien pour l'instant", () => {
     expect(butinToile("arbre_de_moon")).toBeNull();
+  });
+});
+
+describe("les quatre tirages prouvés PAR LE MOTEUR", () => {
+  /** Une équipe aux PV du niveau où la zone se joue (≈ 93), stats INCHANGÉES.
+   *  Pièges déjà rencontrés (Bateau, Antre, Repaire, Domaine) : un héros de niveau 1
+   *  meurt du coup qu'on veut observer, or le moteur n'applique effets et procs que sur
+   *  une cible VIVANTE ; et monter son agilité lui donne une esquive qui annule dégât ET
+   *  proc, de façon reproductible puisque la graine est fixe. */
+  const equipeDeSonde = (): Combatant[] => {
+    const equipe = fabriquerEquipe();
+    for (const h of equipe) {
+      h.pvBase = 1200; h.pvMax = 1200; h.pvActuels = 1200;
+    }
+    return equipe;
+  };
+
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "arbre_de_moon")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  /** Lance `sortId` de `lanceurId` sur une victime préparée (bouclier + HoT via
+   *  `mot_prevention`), avec un rng CONSTANT calé pour viser l'index `i` de
+   *  `procAleatoire` — le tirage vaut `Math.floor(rng() × longueur)`.
+   *
+   *  Mesuré : une constante ne provoque aucune esquive systématique (les quatre coups
+   *  portent), ce qui rend la technique fiable. */
+  const tirage = (lanceurId: string, sortId: string, i: number, total: number) => {
+    const ctx = { rng: () => (i + 0.5) / total, log: () => {}, playerDamageBonus: 1 };
+    const lanceur = trouver(lanceurId);
+    lanceur.position = 0;
+    const [victime, allie] = equipeDeSonde();
+    victime.position = 0;
+    allie.position = 4;
+    const cs = [victime, allie, lanceur];
+    // `mot_prevention` pose un bouclier ET un HoT : c'est le HoT qui sert de marqueur du
+    // désenvoûtement, car le bouclier tombe de toute façon à 0, absorbé par les dégâts —
+    // le vérifier ne prouverait donc rien (piège relevé à la sonde).
+    lancerSort(allie, SORTS.mot_prevention, victime.ref, cs, ctx);
+    expect(victime.effets.some((e) => e.stat === "hot"), "la mise en place doit avoir marché").toBe(true);
+    lancerSort(lanceur, SORTS[sortId], victime.ref, cs, ctx);
+    return victime;
+  };
+
+  const a = (v: Combatant, stat: string) => v.effets.some((e) => e.stat === stat);
+
+  it("tirage 0 : le désenvoûtement retire le HoT, et rien d'autre ne s'applique", () => {
+    const v = tirage("moon", "sortilege_lunaire", 0, 4);
+    expect(a(v, "hot"), "le HoT doit avoir été dévoré").toBe(false);
+    for (const autre of ["friction", "tetanise", "poison"]) {
+      expect(a(v, autre), `${autre} ne doit PAS s'appliquer sur ce tirage`).toBe(false);
+    }
+  });
+
+  it("tirage 1 : la friction s'applique, et le HoT survit", () => {
+    const v = tirage("moon", "sortilege_lunaire", 1, 4);
+    expect(a(v, "friction")).toBe(true);
+    expect(a(v, "hot"), "pas de désenvoûtement sur ce tirage").toBe(true);
+  });
+
+  it("tirage 2 : la toile s'applique, et le HoT survit", () => {
+    const v = tirage("moon", "sortilege_lunaire", 2, 4);
+    expect(a(v, "tetanise")).toBe(true);
+    expect(a(v, "hot"), "pas de désenvoûtement sur ce tirage").toBe(true);
+  });
+
+  it("tirage 3 : le poison s'applique, et le HoT survit", () => {
+    const v = tirage("moon", "sortilege_lunaire", 3, 4);
+    expect(a(v, "poison")).toBe(true);
+    expect(a(v, "hot"), "pas de désenvoûtement sur ce tirage").toBe(true);
+  });
+
+  it("le caprice du Dostrogo tire bien parmi ses DEUX entrées", () => {
+    const friction = tirage("dostrogo", "souffle_capricieux", 0, 2);
+    expect(a(friction, "friction")).toBe(true);
+    expect(a(friction, "tetanise")).toBe(false);
+    const toile = tirage("dostrogo", "souffle_capricieux", 1, 2);
+    expect(a(toile, "tetanise")).toBe(true);
+    expect(a(toile, "friction")).toBe(false);
   });
 });
