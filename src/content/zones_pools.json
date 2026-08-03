@@ -12,6 +12,19 @@
       "gob_3"
     ]
   },
+  "antre_dragon_cochon": {
+    "boss": [
+      "por_boss"
+    ],
+    "elite": [
+      "por_elite"
+    ],
+    "normales": [
+      "por_1",
+      "por_2",
+      "por_3"
+    ]
+  },
   "astrub": {
     "boss": [
       "boss"

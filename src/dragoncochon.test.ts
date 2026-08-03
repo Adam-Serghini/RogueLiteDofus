@@ -3,7 +3,7 @@
 //  voracité (dissipePositifs : boucliers ET buffs retirés), budget de PA.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 
 const ELEMENT_DE = {
   porsalu: "terre", cochon_de_farle: "terre",
@@ -108,5 +108,71 @@ describe("les sorts de la voracité", () => {
     expect(SORTS.goinfrerie.cooldownTours).toBe(2);
     expect(SORTS.morsure_vorace.coutPA).toBe(4);
     expect(SORTS.morsure_vorace.cooldownTours).toBeUndefined();
+  });
+});
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "antre_dragon_cochon")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
+
+describe("la zone Antre du Dragon Cochon", () => {
+  it("est la 8e zone de la Tranche 2, sur la toile 20", () => {
+    expect(TRANCHES.find((t) => t.id === "t2")!.zones[7]).toBe("antre_dragon_cochon");
+    const loc = localiserZone("antre_dragon_cochon")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(20); // 12 toiles consommées par la t1
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale a UN boss, qui lâche le Turquoise", () => {
+    const zone = ZONES.find((z) => z.id === "antre_dragon_cochon")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["dragon_cochon"]);
+    expect(MONSTRES.dragon_cochon.dofus).toBe("dofus_turquoise");
+  });
+
+  it("chaque pack normal contient un porteur de désenvoûtement", () => {
+    // La leçon se paie tôt et sur un petit ennemi, avant de la subir face au boss.
+    const zone = ZONES.find((z) => z.id === "antre_dragon_cochon")!;
+    for (const id of zone.pools.normales) {
+      const porte = COMBATS[id].ennemis.some((e) =>
+        MONSTRES[e.monstre].sorts.some((s) => SORTS[s].procAleatoire?.[0]?.dissipePositifs));
+      expect(porte, `${id} n'enseigne pas la voracité`).toBe(true);
+    }
+  });
+
+  it("l'élite n'est le doublon d'aucun pack normal", () => {
+    const zone = ZONES.find((z) => z.id === "antre_dragon_cochon")!;
+    const cle = (id: string) => [...COMBATS[id].ennemis.map((e) => e.monstre)].sort().join("+");
+    const elites = zone.pools.elite.map(cle);
+    for (const n of zone.pools.normales.map(cle)) expect(elites).not.toContain(n);
+  });
+
+  it("aucune rencontre ne double une espèce, ni ne dépasse 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "antre_dragon_cochon")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const e = COMBATS[id].ennemis.map((x) => x.monstre);
+      expect(new Set(e).size, `${id} double une espèce`).toBe(e.length);
+      expect(e.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("les 4 espèces capturables apparaissent toutes en pack NORMAL", () => {
+    const zone = ZONES.find((z) => z.id === "antre_dragon_cochon")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
+  });
+
+  it("la toile 20 ne lâche rien pour l'instant", () => {
+    expect(butinToile("antre_dragon_cochon")).toBeNull();
   });
 });
