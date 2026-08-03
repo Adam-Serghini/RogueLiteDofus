@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
-import { lancerSort } from "./combat";
+import { controllerIA, lancerSort } from "./combat";
 import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
@@ -60,12 +60,27 @@ describe("bestiaire du Bateau du Chouque", () => {
   it("qui frappe deux fois frappe plus faible", () => {
     // Sans cet écart, deux morsures d'un ennemi à 8 PA dépassent un boss à 6 PA :
     // ce serait la 4e inversion boss/escorte du projet.
+    //
+    // La comparaison ne porte QUE sur les espèces non-feu : l'intelligence compte
+    // deux fois (scaling élémentaire ET `multOffensif`), donc comparer une dominante
+    // feu à une dominante d'un autre élément ne veut rien dire. C'est précisément ce
+    // qui a fait de Kanniboul Eth le meilleur DPS de la zone à dominante « égale ».
+    const referencesNonFeu = ["kanniboul_ark", "kanniboul_tam"];
     for (const rapide of ["kanniboul_jav", "ivremor"]) {
       expect(MONSTRES[rapide].pa).toBe(8);
-      for (const lent of ["kanniboul_ark", "kanniboul_eth"]) {
+      for (const lent of referencesNonFeu) {
+        expect(dominante(lent), `${lent} doit être une référence non-feu`).not.toBe("intelligence");
         expect(dom(rapide), `${rapide} doit frapper plus faible que ${lent}`).toBeLessThan(dom(lent));
       }
     }
+  });
+
+  it("le monstre FEU de la zone est bridé pour compenser le doublement", () => {
+    // Repère explicite : 75 en intelligence rend à peu près le même dégât que 105
+    // dans un autre élément. Sans ce bridage, le seul monstre feu de la zone
+    // dépassait les deux boss (constat du garde-fou de domination, 160 contre 130).
+    expect(dominante("kanniboul_eth")).toBe("intelligence");
+    expect(dom("kanniboul_eth")).toBeLessThan(dom("kanniboul_ark"));
   });
 });
 
@@ -308,5 +323,131 @@ describe("le curare part vraiment, côté ENNEMI", () => {
     const avantCharge = chouque.pvActuels;
     lancerSort(chouque, SORTS.charge, victime.ref, cs, ctx);
     expect(chouque.pvActuels, "la charge ne doit rien lui rendre").toBe(avantCharge);
+  });
+});
+
+describe("budget de PA et jouabilité", () => {
+  /** Rejoue un tour complet et renvoie les PA restés sur la table. */
+  async function paOrphelins(c: Combatant, cs: Combatant[], cooldowns: Record<string, number> = {}): Promise<number> {
+    c.paActuels = c.paMax;
+    c.cooldowns = { ...cooldowns };
+    c.lancersCeTour = {};
+    for (let garde = 0; garde < 10; garde++) {
+      const action = await controllerIA(c, cs);
+      if (!action || action.sort.coutPA <= 0) break;
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {}); // le moteur l'incrémente au lancement
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return c.paActuels;
+  }
+
+  /** Séquence des `n` premières actions d'un tour. */
+  async function sequenceDuTour(c: Combatant, cs: Combatant[], n: number): Promise<string[]> {
+    c.paActuels = c.paMax;
+    c.cooldowns = {};
+    c.lancersCeTour = {};
+    const jouees: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const action = await controllerIA(c, cs);
+      if (!action) break;
+      jouees.push(action.sort.id);
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {});
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return jouees;
+  }
+
+  const heros = () => {
+    const h = fabriquerEquipe();
+    for (const [i, x] of h.entries()) x.position = i < 2 ? i : i + 2; // 2 devant, 2 derrière
+    return h;
+  };
+
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "bateau_du_chouque")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  it("aucune des 9 espèces ne laisse de PA sur la table", async () => {
+    const equipe = heros();
+    for (const espece of [...especesDeLaZone()]) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...equipe]), `${espece} laisse des PA`).toBe(0);
+    }
+  });
+
+  it("les deux boss ne gaspillent rien quand leur signature recharge", async () => {
+    const equipe = heros();
+    for (const [espece, signature] of [["le_chouque", "ripaille"], ["kanniboul_ebil", "fumee_de_curare"]] as const) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...equipe], { [signature]: 1 }), `${espece} en recharge`).toBe(0);
+    }
+  });
+
+  it("chaque porteur de signature la lance réellement", async () => {
+    const equipe = heros();
+    for (const [espece, attendu] of [
+      ["kanniboul_sarbak", "sarbacane_curare"], ["kanniboul_ebil", "fumee_de_curare"], ["le_chouque", "ripaille"],
+    ] as const) {
+      const c = trouver(espece);
+      expect((await sequenceDuTour(c, [c, ...equipe], 1))[0], `${espece}`).toBe(attendu);
+    }
+  });
+
+  /** Dégâts par tour estimés. Modèle de CONCEPTION, pas une simulation du moteur.
+   *
+   *  Le VAMPIRISME et la FRICTION sont exclus : l'un est du soin, l'autre du
+   *  contrôle — les compter reviendrait à mesurer autre chose que des dégâts par
+   *  tour, l'erreur commise au Laboratoire en sens inverse (son modèle ignorait le
+   *  poison, qui faisait toute l'identité de la zone). `zoneLigne` est évalué sur
+   *  `cibles` cibles, dont le cas le plus défavorable au boss (une seule cible). */
+  const degatsParTour = (id: string, cibles: number): number => {
+    const m = MONSTRES[id];
+    const stats = m.stats as unknown as Record<string, number>;
+    const d = Math.max(stats.force ?? 0, stats.intelligence ?? 0, stats.agilite ?? 0, stats.chance ?? 0);
+    const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
+    const coup = (s: string) => {
+      const sort = SORTS[s];
+      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      return direct * (sort.zoneLigne ? cibles : 1);
+    };
+    const cycle = (dispo: string[]) => {
+      let pa = m.pa, total = 0;
+      const lances: Record<string, number> = {};
+      for (const s of [...dispo].sort((a, b) => SORTS[b].coutPA - SORTS[a].coutPA)) {
+        const max = SORTS[s].maxParTour ?? Infinity;
+        while (pa >= SORTS[s].coutPA && (lances[s] ?? 0) < max) {
+          total += coup(s); pa -= SORTS[s].coutPA; lances[s] = (lances[s] ?? 0) + 1;
+        }
+      }
+      return total;
+    };
+    const enRecharge = m.sorts.filter((s) => !SORTS[s].cooldownTours);
+    const avec = cycle(m.sorts);
+    return m.sorts.length === enRecharge.length ? avec : (avec + cycle(enRecharge)) / 2;
+  };
+
+  // Erreur commise TROIS fois dans ce projet. Ici on compare les boss à TOUTE espèce
+  // de la zone et non à leurs seules escortes de salle : Kanniboul Jav joue deux fois
+  // par tour et n'est PAS dans la salle finale, il échapperait au contrôle.
+  it("chaque boss frappe plus fort que TOUTE espèce non-boss de la zone", () => {
+    const nonBoss = [...especesDeLaZone()].filter((m) => !MONSTRES[m].boss);
+    expect(nonBoss.length).toBeGreaterThan(0);
+    for (const cibles of [1, 2]) {
+      for (const boss of ["le_chouque", "kanniboul_ebil"]) {
+        const b = degatsParTour(boss, cibles);
+        for (const e of nonBoss) {
+          const esc = degatsParTour(e, cibles);
+          expect(b, `à ${cibles} cible(s) : ${boss} (${b.toFixed(0)}) doit dépasser ${e} (${esc.toFixed(0)})`)
+            .toBeGreaterThan(esc);
+        }
+      }
+    }
   });
 });

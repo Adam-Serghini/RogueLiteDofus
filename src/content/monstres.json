@@ -1793,7 +1793,7 @@
     ],
     "stats": {
       "agilite": 22,
-      "chance": 140,
+      "chance": 160,
       "force": 22,
       "intelligence": 22,
       "vitalite": 495
@@ -1821,7 +1821,7 @@
       "agilite": 20,
       "chance": 20,
       "force": 20,
-      "intelligence": 105,
+      "intelligence": 75,
       "vitalite": 220
     }
   },
