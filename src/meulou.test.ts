@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
-import { lancerSort, effetsDebutTour } from "./combat";
+import { lancerSort, effetsDebutTour, controllerIA, runCombat } from "./combat";
 import type { Combatant } from "./types";
 
 const ctxNeuf = () => {
@@ -242,5 +242,131 @@ describe("la zone Tanière du Meulou", () => {
 
   it("la toile 22 ne lâche rien pour l'instant", () => {
     expect(butinToile("taniere_meulou")).toBeNull();
+  });
+});
+
+describe("budget de PA, rechargement et domination", () => {
+  async function paOrphelins(c: Combatant, cs: Combatant[], cooldowns: Record<string, number> = {}): Promise<number> {
+    c.paActuels = c.paMax;
+    c.cooldowns = { ...cooldowns };
+    c.lancersCeTour = {};
+    for (let garde = 0; garde < 10; garde++) {
+      const action = await controllerIA(c, cs);
+      if (!action || action.sort.coutPA <= 0) break;
+      c.paActuels -= action.sort.coutPA;
+      const l = (c.lancersCeTour ??= {}); // le moteur l'incrémente au lancement
+      l[action.sort.id] = (l[action.sort.id] ?? 0) + 1;
+    }
+    return c.paActuels;
+  }
+
+  const equipe = () => {
+    const h = fabriquerEquipe();
+    for (const [i, x] of h.entries()) {
+      x.position = i < 2 ? i : i + 2;
+      x.pvBase = 900; x.pvMax = 900; x.pvActuels = 900;
+    }
+    return h;
+  };
+
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "taniere_meulou")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  it("aucune des 6 espèces ne laisse de PA sur la table", async () => {
+    const eq = equipe();
+    for (const espece of [...especesDeLaZone()]) {
+      const c = trouver(espece);
+      expect(await paOrphelins(c, [c, ...eq]), `${espece} laisse des PA`).toBe(0);
+    }
+  });
+
+  it("le boss ne gaspille rien quand son croc recharge", async () => {
+    const eq = equipe();
+    const m = trouver("meulou");
+    expect(await paOrphelins(m, [m, ...eq], { croc_de_l_alpha: 1 })).toBe(0);
+  });
+
+  it("le boss lance réellement son croc", async () => {
+    const eq = equipe();
+    const m = trouver("meulou");
+    m.paActuels = m.paMax;
+    m.cooldowns = {};
+    m.lancersCeTour = {};
+    expect((await controllerIA(m, [m, ...eq]))!.sort.id).toBe("croc_de_l_alpha");
+  });
+
+  it("les annulations se RECHARGENT dans la vraie boucle de combat", async () => {
+    // Pendant du test de socle, qui ne prouvait que la consommation. Ici on épuise les
+    // trois annulations puis on laisse le moteur jouer un tour complet : le rechargement
+    // se fait au début du tour du porteur, pas ailleurs.
+    const m = trouver("meulou");
+    m.position = 0;
+    const eq = equipe();
+    const cs = [...eq, m];
+    m.coupsAnnulesRestants = 0; // épuisé
+    let vu = -1;
+    await runCombat(cs, {
+      controllers: {
+        // le joueur ne fait rien : on veut seulement que le tour du Meulou arrive
+        joueur: () => null,
+        ennemi: (acteur) => {
+          if (acteur.monstreId === "meulou" && vu < 0) vu = acteur.coupsAnnulesRestants ?? 0;
+          return null; // personne n'agit : le combat s'arrête faute d'action
+        },
+      },
+      rng: ctxNeuf().rng,
+    });
+    expect(vu, "au début de son tour, le Meulou doit avoir retrouvé ses 3 annulations").toBe(3);
+  });
+
+  /** Dégâts par tour estimés. Modèle de CONCEPTION, pas une simulation du moteur.
+   *
+   *  L'ANNULATION est exclue : c'est de la défense, pas des dégâts — comme l'armure aux
+   *  Pitons, le soin au Repaire, le désenvoûtement à l'Antre. Le Laboratoire avait fait
+   *  l'erreur inverse (son modèle ignorait le poison, l'identité même de la zone). */
+  const degatsParTour = (id: string, cibles: number): number => {
+    const m = MONSTRES[id];
+    const stats = m.stats as unknown as Record<string, number>;
+    const d = Math.max(stats.force ?? 0, stats.intelligence ?? 0, stats.agilite ?? 0, stats.chance ?? 0);
+    const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
+    const offensifs = m.sorts.filter((s) => SORTS[s].type === "degats");
+    const coup = (s: string) => {
+      const sort = SORTS[s];
+      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      return direct * (sort.zoneLigne ? cibles : 1);
+    };
+    const cycle = (dispo: string[]) => {
+      let pa = m.pa, total = 0;
+      const lances: Record<string, number> = {};
+      for (const s of [...dispo].sort((a, b) => SORTS[b].coutPA - SORTS[a].coutPA)) {
+        const max = SORTS[s].maxParTour ?? Infinity;
+        while (pa >= SORTS[s].coutPA && (lances[s] ?? 0) < max) {
+          total += coup(s); pa -= SORTS[s].coutPA; lances[s] = (lances[s] ?? 0) + 1;
+        }
+      }
+      return total;
+    };
+    const enRecharge = offensifs.filter((s) => !SORTS[s].cooldownTours);
+    const avec = cycle(offensifs);
+    return offensifs.length === enRecharge.length ? avec : (avec + cycle(enRecharge)) / 2;
+  };
+
+  it("le Meulou frappe plus fort que TOUTE espèce non-boss de la zone", () => {
+    const nonBoss = [...especesDeLaZone()].filter((m) => !MONSTRES[m].boss);
+    expect(nonBoss.length).toBeGreaterThan(0);
+    for (const cibles of [1, 2]) {
+      const b = degatsParTour("meulou", cibles);
+      for (const e of nonBoss) {
+        const esc = degatsParTour(e, cibles);
+        expect(b, `à ${cibles} cible(s) : le Meulou (${b.toFixed(0)}) doit dépasser ${e} (${esc.toFixed(0)})`)
+          .toBeGreaterThan(esc);
+      }
+    }
   });
 });
