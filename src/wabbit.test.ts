@@ -3,7 +3,7 @@
 //  bestiaire, riposte ennemie (mécanique dormante réveillée), budget de PA.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { MONSTRES, SORTS } from "./data";
+import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
 
 const ELEMENT_DE = {
   wabbit: "terre", black_wabbit: "feu", tiwabbit: "air", tiwabbit_kiafin: "eau",
@@ -20,6 +20,13 @@ const ARCHIS = {
   wo_wabbit: "Wokènrôl le Danseur",
   grand_pa_wabbit: "Grandilok le Clameur",
 } as const;
+
+/** Union des espèces des trois pools — source unique du bestiaire testé. */
+const especesDeLaZone = (): Set<string> => {
+  const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+  const combats = [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss];
+  return new Set(combats.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+};
 
 const dominante = (id: string): string => {
   const stats = MONSTRES[id].stats as unknown as Record<string, number>;
@@ -96,5 +103,71 @@ describe("les sorts du Terrier", () => {
     expect(s.zoneLigne).toBe(true);
     expect(s.retraitPA).toBeGreaterThan(0);
     expect(s.cooldownTours).toBe(2);
+  });
+});
+
+describe("la zone Terrier du Wa Wabbit", () => {
+  it("est la 5e zone de la Tranche 2, sur la toile 17", () => {
+    const t2 = TRANCHES.find((t) => t.id === "t2")!;
+    expect(t2.zones[4]).toBe("terrier_wa_wabbit");
+    const loc = localiserZone("terrier_wa_wabbit")!;
+    expect(loc.tranche.id).toBe("t2");
+    expect(loc.index + 1 + 12).toBe(17); // 12 toiles consommées par la t1
+  });
+
+  it("les espèces des pools sont exactement celles déclarées ici", () => {
+    // Garde-fou : une 11e espèce ajoutée à un pack sans être déclarée dans
+    // ELEMENT_DE échapperait sinon à tous les contrôles d'élément et d'archi.
+    expect([...especesDeLaZone()].sort()).toEqual(Object.keys(ELEMENT_DE).sort());
+  });
+
+  it("la salle finale aligne les deux rois et une escorte capturable", () => {
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    expect(zone.pools.boss).toHaveLength(1);
+    const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
+    expect(salle).toContain("wa_wabbit");
+    expect(salle).toContain("wa_wobot");
+    expect(salle.some((m) => MONSTRES[m].archiNom), "l'escorte doit être capturable").toBe(true);
+  });
+
+  it("les deux boss lâchent le Dofus Cawotte", () => {
+    // Rompt volontairement la règle « une relique par groupe de six zones » : les
+    // quatre premières zones de t2 lâchent le Pourpre, le Terrier porte la sienne.
+    for (const id of ["wa_wabbit", "wa_wobot"]) expect(MONSTRES[id].dofus).toBe("dofus_cawotte");
+  });
+
+  it("aucune rencontre n'aligne deux fois la même espèce, ni plus de 5 ennemis", () => {
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const especes = COMBATS[id].ennemis.map((e) => e.monstre);
+      expect(new Set(especes).size, `${id} double une espèce`).toBe(especes.length);
+      expect(especes.length, `${id} dépasse 5 ennemis`).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("la toile 17 ne lâche rien pour l'instant", () => {
+    expect(butinToile("terrier_wa_wabbit")).toBeNull();
+  });
+});
+
+describe("la leçon de la zone est enseignée tôt", () => {
+  it("chaque pack normal contient un porteur de riposte", () => {
+    // Le projet s'est déjà fait piéger deux fois en enfermant l'identité d'une zone
+    // dans le nœud élite : Canondorf ne tirait jamais son canon, le Kolérat
+    // n'apparaissait qu'en élite. Ici le joueur se brûle sur un Tiwobot d'abord.
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    for (const id of zone.pools.normales) {
+      const porte = COMBATS[id].ennemis.some((e) => MONSTRES[e.monstre].sorts.includes("riposte_mecanique"));
+      expect(porte, `${id} n'enseigne pas la riposte`).toBe(true);
+    }
+  });
+
+  it("les 6 espèces capturables apparaissent toutes en pack NORMAL", () => {
+    // Sinon leur archi est enfermé derrière les nœuds élite, qui sont rares.
+    const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
+    const enNormal = new Set(zone.pools.normales.flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+    for (const id of Object.keys(ARCHIS)) {
+      expect(enNormal.has(id), `${id} est capturable mais absent des packs normaux`).toBe(true);
+    }
   });
 });

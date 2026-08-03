@@ -1588,5 +1588,98 @@
       }
     ],
     "nom": "Essaim maudit (dur)"
+  },
+  "wab_1": {
+    "ennemis": [
+      {
+        "monstre": "wabbit",
+        "position": 0
+      },
+      {
+        "monstre": "tiwabbit",
+        "position": 1
+      },
+      {
+        "monstre": "tiwobot",
+        "position": 4
+      }
+    ],
+    "nom": "Terriers creusés"
+  },
+  "wab_2": {
+    "ennemis": [
+      {
+        "monstre": "black_wabbit",
+        "position": 0
+      },
+      {
+        "monstre": "tiwobot",
+        "position": 1
+      },
+      {
+        "monstre": "tiwabbit_kiafin",
+        "position": 4
+      }
+    ],
+    "nom": "Patrouille d'usine"
+  },
+  "wab_3": {
+    "ennemis": [
+      {
+        "monstre": "grand_pa_wabbit",
+        "position": 0
+      },
+      {
+        "monstre": "wo_wabbit",
+        "position": 1
+      },
+      {
+        "monstre": "tiwobot",
+        "position": 2
+      },
+      {
+        "monstre": "wabbit",
+        "position": 4
+      }
+    ],
+    "nom": "La garde du Grand Pa"
+  },
+  "wab_boss": {
+    "ennemis": [
+      {
+        "monstre": "wa_wobot",
+        "position": 0
+      },
+      {
+        "monstre": "wa_wabbit",
+        "position": 1
+      },
+      {
+        "monstre": "grand_pa_wabbit",
+        "position": 4
+      }
+    ],
+    "nom": "Donjon — Wa Wabbit & Wa Wobot"
+  },
+  "wab_elite": {
+    "ennemis": [
+      {
+        "monstre": "wobot",
+        "position": 0
+      },
+      {
+        "monstre": "grand_pa_wabbit",
+        "position": 1
+      },
+      {
+        "monstre": "wo_wabbit",
+        "position": 2
+      },
+      {
+        "monstre": "black_wabbit",
+        "position": 4
+      }
+    ],
+    "nom": "Chaîne de montage"
   }
 }

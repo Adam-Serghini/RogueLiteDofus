@@ -204,6 +204,19 @@
       "tai_3"
     ]
   },
+  "terrier_wa_wabbit": {
+    "boss": [
+      "wab_boss"
+    ],
+    "elite": [
+      "wab_elite"
+    ],
+    "normales": [
+      "wab_1",
+      "wab_2",
+      "wab_3"
+    ]
+  },
   "tofus": {
     "boss": [
       "tof_boss"
