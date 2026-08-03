@@ -100,6 +100,18 @@ const MONSTRES = {
   macien: 189,
   crowneille: 673,
   nelween: 856,
+  // Terrier du Wa Wabbit (Tranche 2, gfxId relevés directement sur DofusDB — la zone
+  // mélange les donjons 17 « Terrier » et 52 « Château », cf. CLAUDE.md)
+  wabbit: 25,
+  black_wabbit: 26,
+  tiwabbit_kiafin: 28,
+  tiwabbit: 48,
+  wo_wabbit: 49,
+  grand_pa_wabbit: 50,
+  wa_wabbit: 101,
+  wobot: 102,
+  wa_wobot: 1006,
+  tiwobot: 1018,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

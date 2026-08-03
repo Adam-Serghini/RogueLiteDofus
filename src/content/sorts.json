@@ -217,6 +217,21 @@
     "scaling": 0,
     "type": "buff"
   },
+  "caprice_royal": {
+    "baseMax": 26,
+    "baseMin": 18,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Wa Wabbit — exige le silence : frappe toute la rangée ciblée et lui retire 2 PA.",
+    "id": "caprice_royal",
+    "nom": "Caprice royal",
+    "retraitPA": 2,
+    "retraitPAChance": 1,
+    "scaling": 0.5,
+    "type": "degats",
+    "zoneLigne": true
+  },
   "carapace_doree": {
     "baseMax": 22,
     "baseMin": 16,
@@ -349,6 +364,23 @@
       "transmet": true
     },
     "scaling": 0.42,
+    "type": "degats"
+  },
+  "contre_mesure": {
+    "baseMax": 30,
+    "baseMin": 22,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Wa Wobot — verrouille son blindage : 50 % de riposte pendant 3 tours.",
+    "effetLanceur": {
+      "duree": 3,
+      "stat": "contre",
+      "valeur": 0.5
+    },
+    "id": "contre_mesure",
+    "nom": "Contre-mesure",
+    "scaling": 0.62,
     "type": "degats"
   },
   "coup_de_bec": {
@@ -1435,6 +1467,23 @@
     "resquille": 2,
     "scaling": 0,
     "type": "buff"
+  },
+  "riposte_mecanique": {
+    "baseMax": 20,
+    "baseMin": 14,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Wobot — frappe et arme son blindage : 25 % de riposte pendant 2 tours.",
+    "effetLanceur": {
+      "duree": 2,
+      "stat": "contre",
+      "valeur": 0.25
+    },
+    "id": "riposte_mecanique",
+    "maxParTour": 1,
+    "nom": "Riposte mécanique",
+    "scaling": 0.42,
+    "type": "degats"
   },
   "rosee_regenerante": {
     "baseMax": 0,

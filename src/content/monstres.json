@@ -172,6 +172,29 @@
       "vitalite": 50
     }
   },
+  "black_wabbit": {
+    "archiNom": "Wagnagnah le Sanglant",
+    "ia": "agressif",
+    "id": "black_wabbit",
+    "img": "/assets/monstres/black_wabbit.png",
+    "initiative": 14,
+    "nom": "Black Wabbit",
+    "pa": 4,
+    "pv": 300,
+    "resistances": {
+      "feu": 0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 16,
+      "intelligence": 92,
+      "vitalite": 165
+    }
+  },
   "blop_coco": {
     "archiNom": "Blorie l'Assourdissante",
     "ia": "agressif",
@@ -1506,6 +1529,30 @@
       "vitalite": 200
     }
   },
+  "grand_pa_wabbit": {
+    "archiNom": "Grandilok le Clameur",
+    "ia": "agressif",
+    "id": "grand_pa_wabbit",
+    "img": "/assets/monstres/grand_pa_wabbit.png",
+    "initiative": 11,
+    "nom": "Grand Pa Wabbit",
+    "pa": 10,
+    "pv": 520,
+    "resistances": {
+      "terre": 0.2
+    },
+    "sorts": [
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 85,
+      "intelligence": 16,
+      "vitalite": 285
+    }
+  },
   "kankreblath": {
     "boss": true,
     "dofus": "dofawa",
@@ -2509,6 +2556,77 @@
       "vitalite": 100
     }
   },
+  "tiwabbit": {
+    "archiNom": "Tiwalpé le Dévêtu",
+    "ia": "agressif",
+    "id": "tiwabbit",
+    "img": "/assets/monstres/tiwabbit.png",
+    "initiative": 14,
+    "nom": "Tiwabbit",
+    "pa": 4,
+    "pv": 300,
+    "resistances": {
+      "air": 0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 92,
+      "chance": 16,
+      "force": 16,
+      "intelligence": 16,
+      "vitalite": 165
+    }
+  },
+  "tiwabbit_kiafin": {
+    "archiNom": "Tiwoflan le Lâche",
+    "ia": "agressif",
+    "id": "tiwabbit_kiafin",
+    "img": "/assets/monstres/tiwabbit_kiafin.png",
+    "initiative": 14,
+    "nom": "Tiwabbit Kiafin",
+    "pa": 4,
+    "pv": 300,
+    "resistances": {
+      "eau": 0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 92,
+      "force": 16,
+      "intelligence": 16,
+      "vitalite": 165
+    }
+  },
+  "tiwobot": {
+    "ia": "agressif",
+    "id": "tiwobot",
+    "img": "/assets/monstres/tiwobot.png",
+    "initiative": 12,
+    "nom": "Tiwobot",
+    "pa": 4,
+    "pv": 260,
+    "resistances": {
+      "air": 0.2,
+      "eau": 0.2,
+      "feu": 0.2,
+      "terre": 0.2
+    },
+    "sorts": [
+      "riposte_mecanique"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 16,
+      "intelligence": 85,
+      "vitalite": 145
+    }
+  },
   "tofoune": {
     "ia": "agressif",
     "id": "tofoune",
@@ -2782,6 +2900,136 @@
       "force": 8,
       "intelligence": 36,
       "vitalite": 48
+    }
+  },
+  "wa_wabbit": {
+    "boss": true,
+    "dofus": "dofus_cawotte",
+    "ia": "agressif",
+    "id": "wa_wabbit",
+    "img": "/assets/monstres/wa_wabbit.png",
+    "initiative": 20,
+    "nom": "Wa Wabbit",
+    "pa": 10,
+    "pv": 1050,
+    "resistances": {
+      "air": 0.25,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "caprice_royal",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 122,
+      "chance": 18,
+      "force": 18,
+      "intelligence": 18,
+      "vitalite": 580
+    }
+  },
+  "wa_wobot": {
+    "boss": true,
+    "dofus": "dofus_cawotte",
+    "ia": "agressif",
+    "id": "wa_wobot",
+    "img": "/assets/monstres/wa_wobot.png",
+    "initiative": 9,
+    "nom": "Wa Wobot",
+    "pa": 10,
+    "pv": 1150,
+    "resistances": {
+      "air": 0.3,
+      "eau": 0.3,
+      "feu": 0.3,
+      "terre": 0.3
+    },
+    "sorts": [
+      "contre_mesure",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 18,
+      "chance": 18,
+      "force": 125,
+      "intelligence": 18,
+      "vitalite": 630
+    }
+  },
+  "wabbit": {
+    "archiNom": "Wabbitud le Constant",
+    "ia": "agressif",
+    "id": "wabbit",
+    "img": "/assets/monstres/wabbit.png",
+    "initiative": 14,
+    "nom": "Wabbit",
+    "pa": 4,
+    "pv": 300,
+    "resistances": {
+      "terre": 0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 92,
+      "intelligence": 16,
+      "vitalite": 165
+    }
+  },
+  "wo_wabbit": {
+    "archiNom": "Wokènrôl le Danseur",
+    "ia": "agressif",
+    "id": "wo_wabbit",
+    "img": "/assets/monstres/wo_wabbit.png",
+    "initiative": 18,
+    "nom": "Wo Wabbit",
+    "pa": 8,
+    "pv": 420,
+    "resistances": {
+      "air": 0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 88,
+      "chance": 16,
+      "force": 16,
+      "intelligence": 16,
+      "vitalite": 230
+    }
+  },
+  "wobot": {
+    "ia": "agressif",
+    "id": "wobot",
+    "img": "/assets/monstres/wobot.png",
+    "initiative": 10,
+    "nom": "Wobot",
+    "pa": 8,
+    "pv": 400,
+    "resistances": {
+      "air": 0.25,
+      "eau": 0.25,
+      "feu": 0.25,
+      "terre": 0.25
+    },
+    "sorts": [
+      "riposte_mecanique",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 16,
+      "chance": 16,
+      "force": 88,
+      "intelligence": 16,
+      "vitalite": 220
     }
   }
 }
