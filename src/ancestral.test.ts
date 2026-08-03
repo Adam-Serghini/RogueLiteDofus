@@ -4,6 +4,9 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } from "./data";
+import { fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { lancerSort, ciblesValides } from "./combat";
+import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
   abraknyde_venerable: "terre", abraknyde_sombre: "terre",
@@ -194,5 +197,129 @@ describe("la zone Domaine Ancestral", () => {
 
   it("la toile 23 ne lâche rien pour l'instant", () => {
     expect(butinToile("domaine_ancestral")).toBeNull();
+  });
+});
+
+describe("la toile prouvée PAR LE MOTEUR", () => {
+  const ctxNeuf = () => {
+    let g = 3141592;
+    const rng = () => ((g = (g * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    return { rng, log: () => {}, playerDamageBonus: 1 };
+  };
+
+  /** Une équipe aux PV du niveau où la zone se joue (≈ 89), stats INCHANGÉES.
+   *  Pièges déjà rencontrés (Bateau, Antre, Repaire) : un héros de niveau 1 meurt du coup
+   *  qu'on veut observer, or le moteur n'applique un effet que sur une cible VIVANTE ; et
+   *  monter son agilité lui donne une esquive qui annule dégât ET effet, de façon
+   *  reproductible puisque la graine est fixe. */
+  const equipeDeSonde = (): Combatant[] => {
+    const equipe = fabriquerEquipe();
+    for (const h of equipe) {
+      h.pvBase = 900; h.pvMax = 900; h.pvActuels = 900;
+    }
+    return equipe;
+  };
+
+  const trouver = (espece: string): Combatant => {
+    const zone = ZONES.find((z) => z.id === "domaine_ancestral")!;
+    for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {
+      const c = fabriquerEnnemis(id).find((x) => x.monstreId === espece);
+      if (c) return c;
+    }
+    throw new Error(`${espece} n'apparaît dans aucune rencontre de la zone`);
+  };
+
+  /** Une scène : un héros face à un ennemi DEVANT et un ennemi DERRIÈRE. C'est celui de
+   *  derrière qui doit devenir inatteignable une fois le héros englué. */
+  const scene = (tisseuse: string) => {
+    const devant = trouver(tisseuse);
+    devant.position = 0;
+    const derriere = trouver("abraknyde_venerable");
+    derriere.position = 4;
+    const equipe = equipeDeSonde();
+    for (const [i, h] of equipe.entries()) h.position = i < 2 ? i : i + 2;
+    return { devant, derriere, equipe, cs: [...equipe, devant, derriere] };
+  };
+
+  it("un héros englué ne peut plus viser la rangée arrière", () => {
+    // LE test de la zone. `tetanise` n'agit pas sur les dégâts mais sur `ciblesValides` :
+    // interroger le champ du sort n'aurait rien prouvé.
+    const ctx = ctxNeuf();
+    const { devant, derriere, equipe, cs } = scene("nefileuse");
+    const [victime] = equipe;
+
+    const avant = ciblesValides(victime, SORTS.tir_courbe, cs).map((c) => c.ref);
+    expect(avant, "hors toile, la rangée arrière est atteignable").toContain(derriere.ref);
+
+    lancerSort(devant, SORTS.fil_collant, victime.ref, cs, ctx);
+    expect(victime.effets.some((e) => e.stat === "tetanise"), "la toile doit être posée").toBe(true);
+
+    const apres = ciblesValides(victime, SORTS.tir_courbe, cs).map((c) => c.ref);
+    expect(apres, "englué, il ne doit plus atteindre l'arrière").not.toContain(derriere.ref);
+    expect(apres, "mais la rangée avant reste visée").toContain(devant.ref);
+  });
+
+  it("la toile EXPIRE et les cibles reviennent", () => {
+    const ctx = ctxNeuf();
+    const { devant, derriere, equipe, cs } = scene("nefileuse");
+    const [victime] = equipe;
+    lancerSort(devant, SORTS.fil_collant, victime.ref, cs, ctx);
+    expect(ciblesValides(victime, SORTS.tir_courbe, cs).map((c) => c.ref)).not.toContain(derriere.ref);
+
+    // `decrementerEffets` n'est pas exporté : on reproduit sa règle (−1 par tour du
+    // porteur, effet retiré à 0), comme les autres tests reproduisent `lancersCeTour`.
+    const duree = SORTS.fil_collant.effet!.duree;
+    for (let t = 0; t < duree; t++) {
+      victime.effets.forEach((e) => { e.toursRestants -= 1; });
+      victime.effets = victime.effets.filter((e) => e.toursRestants > 0);
+    }
+    expect(victime.effets.some((e) => e.stat === "tetanise")).toBe(false);
+    expect(ciblesValides(victime, SORTS.tir_courbe, cs).map((c) => c.ref)).toContain(derriere.ref);
+  });
+
+  it("`ignoreLigne` est bien le contre", () => {
+    // Sans ce test, une refonte pourrait rendre la zone insoluble sans qu'on le voie :
+    // l'Acuité absolue du Cra est la sortie de secours documentée de `tetanise`.
+    const ctx = ctxNeuf();
+    const { devant, derriere, equipe, cs } = scene("nefileuse");
+    const [victime] = equipe;
+    lancerSort(devant, SORTS.fil_collant, victime.ref, cs, ctx);
+    victime.effets.push({ stat: "ignoreLigne", valeur: 1, toursRestants: 2 });
+    expect(ciblesValides(victime, SORTS.tir_courbe, cs).map((c) => c.ref)).toContain(derriere.ref);
+  });
+
+  it("la toile de la Reine englue TOUTE la rangée ciblée, et elle seule", () => {
+    const ctx = ctxNeuf();
+    const reine = trouver("reine_nyee");
+    reine.position = 0;
+    const equipe = equipeDeSonde();
+    for (const [i, h] of equipe.entries()) h.position = i < 3 ? i : 4; // 3 devant, 1 derrière
+    const cs = [...equipe, reine];
+    const devantJoueur = equipe.filter((h) => h.position < 4);
+    expect(devantJoueur.length, "il faut plusieurs héros devant").toBeGreaterThan(1);
+
+    lancerSort(reine, SORTS.toile_gluante, devantJoueur[0].ref, cs, ctx);
+    for (const h of devantJoueur) {
+      expect(h.effets.some((e) => e.stat === "tetanise"), `${h.nom} doit être englué`).toBe(true);
+    }
+    const arriere = equipe.find((h) => h.position >= 4)!;
+    expect(arriere.effets.some((e) => e.stat === "tetanise"), "la rangée arrière est épargnée").toBe(false);
+  });
+
+  it("les racines de l'Ancestral atteignent la rangée arrière du joueur", () => {
+    // `ennemi_tous` : depuis sa propre rangée arrière, il touche un héros de l'arrière.
+    const ctx = ctxNeuf();
+    const arbre = trouver("abraknyde_ancestral");
+    arbre.position = 4;
+    const equipe = equipeDeSonde();
+    for (const [i, h] of equipe.entries()) h.position = i < 2 ? i : i + 2;
+    const cs = [...equipe, arbre];
+    const cible = equipe.find((h) => h.position >= 4)!;
+
+    expect(ciblesValides(arbre, SORTS.racines_ancestrales, cs).map((c) => c.ref))
+      .toContain(cible.ref);
+    const avant = cible.pvActuels;
+    lancerSort(arbre, SORTS.racines_ancestrales, cible.ref, cs, ctx);
+    expect(cible.pvActuels, "les racines doivent mordre la rangée arrière").toBeLessThan(avant);
   });
 });

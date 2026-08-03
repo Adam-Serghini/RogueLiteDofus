@@ -170,9 +170,13 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
     if (lance && !base.some((c) => c.ref === lance.ref)) base = [...base, lance];
   }
 
-  // Tétanisation (Ouginak) : le porteur ne peut pas viser la ligne arrière adverse
+  // Tétanisation (Ouginak) : le porteur ne peut pas viser la ligne arrière adverse.
+  // `ignoreLigne` (Acuité absolue du Cra) l'emporte : les deux effets sont exactement
+  // opposés, et la doc décrit depuis toujours l'Acuité comme LE contre à la Tétanisation.
+  // L'interaction était inatteignable jusqu'au Domaine Ancestral (toile 23), première
+  // zone où un monstre pose `tetanise` sur un héros — d'où ce correctif tardif.
   if ((sort.cible === "ennemi_tous" || sort.cible === "ennemi_ligne" || sort.cible === "mixte") &&
-      sommeEffet(acteur, "tetanise") > 0) {
+      sommeEffet(acteur, "tetanise") > 0 && sommeEffet(acteur, "ignoreLigne") <= 0) {
     base = base.filter((c) => c.camp === acteur.camp || estAvant(c));
   }
 
