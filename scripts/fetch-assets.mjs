@@ -153,6 +153,14 @@ const MONSTRES = {
   kharnozor: 1911,
   dragoss_proteiforme: 1912,
   draegnerys: 1915,
+  // Tanière du Meulou (Tranche 2, gfxId relevés sur DofusDB — donjon 15 ; Croc Gland,
+  // qui en fait partie, est DÉJÀ au Laboratoire de Brumen, toile 16)
+  mulou: 52,
+  meulou: 128,
+  muloubard: 1591,
+  cocholou: 1592,
+  mulounoke: 1593,
+  mergranlou: 1594,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

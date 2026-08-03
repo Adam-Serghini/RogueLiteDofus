@@ -895,6 +895,31 @@
       "vitalite": 64
     }
   },
+  "cocholou": {
+    "ia": "agressif",
+    "id": "cocholou",
+    "img": "/assets/monstres/cocholou.png",
+    "initiative": 17,
+    "nom": "Cocholou",
+    "pa": 6,
+    "pv": 540,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 30,
+      "chance": 128,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 297
+    }
+  },
   "cochon_de_farle": {
     "archiNom": "Farlon l'Enfant",
     "ia": "agressif",
@@ -2783,6 +2808,61 @@
       "vitalite": 165
     }
   },
+  "mergranlou": {
+    "ia": "agressif",
+    "id": "mergranlou",
+    "img": "/assets/monstres/mergranlou.png",
+    "initiative": 17,
+    "nom": "Mergranlou",
+    "pa": 8,
+    "pv": 480,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 30,
+      "chance": 30,
+      "force": 90,
+      "intelligence": 30,
+      "vitalite": 264
+    }
+  },
+  "meulou": {
+    "boss": true,
+    "dofus": "dofus_turquoise",
+    "ia": "agressif",
+    "id": "meulou",
+    "img": "/assets/monstres/meulou.png",
+    "initiative": 16,
+    "nom": "Meulou",
+    "nullifieParTour": 3,
+    "pa": 10,
+    "pv": 1600,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "croc_de_l_alpha",
+      "charge",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 165,
+      "chance": 32,
+      "force": 32,
+      "intelligence": 32,
+      "vitalite": 880
+    }
+  },
   "mineur_sombre": {
     "archiNom": "Minsinistre l'Elu",
     "ia": "agressif",
@@ -2826,6 +2906,83 @@
       "force": 6,
       "intelligence": 30,
       "vitalite": 40
+    }
+  },
+  "mulou": {
+    "archiNom": "Muloufok l'Hilarant",
+    "ia": "agressif",
+    "id": "mulou",
+    "img": "/assets/monstres/mulou.png",
+    "initiative": 17,
+    "nom": "Mulou",
+    "pa": 4,
+    "pv": 460,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 30,
+      "chance": 30,
+      "force": 128,
+      "intelligence": 30,
+      "vitalite": 253
+    }
+  },
+  "muloubard": {
+    "ia": "agressif",
+    "id": "muloubard",
+    "img": "/assets/monstres/muloubard.png",
+    "initiative": 17,
+    "nom": "Muloubard",
+    "pa": 6,
+    "pv": 540,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "charge"
+    ],
+    "stats": {
+      "agilite": 128,
+      "chance": 30,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 297
+    }
+  },
+  "mulounoke": {
+    "ia": "agressif",
+    "id": "mulounoke",
+    "img": "/assets/monstres/mulounoke.png",
+    "initiative": 17,
+    "nom": "Mulounoké",
+    "nullifieParTour": 1,
+    "pa": 4,
+    "pv": 440,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 128,
+      "chance": 30,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 242
     }
   },
   "nakunbra": {

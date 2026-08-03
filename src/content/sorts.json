@@ -459,6 +459,18 @@
     "scaling": 0.3,
     "type": "degats"
   },
+  "croc_de_l_alpha": {
+    "baseMax": 40,
+    "baseMin": 30,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 6,
+    "desc": "Meulou — referme ses crocs sur une seule proie.",
+    "id": "croc_de_l_alpha",
+    "nom": "Croc de l'alpha",
+    "scaling": 0.66,
+    "type": "degats"
+  },
   "dagues_boomerang": {
     "baseMax": 13,
     "baseMin": 9,
