@@ -179,6 +179,11 @@ const MONSTRES = {
   moon: 123,
   dostrogo: 1325,
   domoizelle: 1326,
+  // Grotte Hesque (Tranche 1, toile 11) — complément du carré 4 Palmifleurs × 4
+  // Crustorails du donjon 25, trois espèces manquaient au Bestiaire
+  crustorail_malibout: 585,
+  crustorail_passaoh: 586,
+  palmifleur_kouracao: 588,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);

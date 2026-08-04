@@ -1030,7 +1030,7 @@
         "position": 1
       },
       {
-        "monstre": "corailleur",
+        "monstre": "crustorail_passaoh",
         "position": 4
       }
     ],
@@ -1043,11 +1043,11 @@
         "position": 0
       },
       {
-        "monstre": "crustorail_kouracao",
+        "monstre": "crustorail_malibout",
         "position": 1
       },
       {
-        "monstre": "palmifleur_passaoh",
+        "monstre": "palmifleur_kouracao",
         "position": 4
       }
     ],

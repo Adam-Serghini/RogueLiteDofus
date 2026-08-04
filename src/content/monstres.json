@@ -1397,6 +1397,30 @@
       "vitalite": 68
     }
   },
+  "crustorail_malibout": {
+    "archiNom": "Crustensyl le Pragmatique",
+    "ia": "agressif",
+    "id": "crustorail_malibout",
+    "img": "/assets/monstres/crustorail_malibout.png",
+    "initiative": 8,
+    "nom": "Crustorail Malibout",
+    "pa": 5,
+    "pv": 116,
+    "resistances": {
+      "air": 0.3,
+      "terre": -0.2
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 46,
+      "chance": 10,
+      "force": 12,
+      "intelligence": 10,
+      "vitalite": 68
+    }
+  },
   "crustorail_morito": {
     "archiNom": "Cruskof le Rustre",
     "ia": "agressif",
@@ -1419,6 +1443,30 @@
       "force": 48,
       "intelligence": 10,
       "vitalite": 72
+    }
+  },
+  "crustorail_passaoh": {
+    "archiNom": "Crusmeyer le Pervers",
+    "ia": "agressif",
+    "id": "crustorail_passaoh",
+    "img": "/assets/monstres/crustorail_passaoh.png",
+    "initiative": 8,
+    "nom": "Crustorail Passaoh",
+    "pa": 5,
+    "pv": 116,
+    "resistances": {
+      "eau": -0.2,
+      "feu": 0.3
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 10,
+      "force": 12,
+      "intelligence": 46,
+      "vitalite": 68
     }
   },
   "directeur_grunob": {
@@ -3350,6 +3398,31 @@
       "force": 18,
       "intelligence": 18,
       "vitalite": 550
+    }
+  },
+  "palmifleur_kouracao": {
+    "archiNom": "Palmbytch la Bronzée",
+    "ia": "agressif",
+    "id": "palmifleur_kouracao",
+    "img": "/assets/monstres/palmifleur_kouracao.png",
+    "initiative": 10,
+    "nom": "Palmifleur Kouraçao",
+    "pa": 5,
+    "pv": 113,
+    "resistances": {
+      "eau": 0.3,
+      "feu": -0.2
+    },
+    "sorts": [
+      "tir_courbe",
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 12,
+      "chance": 46,
+      "force": 12,
+      "intelligence": 10,
+      "vitalite": 66
     }
   },
   "palmifleur_malibout": {
