@@ -59,6 +59,39 @@ describe("intégrité des zones", () => {
     });
   }
 
+  it("aucune espèce définie n'est ORPHELINE — toute espèce doit être placée quelque part", () => {
+    // Ce test est né d'une coquille réelle (2026-08-04) : le Tofu Maléfique existait dans
+    // `monstres.json` avec son archimonstre, mais n'apparaissait dans AUCUNE rencontre —
+    // donc invisible au Bestiaire et incapturable. Une espèce définie et jamais placée est
+    // du contenu mort.
+    const placees = new Set(ZONES.flatMap((z) =>
+      [...z.pools.normales, ...z.pools.elite, ...z.pools.boss]
+        .flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre))));
+    const orphelines = Object.keys(MONSTRES).filter((id) => !placees.has(id));
+    expect(orphelines, `espèces définies mais placées nulle part : ${orphelines.join(", ")}`).toEqual([]);
+  });
+
+  it("toute espèce capturable est joignable en pack NORMAL", () => {
+    // Sinon son archimonstre est enfermé derrière les nœuds élite ou le donjon, qui sont
+    // rares — c'est la règle appliquée à toutes les zones de la Tranche 2. Deux cas
+    // PRÉEXISTANTS de Tranche 1 restent tolérés NOMMÉMENT, en attente d'arbitrage : les
+    // déplacer changerait la difficulté d'un pack normal d'une tranche équilibrée.
+    const ENFERMES_TOLERES = [
+      "chef_de_guerre_bouftou", // Tainéla : seulement dans la salle du boss
+      "palmifleur_morito",      // Grotte Hesque : 219 PV contre 113-123 pour ses cousins
+    ];
+    for (const zone of ZONES) {
+      const enNormal = new Set(zone.pools.normales
+        .flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+      const toutes = new Set([...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]
+        .flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
+      for (const id of toutes) {
+        if (!MONSTRES[id].archiNom || ENFERMES_TOLERES.includes(id)) continue;
+        expect(enNormal.has(id), `${zone.nom} : ${id} est capturable mais absent des packs normaux`).toBe(true);
+      }
+    }
+  });
+
   it("aucune position d'ennemi ne dépasse la grille 0..7", () => {
     for (const c of Object.values(COMBATS)) {
       for (const e of c.ennemis) expect(e.position).toBeGreaterThanOrEqual(0), expect(e.position).toBeLessThan(8);

@@ -2800,12 +2800,90 @@
       "vitalite": 76
     }
   },
+  "kwakere_de_flamme": {
+    "ia": "agressif",
+    "id": "kwakere_de_flamme",
+    "img": "/assets/monstres/kwakere_de_flamme.png",
+    "initiative": 11,
+    "nom": "Kwakere de Flamme",
+    "pa": 5,
+    "pv": 249,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 30,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 104
+    }
+  },
+  "kwakere_de_glace": {
+    "ia": "agressif",
+    "id": "kwakere_de_glace",
+    "img": "/assets/monstres/kwakere_de_glace.png",
+    "initiative": 11,
+    "nom": "Kwakere de Glace",
+    "pa": 5,
+    "pv": 249,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 30,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 104
+    }
+  },
   "kwakere_de_terre": {
     "ia": "agressif",
     "id": "kwakere_de_terre",
     "img": "/assets/monstres/kwakere_de_terre.png",
     "initiative": 11,
     "nom": "Kwakere de Terre",
+    "pa": 5,
+    "pv": 249,
+    "resistances": {
+      "air": 0.15,
+      "eau": 0.15,
+      "feu": 0.15,
+      "terre": 0.15
+    },
+    "sorts": [
+      "morsure",
+      "charge"
+    ],
+    "stats": {
+      "agilite": 22,
+      "chance": 30,
+      "force": 30,
+      "intelligence": 30,
+      "vitalite": 104
+    }
+  },
+  "kwakere_de_vent": {
+    "ia": "agressif",
+    "id": "kwakere_de_vent",
+    "img": "/assets/monstres/kwakere_de_vent.png",
+    "initiative": 11,
+    "nom": "Kwakere de Vent",
     "pa": 5,
     "pv": 249,
     "resistances": {
@@ -2903,6 +2981,32 @@
       "vitalite": 54
     }
   },
+  "larve_champetre": {
+    "archiNom": "Larvaloeil l'Émue",
+    "ia": "agressif",
+    "id": "larve_champetre",
+    "img": "/assets/monstres/larve_champetre.png",
+    "initiative": 8,
+    "nom": "Larve Champêtre",
+    "pa": 5,
+    "pv": 91,
+    "resistances": {
+      "air": 0.1,
+      "eau": 0.1,
+      "feu": 0.1,
+      "terre": 0.1
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 10,
+      "chance": 8,
+      "force": 40,
+      "intelligence": 8,
+      "vitalite": 54
+    }
+  },
   "larve_doree": {
     "ia": "agressif",
     "id": "larve_doree",
@@ -2948,6 +3052,30 @@
       "force": 37,
       "intelligence": 8,
       "vitalite": 60
+    }
+  },
+  "larve_jaune": {
+    "archiNom": "Larvomatik le Propre",
+    "ia": "agressif",
+    "id": "larve_jaune",
+    "img": "/assets/monstres/larve_jaune.png",
+    "initiative": 8,
+    "nom": "Larve Jaune",
+    "pa": 5,
+    "pv": 91,
+    "resistances": {
+      "air": 0.3,
+      "terre": -0.25
+    },
+    "sorts": [
+      "morsure"
+    ],
+    "stats": {
+      "agilite": 40,
+      "chance": 8,
+      "force": 8,
+      "intelligence": 8,
+      "vitalite": 54
     }
   },
   "larve_orange": {

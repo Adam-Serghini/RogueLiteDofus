@@ -586,7 +586,7 @@
   "fan_3": {
     "ennemis": [
       {
-        "monstre": "tofu_mutant",
+        "monstre": "tofu_malefique",
         "position": 0
       },
       {
@@ -1353,7 +1353,7 @@
   "kwa_1": {
     "ennemis": [
       {
-        "monstre": "kwak_de_terre",
+        "monstre": "kwakere_de_vent",
         "position": 0
       },
       {
@@ -1374,7 +1374,7 @@
         "position": 1
       },
       {
-        "monstre": "kwak_de_feu",
+        "monstre": "kwakere_de_flamme",
         "position": 4
       }
     ],
@@ -1391,7 +1391,7 @@
         "position": 1
       },
       {
-        "monstre": "kwak_d_eau",
+        "monstre": "kwakere_de_glace",
         "position": 2
       }
     ],
@@ -1553,7 +1553,7 @@
   "lrv_3": {
     "ennemis": [
       {
-        "monstre": "larve_rubis",
+        "monstre": "larve_champetre",
         "position": 0
       },
       {
@@ -1561,7 +1561,7 @@
         "position": 1
       },
       {
-        "monstre": "larve_saphir",
+        "monstre": "larve_jaune",
         "position": 2
       }
     ],

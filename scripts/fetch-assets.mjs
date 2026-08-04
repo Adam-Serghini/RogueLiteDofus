@@ -184,6 +184,15 @@ const MONSTRES = {
   crustorail_malibout: 585,
   crustorail_passaoh: 586,
   palmifleur_kouracao: 588,
+  // Trois coquilles de bestiaire corrigées le 2026-08-04 : le Tofu Maléfique existait
+  // déjà (orphelin, placé nulle part), les trois autres Kwakere complètent leur carré,
+  // et les deux larves à archi manquaient au Donjon des Larves
+  tofu_malefique: 58,
+  kwakere_de_flamme: 158,
+  kwakere_de_glace: 160,
+  kwakere_de_vent: 161,
+  larve_jaune: 663,
+  larve_champetre: 676,
 };
 
 const existe = (f) => access(f).then(() => true, () => false);
