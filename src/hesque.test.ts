@@ -4,6 +4,8 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { MONSTRES, ZONES, COMBATS } from "./data";
+import { ELEMENTS } from "./combat";
+import type { Element } from "./types";
 
 /** Le nom du cocktail EST un élément, dans les DEUX familles. Grammaire déjà présente
  *  dans les espèces d'origine ; trois manquaient au carré, ce test empêche qu'on le
@@ -54,9 +56,10 @@ describe("bestiaire de la Grotte Hesque", () => {
         const id = `${famille}_${cocktail}`;
         expect(MONSTRES[id], `${id} manquant`).toBeTruthy();
         expect(dominante(id), `${id} doit dominer en ${element}`).toBe(STAT_DE_ELEMENT[element]);
-        const res = MONSTRES[id].resistances ?? {};
-        const meilleure = (["terre", "feu", "air", "eau"] as const)
-          .sort((a, b) => (res[b] ?? 0) - (res[a] ?? 0))[0];
+        // annotation nécessaire : `?? {}` élargit le type et `{}` n'est pas indexable ;
+        // et `ELEMENTS` est copié avant tri, `sort` mutant son tableau
+        const res: Partial<Record<Element, number>> = MONSTRES[id].resistances ?? {};
+        const meilleure = [...ELEMENTS].sort((a, b) => (res[b] ?? 0) - (res[a] ?? 0))[0];
         expect(meilleure, `${id} doit AUSSI résister en ${element}`).toBe(element);
       }
     }
