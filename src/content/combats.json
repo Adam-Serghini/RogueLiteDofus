@@ -2125,7 +2125,7 @@
   "tai_elite": {
     "ennemis": [
       {
-        "monstre": "bouftou_noir",
+        "monstre": "chef_de_guerre_bouftou",
         "position": 0
       },
       {

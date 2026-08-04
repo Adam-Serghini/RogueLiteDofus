@@ -77,7 +77,7 @@ describe("intégrité des zones", () => {
     // PRÉEXISTANTS de Tranche 1 restent tolérés NOMMÉMENT, en attente d'arbitrage : les
     // déplacer changerait la difficulté d'un pack normal d'une tranche équilibrée.
     const ENFERMES_TOLERES = [
-      "chef_de_guerre_bouftou", // Tainéla : seulement dans la salle du boss
+      "chef_de_guerre_bouftou", // Tainéla : en élite ET dans la salle du boss, jamais en normal
       "palmifleur_morito",      // Grotte Hesque : 219 PV contre 113-123 pour ses cousins
     ];
     for (const zone of ZONES) {
