@@ -63,13 +63,16 @@ describe("stats finales & PV", () => {
     expect(s.force).toBe(CLASSES.iop.stats.force);
   });
 
-  it("pvMaxFor = pvBase + vitalité finale, et monte avec le niveau", () => {
+  it("pvMaxFor compose bien pvBase et la vitalité via PV_PAR_VITA", () => {
+    // Ce test recalcule EXACTEMENT le corps de `pvMaxFor` : il passerait même si
+    // `statsFinales` renvoyait vitalite: 0 pour tout le monde. Il vérifie la
+    // COMPOSITION (pvBase + vitalité × PV_PAR_VITA), pas la courbe de vitalité —
+    // celle-ci, avec des valeurs en dur par niveau, est couverte par
+    // `src/archetypes.test.ts` (~ligne 222).
     const p = progressionInitiale();
     const base = pvMaxFor(CLASSES.iop, p);
     expect(base).toBe(CLASSES.iop.pvBase + statsFinales(CLASSES.iop, p).vitalite);
     p.niveau = 50;
-    // valeur exacte : la formule reste calculable même sans allocation manuelle,
-    // un `toBeGreaterThan` laisserait passer une régression du calcul de vitalité.
     expect(pvMaxFor(CLASSES.iop, p))
       .toBe(CLASSES.iop.pvBase + statsFinales(CLASSES.iop, p).vitalite * PV_PAR_VITA);
   });

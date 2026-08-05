@@ -4,8 +4,8 @@
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
-import { chanceCritEffective, bonusDegatsCrit, statsEffectives, elementDeFrappe } from "../combat";
-import { statElement, multSoin, multOffensif, pctRembPA as rembPA } from "../progression";
+import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe } from "../combat";
+import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE } from "../progression";
 import type { PersoState } from "../run";
 import type { Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
@@ -134,10 +134,10 @@ export const CIBLE_LBL: Record<string, string> = {
 /** Explication de la mécanique d'élément de frappe (icône info du sélecteur). */
 export const ELEMENT_AIDE =
   "Élément de frappe\n\n" +
-  "Tous tes dégâts utilisent ta caractéristique élémentaire la plus élevée :\n" +
+  "Tous tes dégâts utilisent l'un des 2 éléments déclarés par ta classe :\n" +
   "Force → Terre · Intelligence → Feu · Agilité → Air · Chance → Eau\n\n" +
   "Les résistances de la cible s'appliquent selon cet élément.\n" +
-  "Clique sur un rond pour basculer entre tes 2 éléments les plus forts.";
+  "Clique sur un rond pour basculer entre tes 2 éléments (un objet Kwakwaffe ouvre les 4).";
 
 /**
  * Tooltip d'aide générique piloté par `data-tip` (texte multiligne, `\n` rendus
@@ -194,7 +194,8 @@ export function elementsFortsPerso(p: PersoState): [Element, Element] {
   return CLASSES[p.classeId].elements;
 }
 
-/** Paire de pastilles d'élément (les 2 plus forts ; frappe en évidence, second estompé). */
+/** Paire de pastilles d'élément (les 2 éléments déclarés de la classe ; frappe en
+ *  évidence, second estompé). */
 export function pastillesElements(p: PersoState): string {
   const [e1, e2] = elementsFortsPerso(p);
   const frappe = p.elementChoisi ?? e1;
@@ -353,7 +354,7 @@ export function itemStatsHtml(inst: ItemInstance): string {
   if (it?.poisonArme) chips.push(`<span class="ichip malus" title="L'attaque de cette arme empoisonne la cible (${it.poisonArme.degats} dégâts pendant ${it.poisonArme.duree} tours)">☠ empoisonne (${it.poisonArme.degats}/t · ${it.poisonArme.duree} t)</span>`);
   if (it?.soinAllieBlesse) chips.push(`<span class="ichip ichip-soin" title="L'attaque soigne l'allié le plus blessé de ${Math.round(it.soinAllieBlesse * 100)} % des dégâts infligés">♥ soigne l'allié blessé (${Math.round(it.soinAllieBlesse * 100)} %)</span>`);
   if (it?.retraitPA) chips.push(`<span class="ichip ichip-pa" title="L'attaque a 30 % de chance de retirer ${it.retraitPA} PA à la cible">⛓ retrait ${it.retraitPA} PA (30 %)</span>`);
-  if (it?.elementLibre) chips.push(`<span class="ichip ichip-adapt" title="Le porteur peut frapper dans N'IMPORTE quel élément (plus limité à ses 2 plus forts)">🌈 élément libre</span>`);
+  if (it?.elementLibre) chips.push(`<span class="ichip ichip-adapt" title="Le porteur peut frapper dans N'IMPORTE quel élément (plus limité à sa paire déclarée)">🌈 élément libre</span>`);
   if (it?.renaissance) chips.push(`<span class="ichip ichip-adapt" title="À la mort du porteur : renaît UNE fois par combat à ${Math.round(it.renaissance * 100)} % de ses PV">🥚 renaissance (${Math.round(it.renaissance * 100)} % PV)</span>`);
   if (it?.panoplie) chips.push(`<span class="ichip ichip-pano" title="Panoplie ${escapeHtml(it.panoplie)} : +1 PA quand les 4 pièces sont portées par le même héros">⬡ ${escapeHtml(it.panoplie)}</span>`);
   return `<span class="ichips">${chips.join("")}</span>`;
@@ -370,21 +371,37 @@ export const STAT_NOM: Record<keyof Stats, string> = {
   prospection: "Prospection",
   crit: "Critique",
 };
+// Les pourcentages ci-dessous sont DÉRIVÉS des fonctions qui font foi (progression.ts /
+// combat.ts) plutôt que recopiés à la main : un delta de 1 point pour le taux/point (les
+// formules sont linéaires avant leur plafond), une stat énorme pour lire le plafond lui-
+// même. Si une formule change, ce bloc suit tout seul — aucun nombre à corriger ici.
+const statsBase: Stats = { force: 0, intelligence: 0, agilite: 0, vitalite: 0 };
+const pct1 = (x: number): number => Math.round(x * 1000) / 10; // 1 décimale, en %
+const TAUX_DGTS_FINAUX = pct1(multOffensif({ ...statsBase, intelligence: 1 }) - 1); // feu, multOffensif — progression.ts
+const CAP_DGTS_FINAUX = pct1(multOffensif({ ...statsBase, intelligence: 1e6 }) - 1);
+const PLANCHER_CRIT = pct1(chanceCritEffective(statsBase)); // air, chanceCrit — combat.ts
+const TAUX_CRIT = pct1(chanceCrit({ ...statsBase, agilite: 1 }) - chanceCrit(statsBase));
+const CAP_CRIT = pct1(CRIT_CAP);
+const BASE_DGTS_CRIT = pct1(bonusDegatsCrit(statsBase));
+const TAUX_DGTS_CRIT = pct1(bonusDegatsCrit({ ...statsBase, agilite: 1 }) - bonusDegatsCrit(statsBase));
+const CAP_DGTS_CRIT = pct1(bonusDegatsCrit({ ...statsBase, agilite: 1e6 }));
+
 // Description complète affichée au survol d'une caractéristique (peut contenir du HTML).
 export const STAT_AIDE: Record<keyof Stats, string> = {
   force:
-    "Dégâts dans l'élément <b>Terre</b>.<br>Coup critique : <b>+0,5 %</b> par point (max 50 %).",
+    `Dégâts dans l'élément <b>Terre</b>.<br>+1 Vitalité par ${VITA_PAR_FORCE} de Force (voir VITA_PAR_FORCE, progression.ts).`,
   intelligence:
-    "Dégâts dans l'élément <b>Feu</b>.<br>Dégâts finaux : <b>+0,5 %</b> par point (max 50 %).",
+    `Dégâts dans l'élément <b>Feu</b>.<br>Dégâts finaux : <b>+${TAUX_DGTS_FINAUX} %</b> par point (max +${CAP_DGTS_FINAUX} %).`,
   agilite:
-    "Dégâts dans l'élément <b>Air</b>.<br>Esquive : <b>+0,2 %</b> par point (max 50 %).<br>Dégâts critiques : <b>+0,4 %</b> par point (max +60 %).",
-  chance: "Dégâts dans l'élément <b>Eau</b>.",
+    `Dégâts dans l'élément <b>Air</b>.<br>Taux de coup critique : <b>+${TAUX_CRIT} %</b> par point (plancher ${PLANCHER_CRIT} % pour tous, max ${CAP_CRIT} %).<br>Dégâts critiques : <b>+${TAUX_DGTS_CRIT} %</b> par point (base ${BASE_DGTS_CRIT} %, max ${CAP_DGTS_CRIT} %).`,
+  chance: `Dégâts dans l'élément <b>Eau</b>.<br>+1 Prospection par ${PROSP_PAR_CHANCE} de Chance (voir PROSP_PAR_CHANCE, progression.ts).`,
   vitalite: "Points de vie maximum : <b>+1 PV</b> par point.",
   soin: "Puissance des soins prodigués : <b>+0,5 %</b> par point (max 50 %).",
   prospection:
     "Augmente les chances de butin d'équipement (cumulé sur toute l'équipe).",
-  crit: "% plat de coup critique (équipement).",
+  crit: "% plat de coup critique (équipement) — s'ajoute au taux dérivé de l'Agilité.",
 };
-// Ta plus haute stat élémentaire (Force/Int/Agi/Chance) définit ton élément de frappe.
+// L'élément de frappe est l'un des 2 éléments DÉCLARÉS par la classe (le Kwakwaffe
+// ouvre les 4) — voir `elementsForts`/`elementDeFrappe`, combat.ts.
 export const AIDE_ELEMENT =
-  '<br><i class="aide-note">L\'élément de frappe est ta plus haute stat élémentaire.</i>';
+  '<br><i class="aide-note">L\'élément de frappe est l\'un des 2 éléments déclarés par ta classe.</i>';

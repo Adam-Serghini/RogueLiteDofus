@@ -92,7 +92,9 @@ export function elementsForts(c: Combatant): [Element, Element] {
   return [tri[0][0], tri[1][0]];
 }
 
-/** Élément de frappe : le choix explicite du joueur (fiche) prime ; sinon sa plus haute stat. */
+/** Élément de frappe : le choix explicite du joueur (fiche) prime ; sinon le premier des
+ *  deux éléments de `elementsForts` (la paire déclarée pour un héros, la plus haute
+ *  stat élémentaire pour un monstre). */
 export function elementDeFrappe(c: Combatant): Element {
   if (c.elementChoisi) return c.elementChoisi;
   return elementsForts(c)[0];
@@ -285,22 +287,28 @@ function gagnerRage(lanceur: Combatant, ctx: CombatCtx): void {
   if (lanceur.rage > avant) ctx.log(`🐺 ${lanceur.nom} entre en Rage (×${lanceur.rage}).`);
 }
 
+/** Plafond du TIRAGE de coup critique (probabilité effectivement testée aux dés).
+ *  Constante nommée pour n'écrire `0.35` qu'une seule fois dans tout le fichier —
+ *  `chanceCrit`, `chanceCritEffective` et `critExcedent` la lisent tous les trois. */
+export const CRIT_CAP = 0.35;
+
 /** Chance de coup critique : l'AGILITÉ porte le critique (l'identité de l'air), plus
  *  le crit plat des objets. Plancher de 5 % pour tout le monde — l'air n'est que sur
  *  3 classes jouables sur 11, sans plancher huit classes ne critiqueraient jamais.
  *  SOURCE UNIQUE de la formule — l'UI l'affiche via cette fonction. Le résultat peut
- *  dépasser le plafond de 0,35 grâce au crit plat : c'est voulu, voir `critExcedent`
+ *  dépasser CRIT_CAP grâce au crit plat : c'est voulu, voir `critExcedent`
  *  et le site de tirage dans `degatsAvec` qui borne la PROBABILITÉ, pas cette valeur. */
 export function chanceCrit(se: Stats): number {
-  return Math.min(0.35, 0.05 + se.agilite * 0.0025) + (se.crit ?? 0) / 100;
+  return Math.min(CRIT_CAP, 0.05 + se.agilite * 0.0025) + (se.crit ?? 0) / 100;
 }
 
-/** Probabilité EFFECTIVEMENT tirée aux dés : `chanceCrit` bornée à 0,35. Source unique
- *  du plafond de tirage — le site de tirage dans `degatsAvec` ET l'affichage (`pctCrit`)
- *  doivent lire CETTE fonction, jamais reconstruire `Math.min(0.35, chanceCrit(se))`
- *  ailleurs, pour qu'il n'existe qu'une seule vérité sur ce qui déclenche un critique. */
+/** Probabilité EFFECTIVEMENT tirée aux dés : `chanceCrit` bornée à CRIT_CAP. Source
+ *  unique du plafond de tirage — le site de tirage dans `degatsAvec` ET l'affichage
+ *  (`pctCrit`) doivent lire CETTE fonction, jamais reconstruire `Math.min(CRIT_CAP,
+ *  chanceCrit(se))` ailleurs, pour qu'il n'existe qu'une seule vérité sur ce qui
+ *  déclenche un critique. */
 export function chanceCritEffective(se: Stats): number {
-  return Math.min(0.35, chanceCrit(se));
+  return Math.min(CRIT_CAP, chanceCrit(se));
 }
 
 // --- Bombes (Roublard) / Téléfrags (Xélor) -----------------------------------
@@ -364,9 +372,11 @@ export function multConjuration(lanceur: Combatant, cible: Combatant, cs: Combat
 }
 
 /** Part du crit au-delà du plafond, convertie en dégâts finaux (Tir Puissant).
- *  Seule la stat de crit PLATE peut déborder — l'agilité seule ne le peut jamais. */
+ *  Seule la stat de crit PLATE peut déborder — l'agilité seule ne le peut jamais.
+ *  S'appuie sur `chanceCrit` (déjà la formule complète) plutôt que de reconstruire
+ *  la sous-formule d'agilité — un seul endroit calcule cette valeur, voir CRIT_CAP. */
 export function critExcedent(se: Stats): number {
-  return Math.max(0, Math.min(0.35, 0.05 + se.agilite * 0.0025) + (se.crit ?? 0) / 100 - 0.35);
+  return Math.max(0, chanceCrit(se) - CRIT_CAP);
 }
 
 /** Bonus de dégâts d'un critique : +25 % de base + Agilité, plafonné à +45 %. */

@@ -37,7 +37,6 @@ export const CASE_DEPART = A("/assets/menu/Depart.png");
 export const MENU_RESTART_PERSO = A("/assets/menu/Recommencer_avec_perso.png");
 export const MENU_DOFUS = A("/assets/menu/dofus.png");
 export const ICON_KAMAS = A("/assets/divers/kamas.png");
-export const ICON_VITA = A("/assets/divers/coeur.png");
 
 export const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
 

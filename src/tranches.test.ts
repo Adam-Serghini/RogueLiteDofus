@@ -162,7 +162,7 @@ describe("PV de départ d'une équipe neuve", () => {
     expect(pvMaxPerso(iop)).toBeGreaterThan(pvMaxFor(CLASSES.iop, progressionInitiale()));
   });
 
-  it("t1 : rien ne change (niveau 1 = aucun point à investir)", () => {
+  it("t1 : au niveau 1, les PV courants sont déjà égaux au max (rien à resynchroniser)", () => {
     const run = avecPreregleges({ iop: "eau" }, () => nouvelleRun(["iop"], 0, "t1"));
     expect(run.persos[0].pvActuels).toBe(pvMaxPerso(run.persos[0]));
   });

@@ -109,6 +109,19 @@ describe("sauvegarde de run", () => {
     expect(s!.run.ascension).toBe(3);
   });
 
+  it("un elementChoisi hors paire dans une save rechargée retombe sur le 1er élément de la classe", () => {
+    // Avant cette refonte, l'écran Formation proposait les 4 éléments à TOUTE classe :
+    // un Iop niveau 50 sauvegardé avec elementChoisi: "eau" (hors de sa paire terre/feu)
+    // était donc un état parfaitement légitime. Sans cette garde, il continue de frapper
+    // avec une caractéristique à 0 pour le reste de sa run et rien ne le signale (les
+    // deux ronds affichés, terre/feu, ne sont d'ailleurs jamais sélectionnés).
+    const run = nouvelleRun(["iop"]);
+    run.persos[0].elementChoisi = "eau";
+    sauverRunEnCours(0, run);
+    const s = chargerRunEnCours();
+    expect(s!.run.persos[0].elementChoisi).toBe("terre");
+  });
+
   it("vieille save sans ascension → 0", () => {
     const run = nouvelleRun(["iop", "cra"]);
     sauverRunEnCours(1, run);
@@ -351,11 +364,11 @@ describe("rangée préférée", () => {
   });
 });
 
-describe("allocation Vitalité", () => {
-  // Task 4 (socle Éléments & Archétypes) : le préréglage "vitalite" n'existe plus (les
-  // points ont disparu). `nouvelleRun`/`chargerConfig` s'en gardent : un préréglage hors
-  // de la paire déclarée de la classe (dont un vieux "vitalite") retombe sur le PREMIER
-  // élément de la classe, jamais sur « aucun élément ».
+describe("préréglage d'élément hors paire (rétro-compat)", () => {
+  // Le préréglage "vitalite" n'existe plus (les points d'allocation manuelle ont
+  // disparu avec la refonte Éléments & Archétypes). `nouvelleRun`/`chargerConfig` s'en
+  // gardent : un préréglage hors de la paire déclarée de la classe (dont un vieux
+  // "vitalite") retombe sur le PREMIER élément de la classe, jamais sur « aucun élément ».
   it("le préréglage vitalite (obsolète) retombe sur le premier élément de la classe", () => {
     localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "vitalite" } }));
     const run = nouvelleRun(["iop"]);

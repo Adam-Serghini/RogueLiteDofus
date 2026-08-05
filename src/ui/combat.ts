@@ -328,8 +328,9 @@ function choisirSort(s: Spell): void {
 }
 
 /**
- * Rond d'élément. `rang` = 1 (plus fort) / 2 (second). `actif` = élément de frappe courant.
- * `switchable` (alliés) rend le rond cliquable pour choisir l'élément de frappe.
+ * Rond d'élément. `rang` = 1 (premier élément déclaré de la classe) / 2 (second).
+ * `actif` = élément de frappe courant. `switchable` (alliés) rend le rond cliquable
+ * pour choisir l'élément de frappe.
  */
 function elemRond(
   el: Element,
@@ -666,7 +667,7 @@ function renderBarreSorts(): string {
     ? `<div class="aide">Choisis une cible pour <b>${escapeHtml(selectedSpell.nom)}</b>.</div>`
     : `<div class="aide">Tour de <b>${escapeHtml(acteur.nom)}</b> — choisis un sort.</div>`;
 
-  // sélecteur d'élément de frappe (les 2 plus forts), vertical, à gauche des sorts
+  // sélecteur d'élément de frappe (les 2 éléments déclarés de la classe), vertical, à gauche des sorts
   const [principal, secondaire] = elementsForts(acteur);
   const actif = elementDeFrappe(acteur);
   const selecteur =

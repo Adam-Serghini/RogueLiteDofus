@@ -777,6 +777,15 @@ export function chargerRunEnCours(): RunSauvee | null {
       for (const slot of Object.keys(perso.equipement ?? {}) as EquipSlot[]) {
         if (perso.equipement[slot] && !ITEMS[perso.equipement[slot]!.id]) delete perso.equipement[slot];
       }
+      // Même garde qu'à `nouvelleRun`/`runDepuisHeritage` — mais pour une sauvegarde
+      // rechargée, pas une run/un héritage frais : un `elementChoisi` hors de la paire
+      // DÉCLARÉE de la classe était un état légitime avant cette refonte (l'écran
+      // Formation proposait alors les 4 éléments à tout le monde), et sans cette garde
+      // le perso continue de frapper avec une caractéristique à 0 pour le reste de sa
+      // run, sans rien pour le lui dire. Absent → déjà géré ailleurs (retombe sur
+      // elements[0]) : seul le cas hors paire est traité ici.
+      const elements = CLASSES[perso.classeId].elements;
+      if (perso.elementChoisi && !elements.includes(perso.elementChoisi)) perso.elementChoisi = elements[0];
     }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas

@@ -61,9 +61,16 @@ export function chargerConfig(): Settings {
       merged.elements = elementsValides(merged.elements) ? { ...merged.elements } : { ...DEFAUT.elements };
       // un élément préféré doit appartenir aux DEUX éléments de la classe : une vieille
       // save peut porter « eau » sur un Iop (terre+feu), ou « vitalite » (mode supprimé,
-      // déjà écarté par `elementsValides` ci-dessus, qui ne connaît plus que les 4 éléments)
+      // déjà écarté par `elementsValides` ci-dessus, qui ne connaît plus que les 4 éléments).
+      // Hors paire → 1er élément de la classe, jamais supprimé : un `delete` laisserait
+      // l'écran Paramètres afficher cette classe sans AUCUN élément sélectionné, un état
+      // impossible dans le nouveau modèle puisque le jeu utilisera `elements[0]` quand
+      // même (voir `nouvelleRun`). Seule une classe inconnue (supprimée du jeu) est retirée :
+      // il n'y a alors rien vers quoi retomber.
       for (const [classeId, el] of Object.entries(merged.elements)) {
-        if (!CLASSES[classeId]?.elements.includes(el)) delete merged.elements[classeId];
+        const classe = CLASSES[classeId];
+        if (!classe) { delete merged.elements[classeId]; continue; }
+        if (!classe.elements.includes(el)) merged.elements[classeId] = classe.elements[0];
       }
       return merged;
     }

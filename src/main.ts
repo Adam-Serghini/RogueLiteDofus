@@ -103,9 +103,10 @@ async function resoudreCombat(
   return { gagne, combatants };
 }
 
-async function recompenserXP(run: RunState, gain: number): Promise<void> {
-  // TRANSITOIRE (Task 2) : les stats découlent désormais de (classe, niveau),
-  // il n'y a plus de points à dépenser — on marque juste l'animation de niveau.
+// Synchrone : gagner de l'XP ne fait plus qu'avancer le niveau et marquer l'animation
+// (les stats découlent de (classe, niveau), il n'y a plus de points à dépenser ni
+// d'écran à ouvrir pour les allouer).
+function recompenserXP(run: RunState, gain: number): void {
   for (const p of run.persos) {
     if (gagnerXPPerso(p, gain, run.trancheId) > 0) p.flashNiveau = true; // pour l'animation dans le panneau d'équipe
   }
@@ -152,7 +153,7 @@ async function resoudreType(
       if (!gagne) return "wipe";
       const toile = zoneId ? toileDeZone(zoneId) : 1;
       crediterKamas(run, Math.round(gainKamas(type, toile, Math.random) * multKamasEquipe(run)));
-      await recompenserXP(run, xpEffective(xp, toile, run.trancheId));
+      recompenserXP(run, xpEffective(xp, toile, run.trancheId));
       // combat dur → butin au TAUX donjon (la prise de risque paie), mais le pool
       // exclusif reste celui des élites (les objets boss ne tombent qu'au donjon)
       await recompenserButin(run, zoneId, type, type === "combat_dur" ? "donjon" : undefined);
