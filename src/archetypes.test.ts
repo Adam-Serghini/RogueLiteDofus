@@ -3,7 +3,7 @@
 //  La table vit dans classes.json ; CLASSES-ELEMENTS.md en est le reflet lisible.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import mdClassesElements from "../CLASSES-ELEMENTS.md?raw";
 import { CLASSES } from "./data";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
@@ -50,7 +50,7 @@ describe("table des classes", () => {
 
   it("CLASSES-ELEMENTS.md ne diverge pas de classes.json", () => {
     // Un document de référence qui mentirait serait pire que pas de document.
-    const md = readFileSync("CLASSES-ELEMENTS.md", "utf8");
+    const md = mdClassesElements;
     const NOM_EL: Record<string, string> = { terre: "terre", feu: "feu", air: "air", eau: "eau" };
     for (const [id, c] of Object.entries(CLASSES)) {
       const ligne = md.split("\n").find((l) => l.includes(`\`${id}\``));

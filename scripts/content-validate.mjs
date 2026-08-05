@@ -105,10 +105,6 @@ export function validerContenu(contenu, base) {
       E("zones_pools", id, "boss manquant (liste non vide de combats attendue)");
   }
 
-  // ---- Passe 2 : références croisées --------------------------------------
-  for (const [id, m] of Object.entries(contenu.monstres))
-    for (const s of m.sorts ?? [])
-      if (!contenu.sorts[s]) E("monstres", id, `le sort « ${s} » n'existe pas`);
   for (const [id, cl] of Object.entries(contenu.classes)) {
     if (!ARCHETYPES.includes(cl.archetype))
       E("classes", id, `archetype doit être « melee » ou « distance » (reçu : ${cl.archetype})`);
@@ -122,6 +118,11 @@ export function validerContenu(contenu, base) {
       if (cl.elements[0] === cl.elements[1]) E("classes", id, "les deux éléments doivent être distincts");
     }
   }
+
+  // ---- Passe 2 : références croisées --------------------------------------
+  for (const [id, m] of Object.entries(contenu.monstres))
+    for (const s of m.sorts ?? [])
+      if (!contenu.sorts[s]) E("monstres", id, `le sort « ${s} » n'existe pas`);
   for (const [id, cl] of Object.entries(contenu.classes))
     for (const s of cl.sorts ?? [])
       if (!contenu.sorts[s]) E("classes", id, `le sort « ${s} » n'existe pas`);

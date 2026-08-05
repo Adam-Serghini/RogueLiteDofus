@@ -53,6 +53,22 @@ describe("passe 1 — schéma", () => {
     const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = 0; }), base());
     expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("coutPA"))).toBe(true);
   });
+  it("refuse un archétype de classe inconnu", () => {
+    const err = validerContenu(modif((c) => { c.classes.iop.archetype = "soigneur"; }), base());
+    expect(err.some((e) => e.includes("[classes: iop]") && e.includes("archetype"))).toBe(true);
+  });
+  it("refuse une classe avec un nombre d'éléments différent de deux", () => {
+    const err = validerContenu(modif((c) => { c.classes.iop.elements = ["terre"]; }), base());
+    expect(err.some((e) => e.includes("[classes: iop]") && e.includes("elements"))).toBe(true);
+  });
+  it("refuse un élément de classe inconnu", () => {
+    const err = validerContenu(modif((c) => { c.classes.iop.elements = ["terre", "wakfu"]; }), base());
+    expect(err.some((e) => e.includes("[classes: iop]") && e.includes("élément inconnu"))).toBe(true);
+  });
+  it("refuse une paire d'éléments de classe en doublon", () => {
+    const err = validerContenu(modif((c) => { c.classes.iop.elements = ["terre", "terre"]; }), base());
+    expect(err.some((e) => e.includes("[classes: iop]") && e.includes("distincts"))).toBe(true);
+  });
 });
 
 describe("passe 2 — références croisées", () => {
