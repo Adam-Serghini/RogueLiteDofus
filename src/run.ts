@@ -10,17 +10,12 @@ import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, HeritageEquipe, HeritagePerso, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
-/** Choix d'allocation automatique : un élément (frappe + points dans sa stat),
- *  la vitalité (points en PV, frappe = plus haute carac), ou rien (manuel). */
-export type Allocation = Element | "vitalite";
-
 export interface PersoState {
   classeId: string;
   progression: Progression;
   pvActuels: number; // PV conservés d'un nœud à l'autre
   position: number; // case de grille 0..7 (0-3 ligne avant, 4-7 arrière)
   elementChoisi?: Element; // élément de frappe choisi, conservé d'un combat à l'autre
-  statAuto?: keyof Stats; // stat d'auto-allocation (dérivée de l'élément, ou « vitalite »)
   equipement: Partial<Record<EquipSlot, ItemInstance>>; // exemplaire équipé par slot
   flashNiveau?: boolean; // transitoire (UI) : a monté de niveau au dernier combat → anime dans le panneau d'équipe
 }
@@ -50,35 +45,6 @@ export interface RunState {
 
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
 export const TAILLE_MAX_EQUIPE = 4;
-
-/** Stat de caractéristique portant chaque élément — ré-exporté ici pour ne pas
- *  casser les appelants existants (le mapping vit désormais dans progression.ts,
- *  qui décide où tombent les gains de niveau). */
-export { STAT_PAR_ELEMENT };
-
-/**
- * Fixe (ou retire, si null) l'élément de frappe choisi d'un perso. Les stats
- * étant désormais une fonction pure de (classe, niveau), il n'y a plus rien à
- * investir ici : on ne fait que mémoriser le choix pour l'élément de frappe
- * (`combat.ts`) et pour l'auto-allocation d'équipement adaptatif (`statPrincipale`).
- *
- * CONDAMNÉE : le seul appelant restant est l'écran d'équipe (`ui/equipe.ts`), qui
- * sera récrit à la Task 5 (« l'interface passe en lecture ») — cette fonction et
- * `PersoState.statAuto`/`Allocation` partiront avec elle. Son mode « vitalité »
- * n'achète plus rien depuis la disparition des points : il se contente d'EFFACER
- * l'élément de frappe du perso, donc il coûte au joueur sans rien lui rendre.
- * `nouvelleRun` s'en garde déjà pour les préréglages (voir plus bas) ; ne PAS
- * étendre cette fonction, la laisser mourir avec l'écran qui l'appelle.
- */
-export function appliquerElement(perso: PersoState, choix: Allocation | null): void {
-  if (choix === "vitalite") {
-    perso.elementChoisi = undefined; // frappe = plus haute carac
-    perso.statAuto = "vitalite";
-  } else {
-    perso.elementChoisi = choix ?? undefined;
-    perso.statAuto = choix ? STAT_PAR_ELEMENT[choix] : undefined;
-  }
-}
 
 /** Niveau maximum (cap d'XP) de la tranche donnée. */
 export const niveauMaxTranche = (trancheId: string): number => trancheDe(trancheId).niveaux[1];
@@ -140,10 +106,9 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
   const persos: PersoState[] = choix.map((classeId) => {
     const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
     // Préréglage validé contre la paire DÉCLARÉE de la classe : un préréglage absent,
-    // invalide, ou valant "vitalite" (vieille sauvegarde de réglages, ou préréglage
+    // invalide, ou hors de la paire (vieille sauvegarde de réglages, ou préréglage
     // d'une autre classe) retombe sur le PREMIER élément de la classe — jamais sur
-    // aucun élément, sinon le perso paierait sa frappe sans rien recevoir en retour
-    // (voir le commentaire condamné d'`appliquerElement` ci-dessus).
+    // aucun élément, sinon le perso paierait sa frappe sans rien recevoir en retour.
     const pref = elemsPref[classeId];
     const elements = CLASSES[classeId].elements;
     perso.elementChoisi = pref && elements.includes(pref as Element) ? (pref as Element) : elements[0];
@@ -220,7 +185,6 @@ export function archiverEquipe(meta: Meta, trancheId: string, run: RunState): vo
     classeId: p.classeId,
     progression: JSON.parse(JSON.stringify(p.progression)) as Progression,
     elementChoisi: p.elementChoisi,
-    statAuto: p.statAuto,
     position: p.position,
     equipement: JSON.parse(JSON.stringify(p.equipement)) as Partial<Record<EquipSlot, ItemInstance>>,
   }));
@@ -260,7 +224,6 @@ export function runDepuisHeritage(
       pvActuels: 0, // fixé juste après, équipement compris
       position: h.position,
       elementChoisi,
-      statAuto: h.statAuto,
       equipement: avecStuff
         ? (JSON.parse(JSON.stringify(h.equipement)) as Partial<Record<EquipSlot, ItemInstance>>)
         : {},

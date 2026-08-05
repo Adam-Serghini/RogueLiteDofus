@@ -10,10 +10,10 @@ import {
   elementsForts,
   elementDeFrappe,
   statsEffectives,
-  statElement,
   ordreDuCombat,
   type FxEvent,
 } from "../combat";
+import { statElement } from "../progression";
 import { libelleTouche } from "../config";
 import {
   A,

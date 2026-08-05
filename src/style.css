@@ -275,17 +275,6 @@ button:focus-visible {
   text-shadow: 0 1px 2px #fff8;
 }
 
-.form-el-btn.alloc-vita.sel {
-  box-shadow:
-    0 0 0 1px #2b231866,
-    0 0 8px #2b231833;
-}
-.form-el-btn.alloc-vita img {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-}
-
 .fin-tour img {
   height: 30px;
   object-fit: contain;
@@ -2873,13 +2862,12 @@ kbd {
   font-size: 0.85rem;
   color: var(--muet);
 }
-.points-dispo {
-  margin: 8px 0;
-  font-size: 0.9rem;
-}
-.points-dispo.actif {
-  color: var(--or-clair);
-  font-weight: 800;
+.prog-archetype {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 4px;
 }
 .stats-grille {
   display: flex;
@@ -2936,11 +2924,8 @@ kbd {
 .stat-val {
   font-variant-numeric: tabular-nums;
 }
-.stat-cout {
-  font-size: 0.62rem;
-}
-/* TOTAL (investis) + (équipement) : total à la couleur de la stat,
-   investis en bleu foncé, équipement en violet */
+/* TOTAL (classe + niveau) + (équipement) : total à la couleur de la stat,
+   apport d'équipement en violet */
 .stat-total {
   font-weight: 900;
   font-size: 1.02em;
@@ -2950,39 +2935,11 @@ kbd {
 .stat-c-agilite { color: #7fc98f; } /* vert clair pastel */
 .stat-c-chance { color: #3aa0e6; } /* eau */
 .stat-c-vitalite { color: #2b2318; } /* noir (chaud, assorti au parchemin) */
-.stat-part-inv {
-  margin-left: 3px;
-  font-weight: 800;
-  font-size: 0.78em;
-  color: #2a4a8f; /* bleu foncé : points investis */
-}
 .stat-part-equip {
   font-weight: 800;
   font-size: 0.78em;
   color: #8a4fb8; /* violet : apport de l'équipement */
 }
-.stat-actions {
-  display: inline-flex;
-  gap: 4px;
-  align-items: center;
-}
-.stat-alloc,
-.stat-champ {
-  padding: 3px 8px;
-  font-size: 0.74rem;
-  min-width: 30px;
-}
-.stat-champ-input {
-  width: 54px;
-  padding: 3px 6px;
-  font-size: 0.74rem;
-}
-.stat-champ-ok {
-  padding: 3px 8px;
-  font-size: 0.74rem;
-  margin-left: 4px;
-}
-
 /* tooltip explicatif au survol d'une caractéristique */
 .stat-aide {
   position: absolute;

@@ -3,9 +3,8 @@
 //  fin de combat) et Paramètres (touche de fin de tour, préréglages, sauvegarde).
 // =============================================================================
 import { ITEMS, RARETE_INFO, CLASSES } from "../data";
-import { ELEMENTS } from "../combat";
 import { sauverConfig, libelleTouche } from "../config";
-import { elementAsset, itemImg, BTN_RETOUR, BTN_CONTINUER, ICON_VITA } from "./assets";
+import { elementAsset, itemImg, BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
   elNom,
@@ -272,7 +271,7 @@ export function showSettings(): Promise<void> {
           <p id="set-import-msg" class="muet settings-sous" style="display:none"></p>
         </div>
         <h2 class="settings-titre">Préréglages des héros</h2>
-        <p class="muet settings-sous">Élément de frappe &amp; position par défaut, appliqués au début de chaque run. « Libre » = allocation manuelle.</p>
+        <p class="muet settings-sous">Élément de frappe &amp; position par défaut, appliqués au début de chaque run.</p>
         <div class="presets">
           ${classesDisponibles().map((cid) => {
             const elSel = config.elements[cid];
@@ -281,9 +280,7 @@ export function showSettings(): Promise<void> {
               <img class="preset-sym" src="${classSymbol(cid)}" alt="" onerror="this.remove()" />
               <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
               <div class="preset-el">
-                ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${elSel === el ? "sel" : ""}" data-classe="${cid}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
-                <button class="form-el-btn alloc-vita ${elSel === "vitalite" ? "sel" : ""}" data-classe="${cid}" data-el="vitalite" title="Points → Vitalité (PV)"><img src="${ICON_VITA}" alt="" onerror="this.remove()" /><span>Vitalité</span></button>
-                <button class="form-el-btn libre ${elSel ? "" : "sel"}" data-classe="${cid}" data-el="libre" title="Allocation manuelle">Libre</button>
+                ${CLASSES[cid].elements.map((el) => `<button class="form-el-btn elem-${el} ${elSel === el ? "sel" : ""}" data-classe="${cid}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
                 <span class="preset-sep"></span>
                 <span class="preset-pos">
                   <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
@@ -295,12 +292,10 @@ export function showSettings(): Promise<void> {
         </div>
         <div class="boutons-ecran"><button id="set-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
-      root.querySelectorAll<HTMLButtonElement>(".preset-el .form-el-btn").forEach((btn) => {
+      root.querySelectorAll<HTMLButtonElement>(".preset-el [data-el]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const cid = btn.dataset.classe!;
-          const el = btn.dataset.el!;
-          if (el === "libre") delete config.elements[cid];
-          else config.elements[cid] = el as Element | "vitalite";
+          config.elements[cid] = btn.dataset.el as Element;
           sauverConfig(config);
           draw();
         });

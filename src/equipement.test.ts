@@ -190,14 +190,14 @@ describe("rareté (objets à toiles)", () => {
 
 describe("toile 3 — stat adaptative & sources de drop", () => {
   it("la stat adaptative rejoint la carac de la voie du perso", async () => {
-    const { nouvelleRun, appliquerElement, bonusEquipement, rollItemRarete } = await import("./run");
+    const { nouvelleRun, bonusEquipement, rollItemRarete } = await import("./run");
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    appliquerElement(p, "feu"); // voie Feu → intelligence
+    p.elementChoisi = "feu"; // voie Feu → intelligence (iop : terre + feu)
     p.equipement.coiffe = rollItemRarete("coiffe_bouftou", () => 0)!; // commun : adapt 3
     expect(p.equipement.coiffe.adaptatif).toBe(3);
     expect(bonusEquipement(p).stats.intelligence).toBe(3);
-    appliquerElement(p, "terre"); // même objet, voie Terre → force
+    p.elementChoisi = "terre"; // même objet, voie Terre → force
     expect(bonusEquipement(p).stats.force).toBe(3);
   });
 

@@ -5,11 +5,10 @@
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, pctRembPA, statElement } from "./progression";
+
 import type {
   Camp, Combatant, EffetSpec, EffetStat, Element, Monstre, Spell, Stats, Action,
 } from "./types";
-
-export { statElement };
 
 // --- Aléatoire (injectable pour les tests) -----------------------------------
 export type Rng = () => number;

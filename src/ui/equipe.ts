@@ -3,13 +3,12 @@
 //  panneau de caractéristiques (montée en niveau) et Fontaine d'Otomai.
 // =============================================================================
 import { CLASSES, ITEMS } from "../data";
-import { ELEMENTS } from "../combat";
 import {
   statsFinales,
   xpRequis,
 } from "../progression";
 import { sauverConfig } from "../config";
-import { elementAsset, BTN_RETOUR, BTN_CONTINUER, ICON_VITA } from "./assets";
+import { elementAsset, BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
   elNom,
@@ -24,11 +23,15 @@ import {
   bonusEquipement,
   bonusEquipe,
   pvMaxPerso,
-  appliquerElement,
-  STAT_PAR_ELEMENT,
   type PersoState,
 } from "../run";
-import type { Element, Meta, Stats } from "../types";
+import type { Archetype, Element, Meta, Stats } from "../types";
+
+/** Libellé lisible d'un archétype (mêlée = plus robuste, distance = frappe plus fort). */
+const ARCHETYPE_LBL: Record<Archetype, string> = {
+  melee: "Mêlée",
+  distance: "Distance",
+};
 
 /** Décision prise à la taverne. */
 export type ActionTaverne =
@@ -172,16 +175,14 @@ export function showFormation(persos: PersoState[]): Promise<void> {
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
         </div>
         <div class="form-elements">
-          <h2>Élément &amp; montée en niveau</h2>
-          <p class="sous-titre">Choisis un élément : c'est ton élément de frappe et les points de niveau y vont automatiquement. <b>Libre</b> = tu répartis toi-même (l'élément de frappe est alors ta plus haute carac).</p>
+          <h2>Élément de frappe</h2>
+          <p class="sous-titre">Chaque classe a 2 éléments : choisis lequel des deux frappe.</p>
           ${persos.map((p) => `
             <div class="form-el-perso">
               <img class="form-el-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
               <span class="form-el-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
               <div class="form-el-choix">
-                ${ELEMENTS.map((el) => `<button class="form-el-btn elem-${el} ${p.elementChoisi === el ? "sel" : ""}" data-perso="${p.classeId}" data-el="${el}" title="${elNom[el]} · points → ${STAT_NOM[STAT_PAR_ELEMENT[el]]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
-                <button class="form-el-btn alloc-vita ${p.statAuto === "vitalite" ? "sel" : ""}" data-perso="${p.classeId}" data-el="vitalite" title="Points → Vitalité (PV) · frappe = plus haute carac"><img src="${ICON_VITA}" alt="" onerror="this.remove()" /><span>Vitalité</span></button>
-                <button class="form-el-btn libre ${p.elementChoisi || p.statAuto ? "" : "sel"}" data-perso="${p.classeId}" data-el="libre" title="Allocation manuelle">Libre</button>
+                ${CLASSES[p.classeId].elements.map((el) => `<button class="form-el-btn elem-${el} ${p.elementChoisi === el ? "sel" : ""}" data-perso="${p.classeId}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
               </div>
             </div>`).join("")}
         </div>
@@ -192,7 +193,7 @@ export function showFormation(persos: PersoState[]): Promise<void> {
           const p = persos.find((x) => x.classeId === btn.dataset.perso);
           if (!p) return;
           const el = btn.dataset.el;
-          appliquerElement(p, el === "libre" ? null : (el as Element | "vitalite"));
+          p.elementChoisi = el as Element;
           draw();
         });
       });
@@ -254,10 +255,11 @@ const STAT_ELEMENTAIRE = new Set<keyof Stats>([
   "chance",
 ]);
 
-// TRANSITOIRE (Task 2) : les stats ne s'allouent plus manuellement, elles
-// découlent de (classe, niveau) — voir `statsFinales`. Ce panneau n'affiche
-// donc plus que la valeur finale de chaque caractéristique ; la Task 5 doit
-// reprendre l'écran en profondeur pour ce nouveau statut « lecture seule ».
+// Les stats sont entièrement dérivées de (classe, niveau) — voir `statsFinales` — il
+// n'y a plus de pool de points à allouer : ce panneau est une LECTURE, pas un écran
+// d'allocation. L'archétype + la paire d'éléments (affichés ci-dessous) sont ce qui
+// explique les chiffres : mêlée gagne plus de Vitalité, distance frappe plus fort,
+// et seuls les 2 éléments déclarés de la classe montent avec le niveau.
 const STATS_AFFICHEES: (keyof Stats)[] = ["force", "intelligence", "agilite", "chance", "vitalite"];
 
 function carteProgression(p: PersoState): string {
@@ -285,6 +287,7 @@ function carteProgression(p: PersoState): string {
         <span class="prog-nom">${escapeHtml(classe.nom)}</span>
         <span class="prog-niv">Niv. ${prog.niveau}</span>
       </div>
+      <div class="prog-archetype muet">${ARCHETYPE_LBL[classe.archetype]} · ${pastillesElements(p)}</div>
       <div class="barre-xp"><div class="barre-xp-rempli" style="width:${xpPct}%"></div>
         <span class="xp-txt">XP ${prog.xp} / ${xpReq}</span>
       </div>
@@ -311,13 +314,14 @@ function sectionBonusDofus(meta: Meta | null): string {
 }
 
 /**
- * Panneau de progression : dépenser les points dans les stats.
- * `titre`/`sousTitre` permettent de réutiliser l'écran pour l'Otomai.
+ * Panneau de caractéristiques : LECTURE seule (les stats montent seules, selon
+ * l'archétype de chaque classe — plus rien à dépenser). `titre`/`sousTitre`
+ * permettent de réutiliser l'écran pour d'autres contextes.
  */
 export function showStatPanel(
   persos: PersoState[],
   titre = "Caractéristiques",
-  sousTitre = "Caractéristiques de l'équipe.",
+  sousTitre = "Les caractéristiques montent seules, selon l'archétype de chaque classe.",
   retour = false,
   meta: Meta | null = null,
 ): Promise<void> {

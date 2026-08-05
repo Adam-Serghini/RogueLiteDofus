@@ -151,7 +151,7 @@ describe("PV de départ d'une équipe neuve", () => {
   };
 
   it("t2 : les héros naissent au niveau de la tranche avec leurs PV au maximum réel", () => {
-    const run = avecPreregleges({ iop: "vitalite", cra: "terre" }, () => nouvelleRun(["iop", "cra"], 0, "t2"));
+    const run = avecPreregleges({ iop: "eau", cra: "terre" }, () => nouvelleRun(["iop", "cra"], 0, "t2"));
     for (const perso of run.persos) {
       expect(perso.progression.niveau).toBe(50);
       expect(perso.pvActuels).toBe(pvMaxPerso(perso));
@@ -163,7 +163,7 @@ describe("PV de départ d'une équipe neuve", () => {
   });
 
   it("t1 : rien ne change (niveau 1 = aucun point à investir)", () => {
-    const run = avecPreregleges({ iop: "vitalite" }, () => nouvelleRun(["iop"], 0, "t1"));
+    const run = avecPreregleges({ iop: "eau" }, () => nouvelleRun(["iop"], 0, "t1"));
     expect(run.persos[0].pvActuels).toBe(pvMaxPerso(run.persos[0]));
   });
 });

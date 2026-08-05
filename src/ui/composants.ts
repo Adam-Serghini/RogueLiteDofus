@@ -4,9 +4,9 @@
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
-import { ELEMENTS, chanceCritEffective, bonusDegatsCrit, statsEffectives, elementDeFrappe, statElement } from "../combat";
-import { statsFinales, multSoin, multOffensif, pctRembPA as rembPA } from "../progression";
-import { bonusEquipement, STAT_PAR_ELEMENT, type PersoState } from "../run";
+import { chanceCritEffective, bonusDegatsCrit, statsEffectives, elementDeFrappe } from "../combat";
+import { statElement, multSoin, multOffensif, pctRembPA as rembPA } from "../progression";
+import type { PersoState } from "../run";
 import type { Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
 import { escapeHtml, tipsFlottants, setFond } from "./dom";
@@ -189,16 +189,9 @@ export const elNom: Record<Element, string> = {
 export const kamasHtml = (n: number): string =>
   `<span class="kamas"><img src="${ICON_KAMAS}" alt="k" onerror="this.remove()" />${n.toLocaleString("fr-FR")}</span>`;
 
-/** Les 2 éléments les plus forts d'un perso (stats finales + équipement), comme en combat. */
+/** Les 2 éléments d'un perso : ceux de sa classe (l'équipement ne les change plus). */
 export function elementsFortsPerso(p: PersoState): [Element, Element] {
-  const finals = statsFinales(CLASSES[p.classeId], p.progression);
-  const equip = bonusEquipement(p).stats;
-  const valeur = (el: Element): number => {
-    const stat = STAT_PAR_ELEMENT[el];
-    return (finals[stat] ?? 0) + (equip[stat] ?? 0);
-  };
-  const tri = ELEMENTS.map((el): [Element, number] => [el, valeur(el)]).sort((a, b) => b[1] - a[1]);
-  return [tri[0][0], tri[1][0]];
+  return CLASSES[p.classeId].elements;
 }
 
 /** Paire de pastilles d'élément (les 2 plus forts ; frappe en évidence, second estompé). */

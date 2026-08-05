@@ -1,10 +1,12 @@
 // =============================================================================
 //  config.ts — Paramètres joueur (persistés en localStorage).
 // =============================================================================
+import { CLASSES } from "./data";
 import type { Element } from "./types";
 
-/** Préréglage d'allocation : un élément, la vitalité, ou absent (Libre). */
-export type AllocationPref = Element | "vitalite";
+/** Préréglage d'allocation : l'un des 2 éléments de la classe (le mode « Libre »
+ *  et le préréglage « vitalité » ont disparu avec les points à investir). */
+export type AllocationPref = Element;
 
 /** Rangée préférée d'un héros (le placement exact s'empile dans la rangée). */
 export type Rangee = "avant" | "arriere";
@@ -13,21 +15,24 @@ export interface Settings {
   toucheFinTour: string; // valeur de KeyboardEvent.key (ex. " ", "Enter", "a")
   autoFinTour: boolean; // passer le tour automatiquement si aucune action possible
   formation: Record<string, Rangee>; // classe -> rangée préférée (les héros s'y empilent : marche à tous les coups)
-  elements: Record<string, AllocationPref>; // classe -> allocation préférée (élément ou vitalité ; absent = Libre)
+  elements: Record<string, AllocationPref>; // classe -> élément de frappe préféré (l'un des 2 de la classe)
 }
 
 const STORAGE_KEY = "rld_settings_v0";
-const ALLOCS_VALIDES = new Set<AllocationPref>(["terre", "feu", "eau", "air", "vitalite"]);
+const ALLOCS_VALIDES = new Set<Element>(["terre", "feu", "eau", "air"]);
 
-// Préréglages par défaut : mêlée devant, distance/soutien derrière ; un élément par classe.
+// Préréglages par défaut : mêlée devant, distance/soutien derrière ; un élément par classe
+// (toujours l'un des 2 déclarés par la classe, voir CLASSES-ELEMENTS.md).
 const DEFAUT: Settings = {
   toucheFinTour: " ",
   autoFinTour: true,
   formation: { iop: "avant", feca: "avant", sram: "avant", ouginak: "avant", forgelance: "avant", cra: "arriere", eniripsa: "arriere", sadida: "arriere", ecaflip: "arriere", roublard: "arriere", xelor: "arriere", eliotrope: "arriere" },
-  // roublard/xelor/eliotrope/forgelance n'ont volontairement pas d'entrée ici : kits
-  // « bi-teinte » sans stat offensive dominante évidente (dégâts + repositionnement/
-  // contrôle) — pas de choix par défaut imposé, l'allocation reste libre pour le joueur.
-  elements: { iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau", ouginak: "terre" },
+  elements: {
+    iop: "terre", feca: "terre", sram: "air", cra: "air", eniripsa: "feu", sadida: "eau", ecaflip: "eau", ouginak: "terre",
+    // 1er élément déclaré de la classe (CLASSES-ELEMENTS.md) : ce sont exactement les
+    // classes qui n'avaient volontairement aucune entrée à l'époque du mode Libre.
+    roublard: "feu", xelor: "eau", eliotrope: "feu", forgelance: "terre",
+  },
 };
 
 /** Valide la formation en MIGRANT l'ancien format (case 0..7) vers avant/arrière. */
@@ -53,7 +58,13 @@ export function chargerConfig(): Settings {
       // Défauts d'abord, puis les choix stockés par-dessus : les classes absentes
       // d'une vieille sauvegarde retombent sur leur rangée par défaut.
       merged.formation = { ...DEFAUT.formation, ...(formationValide(merged.formation) ? migrerFormation(merged.formation) : {}) };
-      if (!elementsValides(merged.elements)) merged.elements = { ...DEFAUT.elements };
+      merged.elements = elementsValides(merged.elements) ? { ...merged.elements } : { ...DEFAUT.elements };
+      // un élément préféré doit appartenir aux DEUX éléments de la classe : une vieille
+      // save peut porter « eau » sur un Iop (terre+feu), ou « vitalite » (mode supprimé,
+      // déjà écarté par `elementsValides` ci-dessus, qui ne connaît plus que les 4 éléments)
+      for (const [classeId, el] of Object.entries(merged.elements)) {
+        if (!CLASSES[classeId]?.elements.includes(el)) delete merged.elements[classeId];
+      }
       return merged;
     }
   } catch {

@@ -4,32 +4,11 @@
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
-  appliquerElement, gagnerXPPerso, classesDisponibles,
+  gagnerXPPerso, classesDisponibles,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours,
 } from "./run";
 import { chargerConfig } from "./config";
 import type { Meta } from "./types";
-
-describe("allocation par élément", () => {
-  // TRANSITOIRE (Task 2) : les stats découlent désormais de (classe, niveau) —
-  // voir statsFinales — appliquerElement ne fait plus qu'enregistrer le choix
-  // (élément de frappe / stat d'équipement adaptatif), il n'investit plus rien.
-  it("gagnerXPPerso monte de niveau, avec ou sans élément choisi", () => {
-    const p = nouvelleRun(["iop"]).persos[0];
-    appliquerElement(p, "feu"); // feu → intelligence (mémorisé pour la frappe)
-    gagnerXPPerso(p, 50, "t1"); // assez pour passer niveau 2
-    expect(p.progression.niveau).toBe(2);
-    expect(p.elementChoisi).toBe("feu");
-  });
-
-  it("mode Libre (élément null) efface l'élément choisi", () => {
-    const p = nouvelleRun(["iop"]).persos[0];
-    appliquerElement(p, null);
-    gagnerXPPerso(p, 50, "t1");
-    expect(p.elementChoisi).toBeUndefined();
-    expect(p.progression.niveau).toBe(2);
-  });
-});
 
 describe("compteur de runs", () => {
   it("enregistrerRun compte les runs et n'ajoute une victoire que si réussie", () => {
@@ -373,16 +352,14 @@ describe("rangée préférée", () => {
 });
 
 describe("allocation Vitalité", () => {
-  // Task 4 (socle Éléments & Archétypes) : le préréglage "vitalite" n'achète plus rien
-  // depuis la disparition des points — livré tel quel il effacerait la frappe du perso
-  // sans rien lui rendre (piège documenté sur `appliquerElement` dans run.ts). `nouvelleRun`
-  // s'en garde désormais : un préréglage hors de la paire déclarée (dont "vitalite")
-  // retombe sur le PREMIER élément de la classe, jamais sur « aucun élément ».
+  // Task 4 (socle Éléments & Archétypes) : le préréglage "vitalite" n'existe plus (les
+  // points ont disparu). `nouvelleRun`/`chargerConfig` s'en gardent : un préréglage hors
+  // de la paire déclarée de la classe (dont un vieux "vitalite") retombe sur le PREMIER
+  // élément de la classe, jamais sur « aucun élément ».
   it("le préréglage vitalite (obsolète) retombe sur le premier élément de la classe", () => {
     localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "vitalite" } }));
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    expect(p.statAuto).toBeUndefined(); // nouvelleRun n'appelle plus appliquerElement
     expect(p.elementChoisi).toBe("terre"); // 1er élément de la classe (iop : terre + feu)
     gagnerXPPerso(p, 50, "t1"); // niveau 2 : stats à ce niveau, voir statsFinales
     expect(p.progression.niveau).toBe(2);
@@ -397,18 +374,6 @@ describe("allocation Vitalité", () => {
     const run = nouvelleRun(["iop"]);
     expect(run.persos[0].elementChoisi).toBe("terre"); // 1er élément de la classe, pas "eau"
     localStorage.removeItem("rld_settings_v0");
-  });
-
-  it("appliquerElement bascule proprement élément ↔ vitalité ↔ libre", () => {
-    const p = nouvelleRun(["iop"]).persos[0];
-    appliquerElement(p, "feu");
-    expect(p.elementChoisi).toBe("feu");
-    expect(p.statAuto).toBe("intelligence");
-    appliquerElement(p, "vitalite");
-    expect(p.elementChoisi).toBeUndefined();
-    expect(p.statAuto).toBe("vitalite");
-    appliquerElement(p, null);
-    expect(p.statAuto).toBeUndefined();
   });
 });
 

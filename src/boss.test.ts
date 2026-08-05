@@ -4,10 +4,10 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  lancerSort, appliquerMueElementaire, controllerIA, elementDeFrappe, statElement, statsEffectives,
+  lancerSort, appliquerMueElementaire, controllerIA, elementDeFrappe, statsEffectives,
   type CombatCtx,
 } from "./combat";
-import { multSoin } from "./progression";
+import { multSoin, statElement } from "./progression";
 import { SORTS, MONSTRES, ZONES } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import type { Combatant } from "./types";

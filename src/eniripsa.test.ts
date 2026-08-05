@@ -4,10 +4,10 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  lancerSort, ciblesValides, effetsDebutTour, elementDeFrappe, statElement, statsEffectives,
+  lancerSort, ciblesValides, effetsDebutTour, elementDeFrappe, statsEffectives,
   type CombatCtx,
 } from "./combat";
-import { multSoin } from "./progression";
+import { multSoin, statElement } from "./progression";
 import { SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 

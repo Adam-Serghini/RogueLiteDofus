@@ -412,7 +412,6 @@ export interface HeritagePerso {
   classeId: string;
   progression: Progression;
   elementChoisi?: Element;
-  statAuto?: keyof Stats;
   position: number;
   equipement: Partial<Record<EquipSlot, ItemInstance>>; // équipement PORTÉ uniquement
 }
