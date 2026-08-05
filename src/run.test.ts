@@ -373,12 +373,17 @@ describe("rangée préférée", () => {
 });
 
 describe("allocation Vitalité", () => {
-  it("le préréglage vitalite laisse la frappe libre (plus haute carac)", () => {
+  // Task 4 (socle Éléments & Archétypes) : le préréglage "vitalite" n'achète plus rien
+  // depuis la disparition des points — livré tel quel il effacerait la frappe du perso
+  // sans rien lui rendre (piège documenté sur `appliquerElement` dans run.ts). `nouvelleRun`
+  // s'en garde désormais : un préréglage hors de la paire déclarée (dont "vitalite")
+  // retombe sur le PREMIER élément de la classe, jamais sur « aucun élément ».
+  it("le préréglage vitalite (obsolète) retombe sur le premier élément de la classe", () => {
     localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "vitalite" } }));
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
-    expect(p.statAuto).toBe("vitalite");
-    expect(p.elementChoisi).toBeUndefined(); // frappe = plus haute carac
+    expect(p.statAuto).toBeUndefined(); // nouvelleRun n'appelle plus appliquerElement
+    expect(p.elementChoisi).toBe("terre"); // 1er élément de la classe (iop : terre + feu)
     gagnerXPPerso(p, 50, "t1"); // niveau 2 : stats à ce niveau, voir statsFinales
     expect(p.progression.niveau).toBe(2);
     localStorage.removeItem("rld_settings_v0");

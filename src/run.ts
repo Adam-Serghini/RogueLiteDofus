@@ -61,6 +61,14 @@ export { STAT_PAR_ELEMENT };
  * étant désormais une fonction pure de (classe, niveau), il n'y a plus rien à
  * investir ici : on ne fait que mémoriser le choix pour l'élément de frappe
  * (`combat.ts`) et pour l'auto-allocation d'équipement adaptatif (`statPrincipale`).
+ *
+ * CONDAMNÉE : le seul appelant restant est l'écran d'équipe (`ui/equipe.ts`), qui
+ * sera récrit à la Task 5 (« l'interface passe en lecture ») — cette fonction et
+ * `PersoState.statAuto`/`Allocation` partiront avec elle. Son mode « vitalité »
+ * n'achète plus rien depuis la disparition des points : il se contente d'EFFACER
+ * l'élément de frappe du perso, donc il coûte au joueur sans rien lui rendre.
+ * `nouvelleRun` s'en garde déjà pour les préréglages (voir plus bas) ; ne PAS
+ * étendre cette fonction, la laisser mourir avec l'écran qui l'appelle.
  */
 export function appliquerElement(perso: PersoState, choix: Allocation | null): void {
   if (choix === "vitalite") {
@@ -131,8 +139,14 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
   const niveauDepart = trancheDe(trancheId).niveaux[0];
   const persos: PersoState[] = choix.map((classeId) => {
     const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
-    const pref = elemsPref[classeId]; // préréglage (absent = Libre)
-    if (pref) appliquerElement(perso, pref);
+    // Préréglage validé contre la paire DÉCLARÉE de la classe : un préréglage absent,
+    // invalide, ou valant "vitalite" (vieille sauvegarde de réglages, ou préréglage
+    // d'une autre classe) retombe sur le PREMIER élément de la classe — jamais sur
+    // aucun élément, sinon le perso paierait sa frappe sans rien recevoir en retour
+    // (voir le commentaire condamné d'`appliquerElement` ci-dessus).
+    const pref = elemsPref[classeId];
+    const elements = CLASSES[classeId].elements;
+    perso.elementChoisi = pref && elements.includes(pref as Element) ? (pref as Element) : elements[0];
     // `persoAuNiveau` a figé les PV sans l'équipement (encore vide à cet instant,
     // mais `pvMaxPerso` inclut aussi les bonus de Vitalité de l'équipement) : on
     // resynchronise sur le vrai maximum pour rester correct si ça change.
@@ -268,19 +282,16 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
   for (const k of Object.keys(ajout) as Element[]) acc[k] = (acc[k] ?? 0) + (ajout[k] ?? 0);
 }
 
-/** Carac PRINCIPALE d'un perso (sa « voie ») : l'élément de frappe choisi,
- *  sinon son auto-allocation élémentaire, sinon sa plus haute carac investie.
- *  Cible des stats ADAPTATIVES d'équipement (calculée hors équipement). */
+/** Caractéristique PRINCIPALE d'un perso : celle de son élément de frappe (son choix,
+ *  sinon le premier élément de sa classe). Cible des stats ADAPTATIVES d'équipement.
+ *  Ne consulte PLUS `statAuto` (obsolète avec les points d'allocation) ni les stats
+ *  finales : la paire d'éléments DÉCLARÉE de la classe est l'unique source. */
 export function statPrincipale(state: PersoState): keyof Stats {
-  if (state.elementChoisi) return STAT_PAR_ELEMENT[state.elementChoisi];
-  if (state.statAuto && state.statAuto !== "vitalite") return state.statAuto;
-  const finals = statsFinales(CLASSES[state.classeId], state.progression);
-  let best: keyof Stats = "force";
-  for (const el of ["terre", "feu", "eau", "air"] as Element[]) {
-    const k = STAT_PAR_ELEMENT[el];
-    if ((finals[k] ?? 0) > (finals[best] ?? 0)) best = k;
-  }
-  return best;
+  const classe = CLASSES[state.classeId];
+  const el = state.elementChoisi && classe.elements.includes(state.elementChoisi)
+    ? state.elementChoisi
+    : classe.elements[0];
+  return STAT_PAR_ELEMENT[el];
 }
 
 /** Bonus de PA quand les 4 pièces d'une même panoplie sont équipées. */
@@ -388,6 +399,7 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     position: state.position,
     niveau: state.progression.niveau,
     elementChoisi: state.elementChoisi,
+    elements: classe.elements,
     img: classe.img,
     ...etatCombatInitial(),
     // Bonnet Spairance : chaque combat démarre avec un bouclier (fraction des PV max)

@@ -83,8 +83,10 @@ export function statsEffectives(c: Combatant): Stats {
   return s;
 }
 
-/** Les 2 éléments les plus forts d'un combattant (ordre décroissant de stat effective). */
+/** Les 2 éléments d'un combattant : la paire DÉCLARÉE pour un héros (son couple de
+ *  classe), sinon les 2 plus fortes caractéristiques — c'est le cas des monstres. */
 export function elementsForts(c: Combatant): [Element, Element] {
+  if (c.elements) return c.elements;
   const se = statsEffectives(c);
   const tri = ELEMENTS.map((el): [Element, number] => [el, statElement(se, el)])
     .sort((a, b) => b[1] - a[1]);

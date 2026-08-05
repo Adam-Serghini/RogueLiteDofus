@@ -362,6 +362,9 @@ export interface Combatant {
   bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)
   invoquePar?: string; // ref de l'invocateur (monstres invoqués en combat)
   elementChoisi?: Element; // élément de frappe choisi (parmi les 2 plus forts) ; sinon = le plus fort
+  /** Les 2 éléments DÉCLARÉS (héros seulement) : le choix de frappe se limite à eux.
+   *  Absent chez les monstres, dont les 2 éléments se déduisent des stats. */
+  elements?: [Element, Element];
   // état transitoire :
   maxRollCharges: number; // Œil affûté
   passeProchainTour: boolean; // Colère

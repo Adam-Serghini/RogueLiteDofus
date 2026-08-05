@@ -6,7 +6,8 @@ import { describe, it, expect } from "vitest";
 import mdClassesElements from "../CLASSES-ELEMENTS.md?raw";
 import { CLASSES } from "./data";
 import { multOffensif, multSoin, statPourPoints, statsFinales, VITA_PAR_FORCE, PROSP_PAR_CHANCE } from "./progression";
-import { chanceCrit, bonusDegatsCrit, critExcedent } from "./combat";
+import { chanceCrit, bonusDegatsCrit, critExcedent, elementsForts, elementDeFrappe } from "./combat";
+import { combattantDepuisPerso, persoAuNiveau, statPrincipale, fabriquerEnnemis } from "./run";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
@@ -177,5 +178,48 @@ describe("effets secondaires des éléments", () => {
     const oug = statsFinales(CLASSES.ouginak, { niveau: 50, xp: 0 });
     expect(oug.intelligence).toBe(CLASSES.ouginak.stats.intelligence); // aucun gain en feu
     expect(multSoin(oug, oug.force)).toBeGreaterThan(1.2); // et pourtant il soigne
+  });
+});
+
+describe("les éléments en combat", () => {
+  it("les deux ronds d'un héros SONT les deux éléments de sa classe", () => {
+    const c = combattantDepuisPerso(persoAuNiveau("xelor", 50, 0)); // eau + terre
+    expect(elementsForts(c)).toEqual(["eau", "terre"]);
+  });
+
+  it("un monstre garde le calcul par stats — il n'a pas d'éléments déclarés", () => {
+    const [m] = fabriquerEnnemis("inc_1");
+    expect(m.elements).toBeUndefined();
+    expect(elementsForts(m)).toHaveLength(2);
+  });
+
+  it("l'élément de frappe par défaut est le PREMIER élément déclaré", () => {
+    const c = combattantDepuisPerso(persoAuNiveau("eliotrope", 50, 0)); // feu + terre
+    expect(elementDeFrappe(c)).toBe("feu");
+  });
+
+  it("statPrincipale suit l'élément de frappe", () => {
+    const p = persoAuNiveau("cra", 50, 0); // feu + air
+    expect(statPrincipale(p)).toBe("intelligence");
+    p.elementChoisi = "air";
+    expect(statPrincipale(p)).toBe("agilite");
+  });
+
+  it("persoAuNiveau produit les stats de l'archétype — c'est la porte de la Tranche 2", () => {
+    const p = persoAuNiveau("iop", 50, 0);
+    const c = combattantDepuisPerso(p);
+    expect(c.stats.force).toBe(147);
+    expect(c.pvMax).toBe(CLASSES.iop.pvBase + 98 + 29); // vitalité d'archétype + passif terre
+    expect(c.pvActuels).toBe(c.pvMax);
+  });
+
+  it("une vieille save portant des points investis se charge sans broncher", () => {
+    const vieille = {
+      classeId: "iop", position: 0, equipement: {}, pvActuels: 50,
+      progression: { niveau: 20, xp: 0, pointsDispo: 57, pointsInvestis: { force: 40, intelligence: 0, agilite: 0, vitalite: 17, chance: 0 } },
+    } as never;
+    const c = combattantDepuisPerso(vieille);
+    // les points stockés sont IGNORÉS : les stats viennent du niveau et de la classe
+    expect(c.stats.force).toBe(19 * 3);
   });
 });

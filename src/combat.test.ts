@@ -35,40 +35,51 @@ const SYN_IGNORE_RES: Spell = { // ex-Flèche intrusive (baseMin5/baseMax7/scali
 };
 
 describe("élément de frappe", () => {
-  it("est déterminé par la plus haute stat élémentaire", () => {
-    const [iop, cra] = fabriquerEquipe();
-    iop.stats = { ...iop.stats, force: 60 }; // build Terre
-    cra.stats = { ...cra.stats, agilite: 55 }; // build Air
-    expect(elementDeFrappe(iop)).toBe("terre");
-    expect(elementDeFrappe(cra)).toBe("air");
+  it("un MONSTRE (sans paire déclarée) : déterminé par la plus haute stat élémentaire", () => {
+    const [m1] = fabriquerEnnemis("combat_1");
+    const [m2] = fabriquerEnnemis("combat_1");
+    m1.elementChoisi = undefined;
+    m2.elementChoisi = undefined;
+    m1.stats = { ...m1.stats, force: 60 }; // build Terre
+    m2.stats = { ...m2.stats, agilite: 55 }; // build Air
+    expect(elementDeFrappe(m1)).toBe("terre");
+    expect(elementDeFrappe(m2)).toBe("air");
   });
 
-  it("bascule sur l'Eau quand la Chance domine", () => {
-    const [iop] = fabriquerEquipe();
-    iop.elementChoisi = undefined; // teste le fallback (pas de choix explicite)
-    iop.stats = { ...iop.stats, chance: 999 };
-    expect(elementDeFrappe(iop)).toBe("eau"); // Chance domine
-  });
-
-  it("le choix explicite d'élément prime ; sinon la plus haute carac", () => {
-    const [iop] = fabriquerEquipe();
+  it("un HÉROS (paire déclarée) : la stat n'y change rien, seul le choix explicite compte", () => {
+    const [iop] = fabriquerEquipe(); // iop : terre + feu
     iop.elementChoisi = undefined;
-    iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // Terre (plus haute)
-    expect(elementDeFrappe(iop)).toBe("terre"); // pas de choix → plus haute carac
-    iop.elementChoisi = "air";
-    expect(elementDeFrappe(iop)).toBe("air"); // choix explicite prioritaire
-    iop.elementChoisi = "feu"; // choix explicite, même si Feu n'est pas dominant
+    iop.stats = { ...iop.stats, agilite: 9999 }; // Air en tête des stats, mais hors de la paire
+    expect(elementDeFrappe(iop)).toBe("terre"); // 1er élément DÉCLARÉ, la stat ne joue aucun rôle
+  });
+
+  it("bascule sur l'Eau quand la Chance domine — un MONSTRE, sans paire déclarée", () => {
+    // Depuis le socle Éléments & Archétypes, un héros a une paire d'éléments DÉCLARÉE
+    // (sa classe) : le fallback par plus-haute-stat ne s'applique plus qu'aux monstres.
+    const [m] = fabriquerEnnemis("combat_1");
+    m.elementChoisi = undefined; // teste le fallback (pas de choix explicite)
+    m.stats = { ...m.stats, chance: 999 };
+    expect(elementDeFrappe(m)).toBe("eau"); // Chance domine
+  });
+
+  it("le choix explicite d'élément prime, même hors de la paire déclarée", () => {
+    const [iop] = fabriquerEquipe(); // iop : terre + feu
+    iop.elementChoisi = "air"; // choix explicite prioritaire, même hors de sa paire
+    expect(elementDeFrappe(iop)).toBe("air");
+    iop.elementChoisi = "feu"; // choix explicite, un des 2 éléments déclarés
     expect(elementDeFrappe(iop)).toBe("feu");
+    iop.elementChoisi = undefined;
+    expect(elementDeFrappe(iop)).toBe("terre"); // pas de choix → 1er élément DÉCLARÉ de la classe
   });
 
-  it("applique la résistance de l'élément de frappe basculé", () => {
-    const [iop] = fabriquerEquipe();
-    iop.elementChoisi = undefined;
-    iop.stats = { ...iop.stats, chance: 999 }; // frappe désormais en Eau
+  it("applique la résistance de l'élément de frappe basculé — un MONSTRE", () => {
+    const [m] = fabriquerEnnemis("combat_1");
+    m.elementChoisi = undefined;
+    m.stats = { ...m.stats, chance: 999 }; // frappe désormais en Eau
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.resistances = { eau: 0.5 }; // -50 % subis en Eau
-    const sansRes = degatsCible(iop, SYN_DEGATS, { ...cible, resistances: {} }, { useMax: true, mult: 1, ctx: ctx() });
-    const avecRes = degatsCible(iop, SYN_DEGATS, cible, { useMax: true, mult: 1, ctx: ctx() });
+    const sansRes = degatsCible(m, SYN_DEGATS, { ...cible, resistances: {} }, { useMax: true, mult: 1, ctx: ctx() });
+    const avecRes = degatsCible(m, SYN_DEGATS, cible, { useMax: true, mult: 1, ctx: ctx() });
     expect(avecRes.dmg).toBeLessThan(sansRes.dmg);
   });
 });
@@ -312,17 +323,20 @@ describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
     expect(cra.paActuels).toBe(3); // coût remboursé
   });
 
-  it("maitriseArc : buff des 2 stats élémentaires les plus fortes du lanceur — mécanique sans sort réel, candidate à purge", () => {
+  it("maitriseArc : buff des 2 éléments DÉCLARÉS du lanceur — mécanique sans sort réel, candidate à purge", () => {
+    // `elementsForts` lit désormais la paire déclarée de la classe pour un héros
+    // (cra : feu + air) et non plus la stat dominante — les stats mutées ci-dessous
+    // ne pèsent donc plus sur le résultat, elles ne sont là que pour prouver le point.
     const synMaitrise: Spell = {
       id: "syn_maitrise_arc", nom: "Syn Maîtrise", type: "buff", cible: "soi", coutPA: 2,
       baseMin: 0, baseMax: 0, scaling: 0,
       maitriseArc: { principal: 20, secondaire: 10, duree: 3 },
     };
-    const [, cra] = fabriquerEquipe();
+    const [, cra] = fabriquerEquipe(); // cra : feu + air
     cra.stats = { ...cra.stats, force: 50, intelligence: 30, agilite: 10, chance: 0 }; // terre > feu > air > eau
     lancerSort(cra, synMaitrise, cra.ref, [cra], ctx());
-    expect(cra.effets.some((e) => e.stat === "force" && e.valeur === 20 && e.toursRestants === 3)).toBe(true);
-    expect(cra.effets.some((e) => e.stat === "intelligence" && e.valeur === 10 && e.toursRestants === 3)).toBe(true);
+    expect(cra.effets.some((e) => e.stat === "intelligence" && e.valeur === 20 && e.toursRestants === 3)).toBe(true); // feu, principal
+    expect(cra.effets.some((e) => e.stat === "agilite" && e.valeur === 10 && e.toursRestants === 3)).toBe(true); // air, secondaire
   });
 
   it("doubleEffetProchain : double la durée de l'effet posé par la PROCHAINE flèche — mécanique sans sort réel, candidate à purge", () => {
