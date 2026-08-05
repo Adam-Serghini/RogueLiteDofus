@@ -109,14 +109,18 @@ export function pvMaxFor(classe: Classe, p: Progression): number {
   return classe.pvBase + statsFinales(classe, p).vitalite * PV_PAR_VITA;
 }
 
-/** Multiplicateur de puissance offensive (Intelligence, plafonné à +50 %). */
+/** Multiplicateur de dégâts finaux (Intelligence — l'identité du feu, plafonné à +20 %).
+ *  Le plafond est fixé à 200 d'intelligence et non à 100 : la marge doit encore servir
+ *  en T2-T5, où la caractéristique de frappe monte jusqu'à 432. */
 export function multOffensif(stats: Stats): number {
-  return 1 + Math.min(0.5, stats.intelligence * 0.005);
+  return 1 + Math.min(0.2, stats.intelligence * 0.001);
 }
 
-/** Multiplicateur de puissance de soin (stat Soin + Intelligence, plafonné à +50 %). */
-export function multSoin(stats: Stats): number {
-  return 1 + Math.min(0.5, ((stats.soin ?? 0) + stats.intelligence) * 0.005);
+/** Multiplicateur de puissance de soin : stat Soin + la caractéristique de FRAPPE du
+ *  lanceur (et non l'intelligence précisément — sinon un soigneur sans feu soignerait
+ *  à plat). Coefficient et plafond inchangés : on ne change que ce qu'elle lit. */
+export function multSoin(stats: Stats, statFrappe: number): number {
+  return 1 + Math.min(0.5, ((stats.soin ?? 0) + statFrappe) * 0.005);
 }
 
 /** Chance de remboursement des PA (Flèche magique) : 5 % de base + Chance, plafonnée à 50 %. */

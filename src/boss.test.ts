@@ -3,7 +3,10 @@
 //  conservé). Le Kwakwa a en plus la « mue élémentaire » (moteur).
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, appliquerMueElementaire, controllerIA, type CombatCtx } from "./combat";
+import {
+  lancerSort, appliquerMueElementaire, controllerIA, elementDeFrappe, statElement, statsEffectives,
+  type CombatCtx,
+} from "./combat";
 import { multSoin } from "./progression";
 import { SORTS, MONSTRES, ZONES } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
@@ -87,8 +90,8 @@ describe("signatures des boss", () => {
     lancerSort(boss, SORTS.racines_voraces, iop.ref, [boss, allie, iop], ctx());
     const degats = 500 - iop.pvActuels;
     expect(degats).toBeGreaterThan(0);
-    // soinEquipeRatio 0.6 × multSoin (l'Intelligence scale aussi les soins des monstres)
-    const attendu = Math.round(degats * 0.6 * multSoin(boss.stats));
+    // soinEquipeRatio 0.6 × multSoin (la caractéristique de frappe du boss scale aussi ses soins)
+    const attendu = Math.round(degats * 0.6 * multSoin(boss.stats, statElement(statsEffectives(boss), elementDeFrappe(boss))));
     expect(boss.pvActuels).toBe(Math.min(boss.pvMax, pvAvant + attendu));
   });
 

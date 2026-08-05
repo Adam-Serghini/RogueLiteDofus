@@ -3,7 +3,10 @@
 //  poison, HoT, vol de vie, dissipe, don de PA, cooldown.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, ciblesValides, effetsDebutTour, type CombatCtx } from "./combat";
+import {
+  lancerSort, ciblesValides, effetsDebutTour, elementDeFrappe, statElement, statsEffectives,
+  type CombatCtx,
+} from "./combat";
 import { multSoin } from "./progression";
 import { SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
@@ -22,12 +25,13 @@ describe("soins", () => {
     iop.pvActuels = 10;
     lancerSort(eni, SORTS.mot_alternatif, iop.ref, [iop, eni], ctx());
     // 10 + jet max du soin (20) × multSoin(Eniripsa)
-    expect(iop.pvActuels).toBe(10 + Math.round(20 * multSoin(eni.stats)));
+    const frappeEni = statElement(statsEffectives(eni), elementDeFrappe(eni));
+    expect(iop.pvActuels).toBe(10 + Math.round(20 * multSoin(eni.stats, frappeEni)));
   });
 
   it("la puissance de soin (stat Soin) amplifie les soins", () => {
     const [iop, , eni] = equipe();
-    expect(multSoin(eni.stats)).toBeGreaterThan(1); // l'Eniripsa a une stat Soin
+    expect(multSoin(eni.stats, statElement(statsEffectives(eni), elementDeFrappe(eni)))).toBeGreaterThan(1); // l'Eniripsa a une stat Soin
     iop.pvActuels = 1;
     const sansBonus = SORTS.mot_alternatif.mixte?.surAllie.soin?.max ?? 0; // jet max sans bonus
     lancerSort(eni, SORTS.mot_alternatif, iop.ref, [iop, eni], ctx());

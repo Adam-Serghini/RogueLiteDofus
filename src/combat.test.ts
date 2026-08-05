@@ -80,8 +80,8 @@ describe("degatsCible", () => {
     const [cible] = fabriquerEnnemis("combat_1");
     cible.resistances = { terre: 0.15 }; // résiste +15 % à la Terre
     const r = degatsCible(iop, SYN_DEGATS, cible, { useMax: true, mult: 1, ctx: ctx() });
-    // (13 + 60*0.35) * (1 - 0.15) * multOffensif(Int 10 = 1.05) = 34 * 0.85 * 1.05 = 30.3 → 30
-    expect(r.dmg).toBe(30);
+    // (13 + 60*0.35) * (1 - 0.15) * multOffensif(Int 10 = 1.01) = 34 * 0.85 * 1.01 = 29.189 → 29
+    expect(r.dmg).toBe(29);
     expect(r.esquive).toBe(false);
     expect(r.crit).toBe(false);
   });
@@ -101,8 +101,8 @@ describe("degatsCible", () => {
     cra.stats = { ...cra.stats, agilite: 55, intelligence: 20 };
     const [bouftou] = fabriquerEnnemis("combat_1");
     const r = degatsCible(cra, SYN_IGNORE_RES, bouftou, { useMax: true, mult: 1, ctx: ctx() });
-    // (7 + 55*0.2) * multOffensif(Int 20 = 1.10) = 18 * 1.10 = 19.8 → 20, aucune résistance
-    expect(r.dmg).toBe(20);
+    // (7 + 55*0.2) * multOffensif(Int 20 = 1.02) = 18 * 1.02 = 18.36 → 18, aucune résistance
+    expect(r.dmg).toBe(18);
   });
 
   it("esquive (Agilité) annule les dégâts", () => {
@@ -620,21 +620,21 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     lancerSort(iop, syn, cible.ref, [iop, cible], ctx());
     expect(500 - cible.pvActuels).toBe(Math.round(10 * 3)); // ×(1 + 0.5×4)
   });
-  it("le crit au-delà du cap 50 % se convertit en dégâts finaux", () => {
+  it("le crit au-delà du cap 35 % se convertit en dégâts finaux", () => {
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
-    // force 0 + crit 65 → chanceCrit = 0.5 (cap), excédent 0.15
-    iop.stats = { ...iop.stats, force: 0, agilite: 0, crit: 65 };
+    // agilite 0 + crit 45 → chanceCrit = 0.05 + 0.45 = 0.50, plafonné à 0.35 pour le tirage, excédent 0.15
+    iop.stats = { ...iop.stats, force: 0, agilite: 0, crit: 45 };
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
     const syn: Spell = { id: "syn_crit", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
-    lancerSort(iop, syn, cible.ref, [iop, cible], { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 }); // 0.99 > 0.5 : pas de crit
+    lancerSort(iop, syn, cible.ref, [iop, cible], { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 }); // 0.99 > 0.35 : pas de crit
     expect(500 - cible.pvActuels).toBe(Math.round(10 * 1.15));
   });
-  it("la Force seule ne déborde jamais du cap de crit (pas d'excédent)", () => {
-    // force 999 + crit 0 → contribution Force plafonnée à 0.5 DANS l'excédent → excédent 0
-    expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0 })).toBe(0);
-    // seul le crit PLAT déborde : force 999 + crit 20 → excédent 0.20
-    expect(critExcedent({ force: 999, intelligence: 0, agilite: 0, vitalite: 0, crit: 20 })).toBeCloseTo(0.2);
+  it("l'Agilité seule ne déborde jamais du cap de crit (pas d'excédent)", () => {
+    // agilite 999 + crit 0 → contribution Agilité plafonnée à 0.35 DANS l'excédent → excédent 0
+    expect(critExcedent({ force: 0, intelligence: 0, agilite: 999, vitalite: 0 })).toBe(0);
+    // seul le crit PLAT déborde : agilite 999 + crit 20 → excédent 0.20
+    expect(critExcedent({ force: 0, intelligence: 0, agilite: 999, vitalite: 0, crit: 20 })).toBeCloseTo(0.2);
   });
   it("bonusParAllieLigne (signature Grunob) ignore la Lance dans le compte d'alliés de rangée", () => {
     const syn: Spell = { id: "syn_grunob", nom: "G", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };

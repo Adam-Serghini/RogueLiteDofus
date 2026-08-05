@@ -124,8 +124,8 @@ describe("Rayon de Wakfu", () => {
     lancerSort(e, SORTS.rayon_de_wakfu, en1.ref, cs, ctx());
     const dmg = pvAvant - en1.pvActuels;
     expect(dmg).toBeGreaterThan(0);
-    const part = Math.round((dmg / 1) * multSoin(e.stats)); // = round(dmg × 1.5)
-    expect(multSoin(e.stats)).toBeCloseTo(1.5);
+    const part = Math.round((dmg / 1) * multSoin(e.stats, 0)); // = round(dmg × 1.5)
+    expect(multSoin(e.stats, 0)).toBeCloseTo(1.5);
     expect(al1.pvActuels).toBe(Math.min(al1.pvMax, 100 + part));
   });
 

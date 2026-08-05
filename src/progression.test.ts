@@ -76,20 +76,28 @@ describe("stats finales & PV", () => {
 });
 
 describe("multOffensif", () => {
-  it("croît avec l'Intelligence et plafonne à +50 %", () => {
+  it("croît avec l'Intelligence et plafonne à +20 %", () => {
+    // Plafond et coefficient revus (rework des 4 éléments) : +20 % à 200
+    // d'intelligence (coefficient 0,001) et non plus +50 % à 100 (0,005) —
+    // la marge doit encore servir en T2-T5, où la stat de frappe monte à 432.
     expect(multOffensif({ force: 0, intelligence: 0, agilite: 0, vitalite: 0 })).toBeCloseTo(1);
-    expect(multOffensif({ force: 0, intelligence: 20, agilite: 0, vitalite: 0 })).toBeCloseTo(1.1);
-    expect(multOffensif({ force: 0, intelligence: 1000, agilite: 0, vitalite: 0 })).toBeCloseTo(1.5);
+    expect(multOffensif({ force: 0, intelligence: 100, agilite: 0, vitalite: 0 })).toBeCloseTo(1.1);
+    expect(multOffensif({ force: 0, intelligence: 1000, agilite: 0, vitalite: 0 })).toBeCloseTo(1.2);
   });
 });
 
 describe("multSoin", () => {
-  it("vaut 1 sans stat, croît avec Soin ET Intelligence, plafonne à +50 %", () => {
+  it("vaut 1 sans stat, croît avec Soin ET la caractéristique de frappe passée en second argument, plafonne à +50 %", () => {
+    // Signature changée (rework des 4 éléments) : multSoin ne lit plus l'Intelligence
+    // en dur, elle reçoit la caractéristique de FRAPPE du lanceur en second argument —
+    // un soigneur dont les éléments ne comprennent pas le feu (Ouginak, Ecaflip…)
+    // doit quand même soigner avec sa propre stat de frappe. Coefficient et plafond
+    // inchangés : 0,005, cap +50 %.
     const s = { force: 0, intelligence: 0, agilite: 0, vitalite: 0 };
-    expect(multSoin(s)).toBeCloseTo(1); // aucune stat → pas de bonus
-    expect(multSoin({ ...s, soin: 40 })).toBeCloseTo(1.2);
-    expect(multSoin({ ...s, intelligence: 40 })).toBeCloseTo(1.2); // l'Intelligence scale les soins
-    expect(multSoin({ ...s, soin: 20, intelligence: 20 })).toBeCloseTo(1.2); // cumul
-    expect(multSoin({ ...s, soin: 1000 })).toBeCloseTo(1.5); // plafond
+    expect(multSoin(s, 0)).toBeCloseTo(1); // aucune stat → pas de bonus
+    expect(multSoin({ ...s, soin: 40 }, 0)).toBeCloseTo(1.2);
+    expect(multSoin(s, 40)).toBeCloseTo(1.2); // la caractéristique de frappe scale les soins
+    expect(multSoin({ ...s, soin: 20 }, 20)).toBeCloseTo(1.2); // cumul
+    expect(multSoin({ ...s, soin: 1000 }, 0)).toBeCloseTo(1.5); // plafond
   });
 });

@@ -97,6 +97,11 @@ export function elementDeFrappe(c: Combatant): Element {
   return elementsForts(c)[0];
 }
 
+/** Puissance de soin d'un combattant : sa stat Soin + la caractéristique de son élément
+ *  de frappe. Les monstres frappent avec leur dominante, donc le calcul les suit. */
+const multSoinDe = (c: Combatant): number =>
+  multSoin(c.stats, statElement(statsEffectives(c), elementDeFrappe(c)));
+
 /** Initiative effective = base + effets (négatifs = ralentissement). */
 // (l'ancien initOf — initiative effective avec effets — a disparu avec la séquence
 //  figée : seule l'initiative de DÉPART compte pour l'ordre, cf. ordreDuCombat)
@@ -279,10 +284,14 @@ function gagnerRage(lanceur: Combatant, ctx: CombatCtx): void {
   if (lanceur.rage > avant) ctx.log(`🐺 ${lanceur.nom} entre en Rage (×${lanceur.rage}).`);
 }
 
-/** Chance de coup critique : Force (+ crit plat d'équipement), plafonnée à 50 %.
- *  SOURCE UNIQUE de la formule — l'UI l'affiche via cette fonction. */
+/** Chance de coup critique : l'AGILITÉ porte le critique (l'identité de l'air), plus
+ *  le crit plat des objets. Plancher de 5 % pour tout le monde — l'air n'est que sur
+ *  3 classes jouables sur 11, sans plancher huit classes ne critiqueraient jamais.
+ *  SOURCE UNIQUE de la formule — l'UI l'affiche via cette fonction. Le résultat peut
+ *  dépasser le plafond de 0,35 grâce au crit plat : c'est voulu, voir `critExcedent`
+ *  et le site de tirage dans `degatsAvec` qui borne la PROBABILITÉ, pas cette valeur. */
 export function chanceCrit(se: Stats): number {
-  return Math.min(0.5, se.force * 0.005 + (se.crit ?? 0) / 100);
+  return Math.min(0.35, 0.05 + se.agilite * 0.0025) + (se.crit ?? 0) / 100;
 }
 
 // --- Bombes (Roublard) / Téléfrags (Xélor) -----------------------------------
@@ -345,15 +354,15 @@ export function multConjuration(lanceur: Combatant, cible: Combatant, cs: Combat
   return 1;
 }
 
-/** Part du crit au-delà du cap 50 %, convertie en dégâts finaux (Tir Puissant).
- *  Seule la stat de crit PLATE peut déborder du cap — la Force seule ne le peut jamais. */
+/** Part du crit au-delà du plafond, convertie en dégâts finaux (Tir Puissant).
+ *  Seule la stat de crit PLATE peut déborder — l'agilité seule ne le peut jamais. */
 export function critExcedent(se: Stats): number {
-  return Math.max(0, Math.min(0.5, se.force * 0.005) + (se.crit ?? 0) / 100 - 0.5);
+  return Math.max(0, Math.min(0.35, 0.05 + se.agilite * 0.0025) + (se.crit ?? 0) / 100 - 0.35);
 }
 
-/** Bonus de dégâts d'un critique : +25 % de base + Agilité, plafonné à +60 %. */
+/** Bonus de dégâts d'un critique : +25 % de base + Agilité, plafonné à +45 %. */
 export function bonusDegatsCrit(se: Stats): number {
-  return Math.min(0.6, 0.25 + se.agilite * 0.004);
+  return Math.min(0.45, 0.25 + se.agilite * 0.002);
 }
 
 export function degatsCible(
@@ -388,9 +397,11 @@ function degatsAvec(
   const el = elementDeFrappe(lanceur);
   dmg += statElement(se, el) * base.scaling;
 
-  // critique : chance via Force (≤ 50 %), bonus de dégâts via Agilité (+25 % à +60 %)
+  // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
+  // Le tirage lui-même est borné à 35 % : le crit plat excédentaire ne doit pas faire
+  // gonfler la PROBABILITÉ de critiquer, il devient des dégâts finaux via critExcedent.
   let crit = false;
-  if (ctx.rng() < chanceCrit(se)) {
+  if (ctx.rng() < Math.min(0.35, chanceCrit(se))) {
     dmg *= 1 + bonusDegatsCrit(se);
     crit = true;
   }
@@ -511,7 +522,7 @@ function infligerDegats(
       cible.pvActuels = 0;
       const proprio = ctx?.combatants && parRef(ctx.combatants, cible.lanceurRef ?? "");
       if (proprio && proprio.pvActuels > 0) {
-        const bonus = Math.round(LANCE_BOUCLIER_BRIS * multSoin(proprio.stats));
+        const bonus = Math.round(LANCE_BOUCLIER_BRIS * multSoinDe(proprio));
         proprio.bouclier += bonus;
         ctx?.log(`🔱 La lance de ${proprio.nom} vole en éclats : ${proprio.nom} gagne ${bonus} bouclier.`);
       }
@@ -811,7 +822,7 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     ctx.log(`${cible.nom} gagne un bouclier de ${b}.`);
   }
   if (sort.hotPct && !aFriction(cible)) {
-    const h = Math.max(1, Math.round(cible.stats.vitalite * sort.hotPct * multSoin(lanceur.stats)));
+    const h = Math.max(1, Math.round(cible.stats.vitalite * sort.hotPct * multSoinDe(lanceur)));
     appliquerEffet(cible, { stat: "hot", valeur: h, duree: sort.hotDuree ?? 2 });
   }
   if (sort.paGain) {
@@ -1144,7 +1155,7 @@ function lancerTarot(lanceur: Combatant, sort: Spell, cible: Combatant | undefin
       if (!aFriction(cible)) cible.bouclier += b;
       ctx.log(`${cible.nom} gagne un bouclier de ${b}.`);
     } else if (couleur === "coeur") {
-      soigner(cible, Math.round(cible.pvMax * 0.2 * multSoin(lanceur.stats)), ctx);
+      soigner(cible, Math.round(cible.pvMax * 0.2 * multSoinDe(lanceur)), ctx);
     } else {
       // trèfle : + toutes caractéristiques
       for (const k of STATS_BUFFABLES) appliquerEffet(cible, { stat: k, valeur: 8, duree: 2 });
@@ -1160,7 +1171,7 @@ function lancerEspritFelin(lanceur: Combatant, cs: Combatant[], ctx: CombatCtx):
     const r = Math.floor(ctx.rng() * 4);
     if (u.camp === lanceur.camp) {
       if (r === 0 && !aFriction(u)) u.bouclier += Math.round(u.pvMax * 0.15);
-      else if (r === 1) soigner(u, Math.round(u.pvMax * 0.15 * multSoin(lanceur.stats)), ctx);
+      else if (r === 1) soigner(u, Math.round(u.pvMax * 0.15 * multSoinDe(lanceur)), ctx);
       else if (r === 2) appliquerEffet(u, { stat: "degatsInfliges", valeur: 0.15, duree: 2 });
       else appliquerEffet(u, { stat: "resAll", valeur: 0.1, duree: 2 });
     } else {
@@ -1378,7 +1389,7 @@ export function lancerSort(
         if (sa.nonCumulable) cible.effets = cible.effets.filter((e) => e.stat !== sa.effet!.stat);
         appliquerEffet(cible, sa.effet);
       }
-      if (sa.soin) soigner(cible, Math.round(jet(sa.soin.min, sa.soin.max, ctx.rng) * multSoin(lanceur.stats)), ctx);
+      if (sa.soin) soigner(cible, Math.round(jet(sa.soin.min, sa.soin.max, ctx.rng) * multSoinDe(lanceur)), ctx);
       poseCooldown(cible);
       return;
     }
@@ -1399,7 +1410,7 @@ export function lancerSort(
     const charges = lanceur.rage ?? 0;
     if (charges <= 0) return; // gardé aussi par ciblesValides
     lanceur.rage = 0;
-    const soin = Math.round(jet(sort.baseMin, sort.baseMax, ctx.rng) * charges * multSoin(lanceur.stats));
+    const soin = Math.round(jet(sort.baseMin, sort.baseMax, ctx.rng) * charges * multSoinDe(lanceur));
     ctx.log(`${lanceur.nom} lance ${sort.nom} : ${charges} Rage consommée${charges > 1 ? "s" : ""}.`);
     soigner(lanceur, soin, ctx);
     poseCooldown(lanceur);
@@ -1431,7 +1442,7 @@ export function lancerSort(
     const durabiliteRestante = lance.pvActuels;
     ctx.log(`${lanceur.nom} rappelle sa lance (Vajra).`);
     while (lance.pvActuels > 0) infligerDegats(lance, 1, undefined, ctx);
-    const soin = Math.round(sort.rappelleLance.soinParDurabilite * durabiliteRestante * multSoin(lanceur.stats));
+    const soin = Math.round(sort.rappelleLance.soinParDurabilite * durabiliteRestante * multSoinDe(lanceur));
     soigner(lanceur, soin, ctx);
     poseCooldown(lanceur);
     return;
@@ -1453,7 +1464,7 @@ export function lancerSort(
     for (const t of cibles) {
       const montant = sort.soinComplet
         ? t.pvMax - t.pvActuels
-        : Math.round(jet(sort.baseMin, sort.baseMax, ctx.rng) * multSoin(lanceur.stats));
+        : Math.round(jet(sort.baseMin, sort.baseMax, ctx.rng) * multSoinDe(lanceur));
       soigner(t, montant, ctx);
       poseCooldown(t);
     }
@@ -1586,8 +1597,8 @@ export function lancerSort(
     const rangeeAvant = allies(lanceur, cs).filter(estAvant);
     if (total > 0 && rangeeAvant.length) {
       // convention des soins dérivés de dégâts (vampirismeRatio, soinEquipeRatio,
-      // soinAllieBlesseRatio) : le montant scale avec multSoin(lanceur.stats)
-      const part = Math.round((total * sort.soinLigneAvantRatio / rangeeAvant.length) * multSoin(lanceur.stats));
+      // soinAllieBlesseRatio) : le montant scale avec multSoinDe(lanceur)
+      const part = Math.round((total * sort.soinLigneAvantRatio / rangeeAvant.length) * multSoinDe(lanceur));
       for (const a of rangeeAvant) soigner(a, part, ctx);
     }
     poseCooldown(cible);
@@ -1635,7 +1646,7 @@ export function lancerSort(
       lanceur.bouclier += b;
       ctx.log(`${lanceur.nom} gagne un bouclier de ${b}.`);
     }
-    if (sort.vampirismeRatio && totalDmg > 0) soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
+    if (sort.vampirismeRatio && totalDmg > 0) soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoinDe(lanceur)), ctx);
     poseCooldown(cible);
     return;
   }
@@ -1744,13 +1755,13 @@ export function lancerSort(
     const blesse = allies(lanceur, cs)
       .sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
     if (blesse && blesse.pvActuels < blesse.pvMax) {
-      soigner(blesse, Math.round(totalDmg * sort.soinAllieBlesseRatio * multSoin(lanceur.stats)), ctx);
+      soigner(blesse, Math.round(totalDmg * sort.soinAllieBlesseRatio * multSoinDe(lanceur)), ctx);
     }
   }
 
   // Mot vampirique : soigne l'équipe d'une fraction des dégâts infligés
   if (sort.soinEquipeRatio && totalDmg > 0) {
-    const soin = Math.round(totalDmg * sort.soinEquipeRatio * multSoin(lanceur.stats));
+    const soin = Math.round(totalDmg * sort.soinEquipeRatio * multSoinDe(lanceur));
     for (const a of allies(lanceur, cs)) soigner(a, soin, ctx);
     ctx.log(`${lanceur.nom} draine ${soin} PV pour l'équipe.`);
   }
@@ -1776,7 +1787,7 @@ export function lancerSort(
 
   // Pattounes : soigne le lanceur d'une fraction des dégâts infligés
   if (sort.vampirismeRatio && totalDmg > 0) {
-    soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoin(lanceur.stats)), ctx);
+    soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoinDe(lanceur)), ctx);
   }
 
   // Fracas / Arc des Rivages / Étreinte glaciale : retrait de PA — 30 % de chance

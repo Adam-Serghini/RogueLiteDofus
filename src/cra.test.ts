@@ -201,12 +201,15 @@ describe("Tir Puissant", () => {
     expect(c.effets.some((x) => x.stat === "crit" && x.valeur === 15 && x.toursRestants === 3)).toBe(true);
 
     const se = statsEffectives(c);
-    expect(chanceCrit(se)).toBeCloseTo(0.5); // 40+15=55 % → plafonné à 50 %
-    expect(critExcedent(se)).toBeCloseTo(0.05); // l'excédent (5 points) devient des dégâts finaux
+    // agilite 0 → part dérivée plafonnée à son plancher de 5 % ; 40+15=55 % de crit plat
+    // s'ajoute PAR-DESSUS sans être plafonné (seul le tirage l'est) : 0.05 + 0.55 = 0.60
+    expect(chanceCrit(se)).toBeCloseTo(0.6);
+    // excédent = (0.05 + 0.55) − 0.35 (plafond) = 0.25, converti en dégâts finaux
+    expect(critExcedent(se)).toBeCloseTo(0.25);
 
     const syn: Spell = { id: "syn_neutre", nom: "Syn", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
     lancerSort(c, syn, e.ref, [c, e], ctx()); // rng max → pas de crit déclenché, seul l'excédent joue
-    expect(500 - e.pvActuels).toBe(Math.round(10 * 1.05));
+    expect(500 - e.pvActuels).toBe(Math.round(10 * 1.25));
   });
 });
 

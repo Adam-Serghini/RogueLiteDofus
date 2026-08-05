@@ -10,6 +10,7 @@ import {
   elementsForts,
   elementDeFrappe,
   statsEffectives,
+  statElement,
   ordreDuCombat,
   type FxEvent,
 } from "../combat";
@@ -444,7 +445,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         return `<div class="mini-stats">
         <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(se)}%</span>
         <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(se)}%</span>
-        <span class="ms" title="Soins (Soin + Intelligence)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(se)}%</span>
+        <span class="ms" title="Soins (Soin + élément de frappe)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(se, statElement(se, elementDeFrappe(c)))}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(se)}%</span>
         ${(se.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(se)}%</span>` : ""}
         ${(c.armure ?? 0) > 0 ? `<span class="ms" title="Armure — retranchée de CHAQUE frappe reçue">🪨 ${c.armure}</span>` : ""}

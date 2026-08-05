@@ -142,7 +142,11 @@ describe("enrage (moteur)", () => {
     appliquerEnrage(boss, ctx as never);
     appliquerEnrage(boss, ctx as never); // 2 tours → +20 %
     const enragee = degatsCible(boss, SORTS.morsure, cible, { useMax: true, mult: 1, ctx: ctx as never }).dmg;
-    expect(enragee).toBeCloseTo(base * 1.2, 0);
+    // comparaison en RATIO plutôt qu'en valeur absolue : base et enragee sont chacun
+    // arrondis indépendamment (Math.round appliqué une seule fois, en fin de pipeline),
+    // donc une tolérance absolue de 0,5 est trop stricte une fois les dégâts de base
+    // recalibrés par le rework des 4 éléments — la règle testée reste « +20 % ».
+    expect(enragee / base).toBeCloseTo(1.2, 1);
   });
 });
 

@@ -5,7 +5,8 @@
 import { describe, it, expect } from "vitest";
 import mdClassesElements from "../CLASSES-ELEMENTS.md?raw";
 import { CLASSES } from "./data";
-import { statPourPoints, statsFinales } from "./progression";
+import { multOffensif, multSoin, statPourPoints, statsFinales, VITA_PAR_FORCE, PROSP_PAR_CHANCE } from "./progression";
+import { chanceCrit, bonusDegatsCrit, critExcedent } from "./combat";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
@@ -123,5 +124,58 @@ describe("courbes de progression", () => {
   it("au niveau 1, un héros n'a que sa base de classe", () => {
     const s = statsFinales(CLASSES.iop, { niveau: 1, xp: 0 });
     expect(s.force).toBe(CLASSES.iop.stats.force);
+  });
+});
+
+const stats = (o: Partial<Record<string, number>>) =>
+  ({ force: 0, intelligence: 0, agilite: 0, vitalite: 0, chance: 0, ...o }) as never;
+
+describe("effets secondaires des éléments", () => {
+  it("feu : dégâts finaux, ~+15 % au niveau 50 et plafond +20 %", () => {
+    expect(multOffensif(stats({ intelligence: 147 }))).toBeCloseTo(1.147, 3);
+    expect(multOffensif(stats({ intelligence: 200 }))).toBeCloseTo(1.2, 3);
+    expect(multOffensif(stats({ intelligence: 400 }))).toBeCloseTo(1.2, 3); // plafonné
+  });
+
+  it("air : l'agilité porte les DEUX moitiés du critique", () => {
+    expect(chanceCrit(stats({ agilite: 147 }))).toBeCloseTo(0.35, 3); // plafond
+    expect(chanceCrit(stats({ agilite: 40 }))).toBeCloseTo(0.15, 3);
+    expect(bonusDegatsCrit(stats({ agilite: 147 }))).toBeCloseTo(0.45, 3); // plafond
+    expect(bonusDegatsCrit(stats({ agilite: 50 }))).toBeCloseTo(0.35, 3);
+  });
+
+  it("air : plancher de 5 % de critique pour TOUT LE MONDE", () => {
+    // L'air n'est que sur 3 classes jouables sur 11 ; sans plancher, huit classes ne
+    // verraient jamais un seul coup critique, et un Iop frapperait 200 fois à plat.
+    expect(chanceCrit(stats({}))).toBeCloseTo(0.05, 3);
+    // la force ne donne PLUS de critique : elle donne de la vitalité passive
+    expect(chanceCrit(stats({ force: 300 }))).toBeCloseTo(0.05, 3);
+  });
+
+  it("air : le crit plat des objets s'ajoute et peut déborder du plafond", () => {
+    expect(chanceCrit(stats({ crit: 10 }))).toBeCloseTo(0.15, 3);
+    expect(critExcedent(stats({ agilite: 147, crit: 20 }))).toBeCloseTo(0.2, 3);
+    expect(critExcedent(stats({ agilite: 147 }))).toBe(0); // sans crit plat, jamais d'excédent
+  });
+
+  it("terre : vitalité passive, 1 pour 5 de force", () => {
+    expect(VITA_PAR_FORCE).toBe(5);
+    const s = statsFinales(CLASSES.iop, { niveau: 50, xp: 0 }); // terre + feu, mêlée
+    // 98 de vitalité d'archétype + floor(147 / 5) = 29
+    expect(s.vitalite).toBe(98 + 29);
+  });
+
+  it("eau : prospection passive, 1 pour 3 de chance", () => {
+    expect(PROSP_PAR_CHANCE).toBe(3);
+    const s = statsFinales(CLASSES.xelor, { niveau: 50, xp: 0 }); // eau + terre, distance
+    expect(s.prospection).toBe((CLASSES.xelor.stats.prospection ?? 0) + Math.floor(196 / 3));
+  });
+
+  it("multSoin lit la caractéristique de FRAPPE, pas l'intelligence", () => {
+    // Sans ça, l'Apaisement de l'Ouginak (terre+air) et le vampirisme de l'Ecaflip
+    // (terre+eau) soigneraient à plat : ni l'un ni l'autre n'a feu.
+    const oug = statsFinales(CLASSES.ouginak, { niveau: 50, xp: 0 });
+    expect(oug.intelligence).toBe(CLASSES.ouginak.stats.intelligence); // aucun gain en feu
+    expect(multSoin(oug, oug.force)).toBeGreaterThan(1.2); // et pourtant il soigne
   });
 });

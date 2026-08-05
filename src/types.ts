@@ -5,15 +5,15 @@
 export type Element = "terre" | "feu" | "eau" | "air";
 
 export interface Stats {
-  force: number; // dégâts Terre + taux de crit
-  intelligence: number; // dégâts Feu + puissance offensive
-  agilite: number; // dégâts Air + esquive + dégâts de crit
-  vitalite: number; // PV (réserve, non utilisée pour le calcul de PV max en V0)
+  force: number; // dégâts Terre + vitalité passive (1 par VITA_PAR_FORCE)
+  intelligence: number; // dégâts Feu + dégâts finaux (multOffensif)
+  agilite: number; // dégâts Air + taux ET dégâts de coup critique
+  vitalite: number; // PV max (pvBase + vitalité × PV_PAR_VITA)
   // --- stats étendues (optionnelles, défaut 0) ---
-  chance?: number; // dégâts Eau
+  chance?: number; // dégâts Eau + prospection passive (1 par PROSP_PAR_CHANCE)
   soin?: number; // puissance de soin (× les soins prodigués)
   prospection?: number; // booste le taux de drop d'équipement (cumulé sur l'équipe)
-  crit?: number; // % plat de coup critique (équipement) — s'ajoute au crit dérivé de la Force
+  crit?: number; // % plat de coup critique (équipement) — s'ajoute au crit dérivé de l'Agilité
 }
 
 // --- Équipement --------------------------------------------------------------

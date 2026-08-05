@@ -31,7 +31,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       if (s.soinComplet)
         principal = `<span class="tip-val soin">♥ Soin complet</span>`;
       else if (s.baseMax > 0) {
-        const m = multSoin(se);
+        const m = multSoin(se, statElement(se, elementDeFrappe(acteur)));
         principal = `<span class="tip-val soin">♥ ${Math.round(s.baseMin * m)} – ${Math.round(s.baseMax * m)}</span><span class="tip-unite">PV rendus</span>`;
       }
     } else if (
@@ -216,7 +216,7 @@ export const classSymbol = (classeId: string): string =>
 // des formules : combat.ts / progression.ts), ici on ne fait que formater en %.
 export const pctCrit = (s: Stats): number => Math.round(chanceCrit(s) * 100);
 export const pctDmgCrit = (s: Stats): number => Math.round(bonusDegatsCrit(s) * 100);
-export const pctSoin = (s: Stats): number => Math.round((multSoin(s) - 1) * 100);
+export const pctSoin = (s: Stats, statFrappe: number): number => Math.round((multSoin(s, statFrappe) - 1) * 100);
 export const pctDgtsFinaux = (s: Stats): number => Math.round((multOffensif(s) - 1) * 100);
 export const pctRembPA = (s: Stats): number => Math.round(rembPA(s) * 100);
 
