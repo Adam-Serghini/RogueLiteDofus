@@ -443,7 +443,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         // sans ça, un perso buffé ne voit jamais ses % bouger sur sa carte.
         const se = statsEffectives(c);
         return `<div class="mini-stats">
-        <span class="ms" title="Coup critique (Force)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(se)}%</span>
+        <span class="ms" title="Coup critique (Agilité)"><img src="${ICON_CRIT}" alt="" onerror="this.remove()" />${pctCrit(se)}%</span>
         <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(se)}%</span>
         <span class="ms" title="Soins (Soin + élément de frappe)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(se, statElement(se, elementDeFrappe(c)))}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(se)}%</span>

@@ -294,6 +294,14 @@ export function chanceCrit(se: Stats): number {
   return Math.min(0.35, 0.05 + se.agilite * 0.0025) + (se.crit ?? 0) / 100;
 }
 
+/** Probabilité EFFECTIVEMENT tirée aux dés : `chanceCrit` bornée à 0,35. Source unique
+ *  du plafond de tirage — le site de tirage dans `degatsAvec` ET l'affichage (`pctCrit`)
+ *  doivent lire CETTE fonction, jamais reconstruire `Math.min(0.35, chanceCrit(se))`
+ *  ailleurs, pour qu'il n'existe qu'une seule vérité sur ce qui déclenche un critique. */
+export function chanceCritEffective(se: Stats): number {
+  return Math.min(0.35, chanceCrit(se));
+}
+
 // --- Bombes (Roublard) / Téléfrags (Xélor) -----------------------------------
 export const BOMBES_MAX = 5;
 export const TELEFRAGS_MAX = 4;
@@ -398,10 +406,11 @@ function degatsAvec(
   dmg += statElement(se, el) * base.scaling;
 
   // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
-  // Le tirage lui-même est borné à 35 % : le crit plat excédentaire ne doit pas faire
-  // gonfler la PROBABILITÉ de critiquer, il devient des dégâts finaux via critExcedent.
+  // Le tirage lui-même est borné à 35 % (chanceCritEffective) : le crit plat excédentaire
+  // ne doit pas faire gonfler la PROBABILITÉ de critiquer, il devient des dégâts finaux
+  // via critExcedent.
   let crit = false;
-  if (ctx.rng() < Math.min(0.35, chanceCrit(se))) {
+  if (ctx.rng() < chanceCritEffective(se)) {
     dmg *= 1 + bonusDegatsCrit(se);
     crit = true;
   }

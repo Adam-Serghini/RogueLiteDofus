@@ -115,7 +115,10 @@ describe("degatsCible", () => {
 
   it("le coup critique multiplie les dégâts (Dégât crit %)", () => {
     const [iop] = fabriquerEquipe();
-    iop.stats = { ...iop.stats, force: 60, agilite: 20 }; // chance de crit via Force
+    // force : dégâts de base (élément de frappe terre) ; agilite : la chance de crit
+    // vient désormais d'ELLE (avec un plancher de 5 % pour tout le monde — c'est ce
+    // plancher qui suffit ici avec rng 0.0, la Force n'y joue plus aucun rôle)
+    iop.stats = { ...iop.stats, force: 60, agilite: 20 };
     const [bouftou] = fabriquerEnnemis("combat_1");
     // séquence rng : pas d'esquive (0.9), crit déclenché (0.0)
     const seq = [0.9, 0.0];
@@ -635,6 +638,30 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     expect(critExcedent({ force: 0, intelligence: 0, agilite: 999, vitalite: 0 })).toBe(0);
     // seul le crit PLAT déborde : agilite 999 + crit 20 → excédent 0.20
     expect(critExcedent({ force: 0, intelligence: 0, agilite: 999, vitalite: 0, crit: 20 })).toBeCloseTo(0.2);
+  });
+  it("le TIRAGE du critique reste borné à 0,35 même quand chanceCrit brute dépasse ce plafond", () => {
+    // Si l'on retirait le Math.min(0.35, …) au site de tirage dans degatsAvec (ou si on
+    // le remplaçait par chanceCrit(se) tout court), ce test échouerait : un lanceur à
+    // crit plat qui pousse chanceCrit brute à 0,50 critiquerait deux fois de trop — une
+    // fois via un tirage gonflé à 50 %, ET une seconde fois via critExcedent, qui
+    // suppose justement que ce surplus n'a PAS déjà déclenché de critique réel (double
+    // comptage silencieux). Aucun autre test du projet ne détecte cette régression :
+    // ils utilisent tous rng=0.99 (jamais critique, sous aucun des deux plafonds) ou
+    // rng proche de 0 (critique sous les DEUX plafonds) — aucun ne tire dans la fenêtre
+    // qui les distingue.
+    const [iop] = equipeCombattante(nouvelleRun(["iop"]));
+    iop.stats = { ...iop.stats, force: 0, agilite: 0, crit: 45 }; // chanceCrit brute = 0.05 + 0.45 = 0.50
+    const cible = fabriquerEnnemis("combat_1")[0];
+    cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
+    const syn: Spell = { id: "syn_crit_borne", nom: "CB", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+
+    // dans la fenêtre [0.35, 0.50) : pas de critique — seul le plafonnage à 0.35 l'évite
+    const dansLaFenetre = degatsCible(iop, syn, cible, { useMax: true, mult: 1, ctx: { rng: () => 0.4, log: () => {}, playerDamageBonus: 1 } });
+    expect(dansLaFenetre.crit).toBe(false);
+
+    // juste sous 0.35 : le critique se déclenche bien
+    const sousLePlafond = degatsCible(iop, syn, cible, { useMax: true, mult: 1, ctx: { rng: () => 0.34, log: () => {}, playerDamageBonus: 1 } });
+    expect(sousLePlafond.crit).toBe(true);
   });
   it("bonusParAllieLigne (signature Grunob) ignore la Lance dans le compte d'alliés de rangée", () => {
     const syn: Spell = { id: "syn_grunob", nom: "G", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };

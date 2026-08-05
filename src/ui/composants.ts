@@ -4,7 +4,7 @@
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
-import { ELEMENTS, chanceCrit, bonusDegatsCrit, statsEffectives, elementDeFrappe, statElement } from "../combat";
+import { ELEMENTS, chanceCritEffective, bonusDegatsCrit, statsEffectives, elementDeFrappe, statElement } from "../combat";
 import { statsFinales, multSoin, multOffensif, pctRembPA as rembPA } from "../progression";
 import { bonusEquipement, STAT_PAR_ELEMENT, type PersoState } from "../run";
 import type { Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
@@ -214,7 +214,10 @@ export const classSymbol = (classeId: string): string =>
 
 // Stats secondaires affichées sur la carte — DÉLÉGUÉES au moteur (source unique
 // des formules : combat.ts / progression.ts), ici on ne fait que formater en %.
-export const pctCrit = (s: Stats): number => Math.round(chanceCrit(s) * 100);
+// probabilité EFFECTIVEMENT tirée (bornée à 0,35) — pas la valeur brute de chanceCrit,
+// qui peut dépasser ce plafond grâce au crit plat (l'excédent part en dégâts finaux,
+// voir critExcedent) : afficher la valeur brute mentirait sur ce que le moteur applique.
+export const pctCrit = (s: Stats): number => Math.round(chanceCritEffective(s) * 100);
 export const pctDmgCrit = (s: Stats): number => Math.round(bonusDegatsCrit(s) * 100);
 export const pctSoin = (s: Stats, statFrappe: number): number => Math.round((multSoin(s, statFrappe) - 1) * 100);
 export const pctDgtsFinaux = (s: Stats): number => Math.round((multOffensif(s) - 1) * 100);
