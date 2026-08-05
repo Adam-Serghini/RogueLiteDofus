@@ -16,7 +16,7 @@ Both docs are in French; the game's domain vocabulary (PA, sorts, esquive, élé
 - **4-element system** (`Element = terre | feu | eau | air`, `types.ts`) driven by 4 offensive stats (force→terre, intelligence→feu, agilité→air, **chance→eau**; the earlier wakfu/stasis elements were removed).
 - **12 classes** (Iop/Cra/Eniripsa/Sadida/Sram/Feca/Ecaflip/Ouginak/Roublard/Xélor/**Éliotrope**/**Forgelance**) — **Sadida is disabled**: kept in `CLASSES`/data for tests & saves but filtered out of `classesDisponibles()` in `run.ts` pending a rework. So **11 playable**.
 - **The Ouginak** (user-designed kit, `ouginak.test.ts`): Proie (1 PA, UNIQUE permanent mark — the whole team lifesteals 10% of damage dealt to it, hook in `infligerDegats` via the `proie` effect), **Rage** (`Combatant.rage`, +5%/charge dmg cap 3 — `RAGE_MAX`/`RAGE_BONUS` in combat.ts, gained AFTER each rage-granting cast), Molosse (3 PA + self −10% DR), Dépouille (4 PA, +50% per OTHER enemy on the target's row — `bonusParEnnemiLigneCible`), Tétanisation (4 PA, `tetanise` effect: target can't aim at the back row for its next turn — enforced in `ciblesValides`, its answer to Tir courbe shooters), Tibias (4 PA `zoneLigne` AoE + pushes the MAIN target to the back row via `deplaceCible: "arriere"` — the debuff rider was replaced by the push per playtest feedback, accepting the Dépouille synergy), Apaisement (3 PA, requires ≥1 Rage, consumes ALL, heals 8-12/charge — `consommeRage`). Spell icons pending: sort buttons show the spell NAME when the icon 404s (`.sort-nom-fallback`).
-- **Generic engine fields introduced for the Roublard/Xélor/Cra chantier** (used across all three kits below, defined on `Spell`/`Combatant` in `types.ts`): per-turn cast limits `Spell.maxParTour`/`Spell.maxParCibleParTour`, tracked via `Combatant.lancersCeTour` (keys `sortId` and `sortId:cibleRef`, reset to `{}` at the start of the combatant's turn) and greyed out on the spell bar once hit; a generic target mover `Spell.deplaceCible: "toggle" | "arriere"` (swap the target's row or push it to the back, silent no-op if the destination row is full) resolved by `deplacerCible()`; counter-based mechanics — `poserBombe`/`Combatant.bombes` (cap `BOMBES_MAX = 5`) and `poserTelefrag`/`Combatant.telefrags` (cap `TELEFRAGS_MAX = 4`) — plus damage multipliers reading those counters (`bonusParTelefrag`, `bonusParPADispo`); a one-shot negation flag `Combatant.nullifieProchainCoup` (blocks the next direct hit, not poison); and "excess crit" (`critExcedent`) letting only the flat `crit` stat overflow the 50% cap into bonus flat damage (Force-derived crit stays capped).
+- **Generic engine fields introduced for the Roublard/Xélor/Cra chantier** (used across all three kits below, defined on `Spell`/`Combatant` in `types.ts`): per-turn cast limits `Spell.maxParTour`/`Spell.maxParCibleParTour`, tracked via `Combatant.lancersCeTour` (keys `sortId` and `sortId:cibleRef`, reset to `{}` at the start of the combatant's turn) and greyed out on the spell bar once hit; a generic target mover `Spell.deplaceCible: "toggle" | "arriere"` (swap the target's row or push it to the back, silent no-op if the destination row is full) resolved by `deplacerCible()`; counter-based mechanics — `poserBombe`/`Combatant.bombes` (cap `BOMBES_MAX = 5`) and `poserTelefrag`/`Combatant.telefrags` (cap `TELEFRAGS_MAX = 4`) — plus damage multipliers reading those counters (`bonusParTelefrag`, `bonusParPADispo`); a one-shot negation flag `Combatant.nullifieProchainCoup` (blocks the next direct hit, not poison); and "excess crit" (`critExcedent`) letting only the flat `crit` stat overflow the 0.35 cap into bonus flat damage — **crit chance is driven by Agilité since the archétype rework (2026-08-05, see below), not Force**; the stat-derived part alone can never exceed the cap, only flat `crit` from gear can.
 - **The Roublard** (`roublard.test.ts`): Bombe collante (2 PA, `poseBombe`, sticks a charge on the target, no damage, cap 5, `maxParTour: 2`), Kaboom (3 PA, `kaboom`, detonates ALL bombes on every enemy carrying them — full damage to the bomb carrier + 50% to its row — via `lancerKaboom`; only castable if at least one enemy carries a bomb), Dagues Boomerang (3 PA, `boomerang`, hits the target, then whoever's behind it in line, then the target again), Roublabot (1 PA, `deplaceCible: "toggle"`, cd 3, swaps an enemy to the opposite row), Roublardise (2 PA, `nullifieProchain`, cd 5, negates the next direct hit taken), Resquille (3 PA, sets `resquilleActive` — the next Kaboom also strips PA from every enemy it touches, cleared at end of turn).
 - **The Xélor** (`xelor.test.ts`): Aiguille (2 PA, `maxParCibleParTour: 1`/`maxParTour: 2`, applies the `aiguille` mark), Sablier de Xélor (4 PA, guaranteed PA-steal via `retraitPAChance: 1`), Pendule (1 PA, `deplaceCible: "toggle"` + `telefragSiOccupee` — swaps the target's row and, if that row was occupied, poses a Téléfrag on both the mover and the bumped occupant via `poserTelefrag`; a Téléfrag on an `aiguille`-marked target re-triggers an "Écho d'Aiguille" hit), Rayon Obscur (5 PA, `bonusParTelefrag: 0.5`, +50% damage per Téléfrag on the target, cap 4), Cadran de Xélor (4 PA, `paParTourLigne`, auto-resolved on SELF: grants bonus PA each turn to the Xélor's whole row for 2 turns — was ally-targeted, simplified per playtest), Prémonition (3 PA, `paProchainTour: 2`, sets next-turn bonus PA to the max of current/2, non-stacking).
 - **Cra rework** (6 spells replacing the old kit, `cra.test.ts`): Flèche Punitive (4 PA, `bonusParPADispo: 0.08` — +8%/PA available BEFORE paying the cost, rewards dumping a full PA bar), Flèche enflammée (3 PA, `enflammee` — splashes 50% to the 2 nearest back-row enemies if the target is front row, else hits the 2 nearest same-row enemies at full power), Flèche de recul (2 PA, `maxParTour: 1`, `deplaceCible: "arriere"` + `degatsPoussee` — pushes the target back and also hits whichever unit got bumped, `ignoreResistances` on the push damage), Œil de Taupe (3 PA, `zoneLigne` AoE + `tetanise`, cd 2), Tir Puissant (2 PA buff, flat `crit` stat for 3 turns — the ligne-de-vue payoff via `critExcedent`, since only flat crit can exceed the 50% cap), Acuité absolue (2 PA buff, `ignoreLigne` for 2 turns — lets `ennemi_ligne` spells reach the back row even with a living front row, the counter to `tetanise`/line-locked shooters).
@@ -97,7 +97,7 @@ Two key seams keep things testable and decoupled:
 - **Damage pipeline** (order matters, see `degatsCible` in `combat.ts`): esquive check (Agilité, capped) → roll (or max if `maxRoll` charge) → add élément-de-frappe stat × scaling → crit (Force, capped, *adds* damage via Agilité, does not double) → `degatsInfliges` debuff → rebound mult → resistance (unless `ignoreResistances`) → Dofus team bonus (`ctx.playerDamageBonus`, player camp only) → `multOffensif` (Intelligence, capped, all casters) → round, floor at 0.
 - **Support mechanics** (Eniripsa kit, all in `combat.ts`): damage goes through `infligerDegats` → **shield (`bouclier`) absorbs before HP**; `poison`/`hot` are timed effects in `effets[]` that **tick at the start of the actor's turn** in `effetsDebutTour` (poison can kill, then transmits to the combatant `derriere` if `transmet`); heals via `soigner` (incl. `soinComplet`, `allie_tous`, `soinEquipeRatio` lifesteal-to-team); `appliquerSoutien` applies bouclier/HoT/`dissipe`/`paGain`/`bonusProchainSortPct`; per-target **cooldowns** live on `acteur.cooldowns` and are enforced inside `ciblesValides`. `allie_tous`/`soi`/`invocation` spells resolve with no target click.
 - **Turn order (ALTERNATING + FROZEN, since 2026-07-24)**: the whole combat plays a FIXED sequence built once from the starting roster (`ordreDuCombat` in combat.ts — also drives the UI timeline, single source; `prochainActeur` = first alive-unplayed of that sequence): best BASE initiative opens, camps alternate, the bigger camp's surplus closes the round (4v2 → A E A E A A). Deaths just skip their slot — NO re-interleaving (A E A E → first E dies → A A E), and a resurrected combatant gets its original slot back. Consequence: mid-combat `initiative` effects are INERT for ordering (Déferlante's −init rider no longer delays anyone — flagged for a redesign; Étreinte glaciale's was replaced by a guaranteed −1 PA on every target hit, retraitPA rolled PER TARGET in zone spells since then). **Summons that play** (`invoquePar`: Kankreblath's monsters, Shin Larve's larvae) are OUTSIDE the alternation: they always act immediately after their summoner, every round, and **die with their summoner** (`purgerInvocationsOrphelines`, cascade — also kills the Poupée and breaks the Lance without its destruction shield). Boostache's resurrected are NOT summons (original pack members, normal alternation, survive the boss). **Obstacle invocations** (`estInvocation`: Poupée via `invoquerPoupee`, the Lance) never get a turn slot; the Poupée can `provoque` — enforced in `ciblesValides`. One poupée per summoner. `Vigueur des bois` sets `bonusOffensifProchain`, a one-shot % consumed by the next damage cast.
-- **Secondary-stat caps are mandatory**: crit, esquive, puissance offensive are capped (~50%) in the formulas. Don't remove the `Math.min` caps.
+- **Secondary-stat caps are mandatory**: crit chance capped at 35% (Agilité, 5% floor for everyone), crit damage bonus capped at +45%, final damage multiplier (Intelligence) capped at +20%, esquive capped at 50%. Don't remove the `Math.min` caps. See *Archétypes & éléments* below for the full formulas — they superseded the earlier ~50%-everywhere caps described here before the 2026-08-05 rework.
 - **HP persists between fights/nodes** within a run — the Taverne node is the only heal. A wipe ends the run but **must not erase `Meta.dofus`**.
 - **PV model**: `pvMax = pvBase + vitalitéFinale × PV_PAR_VITA` (spec-literal). Monster damage in `data.ts` is tuned against the resulting (inflated) player HP — retune both together.
 
@@ -173,13 +173,93 @@ The legacy panoplie drop path has been fully removed (no `PANOPLIES`/`BUTIN_ZONE
 
 **Drop mechanics**: `tirerRarete` (weights 60/25/12/3 in `RARETE_INFO`), `rollItem` freezes tier stats into the `ItemInstance` (`rarete`/`resistances`/`pa` fields), `tenterButin` takes a ZONE id (toile pool → 4 uniform draws). New equipment channels: `pa` (paBonus on the combatant), `crit` (flat % added to Force-derived crit in combat+UI), per-tier weapon `attaque`. UI: rarity halos/name colors (`rarete-*`/`inom-*`), stat chips (`itemStatsHtml`).
 
+### Archétypes & éléments (2026-08-05) — fin de l'allocation manuelle
+
+**L'allocation manuelle de points a été supprimée.** Les stats d'un héros sont désormais une
+fonction PURE de sa classe et de son niveau (`statsFinales`, `src/progression.ts`) : il n'y a
+plus de points à distribuer, plus de mode Libre, plus de `restat`. `Progression` est réduit à
+`{ niveau, xp }`. `investirN`/`POINTS_PAR_NIVEAU` n'existent plus.
+
+**Chaque classe porte un `archetype` (`melee` | `distance`) et deux `elements` fixes**
+(`Classe.archetype`/`Classe.elements`, `types.ts`) — table complète et source de vérité dans
+`CLASSES-ELEMENTS.md` à la racine (vérifié en synchro avec `src/content/classes.json` par
+`src/archetypes.test.ts`). À chaque niveau, un héros gagne des points dans **chacun** de ses
+deux éléments plus de la vitalité, au tarif croissant `coutPoint` (inchangé — 1/2/3 selon le
+seuil déjà investi) :
+
+| Archétype | Par élément | Vitalité |
+|---|---|---|
+| `melee` (Iop, Féca, Forgelance, Ouginak, Sram, Ecaflip, Sadida) | +3 dans chacun de ses 2 éléments | +2 |
+| `distance` (Cra, Roublard, Eniripsa, Éliotrope, Xélor) | +4 dans chacun de ses 2 éléments | +1 |
+
+`statPourPoints` calcule ce tarif comme une **fonction pure du niveau** (boucle sur `coutPoint`,
+bornée à ~800 itérations au niveau 200 — plus d'état d'allocation à faire évoluer, juste une
+conversion points→stat) — le mêlée retrouve EXACTEMENT la courbe de l'ancien système à
+allocation pleine dans une seule stat (147/248/315/365 à L50/100/150/200 : 3 pts/niveau, seuils
+200/300). `statElement`/`STAT_PAR_ELEMENT` (terre→force, feu→intelligence, air→agilité,
+eau→chance) décident où tombent ces gains ; l'élément de frappe (`elementChoisi`, dans les 2
+éléments de la classe) sélectionne laquelle des deux stats sert au scaling de dégâts —
+inchangé, voir *Élément de frappe* plus bas.
+
+**Les quatre éléments ont un effet secondaire, hors tarif, hors équipement** (tous en plus des
+gains de niveau ci-dessus, calculés dans `statsFinales`) :
+
+| Élément | Effet secondaire | Formule |
+|---|---|---|
+| terre (force) | +vitalité passive | `Math.floor(force / 5)`, 1 point tous les 5 de force |
+| feu (intelligence) | dégâts finaux | `multOffensif` : `1 + min(0.2, intelligence × 0.001)`, plafond +20% |
+| air (agilité) | taux **et** dégâts de critique | `chanceCrit` : `min(0.35, 0.05 + agilité × 0.0025) + crit_plat`, plancher 5%, plafond 35% ; `bonusDegatsCrit` : `min(0.45, 0.25 + agilité × 0.002)`, plafond +45% |
+| eau (chance) | +prospection passive | `Math.floor(chance / 3)`, 1 point tous les 3 de chance |
+
+Le plancher de 5% de critique s'applique à TOUT le monde, y compris les 8 classes jouables sur
+11 qui n'ont pas l'air dans leurs deux éléments (`CLASSES-ELEMENTS.md` : air ne couvre que 3
+classes — sans plancher, elles ne critiqueraient jamais). `multSoin` lit désormais la
+**caractéristique de frappe du lanceur** (`statElement(statsEffectives(c), elementDeFrappe(c))`),
+pas l'intelligence spécifiquement — un soigneur sans feu (Sram, Ouginak…) soigne quand même à
+plein régime sur sa propre stat de frappe ; ça vaut aussi pour le Dragoss Protéiforme (T2,
+toile 21, seul soigneur ennemi du jeu), dont la puissance de soin lit désormais sa dominante.
+
+**Le banc a été reconstruit et mesuré** (`npm run sim`, équipe Iop/terre · Cra/air · Eniripsa/feu
+· Ecaflip/eau, une classe par élément pour juger les zones à puzzle élémentaire) — **aucun
+monstre, aucune zone, aucun objet n'a été retouché pour cette mesure**, la passe d'équilibrage
+elle-même reste entièrement à faire. Écart mesuré contre les chiffres consignés dans ce fichier
+avant le rework (détail complet, zone par zone, dans le rapport de tâche
+`.superpowers/sdd/2026-08-05-elements-archetypes/task-6-report.md`) :
+- **T1 est nettement plus généreuse qu'avant** : l'ancien système donnait un SET boss win% étalé
+  ≈44-100% « sans rampe lisse » ; la mesure actuelle donne quasiment 100% NU/MI/SET sur les 12
+  zones, à deux exceptions qui restent des points de vigilance sans être des échecs — Tainéla
+  (`tai_boss` 62% NU → 100% SET) et Kankreblath (`kan_boss` 41% NU, ⚠ DUR → 100% SET). Aucun
+  `stalemate?` sur T1.
+- **T2 (toujours `enChantier`, toujours sans objets sur ses 12 toiles) suit un même schéma sur
+  chaque zone mesurée avant le rework (Wa Wabbit, Pitons, Bateau, Antre, Domaine, Moon)** : les
+  combats **normaux** grimpent spectaculairement (ex. Pitons `roc_2` 19%→100%, `roc_3` ~0%→100%,
+  Antre `por_2` 10%→100%, Domaine `abr_1` 79%→100%) alors que les **élites et boss de fin de
+  tranche restent écrasants** (Wa Wabbit `wab_boss` toujours 0%, Pitons `roc_boss` 0%→2%, Bateau
+  `cho_boss` 0%→6%, Antre `por_boss` 0%→5%, Domaine `abr_boss` 0%→3%, Meulou `mlo_boss` reste à
+  0%). Le rework relève donc le plancher (les héros ne meurent plus dans les 3 premiers tours) mais
+  ne résout PAS le problème documenté de ces salles (surcharge de PA de boss, aucun objet à
+  porter) — c'est attendu, T2 n'a jamais reçu sa passe d'équilibrage.
+- **`stalemate?` est apparu sur `khz_elite`** (Repaire du Kharnozor), une rencontre que ce fichier
+  documentait explicitement comme n'en portant AUCUN (« aucun drapeau stalemate? »). À
+  l'inverse, il a **disparu de `mlo_1`** (Tanière du Meulou), précédemment flagué à 61%/27,9
+  tours — la même rencontre tourne maintenant à 100%/17,9 tours sans drapeau. Aucun de ces deux
+  changements ne vient d'un ajustement de monstre : uniquement de la nouvelle courbe de stats.
+- **Aucun chiffre de T2 n'est exploitable comme mesure d'équilibrage** : ses 12 toiles n'ont
+  toujours pas d'objets, donc les colonnes NU/MI/SET y sont rigoureusement identiques (confirmé
+  dans la sortie du banc) — seule la variation liée au niveau/à la composition du pack est
+  mesurée, jamais l'équipement.
+- **Rappel des limites du banc**, à ne pas perdre de vue en lisant ces chiffres : son IA soigne
+  optimalement et ne se trompe jamais, c'est un PLANCHER de difficulté, pas le ressenti réel — et
+  plusieurs rencontres (mue du Kwakwa, annulations du Meulou, toile du Domaine Ancestral) sont
+  déjà documentées comme structurellement sous-lues par lui.
+
 ### Difficulty tuning (deliberately hard, per the user's request)
 
 - **L50 pass**: `XP_PAR_TYPE` 110/195 × `1 + XP_PAR_TOILE(0.3) × (toile−1)`; **POINTS_PAR_NIVEAU = 3**; **levels are CAPPED at the active tranche's max** — `gagnerXP(p, gain, niveauMax)` discards surplus XP, cap fed by `niveauMaxTranche()` in run.ts. Sim zone-entry levels ≈ 1/7/12/15/19/22/26/29/33/36/39/42; real play hits the 50 cap near the end. At 3 pts/level T1 ends ≈147 main-stat (all cost-1); the 200/300 cost thresholds bite in T2+ giving ~248/315/365 at L100/150/200 — the long-term stat curve. Zone-2+ monster PV was rescaled twice and now sits ≈×0.9-1.3 of pre-L50 values.
 - **T2's XP multiplier**: `xpRequis` grows linearly with level while the toile multiplier only grows 0.3/toile, so a tranche that starts at a higher level progresses mechanically slower — measured (via `courbeNiveaux()`'s model, `src/sim.ts`) at level 87 instead of the ~96 target before any fix. Fixed with `TrancheDef.xpMult` (absent = 1, `1.35` on t2) folded into `xpEffective`, used by both `main.ts` and `courbeNiveaux()` so the game and the balancing harness share the same formula. Reference measurement with that harness's model (6 normal fights + 1 elite per zone): **T1 ends at level 46, T2 at level 96** — t1 is untouched (no `xpMult`), t2 lands inside the 95-100 target.
 - **Two sim-honesty fixes**: bosses measured at END-of-zone level (the donjon is the last node); toile zones measured wearing the best-per-stat COMMUN rarity items instead of legacy panoplies. Sim SET boss win% varies widely across the toile'd zones (≈44-100%, no longer a smooth ramp) rather than descending monotonically.
 - **Re-baselined after the Roublard/Xélor/Cra chantier**: the reference team's Cra now plays its reworked 6-spell kit through the generic `controllerIA` (which doesn't sequence PA to satisfy Punitive's conditions optimally), shifting several win% figures below versus the pre-rework numbers — figures updated to the new `npm run sim` output; no monster was retuned for this.
-- **The sim reference build invests 25% vitalité / 75% main stat and weights vita ×4 in gear picks** — the old full-glass-cannon floor made 10-PA bosses read 0% against lean toile gear (Batofu one-shot ~65-HP heroes) when real players simply wear Le Houde and take some vita (Kwakwa finale 56% at the non-adapting floor; rare/épique/légendaire drops and element-switching make real play easier).
+- **OBSOLÈTE depuis le rework archétypes/éléments (2026-08-05)** : cette ligne décrivait l'ancien modèle où le sim investissait « 25% vitalité / 75% stat principale » et pondérait la vitalité ×4 dans le choix d'objets — ce modèle n'a plus de sens, il n'y a plus de points à investir (voir *Archétypes & éléments* ci-dessous). Le poids ×4 de la vitalité dans `meilleurItemToile` (choix d'objet, pas d'allocation) reste, lui, pertinent et inchangé.
 - **When a toile replaces a legacy pano zone, re-tune that zone's monsters** (toile commun budget is leaner than legacy panoplies). Applied retunes: Tainéla PV ×0.7 + boss offense ×0.72; Astrub PV ×0.85 + Tournesol offense ×0.85; Tofus PV ×0.7 + pack offense ×0.75 + Batofu burst halved (pique 15-21@0.45); Akadémie: Grunob pv 482→410 force 31→18 + bonusParAllieLigne 0.10→0.06 + Gobaladée trimmed (sim MI 59/SET 100); Kankreblath left as-is (MI 1/SET 45 — dropped sharply under alternating turns: its summons chain right after it, and the sim never focus-fires the boss; watch in playtest before any retune). **Toiles 7 & 9 are deliberately utilitarian** (crit/prospection, near-zero vita) so gear barely raises survivability — their zones were retuned for near-NU play: Boostache pv 599→330 agi 29→16 + ressuscite 0.5→0.35 & cd 3→4 (the rez loop starved common-gear DPS; the sim also under-reads this fight because `controllerIA` focus-fires lowest-HP rezzes instead of the boss — real players win by focusing Boostache), Scarabosse pv 746→600 force 41→30 resists 0.2→0.15 + carapace 1.0→0.4, Coffre pv 786→430 force 46→23 + mâchoire 26-34@0.6→18-24@0.48, escorts trimmed (sim: fan 99/scr 100/frg 91 SET). Toiles 10-12: Shin Larve pv 1059→760 chance 46→34 + Larves Dorée/Émeraude trimmed (sim MI 1/SET 93 — brutal falaise 2→4p under frozen turn order, watch in playtest), Kwakwa pv 1023→780 offense ~×0.87 + **mue 0.55→0.5** (sim SET 64 — heavily under-read: the sim never element-switches against the mue and can't wear the boss-loot Kwakwaffe; real play is much faster). The legacy panoplie system itself has since been fully purged from `data.ts`/`types.ts` (toiles are the only equipment source for all 12 zones). Boss retunes for their slots: Tournesol as boss #2 (drain 60%, 4v3 room, pv/int trimmed, Gardienne healer softened); Kardorim as boss #1 (4v2 room, pv 145 — playtest: players reach him with ~2 commun items, sim MI 88%/SET 98% (Étreinte −1 PA/cible)). Geared normals stay trivial. **Alternating-turns re-baseline (2026-07-24, twice)**: the win-rate table shifted when turn order switched to ally/enemy alternation, then again when the sequence was FROZEN at combat start (deaths no longer re-interleave) — figures above are the post-frozen-order sim; no monster was retuned (playtest first).
 
 ### Elite nodes, recap, achievements, Armurerie

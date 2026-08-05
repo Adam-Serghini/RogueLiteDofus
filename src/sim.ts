@@ -12,10 +12,6 @@
 //  (spam du sort le plus cher, focus PV le plus bas ; seul le soin est géré via
 //  ia="soutien"). Aucun choix d'élément de frappe adaptatif → mesure « si le
 //  joueur ne s'adapte pas ». C'est une BASELINE RELATIVE, pas le ressenti réel.
-//  TRANSITOIRE (Task 2, 2026-08-05) : depuis le passage aux stats-par-archétype,
-//  ce fichier fixe le niveau sans plus pré-allouer de points (il n'y en a plus) —
-//  la Task 6 doit refaire le modèle de référence (vitalité/stat offensive n'a
-//  plus de sens ici, les deux montent ensemble selon l'archétype de la classe).
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
@@ -24,13 +20,13 @@ import {
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
-import { progressionInitiale, gagnerXP } from "./progression";
+import { progressionInitiale, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateursElite, instanceDuTier,
   effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
   type RunState,
 } from "./run";
-import type { ItemInstance, Rarete, Stats } from "./types";
+import type { Element, ItemInstance, Rarete, Stats } from "./types";
 
 // Tranches mesurées par le banc, dans l'ordre d'affichage du rapport. T1 doit
 // TOUJOURS rester mesurée en premier et à l'identique (garde-fou anti-régression :
@@ -39,28 +35,27 @@ import type { ItemInstance, Rarete, Stats } from "./types";
 const TRANCHES_MESUREES: TrancheDef[] = [TRANCHES[0], TRANCHES[1]];
 
 // --- Paramètres du sim (tunables) --------------------------------------------
-// Les classes ont 0 stat offensive de base → l'élément vient des points investis.
-// On répartit donc un élément par membre (couverture multi-élément = jeu attendu,
-// nécessaire pour juger honnêtement les zones à puzzle élémentaire).
-// SIM_TANK=1 → config « tortue » : Feca FULL VITA seul en ligne avant, le reste
-// à l'arrière (teste l'exploit tank+heal : les sorts ennemi_ligne ne touchent
-// que la ligne avant, l'Eni régénère le tank).
+// Les classes portent désormais leurs deux éléments (voir CLASSES-ELEMENTS.md) : la
+// build n'est plus un choix du banc, seul l'ÉLÉMENT DE FRAPPE l'est. On garde les
+// quatre mêmes classes, qui couvrent les quatre éléments — nécessaire pour juger
+// honnêtement les zones à puzzle élémentaire.
+// SIM_TANK=1 → config « tortue » positionnelle : Feca seul en ligne avant, le reste
+// derrière (l'exploit full-vitalité, lui, n'existe plus : l'allocation est automatique).
 const TANK = !!(globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.SIM_TANK;
-const TEAM: Array<{ classe: string; stat: keyof Stats; pos?: number; fullVita?: boolean }> = TANK
+const TEAM: Array<{ classe: string; element: Element; pos?: number }> = TANK
   ? [
-    { classe: "feca", stat: "vitalite", pos: 0, fullVita: true }, // mur
-    { classe: "iop", stat: "force", pos: 4 },
-    { classe: "cra", stat: "agilite", pos: 5 },
-    { classe: "eniripsa", stat: "intelligence", pos: 6 }, // soigneur
+    { classe: "feca", element: "terre", pos: 0 },
+    { classe: "iop", element: "terre", pos: 4 },
+    { classe: "cra", element: "air", pos: 5 },
+    { classe: "eniripsa", element: "feu", pos: 6 },
   ]
   : [
-    { classe: "iop", stat: "force" }, // terre
-    { classe: "cra", stat: "agilite" }, // air
-    { classe: "eniripsa", stat: "intelligence" }, // feu (+ soin de classe)
-    { classe: "ecaflip", stat: "chance" }, // eau (le sadida est désactivé)
+    { classe: "iop", element: "terre" },
+    { classe: "cra", element: "air" },
+    { classe: "eniripsa", element: "feu" },
+    { classe: "ecaflip", element: "eau" }, // le sadida est désactivé
   ];
 const IDS = TEAM.map((t) => t.classe);
-const ELEM_DE_STAT: Record<string, string> = { force: "terre", intelligence: "feu", agilite: "air", chance: "eau" };
 const N = 200; // combats par (rencontre × scénario de stuff)
 const NORMAUX_PAR_ZONE = 6; // path moyen supposé pour la courbe d'XP (plateau Pokelike ~10 nœuds)
 const ELITES_PAR_ZONE = 1;
@@ -142,21 +137,15 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
   const run = nouvelleRun(IDS);
   const pool = zoneId ? (butinToile(zoneId)?.normales ?? null) : null;
   run.persos.forEach((perso, i) => {
-    const p = progressionInitiale();
-    p.niveau = niveau;
-    // TRANSITOIRE (Task 2) : les stats sont désormais une fonction pure de
-    // (classe, niveau) — voir statsFinales — il n'y a plus rien à investir.
-    // Le modèle « 25 % vitalité / 75 % stat offensive » et la config tortue
-    // (SIM_TANK, fullVita) décrits ci-dessous n'ont plus d'effet ; refaire le
-    // sim autour de l'archétype de la classe est le travail de la Task 6.
-    perso.progression = p;
+    perso.progression = { ...progressionInitiale(), niveau };
+    perso.elementChoisi = TEAM[i].element;
     if (TEAM[i].pos !== undefined) perso.position = TEAM[i].pos!;
     if (pool) {
       // zone à toile : chaque membre porte le meilleur objet COMMUN de sa stat
       // par slot (arme et coiffe d'abord pour le mi-set) — plancher réaliste,
       // les paliers rare/épique/légendaire rendent le vrai jeu plus facile.
       for (const slot of SLOTS_SIM.slice(0, nbPieces)) {
-        const id = meilleurItemToile(pool, slot, TEAM[i].stat);
+        const id = meilleurItemToile(pool, slot, STAT_PAR_ELEMENT[TEAM[i].element]);
         if (id) perso.equipement[slot] = itemPalier(id, "commun");
       }
     }
@@ -232,7 +221,7 @@ describe("équilibrage — simulation par rencontre", () => {
   it("rapport", async () => {
     const out: string[] = [];
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
-    out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${ELEM_DE_STAT[t.stat as string]})`).join(" ")}`);
+    out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${t.element})`).join(" ")}`);
     out.push(`Colonnes — NU (sans stuff) | MI (2 pièces, toile commun) | SET (4 pièces, toile commun) : win% · tours · PV%restant(sur victoire)\n`);
 
     for (const tranche of TRANCHES_MESUREES) {
