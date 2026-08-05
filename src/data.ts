@@ -315,6 +315,27 @@ export const ARCHI = {
   statMult: 1.5, // multiplicateur des caractéristiques
 };
 
+/** Archimonstres ERRANTS : espèces qui n'appartiennent à AUCUNE zone et surgissent
+ *  rarement en plus d'un pack de combat NORMAL, toujours déjà sous forme d'archi.
+ *
+ *  Cette dernière contrainte est structurelle et non cosmétique : soumis au tirage
+ *  habituel (`chanceArchi`, 0,8 % à 2,4 %), capturer un Piou précis vaudrait
+ *  P(apparition) × 1/6 × 2,4 %, soit ~0,04 % par combat même à 10 % d'apparition —
+ *  autant dire jamais. Ils arrivent donc déjà mutés (cf. `appliquerErrants`).
+ *
+ *  `chance` est le SEUL bouton de réglage, délibérément sans levier : il ne dépend ni des
+ *  philtres d'Otomai, ni de la Prospection, ni du palier d'Ascension — c'est le seul archi
+ *  du jeu sur lequel le joueur n'a aucune prise, et c'est assumé. 1 % ≈ 0,7 Piou par run de
+ *  t1 (~72 combats normaux), soit ~20 runs pour les six. Reconnu comme peu : la valeur est
+ *  FAITE pour monter (1,5 % évoqué), et aucun test ne la code en dur — `errants.test.ts`
+ *  la lit et vérifie un ordre de grandeur. */
+export const ERRANTS: Record<string, { especes: string[]; chance: number }> = {
+  t1: {
+    especes: ["piou_rouge", "piou_vert", "piou_bleu", "piou_jaune", "piou_rose", "piou_violet"],
+    chance: 0.01,
+  },
+};
+
 /** Paliers du Dofus Ocre : tous les 50 archis (valeur TOTALE du Dofus à ce palier). */
 export interface OcrePalier { seuil: number; paBonus: number; degats: number }
 export const OCRE_PALIERS: OcrePalier[] = [

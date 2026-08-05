@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
@@ -710,25 +710,58 @@ export function chanceArchi(run: RunState): number {
   return ARCHI.chance + ARCHI.philtre * Math.min(run.philtres ?? 0, ARCHI.philtresMax);
 }
 
+/** Mute un combattant en Archimonstre : vrai nom, PV doublés, stats × `ARCHI.statMult`.
+ *  Partagé par le tirage de zone (`appliquerArchimonstres`) et par les errants, qui eux
+ *  arrivent DÉJÀ mutés. Sans effet sur un archi (garde anti-double-mutation). */
+export function muterEnArchi(e: Combatant): void {
+  if (e.archi || !e.archiNom) return;
+  e.archi = true;
+  e.nom = e.archiNom; // vrai nom d'Archimonstre (DofusDB)
+  e.pvMax = Math.round(e.pvMax * ARCHI.pvMult);
+  e.pvBase = e.pvMax;
+  e.pvActuels = e.pvMax;
+  const s = e.stats;
+  e.stats = {
+    force: Math.round(s.force * ARCHI.statMult),
+    intelligence: Math.round(s.intelligence * ARCHI.statMult),
+    agilite: Math.round(s.agilite * ARCHI.statMult),
+    vitalite: Math.round(s.vitalite * ARCHI.statMult),
+    chance: Math.round((s.chance ?? 0) * ARCHI.statMult),
+  };
+}
+
 /** Transforme aléatoirement des ennemis en Archimonstres (boostés + capturables). */
 export function appliquerArchimonstres(enemies: Combatant[], rng: () => number, chance = ARCHI.chance): void {
   for (const e of enemies) {
     if (!e.archiNom) continue; // seules les espèces ayant un Archimonstre réel peuvent muter
     if (rng() >= chance) continue;
-    e.archi = true;
-    e.nom = e.archiNom; // vrai nom d'Archimonstre (DofusDB)
-    e.pvMax = Math.round(e.pvMax * ARCHI.pvMult);
-    e.pvBase = e.pvMax;
-    e.pvActuels = e.pvMax;
-    const s = e.stats;
-    e.stats = {
-      force: Math.round(s.force * ARCHI.statMult),
-      intelligence: Math.round(s.intelligence * ARCHI.statMult),
-      agilite: Math.round(s.agilite * ARCHI.statMult),
-      vitalite: Math.round(s.vitalite * ARCHI.statMult),
-      chance: Math.round((s.chance ?? 0) * ARCHI.statMult),
-    };
+    muterEnArchi(e);
   }
+}
+
+/** Archimonstre ERRANT : ajoute rarement une espèce hors zone (les Piou) au pack, déjà
+ *  mutée en archi. Renvoie son nom d'archimonstre pour l'annonce, `undefined` sinon.
+ *
+ *  Deux restrictions volontaires : uniquement en combat NORMAL (les nœuds élite et les
+ *  salles de boss sont équilibrés — un archi de plus les déréglerait, et une salle tendue
+ *  pourrait devenir infaisable), et à appeler APRÈS `appliquerArchimonstres` pour ne pas
+ *  subir un second doublement (`muterEnArchi` s'en garde de son côté). */
+export function appliquerErrants(
+  ennemis: Combatant[], rng: () => number,
+  opts: { type: "combat" | "combat_dur" | "donjon"; tranche: string },
+): string | undefined {
+  if (opts.type !== "combat") return undefined;
+  const def = ERRANTS[opts.tranche];
+  if (!def?.especes.length) return undefined;
+  if (rng() >= def.chance) return undefined; // tirage d'apparition D'ABORD, choix ensuite
+  const occupees = new Set(ennemis.map((e) => e.position));
+  const cell = [0, 1, 2, 3, 4, 5, 6, 7].find((c) => !occupees.has(c));
+  if (cell === undefined) return undefined; // grille pleine : il n'apparaît pas, comme packPlus1
+  const espece = def.especes[Math.floor(rng() * def.especes.length)];
+  const piou = depuisMonstre(MONSTRES[espece], `err_${espece}`, cell);
+  muterEnArchi(piou);
+  ennemis.push(piou);
+  return piou.nom;
 }
 
 // --- Run en cours (persistance) ------------------------------------------------

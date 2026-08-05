@@ -11,7 +11,7 @@ import {
   tavernePctAscension, tauxDofusAscension, enregistrerAscension,
   chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, prospectionEquipe,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
-  appliquerArchimonstres, capturerArchi, chanceArchi, verifierSucces, type RunState,
+  appliquerArchimonstres, appliquerErrants, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
   archiverEquipe, heritagePour, runDepuisHeritage, archiveDe,
@@ -67,6 +67,11 @@ async function resoudreCombat(
     rng: Math.random,
   });
   appliquerArchimonstres(ennemis, Math.random, chanceArchi(run)); // taux de base + philtres d'Otomai
+  // archimonstre errant (Piou) : APRÈS le tirage d'archi, sinon il subirait un second
+  // doublement. Annoncé dans le titre, comme les modificateurs d'élite — un ennemi
+  // surgissant sans un mot serait illisible.
+  const errant = appliquerErrants(ennemis, Math.random, { type: opts.type, tranche: run.trancheId });
+  if (errant) titre = `${titre} · ⭐ ${errant}`;
   // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
   const bonus = bonusEquipe(meta);
   appliquerBonusEquipeCombat(equipe, bonus); // un héros mort reste mort (pas de résurrection Dofawa)

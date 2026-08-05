@@ -3626,6 +3626,154 @@
       "vitalite": 66
     }
   },
+  "piou_bleu": {
+    "archiNom": "Pioustone le Problème",
+    "ia": "agressif",
+    "id": "piou_bleu",
+    "img": "/assets/monstres/piou_bleu.png",
+    "initiative": 14,
+    "nom": "Piou Bleu",
+    "pa": 4,
+    "pv": 12,
+    "resistances": {
+      "eau": 0.2,
+      "feu": -0.15
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 6,
+      "chance": 14,
+      "force": 6,
+      "intelligence": 6,
+      "vitalite": 7
+    }
+  },
+  "piou_jaune": {
+    "archiNom": "Pioulbrineur le Mercenaire",
+    "ia": "agressif",
+    "id": "piou_jaune",
+    "img": "/assets/monstres/piou_jaune.png",
+    "initiative": 14,
+    "nom": "Piou Jaune",
+    "pa": 4,
+    "pv": 12,
+    "resistances": {
+      "air": 0.2,
+      "terre": -0.15
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 14,
+      "chance": 6,
+      "force": 6,
+      "intelligence": 6,
+      "vitalite": 7
+    }
+  },
+  "piou_rose": {
+    "archiNom": "Pioufe la Maquillée",
+    "ia": "agressif",
+    "id": "piou_rose",
+    "img": "/assets/monstres/piou_rose.png",
+    "initiative": 14,
+    "nom": "Piou Rose",
+    "pa": 4,
+    "pv": 12,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.05,
+      "feu": 0.05,
+      "terre": 0.05
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 14,
+      "chance": 6,
+      "force": 6,
+      "intelligence": 6,
+      "vitalite": 7
+    }
+  },
+  "piou_rouge": {
+    "archiNom": "Pioulette la Coquine",
+    "ia": "agressif",
+    "id": "piou_rouge",
+    "img": "/assets/monstres/piou_rouge.png",
+    "initiative": 14,
+    "nom": "Piou Rouge",
+    "pa": 4,
+    "pv": 12,
+    "resistances": {
+      "eau": -0.15,
+      "feu": 0.2
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 6,
+      "chance": 6,
+      "force": 6,
+      "intelligence": 14,
+      "vitalite": 7
+    }
+  },
+  "piou_vert": {
+    "archiNom": "Pioukas la Plante",
+    "ia": "agressif",
+    "id": "piou_vert",
+    "img": "/assets/monstres/piou_vert.png",
+    "initiative": 14,
+    "nom": "Piou Vert",
+    "pa": 4,
+    "pv": 12,
+    "resistances": {
+      "air": -0.15,
+      "terre": 0.2
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 6,
+      "chance": 6,
+      "force": 14,
+      "intelligence": 6,
+      "vitalite": 7
+    }
+  },
+  "piou_violet": {
+    "archiNom": "Pioussokrim le Délétère",
+    "ia": "agressif",
+    "id": "piou_violet",
+    "img": "/assets/monstres/piou_violet.png",
+    "initiative": 14,
+    "nom": "Piou Violet",
+    "pa": 4,
+    "pv": 12,
+    "resistances": {
+      "air": 0.05,
+      "eau": 0.05,
+      "feu": 0.05,
+      "terre": 0.05
+    },
+    "sorts": [
+      "coup_de_bec"
+    ],
+    "stats": {
+      "agilite": 6,
+      "chance": 14,
+      "force": 6,
+      "intelligence": 6,
+      "vitalite": 7
+    }
+  },
   "pissenlit_diabolique": {
     "archiNom": "Pissdane l'Insipide",
     "ia": "agressif",

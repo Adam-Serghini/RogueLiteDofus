@@ -3,7 +3,7 @@
 //  Garde-fou : à chaque nouvelle zone, ces invariants doivent tenir.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { ZONES, COMBATS, MONSTRES, ITEMS, TRANCHES, zonesDeTranche, butinToile, itemsDeToile } from "./data";
+import { ZONES, COMBATS, MONSTRES, ITEMS, TRANCHES, ERRANTS, zonesDeTranche, butinToile, itemsDeToile } from "./data";
 
 describe("intégrité des zones", () => {
   for (const zone of ZONES) {
@@ -59,16 +59,36 @@ describe("intégrité des zones", () => {
     });
   }
 
-  it("aucune espèce définie n'est ORPHELINE — toute espèce doit être placée quelque part", () => {
+  it("aucune espèce définie n'est ORPHELINE — toute espèce est placée en zone OU errante", () => {
     // Ce test est né d'une coquille réelle (2026-08-04) : le Tofu Maléfique existait dans
     // `monstres.json` avec son archimonstre, mais n'apparaissait dans AUCUNE rencontre —
     // donc invisible au Bestiaire et incapturable. Une espèce définie et jamais placée est
     // du contenu mort.
+    //
+    // Les Piou errants (2026-08-05) ne sont dans aucune zone PAR CONSTRUCTION : ils
+    // surgissent via `ERRANTS`/`appliquerErrants`. Ils ne sont donc pas une exception
+    // NOMMÉE — la règle réelle est « placée en zone ou déclarée errante », et sous cette
+    // forme le test continue d'attraper un vrai oubli.
     const placees = new Set(ZONES.flatMap((z) =>
       [...z.pools.normales, ...z.pools.elite, ...z.pools.boss]
         .flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre))));
+    for (const def of Object.values(ERRANTS)) for (const id of def.especes) placees.add(id);
     const orphelines = Object.keys(MONSTRES).filter((id) => !placees.has(id));
     expect(orphelines, `espèces définies mais placées nulle part : ${orphelines.join(", ")}`).toEqual([]);
+  });
+
+  it("une espèce errante est joignable : elle a un archimonstre et un sort", () => {
+    // Le pendant du test « toute capturable joignable en pack normal » : celui-ci ne voit
+    // que les pools de zone, donc les errants y échappent sans le savoir. Ici on vérifie
+    // ce qui les rend réellement atteignables.
+    for (const [tranche, def] of Object.entries(ERRANTS)) {
+      expect(def.chance, `${tranche} : un taux nul rendrait les errants inatteignables`).toBeGreaterThan(0);
+      for (const id of def.especes) {
+        expect(MONSTRES[id], `${id} déclaré errant mais inexistant`).toBeTruthy();
+        expect(MONSTRES[id].archiNom, `${id} errant sans archimonstre : rien à capturer`).toBeTruthy();
+        expect(MONSTRES[id].sorts.length, `${id} errant sans sort`).toBeGreaterThan(0);
+      }
+    }
   });
 
   it("toute espèce capturable est joignable en pack NORMAL", () => {
