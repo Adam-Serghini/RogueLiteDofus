@@ -4,7 +4,7 @@ import { validerContenu } from "./content-validate.mjs";
 
 const base = () => ({
   sorts: { morsure: { id: "morsure", nom: "Morsure", type: "degats", coutPA: 3, cible: "ennemi_ligne", baseMin: 4, baseMax: 7, scaling: 0.5 } },
-  classes: { iop: { id: "iop", nom: "Iop", pvBase: 60, stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0 }, pa: 6, initiative: 8, sorts: ["morsure"] } },
+  classes: { iop: { id: "iop", nom: "Iop", pvBase: 60, archetype: "melee", elements: ["terre", "feu"], stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0 }, pa: 6, initiative: 8, sorts: ["morsure"] } },
   monstres: { bouftou: { id: "bouftou", nom: "Bouftou", pv: 20, stats: { force: 10, intelligence: 0, agilite: 2, vitalite: 5 }, pa: 4, initiative: 7, resistances: {}, sorts: ["morsure"], ia: "agressif" } },
   combats: { c1: { nom: "Troupeau", ennemis: [{ monstre: "bouftou", position: 0 }] } },
   zones_pools: { tainela: { normales: ["c1"], elite: ["c1"], boss: ["c1"] } },

@@ -10,6 +10,7 @@ const RARETES = ["commun", "rare", "epique", "legendaire"];
 const SLOTS = ["arme", "coiffe", "cape", "anneau"];
 const ELEMENTS = ["terre", "feu", "eau", "air"];
 const IAS = ["agressif", "soutien"];
+const ARCHETYPES = ["melee", "distance"];
 
 const estNombre = (v) => typeof v === "number" && Number.isFinite(v);
 const estEntier = (v) => Number.isInteger(v);
@@ -108,6 +109,19 @@ export function validerContenu(contenu, base) {
   for (const [id, m] of Object.entries(contenu.monstres))
     for (const s of m.sorts ?? [])
       if (!contenu.sorts[s]) E("monstres", id, `le sort « ${s} » n'existe pas`);
+  for (const [id, cl] of Object.entries(contenu.classes)) {
+    if (!ARCHETYPES.includes(cl.archetype))
+      E("classes", id, `archetype doit être « melee » ou « distance » (reçu : ${cl.archetype})`);
+    // Deux éléments EXACTEMENT, distincts : les gains par niveau tombent dans chacun
+    // des deux, donc un doublon doublerait silencieusement la progression d'une stat.
+    if (!Array.isArray(cl.elements) || cl.elements.length !== 2)
+      E("classes", id, `elements doit être une liste de 2 éléments (reçu : ${JSON.stringify(cl.elements)})`);
+    else {
+      for (const el of cl.elements)
+        if (!ELEMENTS.includes(el)) E("classes", id, `élément inconnu : ${el}`);
+      if (cl.elements[0] === cl.elements[1]) E("classes", id, "les deux éléments doivent être distincts");
+    }
+  }
   for (const [id, cl] of Object.entries(contenu.classes))
     for (const s of cl.sorts ?? [])
       if (!contenu.sorts[s]) E("classes", id, `le sort « ${s} » n'existe pas`);

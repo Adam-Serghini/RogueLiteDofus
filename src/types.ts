@@ -262,10 +262,19 @@ export interface SurAllie {
   nonCumulable?: boolean; // remplace l'effet existant au lieu de l'empiler
 }
 
+/** Archétype d'une classe : pilote les gains de caractéristique par niveau
+ *  (voir GAINS_ARCHETYPE dans progression.ts). */
+export type Archetype = "melee" | "distance";
+
 export interface Classe {
   id: string;
   nom: string;
   pvBase: number;
+  archetype: Archetype;
+  /** Les DEUX éléments de la classe : l'élément de frappe se choisit parmi eux
+   *  (sauf `elementLibre`, Kwakwaffe). Leurs caractéristiques montent à chaque
+   *  niveau, les deux autres restent à la base de classe. */
+  elements: [Element, Element];
   stats: Stats;
   pa: number; // budget de PA par tour
   initiative: number;

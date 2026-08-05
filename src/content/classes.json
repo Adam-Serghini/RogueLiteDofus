@@ -1,5 +1,10 @@
 {
   "cra": {
+    "archetype": "distance",
+    "elements": [
+      "feu",
+      "air"
+    ],
     "id": "cra",
     "img": "/assets/classes/cra.png",
     "initiative": 12,
@@ -23,6 +28,11 @@
     }
   },
   "ecaflip": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "eau"
+    ],
     "id": "ecaflip",
     "img": "/assets/classes/ecaflip.png",
     "initiative": 10,
@@ -48,6 +58,11 @@
     }
   },
   "eliotrope": {
+    "archetype": "distance",
+    "elements": [
+      "feu",
+      "terre"
+    ],
     "id": "eliotrope",
     "img": "/assets/classes/eliotrope.png",
     "initiative": 12,
@@ -71,6 +86,11 @@
     }
   },
   "eniripsa": {
+    "archetype": "distance",
+    "elements": [
+      "feu",
+      "eau"
+    ],
     "id": "eniripsa",
     "img": "/assets/classes/eniripsa.png",
     "initiative": 11,
@@ -97,6 +117,11 @@
     }
   },
   "feca": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "feu"
+    ],
     "id": "feca",
     "img": "/assets/classes/feca.png",
     "initiative": 7,
@@ -122,6 +147,11 @@
     }
   },
   "forgelance": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "feu"
+    ],
     "id": "forgelance",
     "img": "/assets/classes/forgelance.png",
     "initiative": 11,
@@ -145,6 +175,11 @@
     }
   },
   "iop": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "feu"
+    ],
     "id": "iop",
     "img": "/assets/classes/iop.png",
     "initiative": 8,
@@ -170,6 +205,11 @@
     }
   },
   "ouginak": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "air"
+    ],
     "id": "ouginak",
     "img": "/assets/classes/ouginak.png",
     "initiative": 9,
@@ -193,6 +233,11 @@
     }
   },
   "roublard": {
+    "archetype": "distance",
+    "elements": [
+      "feu",
+      "eau"
+    ],
     "id": "roublard",
     "img": "/assets/classes/roublard.png",
     "initiative": 12,
@@ -216,6 +261,11 @@
     }
   },
   "sadida": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "eau"
+    ],
     "id": "sadida",
     "img": "/assets/classes/sadida.png",
     "initiative": 9,
@@ -240,6 +290,11 @@
     }
   },
   "sram": {
+    "archetype": "melee",
+    "elements": [
+      "terre",
+      "air"
+    ],
     "id": "sram",
     "img": "/assets/classes/sram.png",
     "initiative": 13,
@@ -265,6 +320,11 @@
     }
   },
   "xelor": {
+    "archetype": "distance",
+    "elements": [
+      "eau",
+      "terre"
+    ],
     "id": "xelor",
     "img": "/assets/classes/xelor.png",
     "initiative": 14,
