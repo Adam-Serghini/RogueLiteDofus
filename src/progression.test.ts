@@ -1,10 +1,12 @@
 // =============================================================================
-//  progression.test.ts — Validation du système de niveaux & points.
+//  progression.test.ts — Validation du système de niveaux & XP.
+//  Les tests de la courbe de caractéristiques (base + gains d'archétype)
+//  vivent dans archetypes.test.ts, avec la table archétype/éléments.
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  progressionInitiale, xpRequis, coutPoint, gagnerXP, investir, restat,
-  statsFinales, pvMaxFor, multOffensif, multSoin, STAT_KEYS, investirN,
+  progressionInitiale, xpRequis, coutPoint, gagnerXP,
+  statsFinales, pvMaxFor, multOffensif, multSoin,
 } from "./progression";
 import { CLASSES } from "./data";
 
@@ -27,12 +29,11 @@ describe("coutPoint", () => {
 });
 
 describe("gagnerXP", () => {
-  it("monte d'un niveau et octroie 3 points", () => {
+  it("monte d'un niveau", () => {
     const p = progressionInitiale();
     const niv = gagnerXP(p, 50); // xpRequis(1) = 50
     expect(niv).toBe(1);
     expect(p.niveau).toBe(2);
-    expect(p.pointsDispo).toBe(3);
     expect(p.xp).toBe(0);
   });
 
@@ -42,7 +43,6 @@ describe("gagnerXP", () => {
     // niveaux : 50 (→2), 75 (→3), 100 (→4) = 225 > 200 ; donc 2 niveaux, reste 200-125=75
     expect(niv).toBe(2);
     expect(p.niveau).toBe(3);
-    expect(p.pointsDispo).toBe(6);
     expect(p.xp).toBe(75);
   });
 
@@ -56,58 +56,19 @@ describe("gagnerXP", () => {
   });
 });
 
-describe("investir / restat", () => {
-  it("débite le bon coût et incrémente la stat", () => {
-    const p = progressionInitiale();
-    p.pointsDispo = 3;
-    expect(investir(p, "force")).toBe(true);
-    expect(p.pointsInvestis.force).toBe(1);
-    expect(p.pointsDispo).toBe(2);
-  });
-
-  it("refuse si pas assez de points", () => {
-    const p = progressionInitiale();
-    p.pointsDispo = 0;
-    expect(investir(p, "vitalite")).toBe(false);
-    expect(p.pointsInvestis.vitalite).toBe(0);
-  });
-
-  it("investirN dépense jusqu'à n points ; Max vide le pool", () => {
-    const p = progressionInitiale();
-    p.pointsDispo = 10;
-    expect(investirN(p, "force", 3)).toBe(3);
-    expect(p.pointsInvestis.force).toBe(3);
-    expect(p.pointsDispo).toBe(7);
-    expect(investirN(p, "agilite", Infinity)).toBe(7); // « Max »
-    expect(p.pointsDispo).toBe(0);
-  });
-
-  it("restat rembourse tout dans le pool", () => {
-    const p = progressionInitiale();
-    p.pointsDispo = 10;
-    investir(p, "force");
-    investir(p, "agilite");
-    restat(p);
-    expect(p.pointsDispo).toBe(10);
-    expect(p.pointsInvestis.force).toBe(0);
-    expect(p.pointsInvestis.agilite).toBe(0);
-  });
-});
-
 describe("stats finales & PV", () => {
-  it("statsFinales = base + investis", () => {
+  it("statsFinales = base de classe au niveau 1 (aucun gain d'archétype encore acquis)", () => {
     const p = progressionInitiale();
-    p.pointsInvestis.force = 10;
     const s = statsFinales(CLASSES.iop, p);
-    expect(s.force).toBe(CLASSES.iop.stats.force + 10);
+    expect(s.force).toBe(CLASSES.iop.stats.force);
   });
 
-  it("pvMaxFor = pvBase + vitalité finale", () => {
+  it("pvMaxFor = pvBase + vitalité finale, et monte avec le niveau", () => {
     const p = progressionInitiale();
-    const base = pvMaxFor(CLASSES.iop, p); // 60 + 50 = 110
-    expect(base).toBe(CLASSES.iop.pvBase + CLASSES.iop.stats.vitalite);
-    p.pointsInvestis.vitalite = 20;
-    expect(pvMaxFor(CLASSES.iop, p)).toBe(base + 20);
+    const base = pvMaxFor(CLASSES.iop, p);
+    expect(base).toBe(CLASSES.iop.pvBase + statsFinales(CLASSES.iop, p).vitalite);
+    p.niveau = 50;
+    expect(pvMaxFor(CLASSES.iop, p)).toBeGreaterThan(base);
   });
 });
 
@@ -127,22 +88,5 @@ describe("multSoin", () => {
     expect(multSoin({ ...s, intelligence: 40 })).toBeCloseTo(1.2); // l'Intelligence scale les soins
     expect(multSoin({ ...s, soin: 20, intelligence: 20 })).toBeCloseTo(1.2); // cumul
     expect(multSoin({ ...s, soin: 1000 })).toBeCloseTo(1.5); // plafond
-  });
-});
-
-describe("stats étendues", () => {
-  it("Chance est investable ; Soin et Prospection non", () => {
-    expect(STAT_KEYS).toContain("chance");
-    expect(STAT_KEYS).not.toContain("soin");
-    expect(STAT_KEYS).not.toContain("prospection");
-  });
-
-  it("statsFinales : Chance investie (base+points) ; Soin/Prospection = valeur de classe", () => {
-    const p = progressionInitiale();
-    p.pointsInvestis.chance = 15;
-    const s = statsFinales(CLASSES.eniripsa, p);
-    expect(s.chance).toBe((CLASSES.eniripsa.stats.chance ?? 0) + 15);
-    expect(s.soin).toBe(CLASSES.eniripsa.stats.soin ?? 0); // non investable
-    expect(s.prospection).toBe(CLASSES.eniripsa.stats.prospection ?? 0);
   });
 });

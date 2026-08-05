@@ -182,7 +182,6 @@ Butin au taux donjon.`)}"` : "";
         })
         .join("");
 
-      const points = persos.reduce((s, p) => s + p.progression.pointsDispo, 0);
       const asideEquipe = persos
         .map((p) => {
           const classe = CLASSES[p.classeId];
@@ -212,7 +211,7 @@ Butin au taux donjon.`)}"` : "";
           <header class="map-topbar">
             <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension — ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}${philtres >= 1 ? `<span class="asc-badge" title="Philtres d'Otomai bus — les archimonstres apparaissent plus souvent">🧪 ×${philtres}</span>` : ""}</h2>
             <div class="topbar-actions">
-              <button id="carte-persos" class="aside-icone" title="Caractéristiques${points ? ` · ${points} pts à dépenser` : ""}"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" />${points ? `<span class="aside-compte">${points}</span>` : ""}</button>
+              <button id="carte-persos" class="aside-icone" title="Caractéristiques"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" /></button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>
               <button id="carte-equip" class="aside-icone" title="Équipement${inventaire.length ? ` · ${inventaire.length} objet(s)` : ""}"><img src="${MENU_INVENTAIRE}" alt="Équipement" onerror="this.remove()" />${inventaire.length ? `<span class="aside-compte">${inventaire.length}</span>` : ""}</button>
               <button id="carte-bestiaire" class="aside-icone" title="Bestiaire"><img src="${MENU_BESTIAIRE}" alt="Bestiaire" onerror="this.remove()" /></button>

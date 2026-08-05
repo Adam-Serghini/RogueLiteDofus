@@ -396,12 +396,12 @@ export interface Combatant {
   redirectionPoseCeTour?: boolean; // vrai le tour où redirection est posée : le décompte de fin de tour est sauté une fois (même bug/fix que provoquePoseCeTour)
 }
 
-/** Progression d'un personnage pendant une run (réinitialisée à la mort). */
+/** Progression d'un personnage pendant une run (réinitialisée à la mort).
+ *  Les stats sont entièrement dérivées de (classe, niveau) — voir `statsFinales`
+ *  dans `progression.ts` ; il n'y a plus de pool de points à allouer. */
 export interface Progression {
   niveau: number;
   xp: number; // xp accumulée vers le niveau suivant
-  pointsDispo: number; // points de caractéristique non dépensés
-  pointsInvestis: Stats; // points dépensés par stat, au-dessus de la base de classe
 }
 
 /** Héros archivé à la victoire d'une tranche (départ de la tranche suivante). */

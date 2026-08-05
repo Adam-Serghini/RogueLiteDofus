@@ -1,30 +1,40 @@
 // =============================================================================
-//  progression.ts — Niveaux & points de caractéristique (pur, testable).
-//  Aucune dépendance au DOM ni au localStorage.
+//  progression.ts — Niveaux & caractéristiques (pur, testable).
+//  Aucune dépendance au DOM ni au localStorage. Les stats d'un héros sont
+//  entièrement déterminées par sa classe (archétype + éléments) et son niveau —
+//  il n'y a plus d'allocation manuelle.
 // =============================================================================
-import type { Classe, Progression, Stats } from "./types";
+import type { Archetype, Classe, Element, Progression, Stats } from "./types";
 
 // --- Constantes tunables -----------------------------------------------------
 export const PV_PAR_VITA = 1; // PV max gagnés par point de Vitalité
-export const POINTS_PAR_NIVEAU = 3; // points de caractéristique par niveau
 const SEUIL_COUT_2 = 200; // au-delà, un point coûte 2
 const SEUIL_COUT_3 = 300; // au-delà, un point coûte 3
 
-// Stats investables au level-up (soin & prospection exclues : valeurs de classe).
-export const STAT_KEYS: (keyof Stats)[] = [
-  "force", "intelligence", "agilite", "chance", "vitalite",
-];
+/** Points gagnés à chaque niveau : `parElement` dans CHACUN des deux éléments de la
+ *  classe, plus `vitalite`. Le mêlée est plus robuste, le distance frappe plus fort. */
+export const GAINS_ARCHETYPE: Record<Archetype, { parElement: number; vitalite: number }> = {
+  melee: { parElement: 3, vitalite: 2 },
+  distance: { parElement: 4, vitalite: 1 },
+};
+
+/** Caractéristique portant chaque élément. Ce mapping vit ICI (et non dans run.ts ou
+ *  combat.ts) parce que c'est lui qui décide où tombent les gains de niveau. */
+export const STAT_PAR_ELEMENT: Record<Element, keyof Stats> = {
+  terre: "force", feu: "intelligence", air: "agilite", eau: "chance",
+};
+
+/** Valeur de la caractéristique portant un élément. */
+export const statElement = (stats: Stats, el: Element): number =>
+  stats[STAT_PAR_ELEMENT[el]] ?? 0;
+
+/** terre : +1 vitalité par N de force (passif, PAR-DESSUS le tarif). */
+export const VITA_PAR_FORCE = 5;
+/** eau : +1 prospection par N de chance (passif, PAR-DESSUS le tarif). */
+export const PROSP_PAR_CHANCE = 3;
 
 export function progressionInitiale(): Progression {
-  return {
-    niveau: 1,
-    xp: 0,
-    pointsDispo: 0,
-    pointsInvestis: {
-      force: 0, intelligence: 0, agilite: 0, vitalite: 0,
-      chance: 0,
-    },
-  };
+  return { niveau: 1, xp: 0 };
 }
 
 /** XP requise pour passer du niveau donné au suivant. */
@@ -32,11 +42,51 @@ export function xpRequis(niveau: number): number {
   return 50 + (niveau - 1) * 25;
 }
 
-/** Coût (en points dispo) d'un point supplémentaire dans une stat déjà investie. */
+/** Coût d'un point supplémentaire dans une caractéristique déjà à `dejaInvesti`. */
 export function coutPoint(dejaInvesti: number): number {
   if (dejaInvesti < SEUIL_COUT_2) return 1;
   if (dejaInvesti < SEUIL_COUT_3) return 2;
   return 3;
+}
+
+/** Caractéristique obtenue en dépensant `points` dans UNE caractéristique, au tarif
+ *  croissant de `coutPoint`. Volontairement écrit comme une boucle : `coutPoint` reste
+ *  l'unique source du tarif, et la fonction est évidemment correcte à la lecture.
+ *  Borné à ~800 itérations (niveau 200, archétype distance). */
+export function statPourPoints(points: number): number {
+  let stat = 0;
+  let restant = points;
+  while (restant >= coutPoint(stat)) {
+    restant -= coutPoint(stat);
+    stat += 1;
+  }
+  return stat;
+}
+
+/** Stats finales = base de classe + gains d'archétype au niveau atteint + les deux
+ *  passifs élémentaires. Fonction PURE du couple (classe, niveau) : aucun état
+ *  d'allocation n'existe plus, et l'équipement est ajouté ailleurs (run.ts). */
+export function statsFinales(classe: Classe, p: Progression): Stats {
+  const g = GAINS_ARCHETYPE[classe.archetype];
+  const niveaux = Math.max(0, p.niveau - 1);
+  const base = classe.stats;
+  const gagne = (k: keyof Stats): number =>
+    classe.elements.some((el) => STAT_PAR_ELEMENT[el] === k)
+      ? statPourPoints(g.parElement * niveaux)
+      : 0;
+  const force = (base.force ?? 0) + gagne("force");
+  const chance = (base.chance ?? 0) + gagne("chance");
+  return {
+    force,
+    intelligence: (base.intelligence ?? 0) + gagne("intelligence"),
+    agilite: (base.agilite ?? 0) + gagne("agilite"),
+    chance,
+    // vitalité : le gain d'archétype passe par le tarif, le passif de terre s'ajoute
+    // PAR-DESSUS (il n'est pas acheté, il est dérivé)
+    vitalite: (base.vitalite ?? 0) + statPourPoints(g.vitalite * niveaux) + Math.floor(force / VITA_PAR_FORCE),
+    prospection: (base.prospection ?? 0) + Math.floor(chance / PROSP_PAR_CHANCE),
+    soin: base.soin ?? 0, // valeur de classe, jamais gagnée au niveau
+  };
 }
 
 /** Ajoute de l'XP et fait monter de niveau (plafonné à `niveauMax` : l'XP
@@ -48,51 +98,10 @@ export function gagnerXP(p: Progression, gain: number, niveauMax = Infinity): nu
   while (p.niveau < niveauMax && p.xp >= xpRequis(p.niveau)) {
     p.xp -= xpRequis(p.niveau);
     p.niveau += 1;
-    p.pointsDispo += POINTS_PAR_NIVEAU;
     niveauxGagnes += 1;
   }
   if (p.niveau >= niveauMax) p.xp = 0; // cap atteint : surplus perdu
   return niveauxGagnes;
-}
-
-/** Dépense un point dans une stat si abordable. Renvoie le succès. */
-export function investir(p: Progression, stat: keyof Stats): boolean {
-  const cout = coutPoint(p.pointsInvestis[stat] ?? 0);
-  if (p.pointsDispo < cout) return false;
-  p.pointsDispo -= cout;
-  p.pointsInvestis[stat] = (p.pointsInvestis[stat] ?? 0) + 1;
-  return true;
-}
-
-/** Dépense jusqu'à `n` points dans une stat (n = Infinity pour « Max »). Renvoie le nombre réellement dépensé. */
-export function investirN(p: Progression, stat: keyof Stats, n: number): number {
-  let count = 0;
-  while (count < n && investir(p, stat)) count++;
-  return count;
-}
-
-/** Rembourse tous les points investis dans le pool disponible (Otomai / mort). */
-export function restat(p: Progression): void {
-  for (const k of STAT_KEYS) {
-    p.pointsDispo += p.pointsInvestis[k] ?? 0;
-    p.pointsInvestis[k] = 0;
-  }
-}
-
-/** Stats finales = base de classe + points investis. */
-export function statsFinales(classe: Classe, p: Progression): Stats {
-  const base = classe.stats;
-  const inv = p.pointsInvestis;
-  const f = (k: keyof Stats): number => (base[k] ?? 0) + (inv[k] ?? 0);
-  return {
-    force: f("force"),
-    intelligence: f("intelligence"),
-    agilite: f("agilite"),
-    vitalite: f("vitalite"),
-    chance: f("chance"),
-    soin: base.soin ?? 0, // non investable : valeur de classe
-    prospection: base.prospection ?? 0, // non investable : valeur de classe
-  };
 }
 
 /** PV max = pvBase + vitalité finale × PV_PAR_VITA. */

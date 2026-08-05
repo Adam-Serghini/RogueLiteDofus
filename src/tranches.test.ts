@@ -154,11 +154,10 @@ describe("PV de départ d'une équipe neuve", () => {
     const run = avecPreregleges({ iop: "vitalite", cra: "terre" }, () => nouvelleRun(["iop", "cra"], 0, "t2"));
     for (const perso of run.persos) {
       expect(perso.progression.niveau).toBe(50);
-      expect(perso.progression.pointsDispo).toBe(0); // tous auto-investis par le préréglage
       expect(perso.pvActuels).toBe(pvMaxPerso(perso));
     }
-    // le préréglage vitalité gonfle bel et bien le max : sans resynchronisation, les
-    // PV courants resteraient à la valeur de base d'avant l'investissement
+    // au niveau 50, les stats (donc les PV max) sont déjà bien au-dessus de la base :
+    // sans resynchronisation, les PV courants resteraient à la valeur de base du niveau 1
     const iop = run.persos[0];
     expect(pvMaxPerso(iop)).toBeGreaterThan(pvMaxFor(CLASSES.iop, progressionInitiale()));
   });

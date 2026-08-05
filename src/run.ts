@@ -4,7 +4,7 @@
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
 import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
-import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, POINTS_PAR_NIVEAU, gagnerXP, investirN } from "./progression";
+import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, HeritageEquipe, HeritagePerso, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
@@ -51,15 +51,16 @@ export interface RunState {
 export const EQUIPE_DEPART = ["iop", "cra", "eniripsa", "ecaflip"]; // roster par défaut (tests)
 export const TAILLE_MAX_EQUIPE = 4;
 
-/** Stat de caractéristique portant chaque élément (pour l'allocation par élément). */
-export const STAT_PAR_ELEMENT: Record<Element, keyof Stats> = {
-  terre: "force", feu: "intelligence", air: "agilite", eau: "chance",
-};
+/** Stat de caractéristique portant chaque élément — ré-exporté ici pour ne pas
+ *  casser les appelants existants (le mapping vit désormais dans progression.ts,
+ *  qui décide où tombent les gains de niveau). */
+export { STAT_PAR_ELEMENT };
 
 /**
- * Fixe (ou retire, si null) l'élément de frappe choisi d'un perso.
- * En mode « élément » : investit immédiatement les points dispo dans sa stat
- * (les futurs points de niveau suivront via `gagnerXPPerso`).
+ * Fixe (ou retire, si null) l'élément de frappe choisi d'un perso. Les stats
+ * étant désormais une fonction pure de (classe, niveau), il n'y a plus rien à
+ * investir ici : on ne fait que mémoriser le choix pour l'élément de frappe
+ * (`combat.ts`) et pour l'auto-allocation d'équipement adaptatif (`statPrincipale`).
  */
 export function appliquerElement(perso: PersoState, choix: Allocation | null): void {
   if (choix === "vitalite") {
@@ -69,22 +70,15 @@ export function appliquerElement(perso: PersoState, choix: Allocation | null): v
     perso.elementChoisi = choix ?? undefined;
     perso.statAuto = choix ? STAT_PAR_ELEMENT[choix] : undefined;
   }
-  if (perso.statAuto) investirN(perso.progression, perso.statAuto, Infinity);
 }
 
-/**
- * XP d'un perso : monte de niveau ; si un élément est choisi, alloue
- * automatiquement les points gagnés dans sa stat. Renvoie les niveaux gagnés.
- */
 /** Niveau maximum (cap d'XP) de la tranche donnée. */
 export const niveauMaxTranche = (trancheId: string): number => trancheDe(trancheId).niveaux[1];
 
+/** XP d'un perso : monte de niveau (les stats suivent automatiquement, voir
+ *  `statsFinales`). Renvoie les niveaux gagnés. */
 export function gagnerXPPerso(perso: PersoState, gain: number, trancheId: string): number {
-  const niveaux = gagnerXP(perso.progression, gain, niveauMaxTranche(trancheId));
-  // rétro-compat : les saves d'avant statAuto ne portent que elementChoisi
-  const stat = perso.statAuto ?? (perso.elementChoisi ? STAT_PAR_ELEMENT[perso.elementChoisi] : undefined);
-  if (stat) investirN(perso.progression, stat, Infinity);
-  return niveaux;
+  return gagnerXP(perso.progression, gain, niveauMaxTranche(trancheId));
 }
 
 /** Classes retirées du jeu (données conservées pour les tests/saves) — pas
@@ -122,11 +116,11 @@ function cellulesPour(ids: string[]): Record<string, number> {
   return cells;
 }
 
-/** Perso neuf à un niveau donné, avec les points de caractéristique cumulés. */
+/** Perso neuf à un niveau donné (les stats en découlent automatiquement, voir
+ *  `statsFinales`). */
 export function persoAuNiveau(classeId: string, niveau: number, position: number): PersoState {
   const progression = progressionInitiale();
   progression.niveau = niveau;
-  progression.pointsDispo = (niveau - 1) * POINTS_PAR_NIVEAU;
   return { classeId, progression, pvActuels: pvMaxFor(CLASSES[classeId], progression), position, equipement: {} };
 }
 
@@ -139,8 +133,9 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
     const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
     const pref = elemsPref[classeId]; // préréglage (absent = Libre)
     if (pref) appliquerElement(perso, pref);
-    // `persoAuNiveau` a figé les PV AVANT l'auto-investissement des points de la
-    // tranche : on resynchronise sur le vrai maximum (tranche ≠ 1 = niveau > 1).
+    // `persoAuNiveau` a figé les PV sans l'équipement (encore vide à cet instant,
+    // mais `pvMaxPerso` inclut aussi les bonus de Vitalité de l'équipement) : on
+    // resynchronise sur le vrai maximum pour rester correct si ça change.
     perso.pvActuels = pvMaxPerso(perso);
     if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
@@ -173,7 +168,7 @@ export function propositionsRecrutement(run: RunState, rng: () => number): strin
   return res;
 }
 
-/** Crée un nouveau perso au niveau de l'équipe (avec points à dépenser). */
+/** Crée un nouveau perso au niveau de l'équipe. */
 function nouveauPerso(run: RunState, classeId: string, position: number): PersoState {
   return persoAuNiveau(classeId, niveauMoyen(run), position);
 }

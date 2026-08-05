@@ -5,13 +5,17 @@
 //  Rejoue chaque rencontre N fois (IA des deux côtés, RNG graine reproductible)
 //  et sort un tableau : taux de victoire, tours joués, PV restants sur victoire.
 //  Équipe de référence : 4 classes par défaut, montée au NIVEAU ATTENDU de la
-//  zone (dérivé de la courbe d'XP), points investis dans la stat offensive
-//  dominante. Deux scénarios de stuff : « nu » et « set de zone » (toile, palier commun).
+//  zone (dérivé de la courbe d'XP). Deux scénarios de stuff : « nu » et « set
+//  de zone » (toile, palier commun).
 //
 //  LIMITES (à garder en tête) : `controllerIA` ne joue pas de façon optimale
 //  (spam du sort le plus cher, focus PV le plus bas ; seul le soin est géré via
 //  ia="soutien"). Aucun choix d'élément de frappe adaptatif → mesure « si le
 //  joueur ne s'adapte pas ». C'est une BASELINE RELATIVE, pas le ressenti réel.
+//  TRANSITOIRE (Task 2, 2026-08-05) : depuis le passage aux stats-par-archétype,
+//  ce fichier fixe le niveau sans plus pré-allouer de points (il n'y en a plus) —
+//  la Task 6 doit refaire le modèle de référence (vitalité/stat offensive n'a
+//  plus de sens ici, les deux montent ensemble selon l'archétype de la classe).
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
@@ -20,7 +24,7 @@ import {
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
-import { progressionInitiale, gagnerXP, investirN, POINTS_PAR_NIVEAU } from "./progression";
+import { progressionInitiale, gagnerXP } from "./progression";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateursElite, instanceDuTier,
   effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
@@ -140,13 +144,11 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
   run.persos.forEach((perso, i) => {
     const p = progressionInitiale();
     p.niveau = niveau;
-    p.pointsDispo = POINTS_PAR_NIVEAU * (niveau - 1);
-    // build de référence RÉALISTE : ~25 % des points en vitalité, le reste
-    // dans la stat offensive (un full glass cannon rendait les boss 10 PA
-    // « injouables » à la sim alors qu'ils ne le sont pas en vrai jeu).
-    // Config tortue (SIM_TANK) : le tank met TOUT en vitalité.
-    if (TEAM[i].fullVita) investirN(p, "vitalite", Infinity);
-    else { investirN(p, "vitalite", Math.floor(p.pointsDispo * 0.25)); investirN(p, TEAM[i].stat, Infinity); }
+    // TRANSITOIRE (Task 2) : les stats sont désormais une fonction pure de
+    // (classe, niveau) — voir statsFinales — il n'y a plus rien à investir.
+    // Le modèle « 25 % vitalité / 75 % stat offensive » et la config tortue
+    // (SIM_TANK, fullVita) décrits ci-dessous n'ont plus d'effet ; refaire le
+    // sim autour de l'archétype de la classe est le travail de la Task 6.
     perso.progression = p;
     if (TEAM[i].pos !== undefined) perso.position = TEAM[i].pos!;
     if (pool) {

@@ -4,10 +4,12 @@
 //  Pilotable sans UI : voir test.ts (deux IA qui s'affrontent en console).
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
-import { multOffensif, multSoin, pctRembPA } from "./progression";
+import { multOffensif, multSoin, pctRembPA, statElement } from "./progression";
 import type {
   Camp, Combatant, EffetSpec, EffetStat, Element, Monstre, Spell, Stats, Action,
 } from "./types";
+
+export { statElement };
 
 // --- Aléatoire (injectable pour les tests) -----------------------------------
 export type Rng = () => number;
@@ -55,16 +57,6 @@ const adverses = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
 // la cibler (ni aucun autre effet « allié »/rangée-alliée côté ennemi).
 const allies = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
   vivants(cs).filter((c) => c.camp === acteur.camp && !c.estLance);
-
-/** Stat élémentaire associée à un élément (terre→force, feu→int, eau→chance, … ). */
-export const statElement = (stats: Stats, el: Element): number => {
-  switch (el) {
-    case "terre": return stats.force;
-    case "feu": return stats.intelligence;
-    case "eau": return stats.chance ?? 0;
-    case "air": return stats.agilite;
-  }
-};
 
 /** Stat (buffable) portant chaque élément — pour buffer la carac d'un élément. */
 const ELEMENT_STAT: Record<Element, EffetStat> = {

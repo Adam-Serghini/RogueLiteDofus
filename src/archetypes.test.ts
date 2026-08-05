@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import mdClassesElements from "../CLASSES-ELEMENTS.md?raw";
 import { CLASSES } from "./data";
+import { statPourPoints, statsFinales, GAINS_ARCHETYPE } from "./progression";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
@@ -58,5 +59,57 @@ describe("table des classes", () => {
       expect(ligne, `${id} : archétype divergent`).toContain(c.archetype);
       for (const el of c.elements) expect(ligne, `${id} : ${el} manquant`).toContain(NOM_EL[el]);
     }
+  });
+});
+
+/** Caractéristique de frappe d'une classe à un niveau donné. */
+const frappe = (id: string, niveau: number): number => {
+  const c = CLASSES[id];
+  const stats = statsFinales(c, { niveau, xp: 0 });
+  const parEl: Record<string, keyof typeof stats> = {
+    terre: "force", feu: "intelligence", air: "agilite", eau: "chance",
+  };
+  return (stats[parEl[c.elements[0]]] as number) ?? 0;
+};
+
+describe("courbes de progression", () => {
+  it("le mêlée reproduit EXACTEMENT la courbe documentée", () => {
+    // 147/248/315/365 : la courbe d'avant le rework, à 3 points par niveau et par
+    // caractéristique. C'est le test qui prouve que le tarif croissant a survécu à
+    // l'allocation automatique — sans lui, un distance atteindrait 796 au niveau 200.
+    expect([50, 100, 150, 200].map((n) => frappe("iop", n))).toEqual([147, 248, 315, 365]);
+  });
+
+  it("le distance monte ~20 % plus haut", () => {
+    expect([50, 100, 150, 200].map((n) => frappe("cra", n))).toEqual([196, 298, 365, 432]);
+  });
+
+  it("les DEUX éléments de la classe montent, les deux autres restent à la base", () => {
+    const s = statsFinales(CLASSES.iop, { niveau: 50, xp: 0 }); // terre + feu
+    expect(s.force).toBe(147);
+    expect(s.intelligence).toBe(147);
+    expect(s.agilite).toBe(CLASSES.iop.stats.agilite); // air : non concerné
+    expect(s.chance ?? 0).toBe(CLASSES.iop.stats.chance ?? 0);
+  });
+
+  it("statPourPoints applique le tarif croissant aux seuils", () => {
+    expect(statPourPoints(0)).toBe(0);
+    expect(statPourPoints(1)).toBe(1);
+    expect(statPourPoints(200)).toBe(200); // dernier point au tarif 1
+    expect(statPourPoints(202)).toBe(201); // tarif 2 : 2 points pour 1 de stat
+    expect(statPourPoints(400)).toBe(300); // fin du tarif 2
+    expect(statPourPoints(403)).toBe(301); // tarif 3
+  });
+
+  it("la vitalité d'archétype suit le même tarif", () => {
+    // mêlée : 2 par niveau → 98 au niveau 50, sous le seuil, donc tarif 1.
+    const g = GAINS_ARCHETYPE.melee;
+    expect(statPourPoints(g.vitalite * 49)).toBe(98);
+    expect(GAINS_ARCHETYPE.distance.vitalite * 49).toBe(49);
+  });
+
+  it("au niveau 1, un héros n'a que sa base de classe", () => {
+    const s = statsFinales(CLASSES.iop, { niveau: 1, xp: 0 });
+    expect(s.force).toBe(CLASSES.iop.stats.force);
   });
 });

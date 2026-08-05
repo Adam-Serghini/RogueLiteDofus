@@ -5,11 +5,8 @@
 import { CLASSES, ITEMS } from "../data";
 import { ELEMENTS } from "../combat";
 import {
-  STAT_KEYS,
   statsFinales,
   xpRequis,
-  coutPoint,
-  investirN,
 } from "../progression";
 import { sauverConfig } from "../config";
 import { elementAsset, BTN_RETOUR, BTN_CONTINUER, ICON_VITA } from "./assets";
@@ -257,6 +254,12 @@ const STAT_ELEMENTAIRE = new Set<keyof Stats>([
   "chance",
 ]);
 
+// TRANSITOIRE (Task 2) : les stats ne s'allouent plus manuellement, elles
+// découlent de (classe, niveau) — voir `statsFinales`. Ce panneau n'affiche
+// donc plus que la valeur finale de chaque caractéristique ; la Task 5 doit
+// reprendre l'écran en profondeur pour ce nouveau statut « lecture seule ».
+const STATS_AFFICHEES: (keyof Stats)[] = ["force", "intelligence", "agilite", "chance", "vitalite"];
+
 function carteProgression(p: PersoState): string {
   const classe = CLASSES[p.classeId];
   const prog = p.progression;
@@ -266,22 +269,13 @@ function carteProgression(p: PersoState): string {
   const xpReq = xpRequis(prog.niveau);
   const xpPct = Math.min(100, Math.round((prog.xp / xpReq) * 100));
 
-  const lignes = STAT_KEYS.map((stat) => {
-    const cout = coutPoint(prog.pointsInvestis[stat] ?? 0);
-    const peut = prog.pointsDispo >= cout;
-    const inv = prog.pointsInvestis[stat] ?? 0;
+  const lignes = STATS_AFFICHEES.map((stat) => {
     const equip = bonus.stats[stat] ?? 0; // apport de l'équipement pour cette stat
     const total = (finals[stat] ?? 0) + equip;
-    // format : TOTAL (points investis) + (équipement) — total coloré par stat,
-    // investis en bleu foncé, équipement en violet
     return `
       <div class="stat-ligne">
         <span class="stat-nom" tabindex="0">${STAT_NOM[stat]}<span class="stat-info">ⓘ</span><span class="stat-aide">${STAT_AIDE[stat]}${STAT_ELEMENTAIRE.has(stat) ? AIDE_ELEMENT : ""}</span></span>
-        <span class="stat-val"><b class="stat-total stat-c-${stat}">${total}</b><span class="stat-part-inv" title="Points investis">(${inv})</span>${equip ? ` + <span class="stat-part-equip" title="Équipement">(${equip})</span>` : ""}${cout > 1 ? ` <span class="muet stat-cout">×${cout}</span>` : ""}</span>
-        <span class="stat-actions">
-          <button class="stat-champ" data-perso="${p.classeId}" data-stat="${stat}" ${peut ? "" : "disabled"} title="Montant libre">+…</button>
-          <button class="stat-alloc" data-perso="${p.classeId}" data-stat="${stat}" data-n="max" ${peut ? "" : "disabled"}>Max</button>
-        </span>
+        <span class="stat-val"><b class="stat-total stat-c-${stat}">${total}</b>${equip ? ` + <span class="stat-part-equip" title="Équipement">(${equip})</span>` : ""}</span>
       </div>`;
   }).join("");
 
@@ -295,7 +289,6 @@ function carteProgression(p: PersoState): string {
         <span class="xp-txt">XP ${prog.xp} / ${xpReq}</span>
       </div>
       <div class="prog-pv">PV max : <b>${pvMax}</b> · PV actuels : ${Math.max(0, Math.round(p.pvActuels))}</div>
-      <div class="points-dispo ${prog.pointsDispo ? "actif" : ""}">Points à dépenser : <b>${prog.pointsDispo}</b></div>
       <div class="stats-grille">${lignes}</div>
     </div>`;
 }
@@ -324,66 +317,23 @@ function sectionBonusDofus(meta: Meta | null): string {
 export function showStatPanel(
   persos: PersoState[],
   titre = "Caractéristiques",
-  sousTitre = "Dépense tes points de caractéristique.",
+  sousTitre = "Caractéristiques de l'équipe.",
   retour = false,
   meta: Meta | null = null,
 ): Promise<void> {
   return new Promise((res) => {
-    const draw = () => {
-      ecran(`
-        <h1>${escapeHtml(titre)}</h1>
-        <p class="sous-titre">${escapeHtml(sousTitre)}</p>
-        ${sectionBonusDofus(meta)}
-        <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
-        <div class="boutons-ecran">${retour
-          ? `<button id="prog-fermer" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button>`
-          : `<button id="prog-fermer" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button>`}</div>
-      `);
-      const persoDe = (el: HTMLElement) =>
-        persos.find((p) => p.classeId === el.dataset.perso);
-      // +1 / +5 / Max
-      root.querySelectorAll<HTMLButtonElement>(".stat-alloc").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const perso = persoDe(btn);
-          if (!perso) return;
-          const n = btn.dataset.n === "max" ? Infinity : Number(btn.dataset.n);
-          if (
-            investirN(perso.progression, btn.dataset.stat as keyof Stats, n) > 0
-          )
-            draw();
-        });
-      });
-      // montant libre : un champ nombre s'ouvre à la place des boutons
-      root.querySelectorAll<HTMLButtonElement>(".stat-champ").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const actions = btn.closest<HTMLElement>(".stat-actions");
-          if (!actions) return;
-          actions.innerHTML = `<input class="stat-champ-input" type="number" min="1" step="1" value="1" /><button class="stat-champ-ok">OK</button>`;
-          const input =
-            actions.querySelector<HTMLInputElement>(".stat-champ-input")!;
-          input.focus();
-          input.select();
-          const valider = () => {
-            const perso = persoDe(btn);
-            const n = Math.max(0, Math.floor(Number(input.value) || 0));
-            if (perso && n > 0)
-              investirN(perso.progression, btn.dataset.stat as keyof Stats, n);
-            draw();
-          };
-          actions
-            .querySelector<HTMLButtonElement>(".stat-champ-ok")
-            ?.addEventListener("click", valider);
-          input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") valider();
-            else if (e.key === "Escape") draw();
-          });
-        });
-      });
-      document
-        .getElementById("prog-fermer")
-        ?.addEventListener("click", () => res());
-    };
-    draw();
+    ecran(`
+      <h1>${escapeHtml(titre)}</h1>
+      <p class="sous-titre">${escapeHtml(sousTitre)}</p>
+      ${sectionBonusDofus(meta)}
+      <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
+      <div class="boutons-ecran">${retour
+        ? `<button id="prog-fermer" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button>`
+        : `<button id="prog-fermer" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button>`}</div>
+    `);
+    document
+      .getElementById("prog-fermer")
+      ?.addEventListener("click", () => res());
   });
 }
 

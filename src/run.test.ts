@@ -11,21 +11,23 @@ import { chargerConfig } from "./config";
 import type { Meta } from "./types";
 
 describe("allocation par élément", () => {
-  it("gagnerXPPerso investit auto les points de niveau dans la stat de l'élément choisi", () => {
+  // TRANSITOIRE (Task 2) : les stats découlent désormais de (classe, niveau) —
+  // voir statsFinales — appliquerElement ne fait plus qu'enregistrer le choix
+  // (élément de frappe / stat d'équipement adaptatif), il n'investit plus rien.
+  it("gagnerXPPerso monte de niveau, avec ou sans élément choisi", () => {
     const p = nouvelleRun(["iop"]).persos[0];
-    appliquerElement(p, "feu"); // feu → intelligence
-    gagnerXPPerso(p, 50, "t1"); // assez pour passer niveau 2 (+5 pts)
+    appliquerElement(p, "feu"); // feu → intelligence (mémorisé pour la frappe)
+    gagnerXPPerso(p, 50, "t1"); // assez pour passer niveau 2
     expect(p.progression.niveau).toBe(2);
-    expect(p.progression.pointsInvestis.intelligence).toBe(3); // auto-investis
-    expect(p.progression.pointsDispo).toBe(0); // rien à dépenser à la main
+    expect(p.elementChoisi).toBe("feu");
   });
 
-  it("mode Libre (élément null) laisse les points à dépenser manuellement", () => {
+  it("mode Libre (élément null) efface l'élément choisi", () => {
     const p = nouvelleRun(["iop"]).persos[0];
     appliquerElement(p, null);
     gagnerXPPerso(p, 50, "t1");
     expect(p.elementChoisi).toBeUndefined();
-    expect(p.progression.pointsDispo).toBe(3); // manuel : à dépenser soi-même
+    expect(p.progression.niveau).toBe(2);
   });
 });
 
@@ -190,8 +192,7 @@ describe("recrutement", () => {
     run.persos.forEach((p) => (p.progression.niveau = 5));
     recruter(run, "eniripsa");
     const recrue = run.persos.find((p) => p.classeId === "eniripsa")!;
-    expect(recrue.progression.niveau).toBe(5);
-    expect(recrue.progression.pointsDispo).toBe((5 - 1) * 3); // points cumulés
+    expect(recrue.progression.niveau).toBe(5); // stats à ce niveau : voir statsFinales
   });
 
   it("remplace un membre quand l'équipe est pleine (même case)", () => {
@@ -372,15 +373,14 @@ describe("rangée préférée", () => {
 });
 
 describe("allocation Vitalité", () => {
-  it("le préréglage vitalite investit en PV et laisse la frappe libre", () => {
+  it("le préréglage vitalite laisse la frappe libre (plus haute carac)", () => {
     localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "vitalite" } }));
     const run = nouvelleRun(["iop"]);
     const p = run.persos[0];
     expect(p.statAuto).toBe("vitalite");
     expect(p.elementChoisi).toBeUndefined(); // frappe = plus haute carac
-    gagnerXPPerso(p, 50, "t1"); // niveau 2 → 3 points auto en vitalité
-    expect(p.progression.pointsInvestis.vitalite).toBe(3);
-    expect(p.progression.pointsDispo).toBe(0);
+    gagnerXPPerso(p, 50, "t1"); // niveau 2 : stats à ce niveau, voir statsFinales
+    expect(p.progression.niveau).toBe(2);
     localStorage.removeItem("rld_settings_v0");
   });
 

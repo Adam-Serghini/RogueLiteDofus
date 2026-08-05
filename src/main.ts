@@ -104,15 +104,10 @@ async function resoudreCombat(
 }
 
 async function recompenserXP(run: RunState, gain: number): Promise<void> {
-  // Chaque perso monte ; en mode « élément » les points sont investis auto.
-  // On n'ouvre le panneau que si un héros en mode MANUEL a des points à dépenser.
-  let manuelAvecPoints = false;
+  // TRANSITOIRE (Task 2) : les stats découlent désormais de (classe, niveau),
+  // il n'y a plus de points à dépenser — on marque juste l'animation de niveau.
   for (const p of run.persos) {
     if (gagnerXPPerso(p, gain, run.trancheId) > 0) p.flashNiveau = true; // pour l'animation dans le panneau d'équipe
-    if (!p.elementChoisi && p.progression.pointsDispo > 0) manuelAvecPoints = true;
-  }
-  if (manuelAvecPoints) {
-    await ui.showStatPanel(run.persos, "Niveau gagné !", "Dépense les points des héros en mode manuel.", false, meta);
   }
 }
 
