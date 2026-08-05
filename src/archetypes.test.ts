@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import mdClassesElements from "../CLASSES-ELEMENTS.md?raw";
 import { CLASSES } from "./data";
-import { statPourPoints, statsFinales, GAINS_ARCHETYPE } from "./progression";
+import { statPourPoints, statsFinales } from "./progression";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
@@ -101,11 +101,23 @@ describe("courbes de progression", () => {
     expect(statPourPoints(403)).toBe(301); // tarif 3
   });
 
-  it("la vitalité d'archétype suit le même tarif", () => {
-    // mêlée : 2 par niveau → 98 au niveau 50, sous le seuil, donc tarif 1.
-    const g = GAINS_ARCHETYPE.melee;
-    expect(statPourPoints(g.vitalite * 49)).toBe(98);
-    expect(GAINS_ARCHETYPE.distance.vitalite * 49).toBe(49);
+  it("la vitalité finale distingue le mêlée du distance, de bout en bout via statsFinales", () => {
+    // iop (mêlée, terre+feu) niveau 50 : 98 de vitalité au tarif d'archétype
+    // (2/niveau × 49 niveaux, sous le seuil de 200 → tarif 1, donc 98 tel quel)
+    // + le passif de terre, PAR-DESSUS le tarif : force finale 147 (voir le test
+    // de courbe ci-dessus) / VITA_PAR_FORCE (5) = floor(147/5) = 29.
+    // Total : 98 + 29 = 127.
+    const iop = statsFinales(CLASSES.iop, { niveau: 50, xp: 0 });
+    expect(iop.vitalite).toBe(127);
+
+    // cra (distance, feu+air) niveau 50 : 49 de vitalité au tarif d'archétype
+    // (1/niveau × 49 niveaux, tarif 1). La terre n'est pas un de ses éléments,
+    // donc sa force reste à 0 et le passif de terre n'ajoute rien : total 49.
+    const cra = statsFinales(CLASSES.cra, { niveau: 50, xp: 0 });
+    expect(cra.vitalite).toBe(49);
+
+    // le compromis central des deux archétypes : le mêlée est plus robuste.
+    expect(iop.vitalite).toBeGreaterThan(cra.vitalite);
   });
 
   it("au niveau 1, un héros n'a que sa base de classe", () => {

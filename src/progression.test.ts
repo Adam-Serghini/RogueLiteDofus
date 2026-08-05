@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import {
   progressionInitiale, xpRequis, coutPoint, gagnerXP,
-  statsFinales, pvMaxFor, multOffensif, multSoin,
+  statsFinales, pvMaxFor, multOffensif, multSoin, PV_PAR_VITA,
 } from "./progression";
 import { CLASSES } from "./data";
 
@@ -68,7 +68,10 @@ describe("stats finales & PV", () => {
     const base = pvMaxFor(CLASSES.iop, p);
     expect(base).toBe(CLASSES.iop.pvBase + statsFinales(CLASSES.iop, p).vitalite);
     p.niveau = 50;
-    expect(pvMaxFor(CLASSES.iop, p)).toBeGreaterThan(base);
+    // valeur exacte : la formule reste calculable même sans allocation manuelle,
+    // un `toBeGreaterThan` laisserait passer une régression du calcul de vitalité.
+    expect(pvMaxFor(CLASSES.iop, p))
+      .toBe(CLASSES.iop.pvBase + statsFinales(CLASSES.iop, p).vitalite * PV_PAR_VITA);
   });
 });
 
