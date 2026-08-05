@@ -36,8 +36,7 @@ const SYN_IGNORE_RES: Spell = { // ex-Flèche intrusive (baseMin5/baseMax7/scali
 
 describe("élément de frappe", () => {
   it("un MONSTRE (sans paire déclarée) : déterminé par la plus haute stat élémentaire", () => {
-    const [m1] = fabriquerEnnemis("combat_1");
-    const [m2] = fabriquerEnnemis("combat_1");
+    const [m1, m2] = fabriquerEnnemis("combat_1"); // même pack, deux individus distincts
     m1.elementChoisi = undefined;
     m2.elementChoisi = undefined;
     m1.stats = { ...m1.stats, force: 60 }; // build Terre

@@ -205,6 +205,16 @@ describe("les éléments en combat", () => {
     expect(statPrincipale(p)).toBe("agilite");
   });
 
+  it("statPrincipale honore un elementChoisi HORS PAIRE (porteur du Kwakwaffe)", () => {
+    // Le Kwakwaffe (elementLibre) laisse un porteur frapper dans N'IMPORTE quel
+    // élément, y compris hors de la paire de sa classe — statPrincipale doit suivre
+    // ce choix comme elementDeFrappe, pas retomber sur le 1er élément de la classe :
+    // sinon la stat adaptative de l'équipement alimenterait une caractéristique morte.
+    const p = persoAuNiveau("iop", 50, 0); // terre + feu
+    p.elementChoisi = "air"; // hors paire, choix délibéré en combat
+    expect(statPrincipale(p)).toBe("agilite");
+  });
+
   it("persoAuNiveau produit les stats de l'archétype — c'est la porte de la Tranche 2", () => {
     const p = persoAuNiveau("iop", 50, 0);
     const c = combattantDepuisPerso(p);

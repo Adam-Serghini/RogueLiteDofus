@@ -389,6 +389,16 @@ describe("allocation Vitalité", () => {
     localStorage.removeItem("rld_settings_v0");
   });
 
+  it("un préréglage VALIDE mais HORS PAIRE (vieille save rld_settings_v0) retombe aussi sur le 1er élément", () => {
+    // Cas nommé dans le commentaire ci-dessus, jusqu'ici non testé : "eau" est un
+    // élément valide (pas une valeur fantaisiste comme "vitalite"), mais l'iop ne le
+    // déclare pas (terre + feu) — c'est là que le `.includes` fait tout le travail.
+    localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "eau" } }));
+    const run = nouvelleRun(["iop"]);
+    expect(run.persos[0].elementChoisi).toBe("terre"); // 1er élément de la classe, pas "eau"
+    localStorage.removeItem("rld_settings_v0");
+  });
+
   it("appliquerElement bascule proprement élément ↔ vitalité ↔ libre", () => {
     const p = nouvelleRun(["iop"]).persos[0];
     appliquerElement(p, "feu");

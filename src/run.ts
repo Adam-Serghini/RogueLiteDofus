@@ -246,12 +246,20 @@ export function runDepuisHeritage(
   arch: HeritageEquipe, avecStuff: boolean, trancheId: string, ascension = 0,
 ): RunState {
   const persos: PersoState[] = arch.persos.map((h) => {
+    // Même garde qu'à `nouvelleRun` — mais pour une raison DIFFÉRENTE : ici l'élément
+    // hérité vient d'une sauvegarde (donnée potentiellement périmée : refonte de
+    // classe, ancienne save…), pas d'un choix en cours de combat via le Kwakwaffe.
+    // Hors paire, il retombe sur le 1er élément de la classe plutôt que de laisser
+    // le héros hérité frapper silencieusement dans une caractéristique morte pour
+    // toute la tranche suivante.
+    const elements = CLASSES[h.classeId].elements;
+    const elementChoisi = h.elementChoisi && elements.includes(h.elementChoisi) ? h.elementChoisi : elements[0];
     const perso: PersoState = {
       classeId: h.classeId,
       progression: JSON.parse(JSON.stringify(h.progression)) as Progression,
       pvActuels: 0, // fixé juste après, équipement compris
       position: h.position,
-      elementChoisi: h.elementChoisi,
+      elementChoisi,
       statAuto: h.statAuto,
       equipement: avecStuff
         ? (JSON.parse(JSON.stringify(h.equipement)) as Partial<Record<EquipSlot, ItemInstance>>)
@@ -284,13 +292,14 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
 
 /** Caractéristique PRINCIPALE d'un perso : celle de son élément de frappe (son choix,
  *  sinon le premier élément de sa classe). Cible des stats ADAPTATIVES d'équipement.
- *  Ne consulte PLUS `statAuto` (obsolète avec les points d'allocation) ni les stats
- *  finales : la paire d'éléments DÉCLARÉE de la classe est l'unique source. */
+ *  Honore `elementChoisi` INCONDITIONNELLEMENT — même hors de la paire de classe —
+ *  exactement comme `elementDeFrappe` (`combat.ts`) : le Kwakwaffe (`elementLibre`)
+ *  laisse légitimement un porteur frapper dans un élément hors de sa paire, et sa
+ *  ligne d'équipement adaptative doit suivre CE choix, pas retomber sur une
+ *  caractéristique qu'il n'utilise plus. Le repli sur `classe.elements[0]` ne joue
+ *  que quand aucun choix n'existe — pas comme garde-fou de données invalides. */
 export function statPrincipale(state: PersoState): keyof Stats {
-  const classe = CLASSES[state.classeId];
-  const el = state.elementChoisi && classe.elements.includes(state.elementChoisi)
-    ? state.elementChoisi
-    : classe.elements[0];
+  const el = state.elementChoisi ?? CLASSES[state.classeId].elements[0];
   return STAT_PAR_ELEMENT[el];
 }
 

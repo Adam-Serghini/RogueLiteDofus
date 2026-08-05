@@ -287,6 +287,21 @@ describe("héritage d'une tranche à l'autre", () => {
     expect(sans.persos[0].progression.niveau).toBe(50); // le niveau, lui, reste
   });
 
+  it("runDepuisHeritage retombe sur le 1er élément de la classe si l'élément archivé est HORS PAIRE", () => {
+    // Contrairement à un choix en combat via le Kwakwaffe (honoré tel quel, voir
+    // archetypes.test.ts), un élément hérité hors paire est une donnée PÉRIMÉE
+    // (vieille save, refonte de classe) : sans cette garde, le héros hérité
+    // frapperait silencieusement dans une caractéristique qu'il ne monte jamais,
+    // pour toute la tranche suivante.
+    const meta = metaVide();
+    const source = nouvelleRun(["iop"]); // iop : terre + feu
+    source.persos[0].elementChoisi = "eau"; // hors paire — simule une donnée périmée
+    archiverEquipe(meta, "t1", source);
+    const arch = heritagePour(meta, "t2")!;
+    const run = runDepuisHeritage(arch, true, "t2");
+    expect(run.persos[0].elementChoisi).toBe("terre"); // 1er élément de la classe
+  });
+
   it("les trois départs possibles produisent une run cohérente pour t2", () => {
     const meta = metaVide();
     const source = nouvelleRun(["iop", "cra"]);
