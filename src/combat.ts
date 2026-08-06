@@ -266,6 +266,12 @@ export function etatCombatInitial(): Pick<Combatant,
 }
 
 // --- Calcul de dégâts sur une cible ------------------------------------------
+
+/** Libellé COURT et LOCAL de l'élément pour le journal de combat — `combat.ts` est pur et
+ *  ne doit jamais importer le libellé de `src/ui/` (ce serait inverser la dépendance). */
+const elNomCourt = (el: Element): string =>
+  ({ terre: "Terre", feu: "Feu", eau: "Eau", air: "Air" })[el];
+
 export interface ResultatDegats {
   dmg: number;
   esquive: boolean;
@@ -1183,7 +1189,7 @@ function frappe(
   // pas besoin de la ligne de dégâts générique en plus.
   if (!t.estLance) {
     opts.ctx.log(
-      `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
+      `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)}${r.crit ? " (CRIT)" : ""}.` +
         (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
     );
   }
@@ -1660,7 +1666,7 @@ export function lancerSort(
       infligerDegats(t, r.dmg, lanceur, ctx);
       if (!t.estLance) total += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin fantôme
       ctx.log(
-        `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
+        `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)}${r.crit ? " (CRIT)" : ""}.` +
           (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
       );
     }
@@ -1749,7 +1755,7 @@ export function lancerSort(
       // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats.
       if (!t.estLance) {
         ctx.log(
-          `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts${r.crit ? " (CRIT)" : ""}.` +
+          `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)}${r.crit ? " (CRIT)" : ""}.` +
             (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
         );
       }
@@ -1813,7 +1819,7 @@ export function lancerSort(
         infligerDegats(t, r.dmg, lanceur, ctx);
         if (!t.estLance) totalDmg += r.dmg; // pas de soin/bouclier fantôme sur la durabilité de la lance
         ctx.log(
-          `${sort.nom} rebondit sur ${t.nom} : ${r.dmg} dégâts !` +
+          `${sort.nom} rebondit sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)} !` +
             (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
         );
       }

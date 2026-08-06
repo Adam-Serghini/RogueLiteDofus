@@ -8,6 +8,7 @@ import {
   estAvant,
   ELEMENTS,
   elementDeFrappe,
+  elementContre,
   statsEffectives,
   ordreDuCombat,
   type FxEvent,
@@ -345,11 +346,24 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     ? Math.max(0, Math.min(100, Math.round((c.pvActuels / c.pvMax) * 100)))
     : 0;
   const bouclier = Math.round(c.bouclier);
+  // l'élément que le héros actif emploierait contre CET ennemi : l'automatisme devient
+  // une information au lieu d'être caché. Calculé par le moteur (elementContre), jamais
+  // ici — uniquement pour un ennemi, et uniquement pendant le tour d'un héros. `selectedSpell`
+  // (module state, armé par `choisirSort` pendant le ciblage) affine le calcul quand un
+  // sort est visé ; sans lui, `elementContre` retombe sur son jet moyen implicite.
+  const elVise = activeActeur && activeActeur.camp === "joueur" && c.camp === "ennemi" &&
+      activeActeur.pvActuels > 0 && c.pvActuels > 0
+    ? elementContre(activeActeur, c, selectedSpell ?? undefined)
+    : null;
   // chips de résistance : les 4 éléments, toujours affichés (0 % inclus), en grille 2×2
   const resChips = ELEMENTS.map((e) => {
     const v = Math.round((c.resistances[e] ?? 0) * 100);
     const etat = v < 0 ? "faible" : v === 0 ? "zero" : "";
-    return `<span class="res-chip ${etat}" title="Résistance ${elNom[e]}"><img src="${resAsset[e]}" alt="" onerror="this.remove()" />${v > 0 ? "+" : ""}${v}%</span>`;
+    const vise = e === elVise ? " vise" : "";
+    const titre = e === elVise
+      ? `Résistance ${elNom[e]} · ton élément de frappe contre cette cible`
+      : `Résistance ${elNom[e]}`;
+    return `<span class="res-chip ${etat}${vise}" title="${titre}"><img src="${resAsset[e]}" alt="" onerror="this.remove()" />${v > 0 ? "+" : ""}${v}%</span>`;
   }).join("");
   const badges: string[] = [];
   for (const e of c.effets) {

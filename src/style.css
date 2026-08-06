@@ -2353,6 +2353,12 @@ kbd {
 .res-chip.zero {
   opacity: 0.42;
 }
+/* l'élément que le héros actif emploierait contre cet ennemi */
+.res-chip.vise {
+  outline: 1px solid var(--or);
+  outline-offset: 1px;
+  box-shadow: 0 0 8px #e8b54e66;
+}
 .res-chip img {
   width: 13px;
   height: 13px;
