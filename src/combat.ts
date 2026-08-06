@@ -397,12 +397,20 @@ export function bonusDegatsCrit(se: Stats): number {
   return Math.min(0.45, 0.25 + se.agilite * 0.002);
 }
 
-/** Résistance effective d'une cible à un élément, telle que l'applique `degatsAvec` —
- *  même formule, une seule vérité : une copie approchée finirait par diverger. */
+/** Résistance AFFICHÉE d'une cible à un élément : résistance de base + effets temporaires
+ *  de résistance globale (Bulle du Féca, mue du Kwakwa…) — hors modificateurs par-sort
+ *  (`perceResistances`/`ignoreResistances`), qui n'ont pas de sens hors d'une frappe précise.
+ *  Source unique pour l'affichage : `src/ui/combat.ts` doit lire CETTE fonction plutôt que
+ *  recalculer la somme, pour que la puce de résistance et le moteur ne divergent jamais. */
+export function resistanceAffichee(cible: Combatant, el: Element): number {
+  return (cible.resistances[el] ?? 0) + sommeEffet(cible, "resAll");
+}
+
+/** Résistance effective d'une cible à un élément POUR UNE FRAPPE, telle que l'applique
+ *  `degatsAvec` — même formule, une seule vérité : une copie approchée finirait par diverger. */
 function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats): number {
   if (base.ignoreResistances) return 0;
-  const res = (cible.resistances[el] ?? 0) + sommeEffet(cible, "resAll");
-  return res * (1 - (base.perceResistances ?? 0));
+  return resistanceAffichee(cible, el) * (1 - (base.perceResistances ?? 0));
 }
 
 /** Élément de CE coup : celui qui maximise les dégâts contre CETTE cible. `jetTire` est le
@@ -429,12 +437,19 @@ function meilleurElement(lanceur: Combatant, cible: Combatant, base: BaseDegats,
  *  réel part tantôt en feu, tantôt en eau selon le jet — un écart mineur, assumé pour
  *  un simple affichage. */
 export function elementContre(lanceur: Combatant, cible: Combatant, sort?: Spell): Element {
+  // Base de repli SANS sort visé : { baseMin:1, baseMax:1 } et non { 0, 0 } — à caractéristique
+  // nulle (niveau 1, avant tout gain), un jet moyen nul rendrait le score `(jet + stat ×
+  // scaling) × (1 − résistance)` égal à 0 pour TOUS les candidats, et l'égalité ferait toujours
+  // gagner le premier élément déclaré, quelle que soit la résistance de la cible — l'indicateur
+  // mentirait au niveau 1, l'état le plus courant du jeu (premier combat de chaque run). Un jet
+  // plancher de 1 fait dégénérer le score en `1 × (1 − résistance)` (départage par la seule
+  // résistance) à caractéristique nulle, et reste négligeable dès qu'une caractéristique existe.
   const base: BaseDegats = sort
     ? {
       baseMin: sort.baseMin ?? 0, baseMax: sort.baseMax ?? 0, scaling: sort.scaling ?? 0,
       ignoreResistances: sort.ignoreResistances, perceResistances: sort.perceResistances,
     }
-    : { baseMin: 0, baseMax: 0, scaling: 1 };
+    : { baseMin: 1, baseMax: 1, scaling: 1 };
   const jetMoyen = (base.baseMin + base.baseMax) / 2;
   return meilleurElement(lanceur, cible, base, jetMoyen);
 }
@@ -695,7 +710,7 @@ function infligerDegats(
     // (Étreinte) ne s'applique jamais ici — de toute façon inatteignable avec le contenu
     // actuel (contre/riposteAvant sont des mécaniques côté joueur uniquement).
     infligerDegats(attaquant, r.dmg);
-    ctx.log(`${cible.nom} riposte : ${r.dmg} dégâts à ${attaquant.nom}.`);
+    ctx.log(`${cible.nom} riposte : ${r.dmg} dégâts ${elNomCourt(r.element)} à ${attaquant.nom}.`);
   }
 }
 

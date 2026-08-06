@@ -112,6 +112,25 @@ describe("l'élément de frappe suit la cible", () => {
     // ResultatDegats.element suit la CIBLE (et non l'aveugle) tient à ce contraste.
   });
 
+  it("au niveau 1 (caractéristiques nulles), l'indicateur et le moteur désignent le même élément", () => {
+    // Régression : la base de repli d'elementContre était { baseMin: 0, baseMax: 0 } —
+    // à caractéristique nulle (niveau 1, avant tout gain), le score
+    // `(jet + stat × scaling) × (1 − résistance)` valait 0 pour TOUS les candidats,
+    // et meilleurElement ne bascule que sur un score STRICTEMENT supérieur : l'égalité
+    // faisait donc toujours gagner le premier élément déclaré, quelle que soit la
+    // résistance de la cible. Au niveau 1 — le premier combat de chaque run — l'indicateur
+    // pouvait ainsi mettre en évidence un élément que le moteur ne frappait jamais (lui
+    // reste correct : il emploie le jet RÉEL, non nul, qui départage par la résistance).
+    const heros = combattantDepuisPerso(persoAuNiveau("iop", 1, 0)); // terre + feu
+    expect(statsEffectives(heros).force).toBe(0);
+    expect(statsEffectives(heros).intelligence).toBe(0);
+    const vulnerableAuFeu = cible({ terre: 0, feu: -0.2 });
+    expect(elementContre(heros, vulnerableAuFeu)).toBe("feu");
+    // le moteur réel, via un vrai sort et un vrai jet non nul, doit choisir le MÊME élément.
+    const r = degatsCible(heros, SORTS.epee_celeste, vulnerableAuFeu, { useMax: false, mult: 1, ctx: ctx(() => 0.5) });
+    expect(r.element).toBe("feu");
+  });
+
   it("le résultat est déterministe à graine fixe", () => {
     const heros = combattantDepuisPerso(persoAuNiveau("eniripsa", 50, 0));
     const c = cible({ feu: 0.2, eau: 0.05 });

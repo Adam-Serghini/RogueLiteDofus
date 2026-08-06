@@ -9,6 +9,7 @@ import {
   ELEMENTS,
   elementDeFrappe,
   elementContre,
+  resistanceAffichee,
   statsEffectives,
   ordreDuCombat,
   type FxEvent,
@@ -355,9 +356,13 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
       activeActeur.pvActuels > 0 && c.pvActuels > 0
     ? elementContre(activeActeur, c, selectedSpell ?? undefined)
     : null;
-  // chips de résistance : les 4 éléments, toujours affichés (0 % inclus), en grille 2×2
+  // chips de résistance : les 4 éléments, toujours affichés (0 % inclus), en grille 2×2.
+  // Résistance EFFECTIVE (`resistanceAffichee`, moteur) — inclut les effets temporaires de
+  // résistance globale (Bulle du Féca, mue du Kwakwa…) : sans ça, une cible sous ce genre
+  // d'effet afficherait un pourcentage qui ne correspond plus à celui que le moteur applique
+  // réellement, ni à l'élément mis en évidence par `elVise` ci-dessus.
   const resChips = ELEMENTS.map((e) => {
-    const v = Math.round((c.resistances[e] ?? 0) * 100);
+    const v = Math.round(resistanceAffichee(c, e) * 100);
     const etat = v < 0 ? "faible" : v === 0 ? "zero" : "";
     const vise = e === elVise ? " vise" : "";
     const titre = e === elVise
