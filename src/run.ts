@@ -256,11 +256,13 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
 /** Caractéristique PRINCIPALE d'un perso : celle de son élément de frappe (son choix,
  *  sinon le premier élément de sa classe). Cible des stats ADAPTATIVES d'équipement.
  *  Honore `elementChoisi` INCONDITIONNELLEMENT — même hors de la paire de classe —
- *  exactement comme `elementDeFrappe` (`combat.ts`) : le Kwakwaffe (`elementLibre`)
- *  laisse légitimement un porteur frapper dans un élément hors de sa paire, et sa
- *  ligne d'équipement adaptative doit suivre CE choix, pas retomber sur une
- *  caractéristique qu'il n'utilise plus. Le repli sur `classe.elements[0]` ne joue
- *  que quand aucun choix n'existe — pas comme garde-fou de données invalides. */
+ *  contrairement à `elementDeFrappe` (`combat.ts`), qui depuis l'automatisation par
+ *  cible (2026-08-06) NE LIT PLUS `elementChoisi` du tout : les deux fonctions ont
+ *  divergé, ce n'est plus une parité. Le Kwakwaffe (`elementLibre`) laisse
+ *  légitimement un porteur frapper dans un élément hors de sa paire, et sa ligne
+ *  d'équipement adaptative doit suivre CE choix, pas retomber sur une caractéristique
+ *  qu'il n'utilise plus. Le repli sur `classe.elements[0]` ne joue que quand aucun
+ *  choix n'existe — pas comme garde-fou de données invalides. */
 export function statPrincipale(state: PersoState): keyof Stats {
   const el = state.elementChoisi ?? CLASSES[state.classeId].elements[0];
   return STAT_PAR_ELEMENT[el];

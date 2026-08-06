@@ -45,7 +45,7 @@ describe("élément de frappe", () => {
     expect(elementDeFrappe(m2)).toBe("air");
   });
 
-  it("un HÉROS (paire déclarée) : la stat n'y change rien, seul le choix explicite compte", () => {
+  it("un HÉROS (paire déclarée) : seules ses 2 stats élémentaires DÉCLARÉES comptent", () => {
     const [iop] = fabriquerEquipe(); // iop : terre + feu
     iop.elementChoisi = undefined;
     iop.stats = { ...iop.stats, agilite: 9999 }; // Air en tête des stats, mais hors de la paire

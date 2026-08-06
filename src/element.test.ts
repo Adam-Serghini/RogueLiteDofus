@@ -60,16 +60,20 @@ describe("l'élément de frappe suit la cible", () => {
 
   it("un monstre garde exactement l'élément qu'il avait", () => {
     // 177 espèces sur 187 sont mono-élément : la règle doit être INERTE pour elles,
-    // sinon l'équilibrage de 24 zones bouge en silence. Le Boufton Blanc de tai_1 a
-    // FORCE = AGILITÉ (24/24, vraie égalité) : il n'est pas mono-élément à
-    // proprement parler, et une résistance de 50 % sur l'élément arbitrairement
-    // choisi par le tri (terre) fait légitimement basculer vers l'autre (air) —
-    // c'est exactement la règle vérifiée par le test précédent. On l'exclut donc
-    // de cette vérification plutôt que de la neutraliser pour lui.
-    for (const m of fabriquerEnnemis("tai_1")) {
+    // sinon l'équilibrage de 24 zones bouge en silence. abr_elite (Domaine Ancestral)
+    // est choisie précisément parce qu'AUCUNE de ses 5 espèces n'a de véritable
+    // égalité de caractéristiques (contrairement à tai_1, dont le Boufton Blanc a
+    // FORCE = AGILITÉ = 24 : ce n'est pas un mono-élément, une résistance de 50 % sur
+    // l'élément arbitrairement choisi par le tri y basculerait légitimement vers
+    // l'autre — la règle du test voisin, pas un bug). Sur les 181 espèces du jeu,
+    // seules 6 ont une telle égalité : Boufton Blanc, le Kwakwa et ses 4 Kwakere —
+    // aucune n'est dans ce pack, donc aucune exclusion à faire ici.
+    const pack = fabriquerEnnemis("abr_elite");
+    expect(pack.length).toBeGreaterThan(0); // le garde-fou ne doit jamais tourner à vide
+    for (const m of pack) {
       const [p, s] = elementsForts(m);
       const se = statsEffectives(m);
-      if (statElement(se, p) === statElement(se, s)) continue;
+      expect(statElement(se, p)).not.toBe(statElement(se, s)); // garde contre une future égalité silencieuse
       const avant = elementDeFrappe(m);
       expect(elementContre(m, cible({ [avant]: 0.5 }))).toBe(avant);
     }
@@ -92,6 +96,20 @@ describe("l'élément de frappe suit la cible", () => {
       { useMax: false, mult: 1, ctx: ctx(compteur) });
     // esquive + jet + critique = 3 tirages, comme avant le changement
     expect(appels).toBe(3);
+  });
+
+  it("le ResultatDegats.element est bien celui CHOISI pour cette cible, pas l'élément aveugle", () => {
+    // Remplacer `element: el` par `element: elementDeFrappe(lanceur)` dans degatsAvec
+    // (réintroduisant le choix aveugle à la cible que cette tâche supprime) ne ferait
+    // échouer AUCUN autre test du fichier : il faut une assertion sur la VALEUR réelle,
+    // pas seulement sur l'égalité de deux appels identiques (cf. test suivant).
+    const heros = combattantDepuisPerso(persoAuNiveau("eniripsa", 50, 0)); // feu + eau
+    const c = cible({ feu: 0.8, eau: 0 }); // feu fortement résisté → le choix doit basculer sur eau
+    const r = degatsCible(heros, SORTS.morsure, c, { useMax: false, mult: 1, ctx: ctx(() => 0.5) });
+    expect(r.element).toBe("eau");
+    // elementDeFrappe(heros), lui, ignore la cible : sans résistance il retiendrait
+    // la meilleure caractéristique BRUTE — ici pas nécessairement "eau". La preuve que
+    // ResultatDegats.element suit la CIBLE (et non l'aveugle) tient à ce contraste.
   });
 
   it("le résultat est déterministe à graine fixe", () => {

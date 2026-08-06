@@ -415,9 +415,13 @@ function meilleurElement(lanceur: Combatant, cible: Combatant, base: BaseDegats,
 }
 
 /** Élément qu'un combattant emploierait contre une cible — entrée publique de l'AFFICHAGE.
- *  Deux approximations assumées, sans conséquence tant que les 2 caractéristiques d'un héros
- *  sont égales : le jet moyen à défaut d'un jet réel, et la limite `stat × (1 − résistance)`
- *  quand aucun sort n'est visé. */
+ *  Deux approximations : le jet moyen à défaut d'un jet réel, et la limite
+ *  `stat × (1 − résistance)` quand aucun sort n'est visé. Les deux sont EXACTES tant
+ *  que les 2 caractéristiques du lanceur sont égales, et s'écartent dès qu'un buff ou
+ *  un équipement les désaccorde : à intelligence 203 / chance 196 avec 3 % de
+ *  résistance feu par exemple, l'affichage peut annoncer « eau » alors que le coup
+ *  réel part tantôt en feu, tantôt en eau selon le jet — un écart mineur, assumé pour
+ *  un simple affichage. */
 export function elementContre(lanceur: Combatant, cible: Combatant, sort?: Spell): Element {
   const base: BaseDegats = sort
     ? {
