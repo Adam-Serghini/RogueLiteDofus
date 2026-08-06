@@ -61,14 +61,21 @@ describe("élément de frappe", () => {
     expect(elementDeFrappe(m)).toBe("eau"); // Chance domine
   });
 
-  it("le choix explicite d'élément prime, même hors de la paire déclarée", () => {
+  it("elementChoisi n'a plus aucun effet : seul l'écart de caractéristique décide, dans la paire déclarée", () => {
+    // Avant l'automatisation, `elementChoisi` primait même hors de la paire déclarée
+    // de la classe. Le moteur ne le lit plus du tout : régler `elementChoisi` sur
+    // "air" (hors paire) ou sur "feu" (dans la paire) ne doit RIEN changer — seul un
+    // écart de caractéristique entre les 2 éléments déclarés peut faire basculer le
+    // résultat, jamais le champ lui-même.
     const [iop] = fabriquerEquipe(); // iop : terre + feu
-    iop.elementChoisi = "air"; // choix explicite prioritaire, même hors de sa paire
-    expect(elementDeFrappe(iop)).toBe("air");
-    iop.elementChoisi = "feu"; // choix explicite, un des 2 éléments déclarés
-    expect(elementDeFrappe(iop)).toBe("feu");
+    iop.elementChoisi = "air"; // ignoré : hors de la paire déclarée, et plus lu de toute façon
+    expect(elementDeFrappe(iop)).toBe("terre"); // stat par défaut de l'Iop : terre > feu
+    iop.elementChoisi = "feu"; // ignoré aussi, bien que "feu" soit dans la paire déclarée
+    expect(elementDeFrappe(iop)).toBe("terre");
+    iop.stats = { ...iop.stats, intelligence: (iop.stats.force ?? 0) + 50 }; // feu dépasse terre
+    expect(elementDeFrappe(iop)).toBe("feu"); // c'est l'écart de caractéristique qui a basculé, pas elementChoisi
     iop.elementChoisi = undefined;
-    expect(elementDeFrappe(iop)).toBe("terre"); // pas de choix → 1er élément DÉCLARÉ de la classe
+    expect(elementDeFrappe(iop)).toBe("feu");
   });
 
   it("applique la résistance de l'élément de frappe basculé — un MONSTRE", () => {

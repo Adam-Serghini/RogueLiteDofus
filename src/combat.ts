@@ -92,12 +92,18 @@ export function elementsForts(c: Combatant): [Element, Element] {
   return [tri[0][0], tri[1][0]];
 }
 
-/** Élément de frappe : le choix explicite du joueur (fiche) prime ; sinon le premier des
- *  deux éléments de `elementsForts` (la paire déclarée pour un héros, la plus haute
- *  stat élémentaire pour un monstre). */
+/** Éléments parmi lesquels un combattant peut frapper : les 4 s'il porte le Kwakwaffe,
+ *  sinon sa paire déclarée (héros) ou ses 2 plus fortes caractéristiques (monstres) —
+ *  c'est exactement ce que distingue déjà `elementsForts`. Aucune notion de camp ici. */
+export function elementsCandidats(c: Combatant): Element[] {
+  return c.elementLibre ? ELEMENTS : elementsForts(c);
+}
+
+/** Élément de frappe SANS cible : la meilleure caractéristique parmi les candidats.
+ *  Employée par la puissance de soin et par l'affichage hors ciblage. */
 export function elementDeFrappe(c: Combatant): Element {
-  if (c.elementChoisi) return c.elementChoisi;
-  return elementsForts(c)[0];
+  const se = statsEffectives(c);
+  return elementsCandidats(c).reduce((a, b) => (statElement(se, b) > statElement(se, a) ? b : a));
 }
 
 /** Puissance de soin d'un combattant : sa stat Soin + la caractéristique de son élément
@@ -264,6 +270,7 @@ export interface ResultatDegats {
   dmg: number;
   esquive: boolean;
   crit: boolean;
+  element: Element; // élément réellement employé pour ce coup (choisi par cible)
 }
 
 /** Base de dégâts d'une frappe (sort entier ou coup/projectile individuel). */
@@ -384,6 +391,44 @@ export function bonusDegatsCrit(se: Stats): number {
   return Math.min(0.45, 0.25 + se.agilite * 0.002);
 }
 
+/** Résistance effective d'une cible à un élément, telle que l'applique `degatsAvec` —
+ *  même formule, une seule vérité : une copie approchée finirait par diverger. */
+function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats): number {
+  if (base.ignoreResistances) return 0;
+  const res = (cible.resistances[el] ?? 0) + sommeEffet(cible, "resAll");
+  return res * (1 - (base.perceResistances ?? 0));
+}
+
+/** Élément de CE coup : celui qui maximise les dégâts contre CETTE cible. `jetTire` est le
+ *  jet déjà obtenu, donc le choix est exact et ne consomme aucun tirage. Égalité départagée
+ *  par l'ordre des candidats, pour que le résultat soit stable. */
+function meilleurElement(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element {
+  const se = statsEffectives(lanceur);
+  const candidats = elementsCandidats(lanceur);
+  let meilleur = candidats[0];
+  let score = -Infinity;
+  for (const el of candidats) {
+    const s = (jetTire + statElement(se, el) * base.scaling) * (1 - resistanceEffective(cible, el, base));
+    if (s > score) { score = s; meilleur = el; }
+  }
+  return meilleur;
+}
+
+/** Élément qu'un combattant emploierait contre une cible — entrée publique de l'AFFICHAGE.
+ *  Deux approximations assumées, sans conséquence tant que les 2 caractéristiques d'un héros
+ *  sont égales : le jet moyen à défaut d'un jet réel, et la limite `stat × (1 − résistance)`
+ *  quand aucun sort n'est visé. */
+export function elementContre(lanceur: Combatant, cible: Combatant, sort?: Spell): Element {
+  const base: BaseDegats = sort
+    ? {
+      baseMin: sort.baseMin ?? 0, baseMax: sort.baseMax ?? 0, scaling: sort.scaling ?? 0,
+      ignoreResistances: sort.ignoreResistances, perceResistances: sort.perceResistances,
+    }
+    : { baseMin: 0, baseMax: 0, scaling: 1 };
+  const jetMoyen = (base.baseMin + base.baseMax) / 2;
+  return meilleurElement(lanceur, cible, base, jetMoyen);
+}
+
 export function degatsCible(
   lanceur: Combatant,
   sort: Spell,
@@ -406,14 +451,16 @@ function degatsAvec(
   // esquive (Agilité de la cible + buffs + équipement « ligne arrière », plafonnée à 50 %)
   const esquiveEquip = !estAvant(cible) ? (cible.esquiveArriere ?? 0) : 0; // Baguette Rikiki
   if (ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
-    return { dmg: 0, esquive: true, crit: false };
+    return { dmg: 0, esquive: true, crit: false, element: elementDeFrappe(lanceur) };
   }
 
   // jet (max si buff "maxRoll" actif)
   let dmg = opts.useMax ? base.baseMax : jet(base.baseMin, base.baseMax, ctx.rng);
 
-  // stat de l'élément de frappe
-  const el = elementDeFrappe(lanceur);
+  // élément de frappe : CALCULÉ pour cette cible, avec le jet déjà tiré (donc exact, et
+  // sans consommer de tirage). Le `dmg` courant EST ce jet — ne pas déplacer ces lignes
+  // avant le tirage, le choix perdrait son exactitude.
+  const el = meilleurElement(lanceur, cible, base, dmg);
   dmg += statElement(se, el) * base.scaling;
 
   // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
@@ -448,8 +495,7 @@ function degatsAvec(
   // résistance de l'élément (+ resAll), sauf ignoreResistances ;
   // perceResistances (arme) : seule une fraction de la résistance compte
   if (!base.ignoreResistances) {
-    const res = (cible.resistances[el] ?? 0) + sommeEffet(cible, "resAll");
-    dmg *= 1 - res * (1 - (base.perceResistances ?? 0));
+    dmg *= 1 - resistanceEffective(cible, el, base);
   }
 
   // réduction de dégâts subis (Bâton du berger), plafonnée à 80 %
@@ -465,7 +511,7 @@ function degatsAvec(
   // NATIVE permanente du combattant (Craqueleurs) — les deux s'additionnent
   dmg -= sommeEffet(cible, "armure") + (cible.armure ?? 0);
 
-  return { dmg: Math.max(0, Math.round(dmg)), esquive: false, crit };
+  return { dmg: Math.max(0, Math.round(dmg)), esquive: false, crit, element: el };
 }
 
 // --- Effets temporaires ------------------------------------------------------

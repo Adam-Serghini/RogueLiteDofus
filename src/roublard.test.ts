@@ -136,9 +136,12 @@ describe("Kaboom — aura Portails / marque Conjuration (cross-classe, handler d
   // dégâts amplifiés (force haute) : à faible magnitude, 4-5 % se noie dans
   // l'arrondi et le test ne distingue plus rien — ici l'écart est net.
   const roublardPuissant = (): Combatant => {
+    // Le Roublard frappe désormais dans la meilleure de ses 2 caractéristiques
+    // DÉCLARÉES (feu/eau) — `elementChoisi` (qui pointait autrefois sur "terre",
+    // hors de sa paire) n'est plus lu. On monte l'intelligence (feu, dans la
+    // paire) au lieu de la force pour obtenir le même écart net.
     const r = roublard();
-    r.stats = { ...r.stats, force: 300, intelligence: 0, chance: 0 };
-    r.elementChoisi = "terre";
+    r.stats = { ...r.stats, force: 0, intelligence: 300, chance: 0 };
     return r;
   };
   const cibleResistante = (): Combatant => {
