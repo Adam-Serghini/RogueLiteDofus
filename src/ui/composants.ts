@@ -41,18 +41,21 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       !s.projectiles &&
       !s.de
     ) {
-      const el = elementDeFrappe(acteur);
-      const stat = statElement(se, el);
+      // Le nombre est exact (la stat est identique dans les 2 éléments déclarés, cf.
+      // meilleurElement/combat.ts) ; l'ÉLÉMENT réel, lui, dépend de la cible frappée —
+      // absente ici — donc on ne l'affiche plus : nommer un élément qu'un autre coup
+      // choisira serait le même mensonge que l'ancien indicateur au niveau 1.
+      const stat = statElement(se, elementDeFrappe(acteur));
       const mult = multOffensif(se);
       const min = Math.round((s.baseMin + stat * s.scaling) * mult);
       const max = Math.round((s.baseMax + stat * s.scaling) * mult);
-      principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el el-${el}">${elNom[el]}</span>`;
+      principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el">selon la cible</span>`;
     }
   } else if (s.baseMax > 0 && !s.coups && !s.projectiles && !s.de) {
-    // hors combat (encyclopédie) : jets de base, l'élément dépendra de la voie du perso
+    // hors combat (encyclopédie) : jets de base, sans cible non plus — même choix
     principal = s.type === "soin"
       ? `<span class="tip-val soin">♥ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">PV rendus (base)</span>`
-      : `<span class="tip-val dgt">⚔ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">base · élément selon la voie</span>`;
+      : `<span class="tip-val dgt">⚔ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">base · élément selon la cible</span>`;
   }
   // cooldowns : global au sort (cooldownTours) ou par cible (cooldown) + état en cours
   const cd: string[] = [];
@@ -186,15 +189,16 @@ export function elementsFortsPerso(p: PersoState): [Element, Element] {
   return CLASSES[p.classeId].elements;
 }
 
-/** Paire de pastilles d'élément (les 2 éléments déclarés de la classe). L'élément
- *  de frappe se calcule désormais coup par coup (le plus fort des deux au moment
- *  du sort) : hors combat il n'y a rien à mettre en évidence, les deux s'affichent
- *  à égalité. */
+/** Pastilles d'élément (les 2 éléments déclarés de la classe — 4 si le Kwakwaffe est
+ *  porté). L'élément de frappe se calcule désormais coup par coup (le plus fort des
+ *  deux, ou des quatre, au moment du sort) : hors combat il n'y a rien à mettre en
+ *  évidence, tous s'affichent à égalité. */
 export function pastillesElements(p: PersoState): string {
-  const [e1, e2] = elementsFortsPerso(p);
+  const libre = Object.values(p.equipement).some((inst) => inst && ITEMS[inst.id]?.elementLibre);
+  const els: Element[] = libre ? ["terre", "feu", "eau", "air"] : elementsFortsPerso(p);
   const img = (el: Element) =>
     `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="Élément : ${elNom[el]}" onerror="this.remove()" />`;
-  return `<span class="el-pastilles">${img(e1)}${img(e2)}</span>`;
+  return `<span class="el-pastilles">${els.map(img).join("")}</span>`;
 }
 export const ARCHETYPE_NOM: Record<Archetype, string> = {
   melee: "Mêlée",
@@ -204,13 +208,15 @@ export const ARCHETYPE_NOM: Record<Archetype, string> = {
 /** Archétype + les 2 éléments d'une CLASSE (et non d'un héros existant) : sert au choix
  *  d'équipe, au recrutement en taverne et à l'encyclopédie. `avecNoms` ajoute les noms
  *  en clair, pour les écrans où il y a la place et où le joueur découvre la classe.
- *  Le premier élément est l'élément de frappe par défaut (cf. `nouvelleRun`). */
+ *  Les deux éléments sont fixes (ceux de la classe) ; celui qui part au moment du coup
+ *  se choisit CIBLE PAR CIBLE (cf. `meilleurElement`, combat.ts) — il n'y a plus de
+ *  « défaut » ni de second élément au sens hiérarchique. */
 export function ligneArchetype(classeId: string, avecNoms = false): string {
   const c = CLASSES[classeId];
   const gains = GAINS_ARCHETYPE[c.archetype];
   const titreArch = `${ARCHETYPE_NOM[c.archetype]} : +${gains.parElement} dans chacun de ses 2 éléments et +${gains.vitalite} en Vitalité par niveau`;
-  const img = (el: Element, i: number) =>
-    `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="${i === 0 ? "Élément de frappe par défaut" : "Second élément"} : ${elNom[el]}" onerror="this.remove()" />`;
+  const img = (el: Element) =>
+    `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="Élément de la classe : ${elNom[el]}" onerror="this.remove()" />`;
   const noms = avecNoms
     ? `<span class="classe-elems-noms">${c.elements.map((el) => elNom[el]).join(" + ")}</span>`
     : "";
