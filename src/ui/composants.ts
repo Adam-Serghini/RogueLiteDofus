@@ -5,9 +5,9 @@
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
 import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe } from "../combat";
-import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE } from "../progression";
+import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
-import type { Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
+import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
 import { escapeHtml, tipsFlottants, setFond } from "./dom";
 
@@ -203,6 +203,30 @@ export function pastillesElements(p: PersoState): string {
     `<img class="el-pastille ${el === frappe ? "" : "dim"}" src="${elementAsset(el)}" alt="" title="${el === frappe ? "Élément de frappe" : "Élément secondaire"} : ${elNom[el]}" onerror="this.remove()" />`;
   return `<span class="el-pastilles">${img(e1)}${img(e2)}</span>`;
 }
+export const ARCHETYPE_NOM: Record<Archetype, string> = {
+  melee: "Mêlée",
+  distance: "Distance",
+};
+
+/** Archétype + les 2 éléments d'une CLASSE (et non d'un héros existant) : sert au choix
+ *  d'équipe, au recrutement en taverne et à l'encyclopédie. `avecNoms` ajoute les noms
+ *  en clair, pour les écrans où il y a la place et où le joueur découvre la classe.
+ *  Le premier élément est l'élément de frappe par défaut (cf. `nouvelleRun`). */
+export function ligneArchetype(classeId: string, avecNoms = false): string {
+  const c = CLASSES[classeId];
+  const gains = GAINS_ARCHETYPE[c.archetype];
+  const titreArch = `${ARCHETYPE_NOM[c.archetype]} : +${gains.parElement} dans chacun de ses 2 éléments et +${gains.vitalite} en Vitalité par niveau`;
+  const img = (el: Element, i: number) =>
+    `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="${i === 0 ? "Élément de frappe par défaut" : "Second élément"} : ${elNom[el]}" onerror="this.remove()" />`;
+  const noms = avecNoms
+    ? `<span class="classe-elems-noms">${c.elements.map((el) => elNom[el]).join(" + ")}</span>`
+    : "";
+  return `<span class="classe-elems">
+    <span class="classe-archetype" title="${escapeHtml(titreArch)}">${ARCHETYPE_NOM[c.archetype]}</span>
+    <span class="el-pastilles">${c.elements.map(img).join("")}</span>${noms}
+  </span>`;
+}
+
 export const classSymbol = (classeId: string): string =>
   A(`/assets/class_symbol/${classeId}.png`);
 
@@ -262,6 +286,7 @@ export function carteClasse(classeId: string, sel: boolean, dataAttr: string): s
   return `<button class="classe-carte ${sel ? "sel" : ""}" ${dataAttr}="${classeId}">
     <img class="classe-portrait" src="${classe_img(classeId)}" alt="" onerror="this.remove()" />
     <span class="classe-nom">${escapeHtml(c.nom)}</span>
+    ${ligneArchetype(classeId)}
     <span class="classe-role">${escapeHtml(ROLE_CLASSE[classeId] ?? "")}</span>
   </button>`;
 }

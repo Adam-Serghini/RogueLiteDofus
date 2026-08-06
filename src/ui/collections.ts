@@ -19,7 +19,7 @@ import {
 } from "../data";
 import { A, itemImg, sortIcon, classe_img, BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { ecran, escapeHtml, root } from "./dom";
-import { SLOT_NOM, ROLE_CLASSE, sortTooltipHtml } from "./composants";
+import { SLOT_NOM, ROLE_CLASSE, ligneArchetype, sortTooltipHtml } from "./composants";
 import { paliersOcre, classesDisponibles } from "../run";
 import type { Meta } from "../types";
 
@@ -47,6 +47,7 @@ export function showEncyclopedie(): Promise<void> {
             <div>
               <h2>${escapeHtml(c.nom)}</h2>
               <p class="ency-role">${escapeHtml(ROLE_CLASSE[classeId] ?? "")}</p>
+              <p class="ency-archetype">${ligneArchetype(classeId, true)}</p>
               <p class="ency-bases muet">PV ${c.pvBase} · PA ${c.pa} · Initiative ${c.initiative}</p>
             </div>
           </div>

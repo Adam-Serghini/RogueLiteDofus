@@ -1175,6 +1175,43 @@ kbd {
   color: var(--muet);
   line-height: 1.25;
 }
+/* Archétype + éléments d'une classe (choix d'équipe, taverne, encyclopédie) */
+.classe-elems {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.classe-elems .el-pastilles {
+  margin-left: 0;
+}
+.classe-archetype {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  border: 1px solid var(--bord);
+  border-radius: 999px;
+  padding: 1px 7px;
+  cursor: help;
+}
+.classe-elems-noms {
+  font-size: 0.66rem;
+  color: var(--muet);
+}
+/* dans l'encyclopédie il y a la place : pastilles et texte plus lisibles */
+.ency-archetype {
+  margin: 3px 0;
+}
+.ency-archetype .el-pastille {
+  width: 16px;
+  height: 16px;
+}
+.ency-archetype .classe-archetype {
+  font-size: 0.68rem;
+}
+.ency-archetype .classe-elems-noms {
+  font-size: 0.8rem;
+}
 
 /* écran Équipement */
 .equip-onglets {
@@ -2894,7 +2931,7 @@ kbd {
   font-size: 0.7rem;
   color: var(--muet);
 }
-/* Pastilles d'élément — les 2 plus forts (formation + vue plateau) */
+/* Pastilles d'élément — les 2 éléments déclarés de la classe (formation + plateau) */
 .el-pastilles {
   display: inline-flex;
   align-items: center;

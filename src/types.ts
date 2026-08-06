@@ -361,7 +361,7 @@ export interface Combatant {
   soinDegatsRecus?: number; // récupération d'équipement (Goyave) : % des dégâts subis rendus en PV
   bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)
   invoquePar?: string; // ref de l'invocateur (monstres invoqués en combat)
-  elementChoisi?: Element; // élément de frappe choisi (parmi les 2 plus forts) ; sinon = le plus fort
+  elementChoisi?: Element; // élément de frappe choisi (parmi les 2 de la classe ; les 4 avec elementLibre) ; sinon = le 1er élément déclaré
   /** Les 2 éléments DÉCLARÉS (héros seulement) : le choix de frappe se limite à eux.
    *  Absent chez les monstres, dont les 2 éléments se déduisent des stats. */
   elements?: [Element, Element];
