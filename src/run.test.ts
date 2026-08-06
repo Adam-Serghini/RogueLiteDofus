@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
-  gagnerXPPerso, classesDisponibles,
+  classesDisponibles,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours,
 } from "./run";
 import { chargerConfig } from "./config";
@@ -107,19 +107,6 @@ describe("sauvegarde de run", () => {
     expect(s!.run.persos[0].pvActuels).toBe(12);
     expect(s!.run.inventaire[0]).toEqual({ id: "chapeau_de_l_aventurier", rarete: "commun", stats: { vitalite: 4 } });
     expect(s!.run.ascension).toBe(3);
-  });
-
-  it("un elementChoisi hors paire dans une save rechargée retombe sur le 1er élément de la classe", () => {
-    // Avant cette refonte, l'écran Formation proposait les 4 éléments à TOUTE classe :
-    // un Iop niveau 50 sauvegardé avec elementChoisi: "eau" (hors de sa paire terre/feu)
-    // était donc un état parfaitement légitime. Sans cette garde, il continue de frapper
-    // avec une caractéristique à 0 pour le reste de sa run et rien ne le signale (les
-    // deux ronds affichés, terre/feu, ne sont d'ailleurs jamais sélectionnés).
-    const run = nouvelleRun(["iop"]);
-    run.persos[0].elementChoisi = "eau";
-    sauverRunEnCours(0, run);
-    const s = chargerRunEnCours();
-    expect(s!.run.persos[0].elementChoisi).toBe("terre");
   });
 
   it("vieille save sans ascension → 0", () => {
@@ -360,32 +347,6 @@ describe("rangée préférée", () => {
     expect(config.formation.forgelance).toBe("avant");
     expect(config.formation.iop).toBe("arriere"); // les choix stockés gagnent
     expect(config.formation.cra).toBe("avant");
-    localStorage.removeItem("rld_settings_v0");
-  });
-});
-
-describe("préréglage d'élément hors paire (rétro-compat)", () => {
-  // Le préréglage "vitalite" n'existe plus (les points d'allocation manuelle ont
-  // disparu avec la refonte Éléments & Archétypes). `nouvelleRun`/`chargerConfig` s'en
-  // gardent : un préréglage hors de la paire déclarée de la classe (dont un vieux
-  // "vitalite") retombe sur le PREMIER élément de la classe, jamais sur « aucun élément ».
-  it("le préréglage vitalite (obsolète) retombe sur le premier élément de la classe", () => {
-    localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "vitalite" } }));
-    const run = nouvelleRun(["iop"]);
-    const p = run.persos[0];
-    expect(p.elementChoisi).toBe("terre"); // 1er élément de la classe (iop : terre + feu)
-    gagnerXPPerso(p, 50, "t1"); // niveau 2 : stats à ce niveau, voir statsFinales
-    expect(p.progression.niveau).toBe(2);
-    localStorage.removeItem("rld_settings_v0");
-  });
-
-  it("un préréglage VALIDE mais HORS PAIRE (vieille save rld_settings_v0) retombe aussi sur le 1er élément", () => {
-    // Cas nommé dans le commentaire ci-dessus, jusqu'ici non testé : "eau" est un
-    // élément valide (pas une valeur fantaisiste comme "vitalite"), mais l'iop ne le
-    // déclare pas (terre + feu) — c'est là que le `.includes` fait tout le travail.
-    localStorage.setItem("rld_settings_v0", JSON.stringify({ elements: { iop: "eau" } }));
-    const run = nouvelleRun(["iop"]);
-    expect(run.persos[0].elementChoisi).toBe("terre"); // 1er élément de la classe, pas "eau"
     localStorage.removeItem("rld_settings_v0");
   });
 });

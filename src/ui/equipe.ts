@@ -8,10 +8,9 @@ import {
   xpRequis,
 } from "../progression";
 import { sauverConfig } from "../config";
-import { elementAsset, BTN_RETOUR, BTN_CONTINUER } from "./assets";
+import { BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
-  elNom,
   pastillesElements,
   classSymbol,
   carteClasse,
@@ -25,7 +24,7 @@ import {
   pvMaxPerso,
   type PersoState,
 } from "../run";
-import type { Archetype, Element, Meta, Stats } from "../types";
+import type { Archetype, Meta, Stats } from "../types";
 
 /** Libellé lisible d'un archétype (mêlée = plus robuste, distance = frappe plus fort). */
 const ARCHETYPE_LBL: Record<Archetype, string> = {
@@ -174,29 +173,8 @@ export function showFormation(persos: PersoState[]): Promise<void> {
           <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
         </div>
-        <div class="form-elements">
-          <h2>Élément de frappe</h2>
-          <p class="sous-titre">Chaque classe a 2 éléments : choisis lequel des deux frappe.</p>
-          ${persos.map((p) => `
-            <div class="form-el-perso">
-              <img class="form-el-sym" src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
-              <span class="form-el-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
-              <div class="form-el-choix">
-                ${CLASSES[p.classeId].elements.map((el) => `<button class="form-el-btn elem-${el} ${p.elementChoisi === el ? "sel" : ""}" data-perso="${p.classeId}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
-              </div>
-            </div>`).join("")}
-        </div>
         <div class="boutons-ecran"><button id="form-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
-      root.querySelectorAll<HTMLButtonElement>(".form-el-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const p = persos.find((x) => x.classeId === btn.dataset.perso);
-          if (!p) return;
-          const el = btn.dataset.el;
-          p.elementChoisi = el as Element;
-          draw();
-        });
-      });
       root.querySelectorAll<HTMLButtonElement>(".form-cell").forEach((btn) => {
         const cell = Number(btn.dataset.cell);
         // — clic : sélection puis déplacement (fallback)

@@ -4,10 +4,9 @@
 // =============================================================================
 import { ITEMS, RARETE_INFO, CLASSES } from "../data";
 import { sauverConfig, libelleTouche } from "../config";
-import { elementAsset, itemImg, BTN_RETOUR, BTN_CONTINUER } from "./assets";
+import { itemImg, BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
-  elNom,
   classSymbol,
   SLOTS,
   SLOT_NOM,
@@ -30,7 +29,7 @@ import {
   PANOPLIE_BONUS_PA,
   type PersoState,
 } from "../run";
-import type { Element, EquipSlot, ItemInstance } from "../types";
+import type { EquipSlot, ItemInstance } from "../types";
 
 // Tri de l'inventaire (persistant sur la session) : par toile d'obtention ou par type d'objet.
 let triInventaire: "toile" | "type" = "toile";
@@ -271,17 +270,14 @@ export function showSettings(): Promise<void> {
           <p id="set-import-msg" class="muet settings-sous" style="display:none"></p>
         </div>
         <h2 class="settings-titre">Préréglages des héros</h2>
-        <p class="muet settings-sous">Élément de frappe &amp; position par défaut, appliqués au début de chaque run.</p>
+        <p class="muet settings-sous">Position par défaut, appliquée au début de chaque run.</p>
         <div class="presets">
           ${classesDisponibles().map((cid) => {
-            const elSel = config.elements[cid];
             const rangee = config.formation[cid] === "arriere" ? "arriere" : "avant";
             return `<div class="preset-classe">
               <img class="preset-sym" src="${classSymbol(cid)}" alt="" onerror="this.remove()" />
               <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
               <div class="preset-el">
-                ${CLASSES[cid].elements.map((el) => `<button class="form-el-btn elem-${el} ${elSel === el ? "sel" : ""}" data-classe="${cid}" data-el="${el}" title="${elNom[el]}"><img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><span>${elNom[el]}</span></button>`).join("")}
-                <span class="preset-sep"></span>
                 <span class="preset-pos">
                   <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
                   <button class="form-el-btn ${rangee === "arriere" ? "sel" : ""}" data-classe="${cid}" data-rangee="arriere" title="Ligne arrière (les héros s'y empilent)">Arrière</button>
@@ -292,14 +288,6 @@ export function showSettings(): Promise<void> {
         </div>
         <div class="boutons-ecran"><button id="set-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
-      root.querySelectorAll<HTMLButtonElement>(".preset-el [data-el]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const cid = btn.dataset.classe!;
-          config.elements[cid] = btn.dataset.el as Element;
-          sauverConfig(config);
-          draw();
-        });
-      });
       root.querySelectorAll<HTMLButtonElement>(".preset-pos [data-rangee]").forEach((btn) => {
         btn.addEventListener("click", () => {
           config.formation[btn.dataset.classe!] = btn.dataset.rangee as "avant" | "arriere";

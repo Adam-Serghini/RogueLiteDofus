@@ -37,8 +37,6 @@ const SYN_IGNORE_RES: Spell = { // ex-Flèche intrusive (baseMin5/baseMax7/scali
 describe("élément de frappe", () => {
   it("un MONSTRE (sans paire déclarée) : déterminé par la plus haute stat élémentaire", () => {
     const [m1, m2] = fabriquerEnnemis("combat_1"); // même pack, deux individus distincts
-    m1.elementChoisi = undefined;
-    m2.elementChoisi = undefined;
     m1.stats = { ...m1.stats, force: 60 }; // build Terre
     m2.stats = { ...m2.stats, agilite: 55 }; // build Air
     expect(elementDeFrappe(m1)).toBe("terre");
@@ -47,7 +45,6 @@ describe("élément de frappe", () => {
 
   it("un HÉROS (paire déclarée) : seules ses 2 stats élémentaires DÉCLARÉES comptent", () => {
     const [iop] = fabriquerEquipe(); // iop : terre + feu
-    iop.elementChoisi = undefined;
     iop.stats = { ...iop.stats, agilite: 9999 }; // Air en tête des stats, mais hors de la paire
     expect(elementDeFrappe(iop)).toBe("terre"); // 1er élément DÉCLARÉ, la stat ne joue aucun rôle
   });
@@ -56,31 +53,12 @@ describe("élément de frappe", () => {
     // Depuis le socle Éléments & Archétypes, un héros a une paire d'éléments DÉCLARÉE
     // (sa classe) : le fallback par plus-haute-stat ne s'applique plus qu'aux monstres.
     const [m] = fabriquerEnnemis("combat_1");
-    m.elementChoisi = undefined; // teste le fallback (pas de choix explicite)
     m.stats = { ...m.stats, chance: 999 };
     expect(elementDeFrappe(m)).toBe("eau"); // Chance domine
   });
 
-  it("elementChoisi n'a plus aucun effet : seul l'écart de caractéristique décide, dans la paire déclarée", () => {
-    // Avant l'automatisation, `elementChoisi` primait même hors de la paire déclarée
-    // de la classe. Le moteur ne le lit plus du tout : régler `elementChoisi` sur
-    // "air" (hors paire) ou sur "feu" (dans la paire) ne doit RIEN changer — seul un
-    // écart de caractéristique entre les 2 éléments déclarés peut faire basculer le
-    // résultat, jamais le champ lui-même.
-    const [iop] = fabriquerEquipe(); // iop : terre + feu
-    iop.elementChoisi = "air"; // ignoré : hors de la paire déclarée, et plus lu de toute façon
-    expect(elementDeFrappe(iop)).toBe("terre"); // stat par défaut de l'Iop : terre > feu
-    iop.elementChoisi = "feu"; // ignoré aussi, bien que "feu" soit dans la paire déclarée
-    expect(elementDeFrappe(iop)).toBe("terre");
-    iop.stats = { ...iop.stats, intelligence: (iop.stats.force ?? 0) + 50 }; // feu dépasse terre
-    expect(elementDeFrappe(iop)).toBe("feu"); // c'est l'écart de caractéristique qui a basculé, pas elementChoisi
-    iop.elementChoisi = undefined;
-    expect(elementDeFrappe(iop)).toBe("feu");
-  });
-
   it("applique la résistance de l'élément de frappe basculé — un MONSTRE", () => {
     const [m] = fabriquerEnnemis("combat_1");
-    m.elementChoisi = undefined;
     m.stats = { ...m.stats, chance: 999 }; // frappe désormais en Eau
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.resistances = { eau: 0.5 }; // -50 % subis en Eau

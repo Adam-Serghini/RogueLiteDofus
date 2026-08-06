@@ -131,14 +131,6 @@ export const CIBLE_LBL: Record<string, string> = {
   mixte: "Allié ou ennemi",
 };
 
-/** Explication de la mécanique d'élément de frappe (icône info du sélecteur). */
-export const ELEMENT_AIDE =
-  "Élément de frappe\n\n" +
-  "Tous tes dégâts utilisent l'un des 2 éléments déclarés par ta classe :\n" +
-  "Force → Terre · Intelligence → Feu · Agilité → Air · Chance → Eau\n\n" +
-  "Les résistances de la cible s'appliquent selon cet élément.\n" +
-  "Clique sur un rond pour basculer entre tes 2 éléments (un objet Kwakwaffe ouvre les 4).";
-
 /**
  * Tooltip d'aide générique piloté par `data-tip` (texte multiligne, `\n` rendus
  * via white-space: pre-line). Remplace le `title` natif peu fiable du sélecteur
@@ -194,13 +186,14 @@ export function elementsFortsPerso(p: PersoState): [Element, Element] {
   return CLASSES[p.classeId].elements;
 }
 
-/** Paire de pastilles d'élément (les 2 éléments déclarés de la classe ; frappe en
- *  évidence, second estompé). */
+/** Paire de pastilles d'élément (les 2 éléments déclarés de la classe). L'élément
+ *  de frappe se calcule désormais coup par coup (le plus fort des deux au moment
+ *  du sort) : hors combat il n'y a rien à mettre en évidence, les deux s'affichent
+ *  à égalité. */
 export function pastillesElements(p: PersoState): string {
   const [e1, e2] = elementsFortsPerso(p);
-  const frappe = p.elementChoisi ?? e1;
   const img = (el: Element) =>
-    `<img class="el-pastille ${el === frappe ? "" : "dim"}" src="${elementAsset(el)}" alt="" title="${el === frappe ? "Élément de frappe" : "Élément secondaire"} : ${elNom[el]}" onerror="this.remove()" />`;
+    `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="Élément : ${elNom[el]}" onerror="this.remove()" />`;
   return `<span class="el-pastilles">${img(e1)}${img(e2)}</span>`;
 }
 export const ARCHETYPE_NOM: Record<Archetype, string> = {

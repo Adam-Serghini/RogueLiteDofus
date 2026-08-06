@@ -3,7 +3,6 @@ import { genererCarte } from "./carte";
 import { CLASSES, ZONES, trancheDe, localiserZone, offsetToile, xpEffective, XP_PAR_TYPE, XP_PAR_TOILE, type TrancheDef } from "./data";
 import { toileDeZone, toileDeItem, niveauMaxTranche, nouvelleRun, gagnerXPPerso, sauverRunEnCours, chargerRunEnCours, trancheDeverrouillee, trancheJouable, archiverEquipe, heritagePour, runDepuisHeritage, rollItem, chargerMeta, sauverMeta, pvMaxPerso, archiveDe } from "./run";
 import { progressionInitiale, pvMaxFor } from "./progression";
-import { chargerConfig, sauverConfig, type AllocationPref } from "./config";
 import type { Meta } from "./types";
 
 /** Table de tranches factice : t2 n'a pas encore de zones dans le jeu réel. */
@@ -137,21 +136,8 @@ describe("cap de niveau par tranche", () => {
 });
 
 describe("PV de départ d'une équipe neuve", () => {
-  // La config joueur est lue par `nouvelleRun` via `chargerConfig()` : on l'écrit
-  // dans le localStorage simulé pour rendre les préréglages déterministes.
-  const avecPreregleges = <T>(elements: Record<string, AllocationPref>, fn: () => T): T => {
-    const avant = localStorage.getItem("rld_settings_v0");
-    sauverConfig({ ...chargerConfig(), elements });
-    try {
-      return fn();
-    } finally {
-      if (avant === null) localStorage.removeItem("rld_settings_v0");
-      else localStorage.setItem("rld_settings_v0", avant);
-    }
-  };
-
   it("t2 : les héros naissent au niveau de la tranche avec leurs PV au maximum réel", () => {
-    const run = avecPreregleges({ iop: "eau", cra: "terre" }, () => nouvelleRun(["iop", "cra"], 0, "t2"));
+    const run = nouvelleRun(["iop", "cra"], 0, "t2");
     for (const perso of run.persos) {
       expect(perso.progression.niveau).toBe(50);
       expect(perso.pvActuels).toBe(pvMaxPerso(perso));
@@ -163,7 +149,7 @@ describe("PV de départ d'une équipe neuve", () => {
   });
 
   it("t1 : au niveau 1, les PV courants sont déjà égaux au max (rien à resynchroniser)", () => {
-    const run = avecPreregleges({ iop: "eau" }, () => nouvelleRun(["iop"], 0, "t1"));
+    const run = nouvelleRun(["iop"], 0, "t1");
     expect(run.persos[0].pvActuels).toBe(pvMaxPerso(run.persos[0]));
   });
 });
@@ -285,21 +271,6 @@ describe("héritage d'une tranche à l'autre", () => {
     const sans = runDepuisHeritage(arch, false, "t2");
     expect(sans.persos[0].equipement).toEqual({});
     expect(sans.persos[0].progression.niveau).toBe(50); // le niveau, lui, reste
-  });
-
-  it("runDepuisHeritage retombe sur le 1er élément de la classe si l'élément archivé est HORS PAIRE", () => {
-    // Contrairement à un choix en combat via le Kwakwaffe (honoré tel quel, voir
-    // archetypes.test.ts), un élément hérité hors paire est une donnée PÉRIMÉE
-    // (vieille save, refonte de classe) : sans cette garde, le héros hérité
-    // frapperait silencieusement dans une caractéristique qu'il ne monte jamais,
-    // pour toute la tranche suivante.
-    const meta = metaVide();
-    const source = nouvelleRun(["iop"]); // iop : terre + feu
-    source.persos[0].elementChoisi = "eau"; // hors paire — simule une donnée périmée
-    archiverEquipe(meta, "t1", source);
-    const arch = heritagePour(meta, "t2")!;
-    const run = runDepuisHeritage(arch, true, "t2");
-    expect(run.persos[0].elementChoisi).toBe("terre"); // 1er élément de la classe
   });
 
   it("les trois départs possibles produisent une run cohérente pour t2", () => {

@@ -7,7 +7,6 @@ import {
   ciblesValides,
   estAvant,
   ELEMENTS,
-  elementsForts,
   elementDeFrappe,
   statsEffectives,
   ordreDuCombat,
@@ -18,7 +17,6 @@ import { libelleTouche } from "../config";
 import {
   A,
   sortIcon,
-  elementAsset,
   resAsset,
   PA_ICON,
   COEUR_PLEIN,
@@ -32,7 +30,6 @@ import {
 } from "./assets";
 import { root, escapeHtml, tipsFlottants, masquerTooltips, config } from "./dom";
 import {
-  ELEMENT_AIDE,
   elNom,
   pctCrit,
   pctDmgCrit,
@@ -41,7 +38,7 @@ import {
   pctRembPA,
   sortTooltipHtml,
 } from "./composants";
-import type { Action, Camp, Combatant, Element, Meta, Spell } from "../types";
+import type { Action, Camp, Combatant, Meta, Spell } from "../types";
 
 let combatants: Combatant[] = [];
 let logLines: string[] = [];
@@ -328,34 +325,6 @@ function choisirSort(s: Spell): void {
 }
 
 /**
- * Rond d'élément. `rang` = 1 (premier élément déclaré de la classe) / 2 (second).
- * `actif` = élément de frappe courant. `switchable` (alliés) rend le rond cliquable
- * pour choisir l'élément de frappe.
- */
-function elemRond(
-  el: Element,
-  rang: number,
-  actif: boolean,
-  switchable: boolean,
-): string {
-  const cls = [
-    "elem-rond",
-    `elem-${el}`,
-    actif ? "frappe" : "",
-    switchable ? "switch" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const titre = actif
-    ? `Élément de frappe — ${elNom[el]}`
-    : switchable
-      ? `Frapper en ${elNom[el]} (cliquer)`
-      : `Élément ${rang === 1 ? "principal" : "secondaire"} — ${elNom[el]}`;
-  return `<span class="${cls}" ${switchable ? `data-switch="${el}" role="button" tabindex="0" aria-pressed="${actif}"` : ""} data-tip="${escapeHtml(titre)}" aria-label="${escapeHtml(titre)}">
-    <img src="${elementAsset(el)}" alt="" onerror="this.remove()" /><i>${rang}</i>${actif ? `<b class="frappe-pic">⚔</b>` : ""}</span>`;
-}
-
-/**
  * Indicateur d'Archimonstre (coin haut-droit du mob) : affiché UNIQUEMENT quand
  * l'ennemi EST un Archimonstre (le montrer sur toute espèce capturable prêtait
  * à confusion). Pleine opacité ; le tooltip précise si l'âme est déjà capturée.
@@ -549,24 +518,6 @@ function render(): void {
     el.addEventListener("mouseenter", () => lies().forEach((x) => x.classList.add("lie-survol")));
     el.addEventListener("mouseleave", () => lies().forEach((x) => x.classList.remove("lie-survol")));
   });
-
-  // choix de l'élément de frappe de l'acteur courant : clic sur un rond du sélecteur (barre de sorts)
-  root
-    .querySelectorAll<HTMLElement>(".elem-select .elem-rond.switch")
-    .forEach((rond) => {
-      const basculer = () => {
-        const el = rond.dataset.switch as Element | undefined;
-        if (activeActeur && el) {
-          activeActeur.elementChoisi = el;
-          render();
-        }
-      };
-      rond.addEventListener("click", basculer);
-      rond.addEventListener("keydown", (e) => {
-        // rond = rôle bouton : Entrée/Espace au clavier
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); basculer(); }
-      });
-    });
 }
 
 /** Initiative effective (base + effets) — pour l'ordre des tours affiché. */
@@ -667,22 +618,9 @@ function renderBarreSorts(): string {
     ? `<div class="aide">Choisis une cible pour <b>${escapeHtml(selectedSpell.nom)}</b>.</div>`
     : `<div class="aide">Tour de <b>${escapeHtml(acteur.nom)}</b> — choisis un sort.</div>`;
 
-  // sélecteur d'élément de frappe (les 2 éléments déclarés de la classe), vertical, à gauche des sorts
-  const [principal, secondaire] = elementsForts(acteur);
-  const actif = elementDeFrappe(acteur);
-  const selecteur =
-    acteur.camp === "joueur"
-      ? `<div class="elem-select">
-         <span class="elem-info" data-tip="${escapeHtml(acteur.elementLibre ? "Kwakwaffe : frappe dans N'IMPORTE quel élément — clique un rond pour choisir." : ELEMENT_AIDE)}">i</span>
-         ${acteur.elementLibre
-    ? ELEMENTS.map((el, i) => elemRond(el, i + 1, el === actif, true)).join("") // Kwakwaffe : les 4 éléments
-    : elemRond(principal, 1, principal === actif, true) + elemRond(secondaire, 2, secondaire === actif, true)}
-       </div>`
-      : "";
-
   return `
     <div class="sorts-rangee">
-      <div class="sorts-zone">${selecteur}<div class="sorts-liste">${boutons}</div></div>
+      <div class="sorts-zone"><div class="sorts-liste">${boutons}</div></div>
       <div class="barre-actions-fin"><button id="fin-tour" class="fin-tour primaire" title="Terminer le tour"><img src="${MENU_TERMINER}" alt="Terminer le tour" onerror="this.replaceWith('Terminer le tour')" /> <kbd>${escapeHtml(libelleTouche(config.toucheFinTour))}</kbd></button></div>
     </div>
     ${aide}`;

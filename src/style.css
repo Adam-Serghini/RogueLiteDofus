@@ -1515,15 +1515,6 @@ kbd {
   align-items: center;
   gap: 6px;
 }
-/* petit trait vertical entre les éléments et le placement par défaut */
-.preset-sep {
-  width: 1px;
-  align-self: stretch;
-  margin: 2px 4px;
-  background: var(--bord-clair);
-  opacity: 0.7;
-}
-
 /* écran Formation — grille 4×2 */
 .formation-grille {
   max-width: 560px;
@@ -1531,42 +1522,6 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-/* Sélecteur d'élément par héros (fiche de formation) */
-.form-elements {
-  max-width: 560px;
-  margin: 18px auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.form-elements h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-.form-el-perso {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--panel-2);
-  border: 1px solid var(--bord);
-  border-radius: 12px;
-  padding: 6px 10px;
-}
-.form-el-sym {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-}
-.form-el-nom {
-  min-width: 88px;
-  font-weight: 700;
-}
-.form-el-choix {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-left: auto;
 }
 .form-el-btn {
   display: inline-flex;
@@ -1579,11 +1534,6 @@ kbd {
   color: var(--txt);
   font-size: 0.8rem;
   cursor: pointer;
-}
-.form-el-btn img {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
 }
 .form-el-btn:hover {
   border-color: var(--bord-clair);
@@ -2318,93 +2268,6 @@ kbd {
     0 0 4px #0008;
 }
 
-/* éléments : rond principal (1) + secondaire (2) */
-.elems {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin: 2px 0 1px;
-}
-.elem-rond {
-  position: relative;
-  width: 31px;
-  height: 31px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #e4d6b2;
-  border: 1px solid var(--bord);
-}
-.elem-rond img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-.elem-rond i {
-  position: absolute;
-  bottom: -4px;
-  right: -5px;
-  font-style: normal;
-  font-size: 0.5rem;
-  font-weight: 900;
-  width: 14px;
-  height: 14px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--panel-2);
-  border: 1px solid var(--bord);
-  color: var(--txt);
-}
-/* élément de frappe actif vs second (cliquable pour switcher, côté allié) */
-.elem-rond:not(.frappe) {
-  opacity: 0.5;
-}
-.elem-rond.frappe {
-  opacity: 1;
-}
-.elem-rond.switch {
-  cursor: pointer;
-}
-.elem-rond.switch:not(.frappe):hover {
-  opacity: 0.85;
-}
-.elem-rond .frappe-pic {
-  position: absolute;
-  top: -7px;
-  left: -7px;
-  font-size: 0.56rem;
-  font-weight: 900;
-  width: 15px;
-  height: 15px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--cyan);
-  color: #06222b;
-  box-shadow: 0 0 6px #ef7d1aaa;
-}
-.elem-rond.elem-terre {
-  box-shadow:
-    0 0 0 1px #d08a3a66,
-    0 0 8px #d08a3a33;
-}
-.elem-rond.elem-feu {
-  box-shadow:
-    0 0 0 1px #ff6a3d66,
-    0 0 8px #ff6a3d33;
-}
-.elem-rond.elem-eau {
-  box-shadow:
-    0 0 0 1px #3aa0e666,
-    0 0 8px #3aa0e633;
-}
-.elem-rond.elem-air {
-  box-shadow:
-    0 0 0 1px #4fb6ef66,
-    0 0 8px #4fb6ef33;
-}
-
 /* stats secondaires : grille 2×2 (crit / dégât crit / soin / dégâts finaux) */
 .mini-stats {
   display: grid;
@@ -2944,9 +2807,6 @@ kbd {
   object-fit: contain;
   filter: drop-shadow(0 1px 1px #0004);
 }
-.el-pastille.dim {
-  opacity: 0.4;
-}
 .form-cell .el-pastilles {
   position: absolute;
   top: 3px;
@@ -3435,63 +3295,9 @@ body.avec-fond .map-zone {
   color: var(--muet);
 }
 
-/* barre de sorts : sélecteur d'élément (vertical) à gauche des sorts */
+/* barre de sorts */
 .sorts-zone {
   display: flex;
   align-items: stretch;
   gap: 12px;
-}
-.elem-select {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding-right: 12px;
-  border-right: 1px solid var(--bord);
-}
-.elem-info {
-  position: absolute;
-  top: -7px;
-  right: 6px;
-  z-index: 2;
-  width: 14px;
-  height: 14px;
-  display: grid;
-  place-items: center;
-  cursor: help;
-  font-size: 0.52rem;
-  font-weight: 900;
-  font-style: italic;
-  line-height: 1;
-  color: var(--muet);
-  background: var(--panel-solide);
-  border: 1px solid var(--bord);
-  border-radius: 50%;
-}
-.elem-info:hover {
-  color: var(--txt);
-  border-color: var(--or);
-  box-shadow: 0 0 0 2px var(--or-clair);
-}
-.elem-select .elem-rond {
-  width: 40px;
-  height: 40px;
-}
-.elem-select .elem-rond img {
-  width: 24px;
-  height: 24px;
-}
-.elem-select .elem-rond.switch:hover {
-  transform: scale(1.08);
-}
-.elem-select .frappe-pic {
-  display: none;
-} /* pastille ⚔ inutile ici : l'anneau or suffit */
-.elem-select .elem-rond i {
-  font-size: 0.46rem;
-} /* rang 1/2 discret */
-.elem-select .elem-rond.frappe {
-  outline: 2px solid var(--or);
-  outline-offset: 2px;
 }

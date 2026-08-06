@@ -15,7 +15,6 @@ export interface PersoState {
   progression: Progression;
   pvActuels: number; // PV conservés d'un nœud à l'autre
   position: number; // case de grille 0..7 (0-3 ligne avant, 4-7 arrière)
-  elementChoisi?: Element; // élément de frappe choisi, conservé d'un combat à l'autre
   equipement: Partial<Record<EquipSlot, ItemInstance>>; // exemplaire équipé par slot
   flashNiveau?: boolean; // transitoire (UI) : a monté de niveau au dernier combat → anime dans le panneau d'équipe
 }
@@ -100,18 +99,10 @@ export function persoAuNiveau(classeId: string, niveau: number, position: number
 
 export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, trancheId = "t1"): RunState {
   const cells = cellulesPour(choix);
-  const elemsPref = chargerConfig().elements; // élément préféré par classe (préréglages)
   const eff = effetsAscension(ascension);
   const niveauDepart = trancheDe(trancheId).niveaux[0];
   const persos: PersoState[] = choix.map((classeId) => {
     const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
-    // Préréglage validé contre la paire DÉCLARÉE de la classe : un préréglage absent,
-    // invalide, ou hors de la paire (vieille sauvegarde de réglages, ou préréglage
-    // d'une autre classe) retombe sur le PREMIER élément de la classe — jamais sur
-    // aucun élément, sinon le perso paierait sa frappe sans rien recevoir en retour.
-    const pref = elemsPref[classeId];
-    const elements = CLASSES[classeId].elements;
-    perso.elementChoisi = pref && elements.includes(pref as Element) ? (pref as Element) : elements[0];
     // `persoAuNiveau` a figé les PV sans l'équipement (encore vide à cet instant,
     // mais `pvMaxPerso` inclut aussi les bonus de Vitalité de l'équipement) : on
     // resynchronise sur le vrai maximum pour rester correct si ça change.
@@ -184,7 +175,6 @@ export function archiverEquipe(meta: Meta, trancheId: string, run: RunState): vo
   const persos: HeritagePerso[] = run.persos.map((p) => ({
     classeId: p.classeId,
     progression: JSON.parse(JSON.stringify(p.progression)) as Progression,
-    elementChoisi: p.elementChoisi,
     position: p.position,
     equipement: JSON.parse(JSON.stringify(p.equipement)) as Partial<Record<EquipSlot, ItemInstance>>,
   }));
@@ -210,20 +200,11 @@ export function runDepuisHeritage(
   arch: HeritageEquipe, avecStuff: boolean, trancheId: string, ascension = 0,
 ): RunState {
   const persos: PersoState[] = arch.persos.map((h) => {
-    // Même garde qu'à `nouvelleRun` — mais pour une raison DIFFÉRENTE : ici l'élément
-    // hérité vient d'une sauvegarde (donnée potentiellement périmée : refonte de
-    // classe, ancienne save…), pas d'un choix en cours de combat via le Kwakwaffe.
-    // Hors paire, il retombe sur le 1er élément de la classe plutôt que de laisser
-    // le héros hérité frapper silencieusement dans une caractéristique morte pour
-    // toute la tranche suivante.
-    const elements = CLASSES[h.classeId].elements;
-    const elementChoisi = h.elementChoisi && elements.includes(h.elementChoisi) ? h.elementChoisi : elements[0];
     const perso: PersoState = {
       classeId: h.classeId,
       progression: JSON.parse(JSON.stringify(h.progression)) as Progression,
       pvActuels: 0, // fixé juste après, équipement compris
       position: h.position,
-      elementChoisi,
       equipement: avecStuff
         ? (JSON.parse(JSON.stringify(h.equipement)) as Partial<Record<EquipSlot, ItemInstance>>)
         : {},
@@ -365,7 +346,6 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     camp: "joueur",
     position: state.position,
     niveau: state.progression.niveau,
-    elementChoisi: state.elementChoisi,
     elements: classe.elements,
     img: classe.img,
     ...etatCombatInitial(),
@@ -384,13 +364,12 @@ export function fabriquerEquipe(): Combatant[] {
   return equipeCombattante(nouvelleRun());
 }
 
-/** Réécrit l'état conservé d'un combat à l'autre (PV courants + élément de frappe choisi). */
+/** Réécrit l'état conservé d'un combat à l'autre (PV courants). */
 export function synchroniserPV(run: RunState, combatants: Combatant[]): void {
   for (const s of run.persos) {
     const c = combatants.find((x) => x.ref === `j_${s.classeId}`);
     if (c) {
       s.pvActuels = c.pvActuels;
-      s.elementChoisi = c.elementChoisi;
     }
   }
 }
@@ -772,15 +751,6 @@ export function chargerRunEnCours(): RunSauvee | null {
       for (const slot of Object.keys(perso.equipement ?? {}) as EquipSlot[]) {
         if (perso.equipement[slot] && !ITEMS[perso.equipement[slot]!.id]) delete perso.equipement[slot];
       }
-      // Même garde qu'à `nouvelleRun`/`runDepuisHeritage` — mais pour une sauvegarde
-      // rechargée, pas une run/un héritage frais : un `elementChoisi` hors de la paire
-      // DÉCLARÉE de la classe était un état légitime avant cette refonte (l'écran
-      // Formation proposait alors les 4 éléments à tout le monde), et sans cette garde
-      // le perso continue de frapper avec une caractéristique à 0 pour le reste de sa
-      // run, sans rien pour le lui dire. Absent → déjà géré ailleurs (retombe sur
-      // elements[0]) : seul le cas hors paire est traité ici.
-      const elements = CLASSES[perso.classeId].elements;
-      if (perso.elementChoisi && !elements.includes(perso.elementChoisi)) perso.elementChoisi = elements[0];
     }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas

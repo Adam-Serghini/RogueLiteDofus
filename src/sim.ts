@@ -10,8 +10,9 @@
 //
 //  LIMITES (à garder en tête) : `controllerIA` ne joue pas de façon optimale
 //  (spam du sort le plus cher, focus PV le plus bas ; seul le soin est géré via
-//  ia="soutien"). Aucun choix d'élément de frappe adaptatif → mesure « si le
-//  joueur ne s'adapte pas ». C'est une BASELINE RELATIVE, pas le ressenti réel.
+//  ia="soutien"). L'élément de frappe se calcule automatiquement coup par coup
+//  (le plus fort des deux éléments de la classe, par cible) — même moteur qu'en
+//  jeu. C'est une BASELINE RELATIVE, pas le ressenti réel.
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
@@ -26,7 +27,7 @@ import {
   effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
   type RunState,
 } from "./run";
-import type { Element, ItemInstance, Rarete, Stats } from "./types";
+import type { ItemInstance, Rarete, Stats } from "./types";
 
 // Tranches mesurées par le banc, dans l'ordre d'affichage du rapport. T1 doit
 // TOUJOURS rester mesurée en premier et à l'identique (garde-fou anti-régression :
@@ -35,25 +36,26 @@ import type { Element, ItemInstance, Rarete, Stats } from "./types";
 const TRANCHES_MESUREES: TrancheDef[] = [TRANCHES[0], TRANCHES[1]];
 
 // --- Paramètres du sim (tunables) --------------------------------------------
-// Les classes portent désormais leurs deux éléments (voir CLASSES-ELEMENTS.md) : la
-// build n'est plus un choix du banc, seul l'ÉLÉMENT DE FRAPPE l'est. On garde les
-// quatre mêmes classes, qui couvrent les quatre éléments — nécessaire pour juger
-// honnêtement les zones à puzzle élémentaire.
+// Les classes portent désormais leurs deux éléments (voir CLASSES-ELEMENTS.md), et
+// l'élément de frappe se calcule automatiquement coup par coup (le plus fort des
+// deux) : il n'y a plus rien à choisir côté banc. On garde les quatre mêmes
+// classes, qui couvrent les quatre éléments — nécessaire pour juger honnêtement
+// les zones à puzzle élémentaire.
 // SIM_TANK=1 → config « tortue » positionnelle : Feca seul en ligne avant, le reste
 // derrière (l'exploit full-vitalité, lui, n'existe plus : l'allocation est automatique).
 const TANK = !!(globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.SIM_TANK;
-const TEAM: Array<{ classe: string; element: Element; pos?: number }> = TANK
+const TEAM: Array<{ classe: string; pos?: number }> = TANK
   ? [
-    { classe: "feca", element: "terre", pos: 0 },
-    { classe: "iop", element: "terre", pos: 4 },
-    { classe: "cra", element: "air", pos: 5 },
-    { classe: "eniripsa", element: "feu", pos: 6 },
+    { classe: "feca", pos: 0 },
+    { classe: "iop", pos: 4 },
+    { classe: "cra", pos: 5 },
+    { classe: "eniripsa", pos: 6 },
   ]
   : [
-    { classe: "iop", element: "terre" },
-    { classe: "cra", element: "air" },
-    { classe: "eniripsa", element: "feu" },
-    { classe: "ecaflip", element: "eau" }, // le sadida est désactivé
+    { classe: "iop" },
+    { classe: "cra" },
+    { classe: "eniripsa" },
+    { classe: "ecaflip" }, // le sadida est désactivé
   ];
 const IDS = TEAM.map((t) => t.classe);
 const N = 200; // combats par (rencontre × scénario de stuff)
@@ -138,14 +140,16 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
   const pool = zoneId ? (butinToile(zoneId)?.normales ?? null) : null;
   run.persos.forEach((perso, i) => {
     perso.progression = { ...progressionInitiale(), niveau };
-    perso.elementChoisi = TEAM[i].element;
     if (TEAM[i].pos !== undefined) perso.position = TEAM[i].pos!;
     if (pool) {
       // zone à toile : chaque membre porte le meilleur objet COMMUN de sa stat
       // par slot (arme et coiffe d'abord pour le mi-set) — plancher réaliste,
-      // les paliers rare/épique/légendaire rendent le vrai jeu plus facile.
+      // les paliers rare/épique/légendaire rendent le vrai jeu plus facile. Les
+      // 2 éléments de la classe montent tous les deux (allocation automatique) :
+      // le premier élément déclaré suffit à départager le stuff non-adaptatif.
+      const statPref = STAT_PAR_ELEMENT[CLASSES[TEAM[i].classe].elements[0]];
       for (const slot of SLOTS_SIM.slice(0, nbPieces)) {
-        const id = meilleurItemToile(pool, slot, STAT_PAR_ELEMENT[TEAM[i].element]);
+        const id = meilleurItemToile(pool, slot, statPref);
         if (id) perso.equipement[slot] = itemPalier(id, "commun");
       }
     }
@@ -221,7 +225,7 @@ describe("équilibrage — simulation par rencontre", () => {
   it("rapport", async () => {
     const out: string[] = [];
     out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
-    out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${t.element})`).join(" ")}`);
+    out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${CLASSES[t.classe].elements.join("/")})`).join(" ")}`);
     out.push(`Colonnes — NU (sans stuff) | MI (2 pièces, toile commun) | SET (4 pièces, toile commun) : win% · tours · PV%restant(sur victoire)\n`);
 
     for (const tranche of TRANCHES_MESUREES) {

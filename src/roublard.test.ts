@@ -137,9 +137,8 @@ describe("Kaboom — aura Portails / marque Conjuration (cross-classe, handler d
   // l'arrondi et le test ne distingue plus rien — ici l'écart est net.
   const roublardPuissant = (): Combatant => {
     // Le Roublard frappe désormais dans la meilleure de ses 2 caractéristiques
-    // DÉCLARÉES (feu/eau) — `elementChoisi` (qui pointait autrefois sur "terre",
-    // hors de sa paire) n'est plus lu. On monte l'intelligence (feu, dans la
-    // paire) au lieu de la force pour obtenir le même écart net.
+    // DÉCLARÉES (feu/eau). On monte l'intelligence (feu, dans la paire) au lieu
+    // de la force pour obtenir le même écart net.
     const r = roublard();
     r.stats = { ...r.stats, force: 0, intelligence: 300, chance: 0 };
     return r;
