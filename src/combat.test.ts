@@ -43,10 +43,15 @@ describe("élément de frappe", () => {
     expect(elementDeFrappe(m2)).toBe("air");
   });
 
-  it("un HÉROS (paire déclarée) : seules ses 2 stats élémentaires DÉCLARÉES comptent", () => {
+  it("un HÉROS (paire déclarée) : un élément hors paire ne peut jamais l'emporter, même très fort", () => {
+    // Ne fait volontairement varier QUE l'agilité (hors paire) : ça ne prouve pas que
+    // la stat DÉCLARÉE (force/intelligence) est ignorée — seulement que le candidat
+    // hors paire l'est. `elementDeFrappe(iop)` retombe sur "terre" ici par égalité
+    // force = intelligence (voir le test d'archétypes correspondant), pas parce que
+    // la stat ne compterait pas entre les 2 éléments déclarés.
     const [iop] = fabriquerEquipe(); // iop : terre + feu
     iop.stats = { ...iop.stats, agilite: 9999 }; // Air en tête des stats, mais hors de la paire
-    expect(elementDeFrappe(iop)).toBe("terre"); // 1er élément DÉCLARÉ, la stat ne joue aucun rôle
+    expect(elementDeFrappe(iop)).toBe("terre");
   });
 
   it("bascule sur l'Eau quand la Chance domine — un MONSTRE, sans paire déclarée", () => {

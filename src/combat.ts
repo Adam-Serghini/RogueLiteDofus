@@ -476,6 +476,9 @@ function degatsAvec(
   // esquive (Agilité de la cible + buffs + équipement « ligne arrière », plafonnée à 50 %)
   const esquiveEquip = !estAvant(cible) ? (cible.esquiveArriere ?? 0) : 0; // Baguette Rikiki
   if (ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
+    // `element` ici est AVEUGLE à la cible (dmg=0, jamais soumis à `meilleurElement`) :
+    // n'a pas de sens réel sur ce chemin, et n'est actuellement consommé par aucun
+    // journal — ne pas s'en servir pour un futur affichage sans le recalculer via la cible.
     return { dmg: 0, esquive: true, crit: false, element: elementDeFrappe(lanceur) };
   }
 

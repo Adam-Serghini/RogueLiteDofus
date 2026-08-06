@@ -146,7 +146,10 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
       // par slot (arme et coiffe d'abord pour le mi-set) — plancher réaliste,
       // les paliers rare/épique/légendaire rendent le vrai jeu plus facile. Les
       // 2 éléments de la classe montent tous les deux (allocation automatique) :
-      // le premier élément déclaré suffit à départager le stuff non-adaptatif.
+      // `statPref` ne départage en réalité RIEN — aucun objet du jeu ne porte de
+      // ligne de caractéristique élémentaire sèche (voir Archétypes & éléments,
+      // CLAUDE.md), donc ce tri par premier élément déclaré n'a jamais l'occasion
+      // de s'exercer sur le stuff non-adaptatif.
       const statPref = STAT_PAR_ELEMENT[CLASSES[TEAM[i].classe].elements[0]];
       for (const slot of SLOTS_SIM.slice(0, nbPieces)) {
         const id = meilleurItemToile(pool, slot, statPref);

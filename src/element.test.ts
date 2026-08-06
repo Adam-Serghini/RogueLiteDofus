@@ -3,7 +3,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  elementsCandidats, elementsForts, elementDeFrappe, elementContre, degatsCible, statsEffectives, ELEMENTS,
+  elementsCandidats, elementsForts, elementDeFrappe, elementContre, degatsCible, statsEffectives, ELEMENTS, lancerSort,
 } from "./combat";
 import { combattantDepuisPerso, persoAuNiveau, fabriquerEnnemis } from "./run";
 import { SORTS } from "./data";
@@ -56,6 +56,21 @@ describe("l'élément de frappe suit la cible", () => {
     const plusFeu: Combatant = { ...heros, stats: { ...heros.stats, intelligence: heros.stats.intelligence + 50 } };
     const sortIgnore = { ...SORTS.morsure, ignoreResistances: true } as Spell;
     expect(elementContre(plusFeu, cible({ feu: 0.9, eau: 0 }), sortIgnore)).toBe("feu");
+  });
+
+  it("perceResistances entre bien dans le choix d'élément, au même titre qu'ignoreResistances", () => {
+    // Même scénario que le test « ignoreResistances » ci-dessus (intelligence +50,
+    // 90 % de résistance feu vs 0 % eau), mais avec `perceResistances: 1` plutôt que
+    // `ignoreResistances: true` : les deux passent par `resistanceEffective`, mais
+    // perceResistances multiplie par `(1 − perce)` au lieu de retourner 0 directement.
+    // À 100 % de perce les deux DOIVENT converger vers le même résultat (feu) ; une
+    // erreur de signe (`1 + perce`, qui doublerait la résistance au lieu de l'annuler)
+    // laisserait l'eau gagner, sans qu'aucun autre test du fichier ne s'en aperçoive.
+    const heros = combattantDepuisPerso(persoAuNiveau("eniripsa", 50, 0));
+    const plusFeu: Combatant = { ...heros, stats: { ...heros.stats, intelligence: heros.stats.intelligence + 50 } };
+    const cibleRes = cible({ feu: 0.9, eau: 0 });
+    const sortPerceTotal = { ...SORTS.morsure, perceResistances: 1 } as Spell;
+    expect(elementContre(plusFeu, cibleRes, sortPerceTotal)).toBe("feu");
   });
 
   it("un monstre garde exactement l'élément qu'il avait", () => {
@@ -129,6 +144,38 @@ describe("l'élément de frappe suit la cible", () => {
     // le moteur réel, via un vrai sort et un vrai jet non nul, doit choisir le MÊME élément.
     const r = degatsCible(heros, SORTS.epee_celeste, vulnerableAuFeu, { useMax: false, mult: 1, ctx: ctx(() => 0.5) });
     expect(r.element).toBe("feu");
+  });
+
+  it("une volée de zone frappe 2 cibles dans des éléments DIFFÉRENTS — la capacité phare du chantier", () => {
+    // Aucun test existant n'appelle `lancerSort` (l'entrée réelle d'un lancer, pas
+    // `degatsCible` isolé) sur PLUSIEURS cibles à la fois : c'est la seule garde qui
+    // aurait attrapé une régression consistant à calculer `meilleurElement` une seule
+    // fois par lancer (sur la cible primaire) au lieu d'une fois par cible touchée —
+    // un sabotage volontaire de ce genre a été vérifié pour confirmer que ce test
+    // échoue bien avant d'être écrit (voir le rapport de tâche).
+    const heros = combattantDepuisPerso(persoAuNiveau("xelor", 50, 0)); // eau + terre
+    const lanceur: Combatant = {
+      ...heros,
+      elements: ["eau", "air"],
+      stats: { ...heros.stats, agilite: heros.stats.chance ?? 0 }, // isole la résistance, cf. 1er test du fichier
+      camp: "joueur",
+    };
+    const cibleAir: Combatant = { ...cible({ air: 0.5, eau: 0 }), ref: "c-air", nom: "CibleAir", position: 0, camp: "ennemi" };
+    const cibleEau: Combatant = { ...cible({ eau: 0.5, air: 0 }), ref: "c-eau", nom: "CibleEau", position: 1, camp: "ennemi" };
+    const cs: Combatant[] = [lanceur, cibleAir, cibleEau];
+    const logs: string[] = [];
+    const ctxSort = { rng: () => 0.5, log: (m: string) => logs.push(m), playerDamageBonus: 1, combatants: cs };
+    // Écrasement : zoneLigne, touche donc TOUTE la rangée avant adverse en un seul lancer.
+    lancerSort(lanceur, SORTS.ecrasement, cibleAir.ref, cs, ctxSort);
+    const elDe = (nom: string): string | undefined =>
+      logs.find((l) => l.includes(nom))?.match(/dégâts (\w+)/)?.[1];
+    const elAir = elDe("CibleAir");
+    const elEau = elDe("CibleEau");
+    expect(elAir).toBeDefined();
+    expect(elEau).toBeDefined();
+    expect(elAir).not.toBe(elEau); // même lancer, deux éléments différents — l'ancien système ne pouvait pas faire ça
+    expect(elAir).toBe("Eau"); // CibleAir résiste l'air : le lanceur bascule sur l'eau contre elle
+    expect(elEau).toBe("Air"); // CibleEau résiste l'eau : le lanceur bascule sur l'air contre elle
   });
 
   it("le résultat est déterministe à graine fixe", () => {

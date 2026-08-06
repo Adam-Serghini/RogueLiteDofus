@@ -193,7 +193,11 @@ describe("les éléments en combat", () => {
     expect(elementsForts(m)).toHaveLength(2);
   });
 
-  it("l'élément de frappe par défaut est le PREMIER élément déclaré", () => {
+  it("`elementDeFrappe` (sans cible) départage par la meilleure caractéristique, égalité → premier élément déclaré", () => {
+    // Les deux stats déclarées d'un héros sont TOUJOURS égales (gains de niveau
+    // symétriques, équipement adaptatif) : `elementDeFrappe` ne bascule donc jamais
+    // en pratique, il tombe systématiquement sur le premier élément par égalité —
+    // ce n'est pas une règle de « défaut », c'est un départage à égalité stricte.
     const c = combattantDepuisPerso(persoAuNiveau("eliotrope", 50, 0)); // feu + terre
     expect(elementDeFrappe(c)).toBe("feu");
   });
