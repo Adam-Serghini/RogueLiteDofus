@@ -253,21 +253,6 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
   for (const k of Object.keys(ajout) as Element[]) acc[k] = (acc[k] ?? 0) + (ajout[k] ?? 0);
 }
 
-/** Caractéristique PRINCIPALE d'un perso : celle de son élément de frappe (son choix,
- *  sinon le premier élément de sa classe). Cible des stats ADAPTATIVES d'équipement.
- *  Honore `elementChoisi` INCONDITIONNELLEMENT — même hors de la paire de classe —
- *  contrairement à `elementDeFrappe` (`combat.ts`), qui depuis l'automatisation par
- *  cible (2026-08-06) NE LIT PLUS `elementChoisi` du tout : les deux fonctions ont
- *  divergé, ce n'est plus une parité. Le Kwakwaffe (`elementLibre`) laisse
- *  légitimement un porteur frapper dans un élément hors de sa paire, et sa ligne
- *  d'équipement adaptative doit suivre CE choix, pas retomber sur une caractéristique
- *  qu'il n'utilise plus. Le repli sur `classe.elements[0]` ne joue que quand aucun
- *  choix n'existe — pas comme garde-fou de données invalides. */
-export function statPrincipale(state: PersoState): keyof Stats {
-  const el = state.elementChoisi ?? CLASSES[state.classeId].elements[0];
-  return STAT_PAR_ELEMENT[el];
-}
-
 /** Bonus de PA quand les 4 pièces d'une même panoplie sont équipées. */
 export const PANOPLIE_BONUS_PA = 1;
 
@@ -294,7 +279,15 @@ export function bonusEquipement(state: PersoState): {
     const item = inst ? ITEMS[inst.id] : undefined;
     if (!inst || !item) continue;
     ajouterStats(stats, inst.stats); // stats de l'exemplaire (rollées ou du palier de rareté)
-    if (inst.adaptatif) stats[statPrincipale(state)] = (stats[statPrincipale(state)] ?? 0) + inst.adaptatif; // stat adaptative
+    // ligne adaptative : les DEUX éléments de la classe, à pleine valeur sur chacun.
+    // Un seul élément frappe à la fois, donc la puissance effective ne change pas — on
+    // supprime le gaspillage, on ne double pas la mise. L'objet cesse d'être un piège.
+    if (inst.adaptatif) {
+      for (const el of CLASSES[state.classeId].elements) {
+        const k = STAT_PAR_ELEMENT[el];
+        stats[k] = (stats[k] ?? 0) + inst.adaptatif;
+      }
+    }
     pvBonus += item.pvBonus ?? 0;
     paBonus += inst.pa ?? 0; // PA d'équipement (paliers de rareté)
     ajouterRes(resistances, item.resistances);

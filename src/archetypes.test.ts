@@ -7,7 +7,7 @@ import mdClassesElements from "../CLASSES-ELEMENTS.md?raw";
 import { CLASSES } from "./data";
 import { multOffensif, multSoin, statPourPoints, statsFinales, VITA_PAR_FORCE, PROSP_PAR_CHANCE } from "./progression";
 import { chanceCrit, bonusDegatsCrit, critExcedent, elementsForts, elementDeFrappe } from "./combat";
-import { combattantDepuisPerso, persoAuNiveau, statPrincipale, fabriquerEnnemis } from "./run";
+import { combattantDepuisPerso, persoAuNiveau, fabriquerEnnemis } from "./run";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
@@ -196,23 +196,6 @@ describe("les éléments en combat", () => {
   it("l'élément de frappe par défaut est le PREMIER élément déclaré", () => {
     const c = combattantDepuisPerso(persoAuNiveau("eliotrope", 50, 0)); // feu + terre
     expect(elementDeFrappe(c)).toBe("feu");
-  });
-
-  it("statPrincipale suit l'élément de frappe", () => {
-    const p = persoAuNiveau("cra", 50, 0); // feu + air
-    expect(statPrincipale(p)).toBe("intelligence");
-    p.elementChoisi = "air";
-    expect(statPrincipale(p)).toBe("agilite");
-  });
-
-  it("statPrincipale honore un elementChoisi HORS PAIRE (porteur du Kwakwaffe)", () => {
-    // Le Kwakwaffe (elementLibre) laisse un porteur frapper dans N'IMPORTE quel
-    // élément, y compris hors de la paire de sa classe — statPrincipale doit suivre
-    // ce choix comme elementDeFrappe, pas retomber sur le 1er élément de la classe :
-    // sinon la stat adaptative de l'équipement alimenterait une caractéristique morte.
-    const p = persoAuNiveau("iop", 50, 0); // terre + feu
-    p.elementChoisi = "air"; // hors paire, choix délibéré en combat
-    expect(statPrincipale(p)).toBe("agilite");
   });
 
   it("persoAuNiveau produit les stats de l'archétype — c'est la porte de la Tranche 2", () => {

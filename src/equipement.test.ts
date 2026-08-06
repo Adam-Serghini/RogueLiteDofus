@@ -189,16 +189,19 @@ describe("rareté (objets à toiles)", () => {
 });
 
 describe("toile 3 — stat adaptative & sources de drop", () => {
-  it("la stat adaptative rejoint la carac de la voie du perso", async () => {
-    const { nouvelleRun, bonusEquipement, rollItemRarete } = await import("./run");
-    const run = nouvelleRun(["iop"]);
-    const p = run.persos[0];
-    p.elementChoisi = "feu"; // voie Feu → intelligence (iop : terre + feu)
+  it("la ligne adaptative nourrit LES DEUX éléments de la classe", async () => {
+    const { bonusEquipement, persoAuNiveau, rollItemRarete } = await import("./run");
+    const { CLASSES } = await import("./data");
+    const p = persoAuNiveau("eniripsa", 50, 0); // feu + eau
     p.equipement.coiffe = rollItemRarete("coiffe_bouftou", () => 0)!; // commun : adapt 3
-    expect(p.equipement.coiffe.adaptatif).toBe(3);
-    expect(bonusEquipement(p).stats.intelligence).toBe(3);
-    p.elementChoisi = "terre"; // même objet, voie Terre → force
-    expect(bonusEquipement(p).stats.force).toBe(3);
+    const b = bonusEquipement(p);
+    // avant, l'adaptatif ne visait qu'une seule caractéristique : le joueur pouvait
+    // nourrir celle qu'il n'employait presque jamais
+    expect(b.stats.intelligence).toBe(3); // feu
+    expect(b.stats.chance).toBe(3); // eau
+    expect(b.stats.force ?? 0).toBe(0); // terre : hors de la paire
+    expect(b.stats.agilite ?? 0).toBe(0); // air : hors de la paire
+    expect(CLASSES.eniripsa.elements).toEqual(["feu", "eau"]);
   });
 
   it("le donjon droppe les objets « boss », les combats durs les « élite »", async () => {
