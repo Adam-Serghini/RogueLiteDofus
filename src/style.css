@@ -3495,3 +3495,8 @@ body.avec-fond .map-zone {
   border-color: var(--cyan);
   box-shadow: 0 0 0 2px var(--cyan);
 }
+.ordre-jeton.drop-cible {
+  border-color: var(--or);
+  box-shadow: 0 0 0 2px var(--or);
+  opacity: 1;
+}
