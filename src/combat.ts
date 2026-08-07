@@ -167,6 +167,12 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
       base = vivants(cs);
       break;
   }
+
+  // Égide (Féca) : jamais une cible directe, ni pour un allié ni pour un ennemi — elle
+  // n'intercepte que via `infligerDegats` (automatique, sans ciblage). Contrairement à
+  // la Poupée (ciblable, elle provoque) ou la Lance (ciblable via zoneLance).
+  base = base.filter((c) => !c.estEgide);
+
   // provocation : un ennemi doit viser en priorité un allié (joueur) qui provoque
   if (acteur.camp === "ennemi") {
     const prov = base.filter((c) => c.camp === "joueur" && c.provoque && c.pvActuels > 0);
@@ -200,6 +206,15 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   if (sort.invoqueLance && vivants(cs).some((c) => c.ref === `lance_${acteur.ref}`)) return [];
   // Vajra (Forgelance) : injouable sans lance vivante du lanceur
   if (sort.rappelleLance && !vivants(cs).some((c) => c.ref === `lance_${acteur.ref}`)) return [];
+
+  // Égide (Féca) : une seule vivante par lanceur — grisée si déjà posée
+  if (sort.invoqueEgide && vivants(cs).some((c) => c.ref === `egide_${acteur.ref}`)) return [];
+  // Égide : injouable si la rangée de l'allié visé n'a aucune case libre (ex. 4 héros
+  // occupant déjà les 4 cases de leur rangée) — filtrée cible par cible, pas d'un bloc,
+  // car une équipe peut avoir sa rangée avant pleine et sa rangée arrière libre.
+  if (sort.invoqueEgide) {
+    base = base.filter((c) => caseLibreRangee(acteur.camp, estAvant(c), cs) !== null);
+  }
 
   // Changer de ligne (Dagues Eurfolles) : il faut une case libre dans la rangée opposée
   if (sort.changeLigne && caseLibreRangeeOpposee(acteur, cs) === null) return [];
@@ -646,6 +661,21 @@ function infligerDegats(
     return;
   }
 
+  // Égide (Féca) : une invocation posée sur une rangée intercepte l'INTÉGRALITÉ des dégâts
+  // destinés aux héros de cette rangée. Contrairement à l'Étreinte de Valkyr plus bas, qui
+  // PARTAGE une fraction et laisse donc le bouclier de la victime absorber d'abord, l'Égide
+  // intercepte tout : le bouclier du héros n'est jamais entamé tant qu'elle tient. Placée
+  // avant les gardes de nullification pour ne pas les consommer non plus.
+  if (!viaRedirection && dmg > 0 && ctx?.combatants && !cible.estInvocation) {
+    const egide = vivants(ctx.combatants).find((c) =>
+      c.estEgide && c.camp === cible.camp && estAvant(c) === estAvant(cible));
+    if (egide) {
+      ctx.log(`🛡️ L'Égide encaisse le coup destiné à ${cible.nom}.`);
+      infligerDegats(egide, dmg, attaquant, ctx, false, true);
+      return;
+    }
+  }
+
   // nullification (buff soi) : annule UN coup DIRECT (pas un tick de poison, qui ne
   // passe pas par cette fonction), consommée dès le premier coup direct qui suit.
   // Jamais consommée par la part REDIRIGÉE (viaRedirection) : ce coup n'était pas
@@ -746,6 +776,15 @@ function caseLibreRangeeOpposee(c: Combatant, cs: Combatant[]): number | null {
   // on privilégie la case de la même colonne (±4), sinon la première libre
   const memeColonne = estAvant(c) ? c.position + 4 : c.position - 4;
   if (!prises.has(memeColonne)) return memeColonne;
+  for (let p = debut; p <= fin; p++) if (!prises.has(p)) return p;
+  return null;
+}
+
+/** Première case libre (0-3 ou 4-7) de la rangée de `c` (PAS l'opposée), dans `camp`.
+ *  Utilisée par l'Égide (Féca) : elle se plante dans la rangée de l'allié ciblé. */
+function caseLibreRangee(camp: Camp, avant: boolean, cs: Combatant[]): number | null {
+  const prises = new Set(vivants(cs).filter((x) => x.camp === camp).map((x) => x.position));
+  const [debut, fin] = avant ? [0, 3] : [4, 7];
   for (let p = debut; p <= fin; p++) if (!prises.has(p)) return p;
   return null;
 }
@@ -1159,6 +1198,57 @@ export function invoquerLance(
   return lance;
 }
 
+// --- L'Égide (Féca) ------------------------------------------------------------
+/** Invoque une Égide (camp du LANCEUR, contrairement à la Lance qui est côté
+ *  ennemi) à une case libre de la rangée de `allie`. Une seule Égide vivante par
+ *  lanceur ; null si une Égide du lanceur est déjà vivante, ou si la rangée
+ *  visée est pleine. Ses PV/PV max valent les PV MAX du lanceur AU MOMENT du
+ *  lancer (pas ses PV actuels — une Égide n'hérite pas des dégâts déjà subis). */
+export function invoquerEgide(
+  lanceur: Combatant,
+  allie: Combatant,
+  tours: number,
+  cs: Combatant[],
+  ctx: CombatCtx,
+): Combatant | null {
+  const ref = `egide_${lanceur.ref}`;
+  if (vivants(cs).some((c) => c.ref === ref)) return null; // une seule Égide vivante à la fois
+
+  const position = caseLibreRangee(lanceur.camp, estAvant(allie), cs);
+  if (position === null) return null; // rangée cible pleine
+
+  // une vieille Égide morte du même lanceur ne doit pas traîner dans cs
+  const idx = cs.findIndex((c) => c.ref === ref);
+  if (idx >= 0) cs.splice(idx, 1);
+
+  const egide: Combatant = {
+    ref,
+    nom: "Égide",
+    pvBase: lanceur.pvMax,
+    pvMax: lanceur.pvMax,
+    pvActuels: lanceur.pvMax,
+    stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0 },
+    paMax: 0,
+    paActuels: 0,
+    initiative: 0,
+    resistances: {},
+    sorts: [],
+    camp: lanceur.camp,
+    position,
+    niveau: 1,
+    img: "/assets/spells/feca/egide.png",
+    ...etatCombatInitial(),
+    estInvocation: true,
+    joueTour: false,
+    estEgide: true,
+    lanceurRef: lanceur.ref,
+    toursRestantsInvocation: tours,
+  };
+  cs.push(egide);
+  ctx.log(`🛡️ ${lanceur.nom} invoque une Égide (${egide.pvMax} PV) sur sa rangée.`);
+  return egide;
+}
+
 // --- Invocations de monstres (signatures de boss) ------------------------------
 /** Première case libre (0-7) du camp — les invocations arrivent devant d'abord. */
 function caseLibre(camp: Camp, cs: Combatant[]): number | null {
@@ -1503,6 +1593,14 @@ export function lancerSort(
   if (sort.invoqueLance) {
     if (!cible) return;
     invoquerLance(lanceur, cible, cs, ctx);
+    poseCooldown(lanceur);
+    return;
+  }
+
+  // --- ÉGIDE (Féca) : invoque une garde sur la rangée de l'allié ciblé ---
+  if (sort.invoqueEgide) {
+    if (!cible) return;
+    invoquerEgide(lanceur, cible, sort.invoqueEgide.tours, cs, ctx);
     poseCooldown(lanceur);
     return;
   }
@@ -2093,14 +2191,16 @@ export function purgerInvocationsOrphelines(cs: Combatant[], ctx: CombatCtx): vo
     const orphelines = cs.filter((c) =>
       c.pvActuels > 0 && (
         (c.invoquePar !== undefined && morts.has(c.invoquePar)) ||
-        (c.estLance && c.lanceurRef !== undefined && morts.has(c.lanceurRef))
+        ((c.estLance || c.estEgide) && c.lanceurRef !== undefined && morts.has(c.lanceurRef))
       ));
     if (!orphelines.length) return;
     for (const o of orphelines) {
       o.pvActuels = 0;
       ctx.log(o.estLance
         ? `La lance se brise : son porteur est tombé.`
-        : `${o.nom} disparaît avec son invocateur !`);
+        : o.estEgide
+          ? `L'Égide s'efface : son invocateur est tombé.`
+          : `${o.nom} disparaît avec son invocateur !`);
     }
   }
 }
@@ -2134,6 +2234,17 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       appliquerEnrage(acteur, ctx); // Ascension : boss enragés
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)
+      // Égide (Féca) : minuteur décompté au DÉBUT du tour de son invocateur, comme la
+      // marque de Conjuration de l'Éliotrope (mais l'Égide ne joue pas de tour à elle,
+      // donc pas d'occasion de la décompter à SA propre fin de tour).
+      for (const c of combatants) {
+        if (c.estEgide && c.lanceurRef === acteur.ref && c.pvActuels > 0) {
+          if (--c.toursRestantsInvocation! <= 0) {
+            c.pvActuels = 0;
+            ctx.log(`🛡️ L'Égide de ${acteur.nom} expire.`);
+          }
+        }
+      }
       if (effetsDebutTour(acteur, combatants, ctx)) {
         purgerInvocationsOrphelines(combatants, ctx); // mort au poison → ses invocations tombent aussi
         await hooks.onUpdate?.();

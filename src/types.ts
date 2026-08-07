@@ -238,6 +238,7 @@ export interface Spell {
   // --- rework du Féca (primitives de rangée) ---
   effetRangeeAlliee?: BuffRangeeAlliee; // buffe une rangée ALLIÉE absolue (Vigie, Pâturage, Fortification)
   retraitPAProchainTour?: number; // Tétanie : la cible commence son prochain tour amputée de N PA
+  invoqueEgide?: { tours: number }; // Égide : invoque une garde sur la rangée de l'allié ciblé, qui intercepte tous les dégâts destinés à cette rangée pendant N tours ; grisé si une Égide du lanceur est déjà vivante ou si la rangée est pleine
 }
 
 /** Un effet de buff de rangée. Distinct d'`EffetSpec` parce qu'il porte une valeur
@@ -424,9 +425,12 @@ export interface Combatant {
   conjuration?: { pct: number; lanceurRef: string; tours: number }; // marque Conjuration (Éliotrope) : +pct dégâts pour le lanceur et sa rangée, décompte en fin de tour du lanceur
   // --- Forgelance ---
   estLance?: boolean; // vrai pour le pseudo-combattant « Lance » (camp ennemi, invocation)
-  lanceurRef?: string; // ref du Forgelance propriétaire de la lance
+  lanceurRef?: string; // ref du Forgelance propriétaire de la lance (réutilisé par l'Égide du Féca : ref du lanceur)
   redirection?: { ratio: number; tours: number }; // Étreinte : redirige une fraction des dégâts subis par un allié arrière vers le porteur
   redirectionPoseCeTour?: boolean; // vrai le tour où redirection est posée : le décompte de fin de tour est sauté une fois (même bug/fix que provoquePoseCeTour)
+  // --- Féca (Égide) ---
+  estEgide?: boolean; // vrai pour le pseudo-combattant « Égide » (camp du lanceur, invocation qui intercepte pour sa rangée)
+  toursRestantsInvocation?: number; // minuteur de l'Égide, décompté au début du tour de son invocateur (comme Combatant.conjuration)
   // --- Ecaflip (Château de cartes) ---
   /** Boucliers à DURÉE (distincts du bouclier permanent) : chaque entrée retient le
    *  montant octroyé pour ne jamais retirer plus que ce qui a été donné à l'expiration.
