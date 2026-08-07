@@ -24,7 +24,11 @@ export interface FxEvent {
 
 export interface CombatCtx {
   rng: Rng;
-  log: (msg: string) => void;
+  /** Journal de combat. `meta.portion` désigne le fragment EXACT de `msg` que
+   *  `meta.element` concerne (typiquement « 51 dégâts ») : le moteur dit de quoi il
+   *  s'agit, l'interface décide à quoi ça ressemble. Le moteur étant pur, il ne choisit
+   *  jamais une couleur — et l'interface n'a rien à deviner par expression régulière. */
+  log: (msg: string, meta?: { element: Element; portion: string }) => void;
   playerDamageBonus: number; // multiplicateur Dofus appliqué au camp joueur
   fx?: (ev: FxEvent) => void; // effets visuels (optionnel)
   onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (optionnel)
@@ -267,10 +271,13 @@ export function etatCombatInitial(): Pick<Combatant,
 
 // --- Calcul de dégâts sur une cible ------------------------------------------
 
-/** Libellé COURT et LOCAL de l'élément pour le journal de combat — `combat.ts` est pur et
- *  ne doit jamais importer le libellé de `src/ui/` (ce serait inverser la dépendance). */
-const elNomCourt = (el: Element): string =>
-  ({ terre: "Terre", feu: "Feu", eau: "Eau", air: "Air" })[el];
+/** Logue une ligne de dégâts : `avant` + « N dégâts » + `apres`. Le nom de l'élément n'est
+ *  plus écrit — l'interface colore ce fragment, qu'on lui désigne par `portion`. Un seul
+ *  endroit le construit, donc les cinq sites de journal ne peuvent pas diverger. */
+const logDegats = (ctx: CombatCtx, avant: string, dmg: number, element: Element, apres = ""): void => {
+  const portion = `${dmg} dégâts`;
+  ctx.log(`${avant}${portion}${apres}`, { element, portion });
+};
 
 export interface ResultatDegats {
   dmg: number;
@@ -713,7 +720,7 @@ function infligerDegats(
     // (Étreinte) ne s'applique jamais ici — de toute façon inatteignable avec le contenu
     // actuel (contre/riposteAvant sont des mécaniques côté joueur uniquement).
     infligerDegats(attaquant, r.dmg);
-    ctx.log(`${cible.nom} riposte : ${r.dmg} dégâts ${elNomCourt(r.element)} à ${attaquant.nom}.`);
+    logDegats(ctx, `${cible.nom} riposte : `, r.dmg, r.element, ` à ${attaquant.nom}.`);
   }
 }
 
@@ -1206,9 +1213,9 @@ function frappe(
   // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats —
   // pas besoin de la ligne de dégâts générique en plus.
   if (!t.estLance) {
-    opts.ctx.log(
-      `${lanceur.nom} → ${nomSort} sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)}${r.crit ? " (CRIT)" : ""}.` +
-        (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+    logDegats(
+      opts.ctx, `${lanceur.nom} → ${nomSort} sur ${t.nom} : `, r.dmg, r.element,
+      `${r.crit ? " (CRIT)" : ""}.${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
     );
   }
   return r.dmg;
@@ -1683,9 +1690,9 @@ export function lancerSort(
       if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
       infligerDegats(t, r.dmg, lanceur, ctx);
       if (!t.estLance) total += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin fantôme
-      ctx.log(
-        `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)}${r.crit ? " (CRIT)" : ""}.` +
-          (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+      logDegats(
+        ctx, `${lanceur.nom} → ${sort.nom} sur ${t.nom} : `, r.dmg, r.element,
+        `${r.crit ? " (CRIT)" : ""}.${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
       );
     }
     const rangeeAvant = allies(lanceur, cs).filter(estAvant);
@@ -1772,9 +1779,9 @@ export function lancerSort(
       if (!t.estLance) totalDmg += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin/bouclier fantômes
       // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats.
       if (!t.estLance) {
-        ctx.log(
-          `${lanceur.nom} → ${sort.nom} sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)}${r.crit ? " (CRIT)" : ""}.` +
-            (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+        logDegats(
+          ctx, `${lanceur.nom} → ${sort.nom} sur ${t.nom} : `, r.dmg, r.element,
+          `${r.crit ? " (CRIT)" : ""}.${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
         );
       }
       if (t.pvActuels > 0) {
@@ -1836,9 +1843,9 @@ export function lancerSort(
         if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
         infligerDegats(t, r.dmg, lanceur, ctx);
         if (!t.estLance) totalDmg += r.dmg; // pas de soin/bouclier fantôme sur la durabilité de la lance
-        ctx.log(
-          `${sort.nom} rebondit sur ${t.nom} : ${r.dmg} dégâts ${elNomCourt(r.element)} !` +
-            (t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""),
+        logDegats(
+          ctx, `${sort.nom} rebondit sur ${t.nom} : `, r.dmg, r.element,
+          ` !${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
         );
       }
     }

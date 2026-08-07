@@ -163,19 +163,26 @@ describe("l'élément de frappe suit la cible", () => {
     const cibleAir: Combatant = { ...cible({ air: 0.5, eau: 0 }), ref: "c-air", nom: "CibleAir", position: 0, camp: "ennemi" };
     const cibleEau: Combatant = { ...cible({ eau: 0.5, air: 0 }), ref: "c-eau", nom: "CibleEau", position: 1, camp: "ennemi" };
     const cs: Combatant[] = [lanceur, cibleAir, cibleEau];
-    const logs: string[] = [];
-    const ctxSort = { rng: () => 0.5, log: (m: string) => logs.push(m), playerDamageBonus: 1, combatants: cs };
+    // On lit la MÉTA que le moteur attache à chaque ligne de dégâts, pas le texte : le nom
+    // de l'élément n'est plus écrit en toutes lettres (l'interface colore le fragment), et
+    // une garde qui dépend de la formulation d'un message casse au premier reformulage.
+    const lignes: { msg: string; element?: string }[] = [];
+    const ctxSort = {
+      rng: () => 0.5, playerDamageBonus: 1, combatants: cs,
+      log: (msg: string, meta?: { element: string; portion: string }) =>
+        lignes.push({ msg, element: meta?.element }),
+    };
     // Écrasement : zoneLigne, touche donc TOUTE la rangée avant adverse en un seul lancer.
     lancerSort(lanceur, SORTS.ecrasement, cibleAir.ref, cs, ctxSort);
     const elDe = (nom: string): string | undefined =>
-      logs.find((l) => l.includes(nom))?.match(/dégâts (\w+)/)?.[1];
+      lignes.find((l) => l.msg.includes(nom) && l.element)?.element;
     const elAir = elDe("CibleAir");
     const elEau = elDe("CibleEau");
     expect(elAir).toBeDefined();
     expect(elEau).toBeDefined();
     expect(elAir).not.toBe(elEau); // même lancer, deux éléments différents — l'ancien système ne pouvait pas faire ça
-    expect(elAir).toBe("Eau"); // CibleAir résiste l'air : le lanceur bascule sur l'eau contre elle
-    expect(elEau).toBe("Air"); // CibleEau résiste l'eau : le lanceur bascule sur l'air contre elle
+    expect(elAir).toBe("eau"); // CibleAir résiste l'air : le lanceur bascule sur l'eau contre elle
+    expect(elEau).toBe("air"); // CibleEau résiste l'eau : le lanceur bascule sur l'air contre elle
   });
 
   it("le résultat est déterministe à graine fixe", () => {

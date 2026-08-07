@@ -43,7 +43,10 @@ import {
 import type { Action, Camp, Combatant, Meta, Spell } from "../types";
 
 let combatants: Combatant[] = [];
-let logLines: string[] = [];
+/** Une ligne de journal : son texte, plus la méta que le moteur y attache pour les lignes
+ *  de dégâts (quel fragment concerne quel élément — voir `CombatCtx.log`). */
+interface LigneJournal { msg: string; meta?: { element: Element; portion: string } }
+let logLines: LigneJournal[] = [];
 let titre = "";
 let metaCombat: Meta | null = null; // pour l'indicateur de capture d'Archimonstre sur les cartes
 let combatMonte = false; // squelette de l'écran de combat déjà construit ? (évite de tout reconstruire à chaque render)
@@ -130,13 +133,21 @@ function aUneActionPossible(acteur: Combatant, cs: Combatant[]): boolean {
 
 // --- Log ---------------------------------------------------------------------
 /** Une ligne de journal, classée par type pour le style (tour / dégâts / soin / effet). */
-function logLineHtml(l: string): string {
+function logLineHtml(l: LigneJournal): string {
   let type = "info";
-  if (l.startsWith("▶")) type = "tour";
-  else if (/dégâts|inflige|subit|meurt|perd/i.test(l)) type = "degats";
-  else if (/récupère|soigne|soin|PV rendus|bouclier/i.test(l)) type = "soin";
-  else if (/poison|empoisonne|☠/i.test(l)) type = "poison";
-  return `<div class="log-line log-${type}">${escapeHtml(l)}</div>`;
+  if (l.msg.startsWith("▶")) type = "tour";
+  else if (/dégâts|inflige|subit|meurt|perd/i.test(l.msg)) type = "degats";
+  else if (/récupère|soigne|soin|PV rendus|bouclier/i.test(l.msg)) type = "soin";
+  else if (/poison|empoisonne|☠/i.test(l.msg)) type = "poison";
+  let corps = escapeHtml(l.msg);
+  // Le moteur a désigné le fragment porteur de l'élément (« 51 dégâts ») : on le colore
+  // ici, l'élément n'étant plus écrit en toutes lettres. Rien à deviner — le fragment
+  // vient tel quel de combat.ts, on ne fait que l'habiller.
+  if (l.meta) {
+    const portion = escapeHtml(l.meta.portion);
+    corps = corps.replace(portion, `<span class="log-el el-${l.meta.element}">${portion}</span>`);
+  }
+  return `<div class="log-line log-${type}">${corps}</div>`;
 }
 
 /** Réécrit le journal depuis `logLines` (ordre chronologique) et défile vers le plus récent. */
@@ -147,8 +158,8 @@ function rafraichirJournal(): void {
   journal.scrollTop = journal.scrollHeight;
 }
 
-export function log(msg: string): void {
-  logLines.push(msg);
+export function log(msg: string, meta?: { element: Element; portion: string }): void {
+  logLines.push({ msg, meta });
   if (logLines.length > 200) logLines.shift();
   rafraichirJournal();
 }

@@ -46,7 +46,9 @@
 
   --terre: #b9712a;
   --feu: #e0531f;
-  --air: #3f96d0;
+  /* l'air occupait le bleu, que tout le monde lit comme « eau » : air → vert, eau → bleu */
+  --air: #5fae3c;
+  --eau: #3f96d0;
 }
 
 * {
@@ -3291,6 +3293,15 @@ body.avec-fond .map-zone {
 .log-degats {
   color: #8a3326;
 }
+/* « N dégâts » coloré selon l'élément employé — le nom de l'élément n'est plus écrit.
+   Le fragment est désigné par le moteur (CombatCtx.log), la couleur est décidée ici. */
+.log-el {
+  font-weight: 800;
+}
+.log-el.el-terre { color: var(--terre); }
+.log-el.el-feu { color: var(--feu); }
+.log-el.el-air { color: var(--air); }
+.log-el.el-eau { color: var(--eau); }
 .log-soin {
   color: #46701f;
 }
