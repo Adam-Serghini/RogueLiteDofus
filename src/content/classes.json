@@ -96,13 +96,11 @@
     "pa": 6,
     "pvBase": 50,
     "sorts": [
-      "mot_interdit",
       "mot_vampirique",
-      "mot_alternatif",
+      "mot_rituel",
       "mot_reconstitution",
-      "mot_revitalisant",
-      "mot_prevention",
-      "mot_jouvence",
+      "mot_de_solidarite",
+      "mot_galvanisant",
       "mot_stimulant"
     ],
     "stats": {

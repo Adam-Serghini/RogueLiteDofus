@@ -1052,56 +1052,19 @@
     "scaling": 0.42,
     "type": "degats"
   },
-  "mot_alternatif": {
-    "baseMax": 9,
-    "baseMin": 6,
-    "cible": "mixte",
-    "coutPA": 3,
-    "desc": "Allié : soin modéré. Ennemi : dégâts faibles.",
-    "id": "mot_alternatif",
-    "mixte": {
-      "surAllie": {
-        "soin": {
-          "max": 20,
-          "min": 14
-        }
-      }
-    },
-    "nom": "Mot Alternatif",
-    "scaling": 0.25,
-    "type": "degats"
-  },
-  "mot_interdit": {
-    "baseMax": 18,
-    "baseMin": 14,
-    "cible": "ennemi_ligne",
-    "coutPA": 5,
-    "desc": "Gros dégâts + poison (2t). Si la cible meurt du poison, il passe au monstre derrière.",
-    "id": "mot_interdit",
-    "nom": "Mot interdit",
-    "poison": {
-      "degats": 6,
-      "duree": 2,
-      "transmet": true
-    },
-    "scaling": 0.5,
-    "type": "degats"
-  },
-  "mot_jouvence": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "allie",
+  "mot_de_solidarite": {
+    "baseMax": 12,
+    "baseMin": 8,
+    "cible": "allie_tous",
+    "cooldownTours": 2,
     "coutPA": 2,
-    "desc": "Dissipe les effets négatifs + soin sur la durée (5 % vita / 2t).",
-    "dissipe": true,
-    "hotDuree": 2,
-    "hotPct": 0.05,
-    "id": "mot_jouvence",
-    "nom": "Mot de jouvence",
+    "desc": "Soin faible sur toute l'équipe (un tour sur deux).",
+    "id": "mot_de_solidarite",
+    "nom": "Mot de solidarité",
     "scaling": 0,
-    "type": "buff"
+    "type": "soin"
   },
-  "mot_prevention": {
+  "mot_galvanisant": {
     "baseMax": 0,
     "baseMin": 0,
     "bouclierPct": 0.15,
@@ -1111,8 +1074,8 @@
     "desc": "Bouclier (15 % PV) + soin sur la durée (5 % vita / 3t).",
     "hotDuree": 3,
     "hotPct": 0.05,
-    "id": "mot_prevention",
-    "nom": "Mot de prévention",
+    "id": "mot_galvanisant",
+    "nom": "Mot galvanisant",
     "scaling": 0,
     "type": "buff"
   },
@@ -1129,17 +1092,24 @@
     "soinComplet": true,
     "type": "soin"
   },
-  "mot_revitalisant": {
-    "baseMax": 12,
-    "baseMin": 8,
-    "cible": "allie_tous",
-    "cooldownTours": 2,
-    "coutPA": 2,
-    "desc": "Soin faible sur toute l'équipe (un tour sur deux).",
-    "id": "mot_revitalisant",
-    "nom": "Mot revitalisant",
-    "scaling": 0,
-    "type": "soin"
+  "mot_rituel": {
+    "baseMax": 9,
+    "baseMin": 6,
+    "cible": "mixte",
+    "coutPA": 3,
+    "desc": "Allié : soin modéré. Ennemi : dégâts faibles.",
+    "id": "mot_rituel",
+    "mixte": {
+      "surAllie": {
+        "soin": {
+          "max": 20,
+          "min": 14
+        }
+      }
+    },
+    "nom": "Mot rituel",
+    "scaling": 0.25,
+    "type": "degats"
   },
   "mot_stimulant": {
     "baseMax": 0,

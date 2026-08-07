@@ -223,7 +223,7 @@ describe("la voracité mord vraiment, côté ENNEMI", () => {
     const cs = [victime, allie, gorgouille];
 
     // on prépare la victime : un bouclier et un buff de caractéristique
-    lancerSort(allie, SORTS.mot_prevention, victime.ref, cs, ctx);
+    lancerSort(allie, SORTS.mot_galvanisant, victime.ref, cs, ctx);
     victime.effets.push({ stat: "force", valeur: 50, toursRestants: 3 });
     expect(victime.bouclier, "la mise en place doit avoir marché").toBeGreaterThan(0);
 
@@ -233,13 +233,13 @@ describe("la voracité mord vraiment, côté ENNEMI", () => {
   });
 
   it("un héros NON frappé conserve tout (témoin)", () => {
-    // Sans témoin, le test ci-dessus passerait même si `mot_prevention` était cassé.
+    // Sans témoin, le test ci-dessus passerait même si `mot_galvanisant` était cassé.
     const ctx = ctxNeuf();
     const gorgouille = trouver("gorgouille");
     const [victime, temoin] = equipeDeSonde();
     victime.position = 0; temoin.position = 1; gorgouille.position = 0;
     const cs = [victime, temoin, gorgouille];
-    lancerSort(temoin, SORTS.mot_prevention, temoin.ref, cs, ctx);
+    lancerSort(temoin, SORTS.mot_galvanisant, temoin.ref, cs, ctx);
     temoin.effets.push({ stat: "force", valeur: 50, toursRestants: 3 });
     lancerSort(gorgouille, SORTS.morsure_vorace, victime.ref, cs, ctx);
     expect(temoin.bouclier).toBeGreaterThan(0);
@@ -252,7 +252,7 @@ describe("la voracité mord vraiment, côté ENNEMI", () => {
     const [victime, allie] = equipeDeSonde();
     victime.position = 0; allie.position = 4; boss.position = 0;
     const cs = [victime, allie, boss];
-    lancerSort(allie, SORTS.mot_prevention, victime.ref, cs, ctx);
+    lancerSort(allie, SORTS.mot_galvanisant, victime.ref, cs, ctx);
     expect(victime.bouclier).toBeGreaterThan(0);
     lancerSort(boss, SORTS.goinfrerie, victime.ref, cs, ctx);
     expect(victime.bouclier).toBe(0);

@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, butinToile } from "./data";
 import { toileDeZone, fabriquerEquipe, fabriquerEnnemis } from "./run";
-import { controllerIA } from "./combat";
+import { controllerIA, lancerSort, type CombatCtx } from "./combat";
 import type { Combatant } from "./types";
 
 const ELEMENT_DE = {
@@ -89,6 +89,21 @@ describe("la leçon de la zone : le poison ignore ce qui protège", () => {
     expect(SORTS.dard_venimeux.poison!.transmet).toBeFalsy();
     expect(SORTS.vapeurs_corrosives.poison!.transmet).toBeFalsy();
     expect(MONSTRES.kolerat.sorts).toContain("contagion");
+  });
+
+  // Le Kolérat est le DERNIER porteur de `poison.transmet` : le seul autre était
+  // `mot_interdit` (Eniripsa), retiré avec la refonte du kit. Les tests voisins vérifient
+  // la donnée ; celui-ci LANCE le sort, seule preuve que le chemin de résolution pose
+  // réellement l'effet transmissible sur la cible.
+  it("la Contagion, lancée, pose un poison transmissible sur sa cible", () => {
+    const [eni] = fabriquerEquipe();
+    const cible = fabriquerEnnemis("boss")[0]; // gros PV : survit au coup, le poison reste visible
+    const ctx: CombatCtx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+
+    lancerSort(eni, SORTS.contagion, cible.ref, [eni, cible], ctx);
+
+    expect(cible.pvActuels).toBeGreaterThan(0);
+    expect(cible.effets.some((e) => e.stat === "poison" && e.transmet)).toBe(true);
   });
 
   it("la signature du boss frappe toute la rangée ET l'empoisonne", () => {

@@ -202,7 +202,7 @@ describe("les quatre tirages prouvés PAR LE MOTEUR", () => {
   };
 
   /** Lance `sortId` de `lanceurId` sur une victime préparée (bouclier + HoT via
-   *  `mot_prevention`), avec un rng CONSTANT calé pour viser l'index `i` de
+   *  `mot_galvanisant`), avec un rng CONSTANT calé pour viser l'index `i` de
    *  `procAleatoire` — le tirage vaut `Math.floor(rng() × longueur)`.
    *
    *  Mesuré : une constante ne provoque aucune esquive systématique (les quatre coups
@@ -215,10 +215,10 @@ describe("les quatre tirages prouvés PAR LE MOTEUR", () => {
     victime.position = 0;
     allie.position = 4;
     const cs = [victime, allie, lanceur];
-    // `mot_prevention` pose un bouclier ET un HoT : c'est le HoT qui sert de marqueur du
+    // `mot_galvanisant` pose un bouclier ET un HoT : c'est le HoT qui sert de marqueur du
     // désenvoûtement, car le bouclier tombe de toute façon à 0, absorbé par les dégâts —
     // le vérifier ne prouverait donc rien (piège relevé à la sonde).
-    lancerSort(allie, SORTS.mot_prevention, victime.ref, cs, ctx);
+    lancerSort(allie, SORTS.mot_galvanisant, victime.ref, cs, ctx);
     expect(victime.effets.some((e) => e.stat === "hot"), "la mise en place doit avoir marché").toBe(true);
     lancerSort(lanceur, SORTS[sortId], victime.ref, cs, ctx);
     return victime;

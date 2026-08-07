@@ -253,7 +253,7 @@ describe("le curare part vraiment, côté ENNEMI", () => {
     const { sarbak, victime, soigneur, cs } = scene();
     lancerSort(sarbak, SORTS.sarbacane_curare, victime.ref, cs, ctx);
     const avant = victime.bouclier;
-    lancerSort(soigneur, SORTS.mot_prevention, victime.ref, cs, ctx);
+    lancerSort(soigneur, SORTS.mot_galvanisant, victime.ref, cs, ctx);
     expect(victime.bouclier, "le bouclier doit être refusé").toBe(avant);
   });
 
@@ -266,7 +266,7 @@ describe("le curare part vraiment, côté ENNEMI", () => {
     victime.pvActuels = moitie;
     lancerSort(soigneur, SORTS.soin_noir, victime.ref, cs, ctx);
     expect(victime.pvActuels).toBeGreaterThan(moitie);
-    lancerSort(soigneur, SORTS.mot_prevention, victime.ref, cs, ctx);
+    lancerSort(soigneur, SORTS.mot_galvanisant, victime.ref, cs, ctx);
     expect(victime.bouclier).toBeGreaterThan(0);
   });
 
