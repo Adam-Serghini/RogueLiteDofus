@@ -4,7 +4,7 @@
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
-import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe } from "../combat";
+import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort } from "../combat";
 import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
@@ -45,7 +45,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       // absente ici — donc on ne l'affiche plus : nommer un élément qu'un autre coup
       // choisira serait le même mensonge que l'ancien indicateur au niveau 1.
       const stat = statElement(se, elementDeFrappe(acteur));
-      const mult = multOffensif(se);
+      const mult = multOffensif(se) * multiplicateurEscaladeSort(s, acteur);
       const min = Math.round((s.baseMin + stat * s.scaling) * mult);
       const max = Math.round((s.baseMax + stat * s.scaling) * mult);
       principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el">selon la cible</span>`;

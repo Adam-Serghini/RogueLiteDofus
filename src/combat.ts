@@ -268,6 +268,30 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
 /** Remise à zéro des limites de lancer « par tour » (appelée au début du tour du combatant). */
 export function reinitialiserLancersTour(c: Combatant): void { c.lancersCeTour = {}; }
 
+/**
+ * Multiplicateur d'escalade « par lancer » d'un sort pour son lanceur, À L'INSTANT T
+ * — c'est-à-dire pour le lancer qui n'a PAS ENCORE eu lieu. Combine
+ * `bonusParRelanceCeTour` (Pugilat : escalade dans le TOUR) et `bonusParLancerCombat`
+ * (Colère de Iop : escalade sur tout le COMBAT, sans plafond). UNE seule formule,
+ * consommée à la fois par le moteur (`lancerSort`, AVANT que les compteurs de ce
+ * lancer ne soient incrémentés — donc directement, sans le « −1 » qu'il faut
+ * appliquer après incrémentation) et par l'infobulle du sort (`sortTooltipHtml`,
+ * `src/ui/composants.ts`) : sans ce partage, l'infobulle affiche un nombre que le
+ * moteur contredit dès le deuxième lancer, et l'écart grandit sans fin pour un sort
+ * non plafonné comme Colère de Iop. `lanceur` peut être `null` (infobulle hors
+ * combat, encyclopédie) : le multiplicateur vaut alors 1, aucun lancer n'étant connu.
+ */
+export function multiplicateurEscaladeSort(sort: Spell, lanceur: Combatant | null): number {
+  if (!lanceur) return 1;
+  const multRelance = sort.bonusParRelanceCeTour
+    ? 1 + sort.bonusParRelanceCeTour * Math.max(0, lanceur.lancersCeTour?.[sort.id] ?? 0)
+    : 1;
+  const multCombat = sort.bonusParLancerCombat
+    ? 1 + sort.bonusParLancerCombat * Math.max(0, lanceur.lancersCombat?.[sort.id] ?? 0)
+    : 1;
+  return multRelance * multCombat;
+}
+
 /** Cibles effectivement touchées par un sort de dégâts (primaire + rebonds). */
 function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: Combatant[]): Combatant[] {
   // Forgelance (Muspel/Hydra/Jormun) : résolution = la rangée de la cible cliquée
@@ -280,7 +304,7 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
     const memeRangee = estAvant(primaire);
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
   }
-  // zone : toute la rangée (avant/arrière) de la cible cliquée (Tempête de lames)
+  // zone : toute la rangée (avant/arrière) de la cible cliquée (Zénith du Iop)
   if (sort.zoneLigne) {
     const memeRangee = estAvant(primaire);
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
@@ -676,7 +700,9 @@ function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
 
 /** Inflige des dégâts en consommant d'abord le bouclier, puis les PV.
  *  Si `attaquant`/`ctx` sont fournis et que la cible a une posture de contre
- *  (Duel), elle peut riposter d'une frappe modeste (sans re-déclenchement). */
+ *  (`contre` — posée par les Wobots du Terrier du Wa Wabbit via `effetLanceur`,
+ *  ou par le Sabre Shodanwa via `riposteAvant`), elle peut riposter d'une
+ *  frappe modeste (sans re-déclenchement). */
 function infligerDegats(
   cible: Combatant,
   dmg: number,
@@ -728,7 +754,8 @@ function infligerDegats(
   // son propre coup direct. Elle fond ~33 % plus vite en zone qu'en cible unique.
   //
   // Autre conséquence assumée, pas documentée jusqu'ici : cette interception `return` AVANT
-  // le code de riposte plus bas (posture de contre, Duel du Iop, Sabre Shodanwa) — un héros
+  // le code de riposte plus bas (posture de contre : Wobots du Terrier du Wa Wabbit, Sabre
+  // Shodanwa) — un héros
   // protégé par l'Égide ne riposte donc plus, l'attaquant n'ayant jamais frappé le héros
   // lui-même. Défendable (comme l'Égide bloque tout le reste : bouclier, nullification), mais
   // à connaître au même titre que les interactions déjà commentées (Étreinte de Valkyr…).
@@ -815,7 +842,8 @@ function infligerDegats(
       }
     }
   }
-  // riposte : posture de contre (Duel) + équipement « ligne avant » (Sabre Shodanwa)
+  // riposte : posture de contre (Wobots du Terrier du Wa Wabbit, via `effetLanceur`)
+  // + équipement « ligne avant » (Sabre Shodanwa)
   const pRiposte = attaquant && ctx
     ? sommeEffet(cible, "contre") + (estAvant(cible) ? (cible.riposteAvant ?? 0) : 0)
     : 0;
@@ -828,8 +856,8 @@ function infligerDegats(
   ) {
     const r = degatsAvec(cible, { baseMin: 8, baseMax: 12, scaling: 0.3 }, attaquant, { useMax: false, mult: 1, ctx });
     // pas d'attaquant → pas de contre-riposte ; pas de ctx non plus, donc la redirection
-    // (Étreinte) ne s'applique jamais ici — de toute façon inatteignable avec le contenu
-    // actuel (contre/riposteAvant sont des mécaniques côté joueur uniquement).
+    // (Étreinte) ne s'applique jamais ici — les deux camps peuvent riposter (les Wobots du
+    // Terrier du Wa Wabbit en sont la preuve côté monstre, voir CLAUDE.md).
     infligerDegats(attaquant, r.dmg);
     logDegats(ctx, `${cible.nom} riposte : `, r.dmg, r.element, ` à ${attaquant.nom}.`);
   }
@@ -1590,6 +1618,11 @@ export function lancerSort(
   // avant d'appeler lancerSort, donc « avant paiement » = paActuels + coutPA ici.
   const paAvant = lanceur.paActuels + sort.coutPA;
   const cible = parRef(cs, cibleRef);
+  // Multiplicateur d'escalade (Pugilat/Colère de Iop) : calculé AVANT les incréments
+  // de compteur ci-dessous, donc sur les valeurs de « lancers déjà comptés » — c'est
+  // exactement la sémantique attendue par `multiplicateurEscaladeSort` (voir sa
+  // docstring), aucun « −1 » à appliquer ici contrairement à l'ancien calcul en aval.
+  const multEscalade = multiplicateurEscaladeSort(sort, lanceur);
   // Pugilat (bonusParRelanceCeTour) rejoint la garde : sans ça, un sort portant
   // l'escalade sans AUCUNE limite de lancers ne verrait jamais `lancersCeTour`
   // alimenté et n'escaladerait donc jamais, en silence. L'ajout à cette MÊME garde
@@ -1964,14 +1997,8 @@ export function lancerSort(
 
   // Les deux escalades sont des multiplicateurs DU LANCER : elles valent pour toutes
   // les cibles touchées, éclaboussure comprise (décision d'Adam sur Pugilat).
-  // Le « −1 » vient de ce que les deux compteurs sont incrémentés AVANT d'arriver ici.
-  const multRelance = sort.bonusParRelanceCeTour
-    ? 1 + sort.bonusParRelanceCeTour * Math.max(0, (lanceur.lancersCeTour?.[sort.id] ?? 1) - 1)
-    : 1;
-  const multCombat = sort.bonusParLancerCombat
-    ? 1 + sort.bonusParLancerCombat * Math.max(0, (lanceur.lancersCombat?.[sort.id] ?? 1) - 1)
-    : 1;
-
+  // `multEscalade` a été calculé plus haut, AVANT l'incrémentation des compteurs —
+  // voir `multiplicateurEscaladeSort` pour la sémantique exacte.
   const touchees = ciblesDegats(lanceur, sort, cible, cs);
 
   // Sorts purement utilitaires (Pendule/Roublabot : repositionnement via deplaceCible ;
@@ -1984,13 +2011,19 @@ export function lancerSort(
   let unCritique = false; // Pile ou Face : au moins un coup critique porté (monocible = un seul coup)
   touchees.forEach((t, i) => {
     if (sauteJetDegats) return;
-    const ratio = sort.ratioLigne && t.ref !== cible?.ref ? sort.ratioLigne : 1;
+    // Pugilat : la cible principale prend le jet plein, le reste de sa rangée
+    // (l'éclaboussure) prend `ratioLigne` — étiqueté au journal comme la
+    // Flèche enflammée le fait déjà pour SA propre éclaboussure, sinon le
+    // joueur doit deviner la mécanique en comparant des nombres.
+    const estEclaboussure = !!sort.ratioLigne && t.ref !== cible?.ref;
+    const ratio = estEclaboussure ? sort.ratioLigne! : 1;
+    const nomAffiche = estEclaboussure ? `${sort.nom} (éclaboussure)` : sort.nom;
     const mult =
       (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) *
-      (1 + bonusVigueur) * multLigne * multRelance * multCombat * ratio;
+      (1 + bonusVigueur) * multLigne * multEscalade * ratio;
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx, paAvant });
     if (r.esquive) {
-      ctx.log(`${t.nom} esquive ${sort.nom} !`);
+      ctx.log(`${t.nom} esquive ${nomAffiche} !`);
       ctx.fx?.({ type: "esquive", ref: t.ref });
     } else {
       if (r.crit) { ctx.fx?.({ type: "crit", ref: t.ref }); unCritique = true; }
@@ -2000,7 +2033,7 @@ export function lancerSort(
       // la lance (Forgelance) loggue déjà sa propre ligne 🔱 dans infligerDegats.
       if (!t.estLance) {
         logDegats(
-          ctx, `${lanceur.nom} → ${sort.nom} sur ${t.nom} : `, r.dmg, r.element,
+          ctx, `${lanceur.nom} → ${nomAffiche} sur ${t.nom} : `, r.dmg, r.element,
           `${r.crit ? " (CRIT)" : ""}.${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
         );
       }
@@ -2151,7 +2184,7 @@ export function lancerSort(
     soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoinDe(lanceur)), ctx);
   }
 
-  // Fracas / Arc des Rivages / Étreinte glaciale : retrait de PA — 30 % de chance
+  // Caprice royal / Arc des Rivages / Étreinte glaciale : retrait de PA — 30 % de chance
   // par défaut, jeté PAR CIBLE TOUCHÉE (identique pour les monociblés ; une zone
   // avec retraitPA gèle donc chaque cible de la zone indépendamment).
   if (sort.retraitPA) {
@@ -2179,7 +2212,7 @@ export function lancerSort(
     }
   }
 
-  // Épée du Jugement : buff appliqué au lanceur (ex. +résistances)
+  // Mâchoire du Coffre / Colère royale : buff appliqué au lanceur (ex. +résistances)
   if (sort.effetLanceur) appliquerEffet(lanceur, sort.effetLanceur);
 
   // Flèche magique : chance (scale Chance) de rembourser le coût en PA du sort

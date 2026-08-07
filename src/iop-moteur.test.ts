@@ -3,7 +3,7 @@
 //  sorts SYNTHÉTIQUES : ces tests doivent survivre à un rééquilibrage du kit réel.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, reinitialiserLancersTour, effetsDebutTour, runCombat, type CombatCtx } from "./combat";
+import { lancerSort, reinitialiserLancersTour, effetsDebutTour, runCombat, multiplicateurEscaladeSort, type CombatCtx } from "./combat";
 import { SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import type { Action, Combatant, Spell } from "./types";
@@ -251,6 +251,29 @@ describe("ratioLigne — éclaboussure sur le reste de la rangée (Pugilat)", ()
 
     expect(dPrincipal2).toBe(Math.round(dPrincipal1 * 1.2));
     expect(dVoisin2).toBe(Math.round(dVoisin1 * 1.2));
+  });
+
+  it("le journal distingue la cible principale de l'éclaboussure", () => {
+    // Avant ce correctif, les trois lignes de journal étaient strictement
+    // identiques (même libellé de sort) — le joueur devait déduire la
+    // mécanique en comparant les nombres. On suit le patron déjà en place
+    // pour la Flèche enflammée (Cra) : le libellé de l'éclaboussure porte
+    // le suffixe « (éclaboussure) ».
+    const l = heros();
+    const ennemis = fabriquerEnnemis("combat_3");
+    for (const e of ennemis) { e.resistances = {}; e.stats = { ...e.stats, agilite: 0 }; e.pvMax = 9999; e.pvActuels = 9999; }
+    ennemis.forEach((e, i) => (e.position = i)); // tous en rangée avant
+    const cs = [l, ...ennemis];
+    const lignes: string[] = [];
+
+    lancerSort(l, sortEclabousse, ennemis[0].ref, cs, ctx({ log: (msg: string) => lignes.push(msg) }));
+
+    const lignesDegats = lignes.filter((m) => m.includes(sortEclabousse.nom));
+    expect(lignesDegats).toHaveLength(3); // 1 cible principale + 2 voisins éclaboussés
+    const principales = lignesDegats.filter((m) => !m.includes("(éclaboussure)"));
+    const eclaboussees = lignesDegats.filter((m) => m.includes("(éclaboussure)"));
+    expect(principales).toHaveLength(1);
+    expect(eclaboussees).toHaveLength(2);
   });
 });
 
@@ -581,5 +604,67 @@ describe("paImmediat — des PA pour le tour EN COURS (Précipitation)", () => {
     lancerSort(l, sortPrecipitation, l.ref, [l], ctx());
 
     expect(l.paActuels).toBe(l.paMax + 10); // voulu : aucun plafonnement
+  });
+});
+
+describe("multiplicateurEscaladeSort — fonction partagée moteur/infobulle", () => {
+  const sortRelance: Spell = { ...SORTS.morsure, id: "test_mult_relance", bonusParRelanceCeTour: 0.2 };
+  const sortCombat: Spell = { ...SORTS.morsure, id: "test_mult_combat", bonusParLancerCombat: 0.5 };
+  const sortSansEscalade: Spell = { ...SORTS.morsure, id: "test_mult_neutre" };
+
+  it("vaut 1 pour un lanceur null (infobulle hors combat)", () => {
+    expect(multiplicateurEscaladeSort(sortCombat, null)).toBe(1);
+  });
+
+  it("vaut 1 pour un sort sans champ d'escalade, quel que soit le lanceur", () => {
+    const l = heros();
+    l.lancersCeTour = { [sortSansEscalade.id]: 5 };
+    l.lancersCombat = { [sortSansEscalade.id]: 5 };
+    expect(multiplicateurEscaladeSort(sortSansEscalade, l)).toBe(1);
+  });
+
+  it("lit le compteur AVANT incrémentation : 0 lancer connu → ×1,0", () => {
+    const l = heros();
+    expect(multiplicateurEscaladeSort(sortRelance, l)).toBe(1);
+    expect(multiplicateurEscaladeSort(sortCombat, l)).toBe(1);
+  });
+
+  it("bonusParRelanceCeTour : reflète le compteur `lancersCeTour` déjà posé", () => {
+    const l = heros();
+    l.lancersCeTour = { [sortRelance.id]: 2 }; // 2 lancers déjà comptés ce tour
+    expect(multiplicateurEscaladeSort(sortRelance, l)).toBeCloseTo(1 + 0.2 * 2, 10);
+  });
+
+  it("bonusParLancerCombat : reflète le compteur `lancersCombat`, SANS plafond", () => {
+    const l = heros();
+    l.lancersCombat = { [sortCombat.id]: 4 }; // 4 lancers déjà comptés dans le combat
+    expect(multiplicateurEscaladeSort(sortCombat, l)).toBeCloseTo(1 + 0.5 * 4, 10);
+  });
+
+  it("combine les deux escalades quand un même sort porte les deux champs", () => {
+    const sortDouble: Spell = { ...SORTS.morsure, id: "test_mult_double", bonusParRelanceCeTour: 0.2, bonusParLancerCombat: 0.5 };
+    const l = heros();
+    l.lancersCeTour = { [sortDouble.id]: 1 };
+    l.lancersCombat = { [sortDouble.id]: 2 };
+    const attendu = (1 + 0.2 * 1) * (1 + 0.5 * 2);
+    expect(multiplicateurEscaladeSort(sortDouble, l)).toBeCloseTo(attendu, 10);
+  });
+
+  it("preuve par exécution : la valeur rendue AVANT un lancer prédit exactement les dégâts de ce lancer", () => {
+    // sabotage réel du bug rapporté : sans cette fonction, l'infobulle affichait
+    // toujours le jet de base (×1,0) alors que le moteur, lui, escalade sans fin.
+    const l = heros();
+    const ennemis = fabriquerEnnemis("combat_3");
+    for (const e of ennemis) { e.resistances = {}; e.stats = { ...e.stats, agilite: 0 }; e.pvMax = 9999; e.pvActuels = 9999; }
+    const cs = [l, ...ennemis];
+
+    const previsionAvant2eLancer = multiplicateurEscaladeSort(sortCombat, l); // avant tout lancer
+    const d1 = degatsDe(l, sortCombat, ennemis[0], cs);
+    const previsionAvant3eLancer = multiplicateurEscaladeSort(sortCombat, l); // après 1 lancer
+    const d2 = degatsDe(l, sortCombat, ennemis[1], cs);
+
+    expect(previsionAvant2eLancer).toBeCloseTo(1, 10); // 1er lancer : pas de majoration
+    expect(previsionAvant3eLancer).toBeCloseTo(1.5, 10); // annonce le ×1,5 du 2e lancer
+    expect(d2).toBe(Math.round(d1 * 1.5)); // et le moteur livre exactement ce ×1,5
   });
 });

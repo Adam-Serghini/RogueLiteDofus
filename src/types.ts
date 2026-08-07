@@ -60,7 +60,7 @@ export interface Item {
   bouclierDebut?: number; // Bonnet Spairance : bouclier de départ = fraction des PV max
   poisonArme?: { degats: number; duree: number }; // Scalpel de Bworknroll : l'attaque empoisonne
   soinAllieBlesse?: number; // Masse du Corailleur : l'attaque soigne l'allié le plus blessé (fraction des dégâts)
-  retraitPA?: number; // Arc des Rivages : 30 % de chance de retirer N PA (mécanique Fracas)
+  retraitPA?: number; // Arc des Rivages : 30 % de chance de retirer N PA (réutilise Spell.retraitPA)
   elementLibre?: boolean; // Kwakwaffe : frappe dans N'IMPORTE quel élément (plus limité au top 2)
   renaissance?: number; // Kwakwanneau : renaît une fois par combat à cette fraction des PV max
   pvBonus?: number; // PV max plats (fixe)
@@ -102,7 +102,7 @@ export type EffetStat =
   | "reductionDegats" // −% de dégâts subis
   | "armure" // −X plat de dégâts subis
   | "resAll" // ± résistance à tous les éléments
-  | "contre" // posture de contre (Duel) : valeur = probabilité de riposte quand frappé
+  | "contre" // posture de contre (Wobots du Terrier du Wa Wabbit, via effetLanceur) : valeur = probabilité de riposte quand frappé
   | "friction" // bloque soins ET boucliers du porteur (flag : valeur ignorée)
   | "proie" // marque de l'Ouginak : valeur = vol de vie d'ÉQUIPE contre le porteur (unique)
   | "tetanise" // Tétanisation : le porteur ne peut pas viser la ligne arrière (flag)
@@ -139,13 +139,13 @@ export interface Spell {
   rebond?: { sauts: number; bonusParSaut: number }; // touche les ennemis suivants
   ignoreResistances?: boolean; // Flèche intrusive
   ignoreBouclier?: boolean; // Flèche intrusive : les dégâts sautent le bouclier
-  retraitPA?: number; // Fracas : −PA immédiat à la cible (visible avant son tour)
+  retraitPA?: number; // Caprice royal : −PA immédiat à la cible (visible avant son tour)
   rembPA?: boolean; // Flèche magique : chance (Chance) de rembourser le coût en PA
   maitriseArc?: { principal: number; secondaire: number; duree: number }; // +X/+Y aux 2 éléments de frappe
   doubleEffetProchain?: boolean; // Tir Puissant : double la DURÉE de l'effet de la prochaine flèche
   effet?: EffetSpec; // buff/debuff appliqué à la cible
-  effetLanceur?: EffetSpec; // buff appliqué au lanceur après le sort (Épée du Jugement)
-  zoneLigne?: boolean; // dégâts sur TOUTE la rangée de la cible cliquée (Tempête de lames)
+  effetLanceur?: EffetSpec; // buff appliqué au lanceur après le sort (Mâchoire du Coffre, Colère royale)
+  zoneLigne?: boolean; // dégâts sur TOUTE la rangée de la cible cliquée (Zénith du Iop)
   cooldownTours?: number; // cooldown par sort côté lanceur (indispo Nt, toutes cibles)
   // --- mécaniques de soutien (Eniripsa) ---
   poison?: { degats: number; duree: number; transmet?: boolean }; // applique un DoT
