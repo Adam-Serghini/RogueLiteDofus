@@ -178,7 +178,6 @@ export interface Spell {
   ressuscite?: { pvPct: number }; // réinvoque un allié monstre vaincu (Boostache) à pvPct de ses PV max
   effetParNiveau?: { stat: EffetStat; base: number; parNiveau: number; duree: number }; // valeur = base + parNiveau×niveau
   poisonAmpli?: number; // Arsenic : active le doublement des poisons pour N tours
-  paGainAdjacents?: number; // Tactique féline : +PA aux alliés des cases adjacentes
   procAleatoire?: ProcAleatoire[]; // 1 effet tiré au hasard sur la cible (sorts de monstres)
   changeLigne?: boolean; // « Changer de ligne » (Dagues Eurfolles) : déplace le lanceur dans la rangée opposée
   perceResistances?: number; // fraction des résistances ignorée par ce sort (attaque d'arme)
@@ -228,7 +227,6 @@ export interface Spell {
   // --- rework de l'Ecaflip (primitives du pipeline de dégâts) ---
   rembPASiCrit?: number; // Pile ou Face : rembourse ce nombre de PA quand le sort critique
   elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement) plutôt que le meilleur
-  sansEsquiveNiCrit?: boolean; // Bluff (second coup) : saute les jets d'esquive ET de critique — un seul jet de critique a eu lieu, il ne se rejoue pas
   secondCoupSiCrit?: boolean; // Bluff : sur critique, frappe une seconde fois dans l'AUTRE élément (le meilleur)
   effetLigneCible?: EffetSpec; // débuff appliqué à TOUTE la rangée de la cible ; non cumulable (durée rafraîchie)
   soinAvantBlesseRatio?: number; // soigne l'allié le plus blessé de la RANGÉE AVANT d'une fraction des dégâts infligés
@@ -244,9 +242,11 @@ export interface FaceRoulette {
   portee: "soi" | "rangee_lanceur" | "rangee_avant";
   effet?: EffetSpec; // buff appliqué à chaque unité de la portée
   bouclierPct?: number; // ou bouclier en % des PV max
+  duree?: number; // durée du bouclier de `bouclierPct`, en tours du porteur (Combatant.boucliersTemporaires) ; sans elle, le bouclier serait permanent
 }
 
-/** Un effet possible d'un proc aléatoire (Langue râpeuse). */
+/** Un effet possible d'un proc aléatoire : quatre sorts de monstres l'emploient
+ *  (Goinfrerie, Morsure vorace, Sortilège lunaire, Souffle capricieux). */
 export interface ProcAleatoire {
   effet?: EffetSpec;
   dissipePositifs?: boolean;

@@ -7,7 +7,7 @@ import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, pctRembPA, statElement } from "./progression";
 
 import type {
-  Camp, Combatant, EffetSpec, EffetStat, Element, Monstre, Spell, Stats, Action,
+  Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
 } from "./types";
 
 // --- Aléatoire (injectable pour les tests) -----------------------------------
@@ -378,7 +378,7 @@ export function multPortails(lanceur: Combatant, cs: Combatant[]): number {
 /** Bonus de Conjuration (Éliotrope) : la cible est marquée, le marqueur (et sa
  *  rangée) frappe plus fort dessus. Source unique (aussi utilisée par le chemin
  *  générique de `lancerSort`) : c'est CE calcul que les handlers dédiés (Kaboom,
- *  Dagues Boomerang, Flèches, Tarot…) doivent plier dans leur propre multiplicateur
+ *  Dagues Boomerang, Flèches, Bluff…) doivent plier dans leur propre multiplicateur
  *  pour ne pas ignorer la marque quand ils frappent une cible marquée. */
 export function multConjuration(lanceur: Combatant, cible: Combatant, cs: Combatant[]): number {
   if (!cible.conjuration) return 1;
@@ -435,10 +435,6 @@ function elementsClasses(lanceur: Combatant, cible: Combatant, base: BaseDegats,
     .map(([el]) => el);
 }
 
-function meilleurElement(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element {
-  return elementsClasses(lanceur, cible, base, jetTire)[0];
-}
-
 /** Élément qu'un combattant emploierait contre une cible — entrée publique de l'AFFICHAGE.
  *  Deux approximations : le jet moyen à défaut d'un jet réel, et la limite
  *  `stat × (1 − résistance)` quand aucun sort n'est visé. Les deux sont EXACTES tant
@@ -462,7 +458,10 @@ export function elementContre(lanceur: Combatant, cible: Combatant, sort?: Spell
     }
     : { baseMin: 1, baseMax: 1, scaling: 1 };
   const jetMoyen = (base.baseMin + base.baseMax) / 2;
-  return meilleurElement(lanceur, cible, base, jetMoyen);
+  const classes = elementsClasses(lanceur, cible, base, jetMoyen);
+  // Bluff (elementPire) frappe dans le DERNIER du classement, pas le premier — l'indicateur
+  // doit suivre le même choix que le moteur, sinon il désigne la mauvaise résistance.
+  return sort?.elementPire ? classes[classes.length - 1] : classes[0];
 }
 
 export function degatsCible(
@@ -489,7 +488,7 @@ function degatsAvec(
   // il ne se rejoue pas — ce coup de retour en est la conséquence directe.
   const esquiveEquip = !estAvant(cible) ? (cible.esquiveArriere ?? 0) : 0; // Baguette Rikiki
   if (!base.sansEsquiveNiCrit && ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
-    // `element` ici est AVEUGLE à la cible (dmg=0, jamais soumis à `meilleurElement`) :
+    // `element` ici est AVEUGLE à la cible (dmg=0, jamais soumis à `elementsClasses`) :
     // n'a pas de sens réel sur ce chemin, et n'est actuellement consommé par aucun
     // journal — ne pas s'en servir pour un futur affichage sans le recalculer via la cible.
     return { dmg: 0, esquive: true, crit: false, element: elementDeFrappe(lanceur) };
@@ -816,7 +815,7 @@ function retirerPA(cible: Combatant, n: number, ctx: CombatCtx): void {
 const EFFETS_TICK_DEBUT: EffetStat[] = ["paParTour", "hot"];
 
 export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatCtx): boolean {
-  // gain de PA différé (Mot d'ivation, Prémonition, Coalition, Tarot…)
+  // gain de PA différé (Mot d'ivation, Prémonition, Coalition…)
   if (acteur.paBonusNextTurn > 0) {
     acteur.paActuels += acteur.paBonusNextTurn;
     ctx.log(`${acteur.nom} gagne ${acteur.paBonusNextTurn} PA.`);
@@ -942,6 +941,14 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): void {
  *  consommerait un aléa de plus, décalerait la séquence de TOUS les combats et rendrait
  *  faux chaque test à graine fixe du projet. */
 const dependDuCritique = (s: Spell): boolean => !!(s.bouclierPctSiCrit || s.tiragesSiCrit);
+
+/** Libellé journalier d'une face de Roulette (Ecaflip) — pas de nom d'affichage dédié,
+ *  `combat.ts` étant pur ; on décrit directement ce que la face applique. */
+function libelleFace(f: FaceRoulette): string {
+  if (f.bouclierPct) return `bouclier (${Math.round(f.bouclierPct * 100)} % PV max)`;
+  if (f.effet) return `${f.effet.stat} ${f.effet.valeur >= 0 ? "+" : ""}${f.effet.valeur}`;
+  return "effet";
+}
 
 /** Applique les effets de soutien d'un sort (Eniripsa) à une cible. `critSoutien` :
  *  résultat du jet de critique de soutien (voir `dependDuCritique`), déjà tiré une seule
@@ -1200,18 +1207,6 @@ function ressusciter(lanceur: Combatant, spec: { pvPct: number }, cs: Combatant[
 }
 
 // --- Helpers des nouvelles mécaniques ----------------------------------------
-/** Cases voisines (haut/bas/gauche/droite) sur la grille 4×2 (positions 0-7). */
-function adjacents(pos: number): number[] {
-  const col = pos % NB_COLONNES;
-  const ligne = Math.floor(pos / NB_COLONNES);
-  const res: number[] = [];
-  if (col > 0) res.push(pos - 1);
-  if (col < NB_COLONNES - 1) res.push(pos + 1);
-  if (ligne > 0) res.push(pos - NB_COLONNES);
-  if (ligne < 1) res.push(pos + NB_COLONNES);
-  return res;
-}
-
 /** n tirages aléatoires (avec remise, en ignorant les morts) parmi un camp. */
 function ciblesAleatoires(pool: Combatant[], n: number, rng: Rng): Combatant[] {
   const res: Combatant[] = [];
@@ -1573,6 +1568,9 @@ export function lancerSort(
       // fois, ses effets s'additionnent naturellement (sommeEffet somme par stat) —
       // pas de déduplication.
       const face = sort.facesAleatoires[Math.floor(ctx.rng() * sort.facesAleatoires.length)];
+      // Un sort de hasard doit annoncer son tirage : sans cette ligne, deux tirages
+      // sur critique produisent des effets qui apparaissent sans trace au journal.
+      ctx.log(`${lanceur.nom} tire : ${libelleFace(face)}.`);
       const portee =
         face.portee === "soi" ? [lanceur]
         : face.portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
@@ -1583,6 +1581,10 @@ export function lancerSort(
           const b = Math.round(u.pvMax * face.bouclierPct);
           u.bouclier += b;
           ctx.log(`${u.nom} gagne un bouclier de ${b}.`);
+          // Bouclier à DURÉE : sans `face.duree`, ce bouclier serait permanent et se
+          // cumulerait sans borne à chaque recharge — voir Combatant.boucliersTemporaires
+          // (types.ts) pour l'imperfection assumée (même mécanisme que Château de cartes).
+          if (face.duree) (u.boucliersTemporaires ??= []).push({ montant: b, tours: face.duree });
         }
       }
     }
@@ -1594,16 +1596,6 @@ export function lancerSort(
   if (sort.type === "buff" || sort.type === "debuff") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
     const critSoutien = dependDuCritique(sort) && ctx.rng() < chanceCritEffective(statsEffectives(lanceur));
-    // Tactique féline : +PA aux alliés des cases adjacentes
-    if (sort.paGainAdjacents) {
-      const voisines = adjacents(lanceur.position);
-      for (const a of allies(lanceur, cs)) {
-        if (a.ref !== lanceur.ref && voisines.includes(a.position)) {
-          a.paBonusNextTurn += sort.paGainAdjacents;
-          ctx.log(`${a.nom} gagne ${sort.paGainAdjacents} PA (Tactique féline).`);
-        }
-      }
-    }
     let cibles: Combatant[];
     if (sort.cible === "allie_tous") {
       cibles = allies(lanceur, cs);
@@ -1812,6 +1804,9 @@ export function lancerSort(
       if (existant) existant.toursRestants = sort.effetLigneCible!.duree;
       else appliquerEffet(m, sort.effetLigneCible);
     }
+    // Une réduction — ou ici une majoration — invisible se lirait comme un bug (même
+    // principe que l'armure des Craqueleurs) : le journal nomme la rangée marquée.
+    ctx.log(`${lanceur.nom} marque la rangée de ${cible.nom} : ${sort.effetLigneCible.stat} ${sort.effetLigneCible.valeur >= 0 ? "+" : ""}${sort.effetLigneCible.valeur} (${sort.effetLigneCible.duree}t).`);
   }
 
   // Conjuration (Éliotrope) : pose la marque sur la cible (aucun jet — sauteJetDegats)

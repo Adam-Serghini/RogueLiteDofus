@@ -1614,6 +1614,7 @@
       },
       {
         "bouclierPct": 0.15,
+        "duree": 3,
         "portee": "rangee_avant"
       }
     ],

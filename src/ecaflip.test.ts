@@ -9,7 +9,7 @@
 //  son effet de bout en bout via lancerSort dans un vrai combat.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, estAvant, type CombatCtx } from "./combat";
+import { lancerSort, estAvant, effetsDebutTour, type CombatCtx } from "./combat";
 import { SORTS, CLASSES } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 import type { Combatant } from "./types";
@@ -127,6 +127,24 @@ describe("Bluff", () => {
     expect(elements).toEqual(["eau", "air"]); // pire, puis meilleur (le retour)
     expect(crits).toEqual([cible.ref]); // le retour ne recritique pas
   });
+
+  it("bout en bout, à résistances ET stats ÉGALES : les deux coups partent dans DEUX éléments distincts de la classe (pas le même)", () => {
+    // Contrairement à ce que dit la description d'origine du sort, une égalité de score
+    // ne fait pas se confondre pire et meilleur : le classement les départage par
+    // l'ordre déclaré (stable), et Bluff frappe donc bien deux éléments différents,
+    // simplement sans conséquence sur les dégâts puisque les deux scores sont égaux.
+    const eca = ecaflip();
+    eca.stats = { ...eca.stats, agilite: 50, chance: 50 }; // air == eau, résistances nulles des deux côtés
+    const cible = mannequin();
+    const elements: string[] = [];
+    const logCtx = ctx({
+      rng: () => 0, // crit forcé (déclenche le second coup), pas d'esquive
+      log: (_msg, meta) => { if (meta) elements.push(meta.element); },
+    });
+    lancerSort(eca, SORTS.bluff, cible.ref, [eca, cible], logCtx);
+    expect(elements).toEqual(["eau", "air"]); // deux éléments distincts de la paire, jamais le même
+    expect(new Set(elements).size).toBe(2);
+  });
 });
 
 describe("Langue râpeuse", () => {
@@ -197,6 +215,23 @@ describe("Griffe joueuse", () => {
     expect(estAvant(arriere)).toBe(false);
     expect(arriere.effets.some((x) => x.stat === "degatsCritSubis")).toBe(false);
   });
+
+  it("journalise l'application du débuff de rangée (invisible sinon, comme l'armure des Craqueleurs)", () => {
+    const eca = ecaflip();
+    const ennemis = fabriquerEnnemis("combat_elite");
+    ennemis.forEach((e, i) => {
+      e.stats = { ...e.stats, agilite: 0 };
+      e.position = i < 3 ? i : 4;
+      e.pvMax = 500; e.pvActuels = 500; e.resistances = {};
+    });
+    const [e0] = ennemis;
+    const cs = [eca, ...ennemis];
+    const logs: string[] = [];
+
+    lancerSort(eca, SORTS.griffe_joueuse, e0.ref, cs, ctx({ log: (msg) => logs.push(msg) }));
+
+    expect(logs.some((m) => m.includes("degatsCritSubis"))).toBe(true);
+  });
 });
 
 describe("Roulette", () => {
@@ -210,7 +245,7 @@ describe("Roulette", () => {
     expect(s.facesAleatoires).toEqual([
       { portee: "soi", effet: { stat: "degatsInfliges", valeur: 0.10, duree: 3 } },
       { portee: "rangee_lanceur", effet: { stat: "crit", valeur: 10, duree: 3 } },
-      { portee: "rangee_avant", bouclierPct: 0.15 },
+      { portee: "rangee_avant", bouclierPct: 0.15, duree: 3 },
     ]);
   });
 
@@ -252,6 +287,42 @@ describe("Roulette", () => {
     expect(arriere.bouclier).toBe(0);
   });
 
+  it("face « rangée avant » : le bouclier est à DURÉE, il disparaît après 3 tours du porteur (CRITIQUE : plan bouclier permanent)", () => {
+    const eca = ecaflip();
+    eca.position = 0; // rangée avant
+    eca.pvMax = 200; eca.pvActuels = 200;
+    // rng : pas de critique, puis tirage de la face d'index 2 (rangee_avant/bouclier)
+    const queue = [0.99, 0.99];
+    let i = 0;
+    lancerSort(eca, SORTS.roulette, eca.ref, [eca], ctx({ rng: () => queue[i++] }));
+    expect(eca.bouclier).toBe(30); // round(200 * 0.15)
+    expect(eca.boucliersTemporaires).toEqual([{ montant: 30, tours: 3 }]);
+
+    // Comme le bouclier de Château de cartes : décompte à chaque début de tour du
+    // porteur, retire exactement ce qui a été donné à l'expiration, pas plus.
+    effetsDebutTour(eca, [eca], ctx());
+    expect(eca.boucliersTemporaires).toEqual([{ montant: 30, tours: 2 }]);
+    effetsDebutTour(eca, [eca], ctx());
+    expect(eca.boucliersTemporaires).toEqual([{ montant: 30, tours: 1 }]);
+    expect(eca.bouclier).toBe(30); // pas encore expiré
+
+    effetsDebutTour(eca, [eca], ctx());
+    expect(eca.bouclier).toBe(0); // expiré : le bouclier n'était pas permanent
+    expect(eca.boucliersTemporaires).toEqual([]);
+  });
+
+  it("face « rangée avant » : friction bloque le bouclier ET n'ajoute aucune entrée temporaire", () => {
+    const eca = ecaflip();
+    eca.position = 0;
+    eca.pvMax = 200; eca.pvActuels = 200;
+    eca.effets.push({ stat: "friction", valeur: 1, toursRestants: 3 });
+    const queue = [0.99, 0.99];
+    let i = 0;
+    lancerSort(eca, SORTS.roulette, eca.ref, [eca], ctx({ rng: () => queue[i++] }));
+    expect(eca.bouclier).toBe(0);
+    expect(eca.boucliersTemporaires ?? []).toEqual([]);
+  });
+
   it("sur critique : DEUX faces sont tirées (cumulables)", () => {
     const eca = ecaflip();
     eca.position = 0; // rangée avant : nécessaire pour que la face « rangee_avant » l'inclue
@@ -261,6 +332,19 @@ describe("Roulette", () => {
     lancerSort(eca, SORTS.roulette, eca.ref, [eca], ctx({ rng: () => queue[i++] }));
     expect(eca.effets.some((e) => e.stat === "degatsInfliges")).toBe(true);
     expect(eca.bouclier).toBeGreaterThan(0); // face rangee_avant : eca est en rangée avant
+  });
+
+  it("annonce CHAQUE face tirée dans le journal, pas seulement le nom du sort (deux tirages sur critique → deux lignes)", () => {
+    const eca = ecaflip();
+    eca.position = 0;
+    const logs: string[] = [];
+    // crit (0), face 0 (0 → index 0), face 1 (0.99 → index 2)
+    const queue = [0, 0, 0.99];
+    let i = 0;
+    lancerSort(eca, SORTS.roulette, eca.ref, [eca], ctx({ rng: () => queue[i++], log: (msg) => logs.push(msg) }));
+
+    const annoncesDeFace = logs.filter((m) => m.includes("tire :"));
+    expect(annoncesDeFace).toHaveLength(2); // une par face tirée, en plus de « lance Roulette. »
   });
 });
 

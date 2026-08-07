@@ -385,7 +385,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
   for (const e of c.effets) {
     if (e.stat === "vitalite") badges.push(`+PV (${e.toursRestants})`);
     else if (e.stat === "degatsInfliges")
-      badges.push(`−dégâts (${e.toursRestants})`);
+      badges.push(`${e.valeur >= 0 ? "+" : "−"}dégâts (${e.toursRestants})`);
     else if (e.stat === "poison") badges.push(`☠ poison (${e.toursRestants})`);
     else if (e.stat === "hot") badges.push(`♥ soin/t (${e.toursRestants})`);
     else if (e.stat === "initiative")
@@ -395,6 +395,8 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     else if (e.stat === "proie") badges.push(`🎯 Proie (vol ${Math.round(e.valeur * 100)} %)`);
     else if (e.stat === "tetanise") badges.push(`🦴 Tétanisé (${e.toursRestants})`);
     else if (e.stat === "armure") badges.push(`🪨 Armure +${e.valeur} (${e.toursRestants})`);
+    else if (e.stat === "degatsCritSubis")
+      badges.push(`🃏 Crit subis +${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
   }
   if ((c.bombes ?? 0) > 0) badges.push(`💣 ×${c.bombes}`);
   if ((c.telefrags ?? 0) > 0) badges.push(`⌛ ×${c.telefrags}`); // ⌛ distinct de ⏳ (badge d'init ci-dessus)

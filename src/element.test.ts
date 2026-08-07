@@ -73,6 +73,21 @@ describe("l'élément de frappe suit la cible", () => {
     expect(elementContre(plusFeu, cibleRes, sortPerceTotal)).toBe("feu");
   });
 
+  it("elementPire (Bluff) désigne le DERNIER du classement, pas le premier — l'indicateur doit suivre le moteur", () => {
+    // Mesuré : un Ecaflip à 100 d'agilité / 10 de chance, ciblant avec Bluff, frappe
+    // réellement en EAU (le pire élément, celui qu'il maîtrise le moins) — l'indicateur
+    // ne doit pas désigner "air" (sa meilleure caractéristique brute), qui est le
+    // comportement PAR DÉFAUT de elementContre, ignoré uniquement quand le sort porte
+    // `elementPire`.
+    const heros = combattantDepuisPerso(persoAuNiveau("ecaflip", 50, 0)); // air + eau
+    const buffAgilite: Combatant = { ...heros, stats: { ...heros.stats, agilite: 100, chance: 10 } };
+    const cibleNue = cible({});
+    const bluff = { ...SORTS.morsure, elementPire: true } as Spell;
+    expect(elementContre(buffAgilite, cibleNue, bluff)).toBe("eau");
+    // sans elementPire, le même combattant contre la même cible désigne le MEILLEUR (air).
+    expect(elementContre(buffAgilite, cibleNue)).toBe("air");
+  });
+
   it("un monstre garde exactement l'élément qu'il avait", () => {
     // 177 espèces sur 187 sont mono-élément : la règle doit être INERTE pour elles,
     // sinon l'équilibrage de 24 zones bouge en silence. abr_elite (Domaine Ancestral)
