@@ -3500,3 +3500,9 @@ body.avec-fond .map-zone {
   box-shadow: 0 0 0 2px var(--or);
   opacity: 1;
 }
+
+/* Paramètres — les cartes de préréglage portent leur rang de jeu */
+.preset-carte {
+  position: relative;
+  cursor: grab;
+}

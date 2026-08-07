@@ -3,7 +3,7 @@
 //  fin de combat) et Paramètres (touche de fin de tour, préréglages, sauvegarde).
 // =============================================================================
 import { ITEMS, RARETE_INFO, CLASSES } from "../data";
-import { sauverConfig, libelleTouche } from "../config";
+import { sauverConfig, libelleTouche, rangClasse } from "../config";
 import { itemImg, BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
@@ -294,20 +294,21 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
           })() : ""}
         </div>
         <h2 class="settings-titre">Préréglages des héros</h2>
-        <p class="muet settings-sous">Position par défaut, appliquée au début de chaque run.</p>
+        <p class="muet settings-sous">Position et ordre de jeu par défaut, appliqués au début de chaque run. Glisse-dépose les cartes pour changer l'ordre ; pendant une run, la vue Formation le règle sans toucher à cette préférence.</p>
         <div class="presets">
-          ${classesDisponibles().map((cid) => {
+          ${[...classesDisponibles()].sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b)).map((cid, i) => {
             const rangee = config.formation[cid] === "arriere" ? "arriere" : "avant";
             // archétype + éléments : ils sont fixes depuis la refonte, donc informatifs
             // et non réglables — ils redonnent à la carte le contenu qu'avait la ligne
             // quand l'élément se choisissait ici.
-            return `<div class="preset-carte">
+            return `<div class="preset-carte" draggable="true" data-classe-ordre="${cid}">
+              <span class="ordre-rang">${i + 1}</span>
               <img class="preset-sym" src="${classSymbol(cid)}" alt="" onerror="this.remove()" />
               <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
               ${ligneArchetype(cid)}
               <span class="preset-pos">
-                <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
-                <button class="form-el-btn ${rangee === "arriere" ? "sel" : ""}" data-classe="${cid}" data-rangee="arriere" title="Ligne arrière (les héros s'y empilent)">Arrière</button>
+                <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" draggable="false" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
+                <button class="form-el-btn ${rangee === "arriere" ? "sel" : ""}" draggable="false" data-classe="${cid}" data-rangee="arriere" title="Ligne arrière (les héros s'y empilent)">Arrière</button>
               </span>
             </div>`;
           }).join("")}
@@ -319,6 +320,34 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
           config.formation[btn.dataset.classe!] = btn.dataset.rangee as "avant" | "arriere";
           sauverConfig(config);
           draw();
+        });
+      });
+      // réordonner les cartes réécrit Settings.ordre : rangs 1..n renumérotés d'un
+      // bloc, pour qu'ils restent distincts et sans trou après chaque déplacement
+      const reordonner = (srcId: string, dstId: string) => {
+        if (srcId === dstId) return;
+        const ids = [...classesDisponibles()].sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b));
+        const from = ids.indexOf(srcId);
+        const to = ids.indexOf(dstId);
+        if (from < 0 || to < 0) return;
+        ids.splice(to, 0, ids.splice(from, 1)[0]);
+        ids.forEach((id, i) => { config.ordre[id] = i + 1; });
+        sauverConfig(config);
+        draw();
+      };
+      root.querySelectorAll<HTMLElement>("[data-classe-ordre]").forEach((el) => {
+        const id = el.dataset.classeOrdre!;
+        el.addEventListener("dragstart", (e) => {
+          (e as DragEvent).dataTransfer!.setData("text/plain", id);
+          el.classList.add("drag-src");
+        });
+        el.addEventListener("dragend", () => el.classList.remove("drag-src"));
+        el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("drop-cible"); });
+        el.addEventListener("dragleave", () => el.classList.remove("drop-cible"));
+        el.addEventListener("drop", (e) => {
+          e.preventDefault();
+          el.classList.remove("drop-cible");
+          reordonner((e as DragEvent).dataTransfer!.getData("text/plain"), id);
         });
       });
       document.getElementById("set-touche")?.addEventListener("click", () => {
