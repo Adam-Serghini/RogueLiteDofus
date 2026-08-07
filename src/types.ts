@@ -235,7 +235,24 @@ export interface Spell {
   bouclierTours?: number; // Château de cartes : le bouclier octroyé expire après N tours du porteur
   facesAleatoires?: FaceRoulette[]; // Roulette : handler dédié (tirage(s) de face indépendants)
   tiragesSiCrit?: number; // Roulette : nombre de faces tirées si le sort critique (sinon 1 seule)
+  // --- rework du Féca (primitives de rangée) ---
+  effetRangeeAlliee?: BuffRangeeAlliee; // buffe une rangée ALLIÉE absolue (Vigie, Pâturage, Fortification)
+  retraitPAProchainTour?: number; // Tétanie : la cible commence son prochain tour amputée de N PA
 }
+
+/** Un effet de buff de rangée. Distinct d'`EffetSpec` parce qu'il porte une valeur
+ *  conditionnelle, que le reste du moteur n'a pas à connaître. */
+export interface EffetRangee {
+  stat: EffetStat;
+  valeur: number;
+  duree: number;
+  /** Valeur employée à la place de `valeur` si AU MOINS DEUX héros hors invocation
+   *  occupent la rangée AVANT alliée (Pâturage, Fortification). */
+  valeurSiDeuxDevant?: number;
+}
+
+/** Buff appliqué à une rangée ALLIÉE — absolue, pas relative au lanceur. */
+export interface BuffRangeeAlliee { rangee: "avant" | "arriere"; effets: EffetRangee[] }
 
 /** Une face de Roulette (Ecaflip) : une portée, et ce qu'elle applique à chaque unité. */
 export interface FaceRoulette {
@@ -384,7 +401,7 @@ export interface Combatant {
   maxRollCharges: number; // Œil affûté
   passeProchainTour: boolean; // Colère
   bouclier: number; // points d'absorption (encaissés avant les PV)
-  paBonusNextTurn: number; // PA bonus appliqués à la prochaine recharge (Mot Ivation)
+  paBonusNextTurn: number; // delta de PA appliqué à la prochaine recharge, positif ou négatif (Mot Ivation, Tétanie)
   cooldowns: Record<string, number>; // `${sortId}:${cibleRef}` -> tours restants
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée

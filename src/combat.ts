@@ -7,7 +7,7 @@ import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, pctRembPA, statElement } from "./progression";
 
 import type {
-  Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
+  BuffRangeeAlliee, Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
 } from "./types";
 
 // --- Aléatoire (injectable pour les tests) -----------------------------------
@@ -815,10 +815,11 @@ function retirerPA(cible: Combatant, n: number, ctx: CombatCtx): void {
 const EFFETS_TICK_DEBUT: EffetStat[] = ["paParTour", "hot"];
 
 export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatCtx): boolean {
-  // gain de PA différé (Mot d'ivation, Prémonition, Coalition…)
-  if (acteur.paBonusNextTurn > 0) {
-    acteur.paActuels += acteur.paBonusNextTurn;
-    ctx.log(`${acteur.nom} gagne ${acteur.paBonusNextTurn} PA.`);
+  // delta de PA différé (Mot d'ivation, Prémonition, Coalition… / Tétanie en négatif)
+  if (acteur.paBonusNextTurn !== 0) {
+    acteur.paActuels = Math.max(0, acteur.paActuels + acteur.paBonusNextTurn);
+    if (acteur.paBonusNextTurn > 0) ctx.log(`${acteur.nom} gagne ${acteur.paBonusNextTurn} PA.`);
+    else ctx.log(`${acteur.nom} perd ${-acteur.paBonusNextTurn} PA.`);
     acteur.paBonusNextTurn = 0;
   }
   // PA par tour (Cadran…) : crédite tant que l'effet dure (posé par paParTourLigne)
@@ -1030,6 +1031,33 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.resquilleActive = sort.resquille;
     ctx.log(`${cible.nom} prépare une Resquille (−${sort.resquille} PA au prochain Kaboom).`);
   }
+  if (sort.retraitPAProchainTour) {
+    cible.paBonusNextTurn -= sort.retraitPAProchainTour;
+    ctx.log(`${cible.nom} commencera son prochain tour amputé de ${sort.retraitPAProchainTour} PA (Tétanie).`);
+  }
+}
+
+/** Deux héros hors invocation sur la rangée avant alliée ? (Pâturage, Fortification) */
+function deuxHerosDevant(lanceur: Combatant, cs: Combatant[]): boolean {
+  return vivants(cs).filter((c) => c.camp === lanceur.camp && estAvant(c) && !c.estInvocation).length >= 2;
+}
+
+/** Applique un buff à une rangée ALLIÉE. Les invocations en sont exclues : un bonus de
+ *  dégâts sur une Égide n'a pas de sens, et une Égide renforcée par Fortification
+ *  changerait l'équilibre du sort le plus fort du kit. */
+function appliquerBuffRangee(lanceur: Combatant, buff: BuffRangeeAlliee, cs: Combatant[], ctx: CombatCtx): void {
+  const devant = buff.rangee === "avant";
+  const cibles = vivants(cs).filter((c) => c.camp === lanceur.camp && estAvant(c) === devant && !c.estInvocation);
+  const deux = deuxHerosDevant(lanceur, cs);
+  for (const m of cibles) {
+    for (const e of buff.effets) {
+      const valeur = deux && e.valeurSiDeuxDevant !== undefined ? e.valeurSiDeuxDevant : e.valeur;
+      const existant = m.effets.find((x) => x.stat === e.stat);
+      if (existant) { existant.valeur = valeur; existant.toursRestants = e.duree; }
+      else appliquerEffet(m, { stat: e.stat, valeur, duree: e.duree });
+    }
+  }
+  ctx.log(`${lanceur.nom} renforce la rangée ${devant ? "avant" : "arrière"}${deux ? " (renfort à deux)" : ""}.`);
 }
 
 /** Invoque une Poupée de garde (une seule active par invocateur). */
@@ -1614,6 +1642,9 @@ export function lancerSort(
       appliquerSoutien(sort, t, lanceur, ctx, critSoutien);
       poseCooldown(t);
     }
+    // Féca (Fortification) : buff sur une rangée ALLIÉE, absolue — indépendant des
+    // cibles ci-dessus (un sort de soutien peut n'en avoir aucune, ex. `cible: "soi"`).
+    if (sort.effetRangeeAlliee) appliquerBuffRangee(lanceur, sort.effetRangeeAlliee, cs, ctx);
     return;
   }
 
@@ -1808,6 +1839,10 @@ export function lancerSort(
     // principe que l'armure des Craqueleurs) : le journal nomme la rangée marquée.
     ctx.log(`${lanceur.nom} marque la rangée de ${cible.nom} : ${sort.effetLigneCible.stat} ${sort.effetLigneCible.valeur >= 0 ? "+" : ""}${sort.effetLigneCible.valeur} (${sort.effetLigneCible.duree}t).`);
   }
+
+  // Féca (Vigie, Pâturage) : buff sur une rangée ALLIÉE, absolue — indépendante de la
+  // cible cliquée (contrairement à effetLigneCible ci-dessus, qui suit la cible).
+  if (sort.effetRangeeAlliee) appliquerBuffRangee(lanceur, sort.effetRangeeAlliee, cs, ctx);
 
   // Conjuration (Éliotrope) : pose la marque sur la cible (aucun jet — sauteJetDegats)
   // — jamais sur la Lance, qui n'est pas une cible de marque (comme bombes/téléfrags).
