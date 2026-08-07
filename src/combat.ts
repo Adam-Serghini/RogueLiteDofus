@@ -296,7 +296,6 @@ interface BaseDegats {
   bonusParPADispo?: number; // Flèche Punitive : +X % par PA dispo AVANT paiement (opts.paAvant)
   bonusParTelefrag?: number; // Rayon Obscur : +X % par Téléfrag posé sur la cible
   elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement)
-  elementImpose?: Element; // court-circuite le choix d'élément
   sansEsquiveNiCrit?: boolean; // Bluff (second coup) : saute les jets d'esquive ET de critique — un seul jet de critique a eu lieu, il ne se rejoue pas
 }
 
@@ -509,7 +508,7 @@ function degatsAvec(
   // même sur le meilleur élément (le comportement par défaut), d'où le classement
   // plutôt que le simple max.
   const classes = elementsClasses(lanceur, cible, base, dmg);
-  const el = base.elementImpose ?? (base.elementPire ? classes[classes.length - 1] : classes[0]);
+  const el = base.elementPire ? classes[classes.length - 1] : classes[0];
   dmg += statElement(se, el) * base.scaling;
 
   // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
@@ -1232,12 +1231,6 @@ function ciblesAleatoires(pool: Combatant[], n: number, rng: Rng): Combatant[] {
   return res;
 }
 
-/** Tirage normalisé 0..1 d'un dé à `faces` faces (+ bonus de dé du lanceur). */
-function tirageDe(lanceur: Combatant, faces: number, rng: Rng): number {
-  const roll = Math.min(faces, 1 + Math.floor(rng() * faces) + lanceur.bonusDe);
-  return faces > 1 ? (roll - 1) / (faces - 1) : 1;
-}
-
 /** Applique une frappe de dégâts ; renvoie les dégâts infligés (0 si esquive). */
 function frappe(
   lanceur: Combatant,
@@ -1263,72 +1256,6 @@ function frappe(
     );
   }
   return r.dmg;
-}
-
-const COULEURS = ["pique", "trefle", "carreau", "coeur"] as const;
-
-/** Tarot (Ecaflip) : tire une couleur et applique l'effet ennemi ou allié. */
-function lancerTarot(lanceur: Combatant, sort: Spell, cible: Combatant | undefined, cs: Combatant[], ctx: CombatCtx): void {
-  const couleur = COULEURS[Math.floor(ctx.rng() * 4)];
-  ctx.log(`${lanceur.nom} tire un Tarot : ${couleur}.`);
-  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling };
-  const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
-  const optsPour = (t: Combatant) => ({ useMax: false, mult: mp * multConjuration(lanceur, t, cs), ctx });
-
-  if (cible && cible.camp !== lanceur.camp) {
-    // --- variante ennemie ---
-    if (couleur === "pique") {
-      frappe(lanceur, { ...base, ignoreResistances: true }, cible, optsPour(cible), "Tarot (Pique)");
-    } else if (couleur === "carreau") {
-      const t = ciblesAleatoires(adverses(lanceur, cs), 1, ctx.rng)[0];
-      if (t) frappe(lanceur, base, t, optsPour(t), "Tarot (Carreau)");
-    } else if (couleur === "coeur") {
-      const dmg = frappe(lanceur, base, cible, optsPour(cible), "Tarot (Cœur)");
-      if (dmg > 0) soigner(lanceur, dmg, ctx);
-    } else {
-      // trèfle : relance (deux frappes)
-      frappe(lanceur, base, cible, optsPour(cible), "Tarot (Trèfle)");
-      if (cible.pvActuels > 0) frappe(lanceur, base, cible, optsPour(cible), "Tarot (Trèfle, relance)");
-    }
-  } else if (cible) {
-    // --- variante alliée ---
-    if (couleur === "pique") {
-      appliquerEffet(cible, { stat: "degatsInfliges", valeur: 0.15, duree: 2 });
-      ctx.log(`${cible.nom} gagne +15 % de dégâts finaux.`);
-    } else if (couleur === "carreau") {
-      const b = Math.round(cible.pvMax * (0.15 + 0.005 * lanceur.niveau));
-      if (!aFriction(cible)) cible.bouclier += b;
-      ctx.log(`${cible.nom} gagne un bouclier de ${b}.`);
-    } else if (couleur === "coeur") {
-      soigner(cible, Math.round(cible.pvMax * 0.2 * multSoinDe(lanceur)), ctx);
-    } else {
-      // trèfle : + toutes caractéristiques
-      for (const k of STATS_BUFFABLES) appliquerEffet(cible, { stat: k, valeur: 8, duree: 2 });
-      ctx.log(`${cible.nom} gagne +8 à toutes ses caractéristiques (2t).`);
-    }
-  }
-}
-
-/** Esprit félin (Ecaflip) : effet aléatoire (25 % chacun) sur chaque unité. */
-function lancerEspritFelin(lanceur: Combatant, cs: Combatant[], ctx: CombatCtx): void {
-  ctx.log(`${lanceur.nom} libère l'Esprit félin sur le champ de bataille !`);
-  for (const u of vivants(cs)) {
-    const r = Math.floor(ctx.rng() * 4);
-    if (u.camp === lanceur.camp) {
-      if (r === 0 && !aFriction(u)) u.bouclier += Math.round(u.pvMax * 0.15);
-      else if (r === 1) soigner(u, Math.round(u.pvMax * 0.15 * multSoinDe(lanceur)), ctx);
-      else if (r === 2) appliquerEffet(u, { stat: "degatsInfliges", valeur: 0.15, duree: 2 });
-      else appliquerEffet(u, { stat: "resAll", valeur: 0.1, duree: 2 });
-    } else {
-      if (r === 0) {
-        retirerPA(u, 2, ctx);
-        lanceur.paBonusNextTurn += 2;
-        ctx.log(`${lanceur.nom} vole 2 PA à ${u.nom}.`);
-      } else if (r === 1) appliquerEffet(u, { stat: "resAll", valeur: -0.1, duree: 2 });
-      else if (r === 2) appliquerEffet(u, { stat: "degatsInfliges", valeur: -0.1, duree: 2 });
-      else dissiperPositifs(u, ctx);
-    }
-  }
 }
 
 /** Kaboom (Roublard) : détonne toutes les bombes posées sur les ennemis vivants.
@@ -1465,17 +1392,6 @@ export function lancerSort(
   const pEchec = sommeEffet(lanceur, "echecCritique");
   if (pEchec > 0 && ctx.rng() < pEchec) {
     ctx.log(`${lanceur.nom} subit un échec critique : ${sort.nom} échoue !`);
-    return;
-  }
-
-  // --- HANDLERS DÉDIÉS ---
-  if (sort.tarot) {
-    lancerTarot(lanceur, sort, cible, cs, ctx);
-    if (cible) poseCooldown(cible);
-    return;
-  }
-  if (sort.espritFelin) {
-    lancerEspritFelin(lanceur, cs, ctx);
     return;
   }
 
@@ -1824,9 +1740,6 @@ export function lancerSort(
     return;
   }
 
-  // Multiplicateur de dé (All in)
-  const deMult = sort.de ? sort.de.multMin + tirageDe(lanceur, sort.de.faces, ctx.rng) * (sort.de.multMax - sort.de.multMin) : 1;
-
   const touchees = ciblesDegats(lanceur, sort, cible, cs);
   let primaireMorte = false;
 
@@ -1840,7 +1753,7 @@ export function lancerSort(
   let unCritique = false; // Pile ou Face : au moins un coup critique porté (monocible = un seul coup)
   touchees.forEach((t, i) => {
     if (sauteJetDegats) return;
-    const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult * multLigne;
+    const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * multLigne;
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx, paAvant });
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${sort.nom} !`);

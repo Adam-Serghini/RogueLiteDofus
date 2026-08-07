@@ -172,9 +172,6 @@ export interface Spell {
   dissipePositifs?: boolean; // désenvoûtement : retire boucliers + effets bénéfiques
   provoqueTours?: number; // Provocation : le lanceur provoque pendant N tours
   mixte?: { surAllie: SurAllie }; // sort lançable sur ennemi (dégâts) ou allié (soutien)
-  de?: { faces: number; multMin: number; multMax: number }; // All in : mult tiré au dé
-  tarot?: boolean; // Tarot : handler dédié (tirage de couleur)
-  espritFelin?: boolean; // Esprit félin : handler dédié (effet aléatoire par unité)
   effets?: EffetSpec[]; // plusieurs effets cumulés (ex. Maître des ombres)
   // --- signatures de boss (invocations côté monstres) ---
   invoqueMonstre?: { pool: string[]; max: number }; // invoque un monstre (id tiré dans pool) ; max = invocations vivantes simultanées
@@ -232,7 +229,6 @@ export interface Spell {
   // --- rework de l'Ecaflip (primitives du pipeline de dégâts) ---
   rembPASiCrit?: number; // Pile ou Face : rembourse ce nombre de PA quand le sort critique
   elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement) plutôt que le meilleur
-  elementImpose?: Element; // court-circuite le choix d'élément
   sansEsquiveNiCrit?: boolean; // Bluff (second coup) : saute les jets d'esquive ET de critique — un seul jet de critique a eu lieu, il ne se rejoue pas
   secondCoupSiCrit?: boolean; // Bluff : sur critique, frappe une seconde fois dans l'AUTRE élément (le meilleur)
   effetLigneCible?: EffetSpec; // débuff appliqué à TOUTE la rangée de la cible ; non cumulable (durée rafraîchie)

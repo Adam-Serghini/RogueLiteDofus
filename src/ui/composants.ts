@@ -38,8 +38,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       s.type === "degats" &&
       s.baseMax > 0 &&
       !s.coups &&
-      !s.projectiles &&
-      !s.de
+      !s.projectiles
     ) {
       // Le nombre est exact (la stat est identique dans les 2 éléments déclarés, cf.
       // meilleurElement/combat.ts) ; l'ÉLÉMENT réel, lui, dépend de la cible frappée —
@@ -51,7 +50,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       const max = Math.round((s.baseMax + stat * s.scaling) * mult);
       principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el">selon la cible</span>`;
     }
-  } else if (s.baseMax > 0 && !s.coups && !s.projectiles && !s.de) {
+  } else if (s.baseMax > 0 && !s.coups && !s.projectiles) {
     // hors combat (encyclopédie) : jets de base, sans cible non plus — même choix
     principal = s.type === "soin"
       ? `<span class="tip-val soin">♥ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">PV rendus (base)</span>`

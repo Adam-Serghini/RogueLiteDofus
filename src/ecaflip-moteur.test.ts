@@ -1,6 +1,6 @@
 // =============================================================================
 //  ecaflip-moteur.test.ts — Task 1 du rework Ecaflip : les primitives du pipeline
-//  de dégâts (rembPASiCrit, elementPire/elementImpose, secondCoupSiCrit,
+//  de dégâts (rembPASiCrit, elementPire, secondCoupSiCrit,
 //  degatsCritSubis, effetLigneCible, soinAvantBlesseRatio).
 //
 //  Aucun contenu réel n'utilise encore ces champs (Task 3) : chaque bloc construit
@@ -55,7 +55,7 @@ describe("rembPASiCrit", () => {
   });
 });
 
-describe("elementPire / elementImpose", () => {
+describe("elementPire", () => {
   /** Ecaflip avec l'élément libre (les 4 candidats) et des stats qui donnent un
    *  classement net et sans ambiguïté : terre > eau > air > feu. */
   function ecaflipLibre(): Combatant {
@@ -79,14 +79,6 @@ describe("elementPire / elementImpose", () => {
     const spell: Spell = { ...SORTS.morsure, id: "test_meilleur" };
     const r = degatsCible(lanceur, spell, cible, { useMax: true, mult: 1, ctx: ctx() });
     expect(r.element).toBe("terre"); // stat la plus forte (force = 100)
-  });
-
-  it("elementImpose court-circuite le choix, même avec elementPire", () => {
-    const lanceur = ecaflipLibre();
-    const cible = mannequin();
-    const spell: Spell = { ...SORTS.morsure, id: "test_impose", elementPire: true, elementImpose: "air" };
-    const r = degatsCible(lanceur, spell, cible, { useMax: true, mult: 1, ctx: ctx() });
-    expect(r.element).toBe("air");
   });
 });
 
