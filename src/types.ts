@@ -178,9 +178,8 @@ export interface Spell {
   ressuscite?: { pvPct: number }; // réinvoque un allié monstre vaincu (Boostache) à pvPct de ses PV max
   effetParNiveau?: { stat: EffetStat; base: number; parNiveau: number; duree: number }; // valeur = base + parNiveau×niveau
   poisonAmpli?: number; // Arsenic : active le doublement des poisons pour N tours
-  donneBonusDe?: { min: number; max: number; duree: number }; // Bonne pioche
   paGainAdjacents?: number; // Tactique féline : +PA aux alliés des cases adjacentes
-  procAleatoire?: ProcAleatoire[]; // Langue râpeuse : 1 effet tiré au hasard sur la cible
+  procAleatoire?: ProcAleatoire[]; // 1 effet tiré au hasard sur la cible (sorts de monstres)
   changeLigne?: boolean; // « Changer de ligne » (Dagues Eurfolles) : déplace le lanceur dans la rangée opposée
   perceResistances?: number; // fraction des résistances ignorée par ce sort (attaque d'arme)
   toucheDerriere?: boolean; // l'attaque touche aussi l'ennemi juste derrière la cible (Masse Aj Taye)
@@ -391,8 +390,6 @@ export interface Combatant {
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente
   poisonAmpliTours: number; // Arsenic : poisons appliqués ×2 tant que > 0
-  bonusDe: number; // Bonne pioche : +X aux tirages dé/carte
-  bonusDeTours: number; // durée restante du bonus de dé
   dofusLache?: string; // pour le boss
   // --- invocation (Poupée de garde) ---
   estInvocation?: boolean; // ne joue pas de tour

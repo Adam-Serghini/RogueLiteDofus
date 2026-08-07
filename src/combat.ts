@@ -254,7 +254,7 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
  *  d'état s'ajoute ici, pas dans chacune des quatre fabriques. */
 export function etatCombatInitial(): Pick<Combatant,
   "effets" | "maxRollCharges" | "passeProchainTour" | "bouclier" | "paBonusNextTurn" |
-  "cooldowns" | "bonusOffensifProchain" | "poisonAmpliTours" | "bonusDe" | "bonusDeTours"> {
+  "cooldowns" | "bonusOffensifProchain" | "poisonAmpliTours"> {
   return {
     effets: [],
     maxRollCharges: 0,
@@ -264,8 +264,6 @@ export function etatCombatInitial(): Pick<Combatant,
     cooldowns: {},
     bonusOffensifProchain: 0,
     poisonAmpliTours: 0,
-    bonusDe: 0,
-    bonusDeTours: 0,
   };
 }
 
@@ -890,9 +888,8 @@ function decrementerEffets(acteur: Combatant): void {
   acteur.effets = acteur.effets.filter((e) => e.toursRestants > 0);
   if (toucheVitalite) recomputePvMax(acteur);
 
-  // compteurs temporisés (Arsenic, Bonne pioche, Provocation)
+  // compteurs temporisés (Arsenic, Provocation)
   if (acteur.poisonAmpliTours > 0) acteur.poisonAmpliTours -= 1;
-  if (acteur.bonusDeTours > 0 && --acteur.bonusDeTours <= 0) acteur.bonusDe = 0;
   // Provocation : posée pendant CE tour → on saute le décompte une fois (sinon elle
   // expirerait avant même le tour adverse suivant, qu'elle est censée contraindre).
   if (acteur.provoqueTours) {
@@ -994,11 +991,6 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
   if (sort.poisonAmpli) {
     cible.poisonAmpliTours = sort.poisonAmpli;
     ctx.log(`${cible.nom} empoisonne ses lames (Arsenic).`);
-  }
-  if (sort.donneBonusDe) {
-    cible.bonusDe = jet(sort.donneBonusDe.min, sort.donneBonusDe.max, ctx.rng);
-    cible.bonusDeTours = sort.donneBonusDe.duree;
-    ctx.log(`${cible.nom} affûte sa chance (+${cible.bonusDe} aux tirages).`);
   }
   if (sort.provoqueTours) {
     cible.provoque = true;
