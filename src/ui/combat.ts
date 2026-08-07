@@ -407,7 +407,17 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
   if (c.bonusOffensifProchain > 0)
     badges.push(`+${Math.round(c.bonusOffensifProchain * 100)} % prochain`);
   if (c.maxRollCharges > 0) badges.push(`Œil affûté ×${c.maxRollCharges}`);
-  if (c.paBonusNextTurn > 0) badges.push(`+${c.paBonusNextTurn} PA`);
+  // Sensible au SIGNE : Tétanie (Féca) pose un malus négatif (`retraitPAProchainTour`),
+  // qui n'affichait rien avec un simple `> 0` — toute la charge utile du sort était
+  // invisible sur la carte ennemie. Même correctif que le badge de dégâts plus haut
+  // (`degatsInfliges` affiche déjà +/− selon le signe).
+  if (c.paBonusNextTurn !== 0) badges.push(`${c.paBonusNextTurn > 0 ? "+" : ""}${c.paBonusNextTurn} PA`);
+  // Égide (Féca) : minuteur d'invocation — sans lui, rien sur la carte n'indique
+  // qu'elle va expirer, contrairement au poison/HoT/tétanisation qui affichent tous
+  // leur compte à rebours.
+  if (c.estEgide && (c.toursRestantsInvocation ?? 0) > 0) {
+    badges.push(`🛡️ Égide (${c.toursRestantsInvocation})`);
+  }
 
   const ligne = estAvant(c) ? "avant" : "arriere";
 
@@ -441,6 +451,12 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         </span>
       </div>
       ${(() => {
+        // Égide (Féca) : pseudo-combattant à stats nulles (force/intelligence/agilité/chance
+        // toutes à 0, aucune résistance) — crit, dégâts de crit, soin, dégâts finaux,
+        // prospection et les 4 chips de résistance n'y ont AUCUN sens (ses résistances ne sont
+        // jamais appliquées : les dégâts lui arrivent déjà calculés pour le héros protégé) et
+        // n'afficheraient que des zéros trompeurs. Retirés pour elle seule.
+        if (c.estEgide) return "";
         // stats EFFECTIVES (buffs temporaires inclus — Tir Puissant, Maîtrise…) :
         // sans ça, un perso buffé ne voit jamais ses % bouger sur sa carte.
         const se = statsEffectives(c);
@@ -453,8 +469,8 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         ${(c.armure ?? 0) > 0 ? `<span class="ms" title="Armure — retranchée de CHAQUE frappe reçue">🪨 ${c.armure}</span>` : ""}
       </div>`;
       })()}
-      ${c.camp === "joueur" ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
-      ${resChips ? `<div class="res-row">${resChips}</div>` : ""}
+      ${c.camp === "joueur" && !c.estEgide ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
+      ${resChips && !c.estEgide ? `<div class="res-row">${resChips}</div>` : ""}
       <div class="badges">${badges.map((b) => `<span class="badge">${escapeHtml(b)}</span>`).join("")}</div>
       ${ko ? `<div class="ko-label">K.O.</div>` : ""}
     </div>`;

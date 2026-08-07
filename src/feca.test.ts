@@ -7,7 +7,7 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import { lancerSort, ciblesValides, type CombatCtx } from "./combat";
-import { SORTS } from "./data";
+import { SORTS, CLASSES } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet haut, pas de crit
@@ -35,6 +35,99 @@ const mannequin = () => {
   e.pvActuels = 500;
   return e;
 };
+
+// Le kit RÉEL du Féca (post-rework) et les 7 sorts qu'il a remplacés (les 8 de
+// l'ancien kit moins "bulle", réutilisé sous un tout autre sort). Forme reprise
+// de ecaflip.test.ts (KIT/RETIRES + toEqual/toBeUndefined) : sans ce test, rien
+// n'empêche un cooldown de disparaître ou un jet calibré en séance de dériver.
+const KIT = ["vigie", "paturage", "bulle", "tetanie", "egide", "fortification"];
+const RETIRES = [
+  "attaque_naturelle", "glyphe_agressif", "glyphe_stimulant", "attaque_nuageuse",
+  "baton_du_berger", "provocation", "armures",
+];
+
+describe("la classe", () => {
+  it("son kit est EXACTEMENT les 6 sorts du rework, dans cet ordre", () => {
+    expect(CLASSES.feca.sorts).toEqual(KIT);
+  });
+
+  it("les 7 anciens sorts ont disparu du contenu", () => {
+    for (const id of RETIRES) expect(SORTS[id as keyof typeof SORTS], id).toBeUndefined();
+  });
+
+  it("les 7 anciens sorts ne figurent dans le kit d'AUCUNE classe", () => {
+    for (const classe of Object.values(CLASSES)) {
+      for (const id of RETIRES) expect(classe.sorts, `${classe.id} ↔ ${id}`).not.toContain(id);
+    }
+  });
+});
+
+describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () => {
+  it("Vigie", () => {
+    const s = SORTS.vigie;
+    expect(s.coutPA).toBe(3);
+    expect(s.cible).toBe("ennemi_ligne");
+    expect(s.baseMin).toBe(8);
+    expect(s.baseMax).toBe(11);
+    expect(s.scaling).toBeCloseTo(0.28);
+    expect(s.cooldownTours).toBe(3);
+    expect(s.type).toBe("degats");
+  });
+
+  it("Pâturage", () => {
+    const s = SORTS.paturage;
+    expect(s.coutPA).toBe(3);
+    expect(s.cible).toBe("ennemi_ligne");
+    expect(s.baseMin).toBe(8);
+    expect(s.baseMax).toBe(11);
+    expect(s.scaling).toBeCloseTo(0.28);
+    expect(s.cooldownTours).toBeUndefined();
+    expect(s.type).toBe("degats");
+  });
+
+  it("Bulle", () => {
+    const s = SORTS.bulle;
+    expect(s.coutPA).toBe(3);
+    expect(s.cible).toBe("ennemi_tous");
+    expect(s.baseMin).toBe(8);
+    expect(s.baseMax).toBe(11);
+    expect(s.scaling).toBeCloseTo(0.28);
+    expect(s.type).toBe("degats");
+  });
+
+  it("Tétanie", () => {
+    const s = SORTS.tetanie;
+    expect(s.coutPA).toBe(4);
+    expect(s.cible).toBe("ennemi_ligne");
+    expect(s.baseMin).toBe(5);
+    expect(s.baseMax).toBe(9);
+    expect(s.scaling).toBeCloseTo(0.22);
+    expect(s.cooldownTours).toBe(2);
+    expect(s.retraitPAProchainTour).toBe(2);
+    expect(s.type).toBe("degats");
+  });
+
+  it("Égide", () => {
+    const s = SORTS.egide;
+    expect(s.coutPA).toBe(4);
+    expect(s.cible).toBe("allie");
+    expect(s.cooldownTours).toBe(4);
+    expect(s.invoqueEgide).toEqual({ tours: 2 });
+    expect(s.type).toBe("buff");
+  });
+
+  it("Fortification", () => {
+    const s = SORTS.fortification;
+    expect(s.coutPA).toBe(2);
+    expect(s.cible).toBe("soi");
+    expect(s.cooldownTours).toBe(2);
+    expect(s.effetRangeeAlliee).toEqual({
+      rangee: "avant",
+      effets: [{ stat: "resAll", valeur: 0.1, valeurSiDeuxDevant: 0.15, duree: 2 }],
+    });
+    expect(s.type).toBe("buff");
+  });
+});
 
 describe("Vigie", () => {
   it("inflige des dégâts et renforce la rangée arrière alliée (ignoreLigne + degatsInfliges)", () => {

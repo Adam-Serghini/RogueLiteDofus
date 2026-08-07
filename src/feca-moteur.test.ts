@@ -544,4 +544,234 @@ describe("Égide — interception pour la rangée", () => {
     expect(allie.pvActuels).toBeLessThan(allie.pvMax); // round 1 intercepté, round 2 non
     expect(ennemi.pvActuels).toBe(0); // témoin : le combat s'est terminé par la mort de l'ennemi, pas la sécurité anti-boucle
   });
+
+  it("caractérisation : une frappe de ZONE sur sa propre rangée touche l'Égide QUATRE fois "
+    + "(les 3 redirections + son propre coup direct) — fond ~33 % plus vite qu'en cible unique", () => {
+    // Documenté en commentaire au-dessus du site d'interception (`infligerDegats`) comme une
+    // conséquence ASSUMÉE, pas un bug : ce test la FIGE, pour que le jour où les sorts de zone
+    // filtreraient les invocations, la régression (fonte ×1,33 qui disparaît en silence) se
+    // voie dans un test plutôt que d'être découverte en playtest.
+    const zoneLigne: Spell = { ...SORTS.morsure, id: "test_zone_egide", zoneLigne: true, scaling: 0 };
+
+    // Témoin : le MÊME sort, sur une cible UNIQUE (pas de zone, pas d'Égide), même rng
+    // déterministe (pas de crit/esquive) → la référence « un seul coup ».
+    const temoin = mannequin();
+    const ennemiTemoin = mannequin();
+    lancerSort(ennemiTemoin, { ...zoneLigne, zoneLigne: false }, temoin.ref, [temoin, ennemiTemoin], ctx());
+    const unCoup = temoin.pvMax - temoin.pvActuels;
+    expect(unCoup).toBeGreaterThan(0); // témoin : le coup de référence porte bien
+
+    // Scénario réel : l'Égide (posée par le Féca sur SA PROPRE rangée arrière) partage cette
+    // rangée avec 3 autres héros — elle est donc elle-même membre de la rangée que `zoneLigne`
+    // balaie en entier (`ciblesDegats` ne l'exclut pas, contrairement à `ciblesValides`).
+    const feca = hero(0); // avant, seul : hors de la rangée touchée, témoin de non-effet
+    const a1 = hero(4); const a2 = hero(5); const a3 = hero(6); // rangée arrière : 3 places sur 4
+    const ennemi = mannequin();
+    const cs = [feca, a1, a2, a3, ennemi];
+    const egide = invoquerEgide(feca, a1, 5, cs, ctx())!; // rangée arrière : la 4ᵉ et dernière place
+    expect(egide).toBeTruthy();
+    expect(egide.position).toBeGreaterThanOrEqual(4); // bien plantée en arrière, avec a1/a2/a3
+
+    lancerSort(ennemi, zoneLigne, a1.ref, cs, ctx());
+
+    // Les 3 héros protégés n'ont rien perdu (l'Égide a tout absorbé, à chaque redirection).
+    expect(a1.pvActuels).toBe(a1.pvMax);
+    expect(a2.pvActuels).toBe(a2.pvMax);
+    expect(a3.pvActuels).toBe(a3.pvMax);
+    // Le témoin hors-rangée n'a rien pris non plus (il n'était pas dans la zone).
+    expect(feca.pvActuels).toBe(feca.pvMax);
+    // L'Égide a encaissé 4 coups (3 redirections + son propre coup direct, elle est elle-même
+    // membre de la rangée touchée par `zoneLigne`) : à dégâts identiques par coup (même sort,
+    // mêmes stats de lanceur/cibles, même rng), elle a perdu exactement 4× la référence à
+    // cible unique — jamais 1× ni 3×.
+    const perdu = egide.pvMax - egide.pvActuels;
+    expect(perdu).toBe(unCoup * 4);
+  });
 });
+
+// =============================================================================
+//  Correctifs de revue finale (2026-08-07)
+// =============================================================================
+describe("l'Égide n'est jamais un ALLIÉ pour les effets automatiques (soins/boucliers/buffs)", () => {
+  it("un soin `allie_tous` ne soigne JAMAIS l'Égide, même blessée", () => {
+    const feca = hero(0);
+    const allie = hero(1); // même rangée : protégé par l'Égide
+    const ennemi = mannequin();
+    const cs = [feca, allie, ennemi];
+    const egide = invoquerEgide(feca, allie, 5, cs, ctx())!;
+    // L'Égide encaisse un coup pour être blessée (donc potentiellement « la plus blessée »
+    // si un effet automatique la considérait comme un allié normal).
+    lancerSort(ennemi, { ...SORTS.morsure }, allie.ref, cs, ctx());
+    const pvEgideAvant = egide.pvActuels;
+    expect(pvEgideAvant).toBeLessThan(egide.pvMax); // témoin : elle a bien encaissé
+
+    const soinTous: Spell = {
+      ...SORTS.morsure, id: "test_soin_tous", type: "soin", cible: "allie_tous",
+      baseMin: 50, baseMax: 50, scaling: 0,
+    };
+    lancerSort(feca, soinTous, feca.ref, cs, ctx());
+
+    expect(egide.pvActuels).toBe(pvEgideAvant); // AUCUN soin reçu
+  });
+
+  it("le soin « au plus blessé » (soinAvantBlesseRatio) siphonnait l'Égide : il soigne "
+    + "désormais le héros réellement le plus blessé, malgré la présence de l'Égide", () => {
+    const feca = hero(0);
+    const allie = hero(1); // même rangée que l'Égide : très blessé, DOIT recevoir le soin
+    const ennemi = mannequin();
+    const cs = [feca, allie, ennemi];
+    const egide = invoquerEgide(feca, allie, 5, cs, ctx())!;
+    // L'Égide encaisse un très gros coup direct — sans la correction, elle deviendrait
+    // « la plus blessée » et siphonnerait le soin dérivé de dégâts.
+    lancerSort(ennemi, { ...SORTS.morsure, baseMin: 400, baseMax: 400, scaling: 0 }, allie.ref, cs, ctx());
+    expect(egide.pvActuels).toBeLessThan(egide.pvMax / 2); // témoin : très blessée
+    allie.pvActuels = allie.pvMax; // l'allié protégé, lui, n'a subi AUCUN dégât (interception)
+    // On blesse légèrement l'allié pour qu'il soit éligible au soin (pvActuels < pvMax).
+    allie.pvActuels -= 10;
+    const pvEgideAvant = egide.pvActuels;
+
+    const soinAvant: Spell = {
+      ...SORTS.morsure, id: "test_soin_avant", soinAvantBlesseRatio: 1, scaling: 0, baseMin: 20, baseMax: 20,
+    };
+    lancerSort(feca, soinAvant, ennemi.ref, cs, ctx());
+
+    expect(allie.pvActuels).toBe(allie.pvMax); // le héros réellement blessé a été soigné
+    expect(egide.pvActuels).toBe(pvEgideAvant); // l'Égide n'a RIEN reçu
+  });
+
+  it("une face de Roulette (bouclier ou buff) ne s'applique jamais à l'Égide", () => {
+    const feca = hero(0);
+    const allie = hero(1); // même rangée avant que le lanceur : dans la « rangee_avant »
+    const cs = [feca, allie];
+    const egide = invoquerEgide(feca, allie, 5, cs, ctx())!;
+    const pvEgideAvant = egide.pvActuels;
+
+    const roulette: Spell = {
+      ...SORTS.morsure, id: "test_roulette_egide", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, scaling: 0,
+      facesAleatoires: [{ portee: "rangee_avant", bouclierPct: 0.5, effet: { stat: "crit", valeur: 10, duree: 2 } }],
+    };
+    lancerSort(feca, roulette, feca.ref, cs, ctx());
+
+    expect(allie.bouclier).toBeGreaterThan(0); // témoin : la face s'applique bien à un allié réel
+    expect(allie.effets.some((e) => e.stat === "crit")).toBe(true);
+    expect(egide.bouclier).toBe(0); // l'Égide n'a reçu AUCUN bouclier
+    expect(egide.effets.length).toBe(0); // ni AUCUN buff
+    expect(egide.pvActuels).toBe(pvEgideAvant); // et rien n'a changé côté PV
+  });
+});
+
+describe("la garde de non-cumul du buff de rangée ne touche que SES PROPRES effets", () => {
+  it("un débuff ÉTRANGER de même stat (ex. Rostre broyeur, -15 % dégâts) n'est ni écrasé "
+    + "ni raccourci par Pâturage (+10 %/+15 %) : les deux coexistent", () => {
+    const lanceur = hero(0);
+    const cible = mannequin();
+    const cs = [lanceur, cible];
+    // Débuff étranger posé manuellement (simule le Rostre broyeur, un sort de boss T1).
+    lanceur.effets.push({ stat: "degatsInfliges", valeur: -0.15, toursRestants: 2 });
+
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_paturage_etranger",
+      effetRangeeAlliee: { rangee: "avant", effets: [{ stat: "degatsInfliges", valeur: 0.10, valeurSiDeuxDevant: 0.15, duree: 1 }] },
+    };
+    lancerSort(lanceur, spell, cible.ref, cs, ctx());
+
+    const marques = lanceur.effets.filter((e) => e.stat === "degatsInfliges");
+    expect(marques.length).toBe(2); // les deux COEXISTENT, aucun n'a écrasé l'autre
+    expect(marques.some((e) => e.valeur === -0.15 && e.toursRestants === 2)).toBe(true); // étranger intact
+    expect(marques.some((e) => e.valeur === 0.10)).toBe(true); // le buff de rangée s'est bien posé
+  });
+
+  it("un `resAll` étranger (Épée du jugement, une face de Roulette) n'est ni écrasé "
+    + "ni réduit par Fortification (+10 %/+15 %)", () => {
+    const lanceur = hero(0);
+    const cs = [lanceur];
+    lanceur.effets.push({ stat: "resAll", valeur: 0.2, toursRestants: 3 }); // étranger, plus fort
+
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_fortif_etranger", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, scaling: 0,
+      effetRangeeAlliee: { rangee: "avant", effets: [{ stat: "resAll", valeur: 0.10, valeurSiDeuxDevant: 0.15, duree: 2 }] },
+    };
+    lancerSort(lanceur, spell, lanceur.ref, cs, ctx());
+
+    const marques = lanceur.effets.filter((e) => e.stat === "resAll");
+    expect(marques.length).toBe(2);
+    expect(marques.some((e) => e.valeur === 0.2 && e.toursRestants === 3)).toBe(true); // intact
+    expect(marques.some((e) => e.valeur === 0.10)).toBe(true);
+  });
+
+  it("l'escalade 10 % → 15 % de SA PROPRE valeur (piège de conception déjà testé plus haut) "
+    + "continue de fonctionner : seul SON effet est mis à jour, pas un doublon", () => {
+    const lanceur = hero(0);
+    const cible = mannequin();
+    const cs = [lanceur, cible];
+    const spell = sortSoutienRangee({
+      rangee: "avant",
+      effets: [{ stat: "force", valeur: 5, valeurSiDeuxDevant: 10, duree: 2 }],
+    });
+    lancerSort(lanceur, spell, lanceur.ref, cs, ctx());
+    expect(lanceur.effets.find((e) => e.stat === "force")!.valeur).toBe(5);
+
+    const alliéAvant = hero(1);
+    cs.push(alliéAvant); // deux héros devant désormais
+    lancerSort(lanceur, spell, lanceur.ref, cs, ctx());
+
+    const marques = lanceur.effets.filter((e) => e.stat === "force");
+    expect(marques.length).toBe(1); // toujours pas de doublon
+    expect(marques[0].valeur).toBe(10);
+  });
+});
+
+describe("Fortification (buff pur) grisée si sa rangée cible est vide", () => {
+  it("ciblesValides est vide pour une équipe 100 % rangée arrière", () => {
+    const lanceur = hero(4); // le seul héros, en rangée ARRIÈRE
+    const cs = [lanceur];
+
+    const cibles = ciblesValides(lanceur, SORTS_FORTIFICATION_LIKE, cs);
+
+    expect(cibles.length).toBe(0);
+  });
+
+  it("reste jouable dès qu'au moins un héros réel (hors invocation) occupe la rangée avant", () => {
+    const lanceur = hero(0); // rangée avant
+    const cs = [lanceur];
+
+    const cibles = ciblesValides(lanceur, SORTS_FORTIFICATION_LIKE, cs);
+
+    expect(cibles.length).toBeGreaterThan(0);
+  });
+
+  it("une invocation seule en rangée avant ne suffit pas : reste grisé", () => {
+    const lanceur = hero(4); // le lanceur est en arrière
+    const egideAvant = invocationAlliee(0); // seule occupante de la rangée avant : une invocation
+    const cs = [lanceur, egideAvant];
+
+    const cibles = ciblesValides(lanceur, SORTS_FORTIFICATION_LIKE, cs);
+
+    expect(cibles.length).toBe(0);
+  });
+
+  it("un sort de DÉGÂTS portant `effetRangeeAlliee` (Vigie/Pâturage) n'est PAS concerné "
+    + "par ce garde-fou : il reste jouable même rangée bonus vide", () => {
+    const lanceur = hero(4); // rangée arrière : sa Vigie viserait la rangée arrière (peuplée)
+    const ennemi = mannequin();
+    const cs = [lanceur, ennemi];
+    const spellDegatsRangee: Spell = {
+      ...SORTS.morsure, id: "test_degats_rangee_vide", cible: "ennemi_ligne",
+      effetRangeeAlliee: { rangee: "avant", effets: [{ stat: "force", valeur: 5, duree: 2 }] },
+    };
+
+    const cibles = ciblesValides(lanceur, spellDegatsRangee, cs);
+
+    expect(cibles.length).toBeGreaterThan(0); // toujours jouable : c'est un sort de dégâts
+  });
+});
+
+/** Sort de soutien synthétique « soi », dont l'UNIQUE effet est `effetRangeeAlliee` sur la
+ *  rangée avant — calque exact de Fortification, pour le garde-fou de rangée vide. */
+const SORTS_FORTIFICATION_LIKE: Spell = {
+  ...SORTS.morsure, id: "test_fortification_like", type: "buff", cible: "soi",
+  baseMin: 0, baseMax: 0, scaling: 0,
+  effetRangeeAlliee: { rangee: "avant", effets: [{ stat: "resAll", valeur: 0.10, valeurSiDeuxDevant: 0.15, duree: 2 }] },
+};

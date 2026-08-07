@@ -58,8 +58,18 @@ const adverses = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
 // la Lance (Forgelance) partage le camp « ennemi » pour la grille/le ciblage,
 // mais n'est jamais un ALLIÉ réel : un soigneur ennemi ne doit jamais pouvoir
 // la cibler (ni aucun autre effet « allié »/rangée-alliée côté ennemi).
+//
+// `!c.estInvocation` généralise la même règle à TOUTE invocation-obstacle du
+// camp du lanceur (Poupée du Sadida, Égide du Féca) : ni l'une ni l'autre n'est
+// un allié réel pour un soin/bouclier/buff automatique. Trouvé sur l'Égide —
+// elle est presque toujours « la plus blessée » (c'est sa fonction), donc un
+// soin « au plus blessé » la siphonnait systématiquement au lieu du héros
+// réellement visé, et une face de Roulette pouvait la reboucler ou la crit-buffer,
+// rendant Égide indéfiniment rechargeable par des effets qui n'ont ni ciblage ni
+// contrôle du joueur — exactement ce que `ciblesValides` interdit déjà pour le
+// ciblage manuel (voir son commentaire dédié).
 const allies = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
-  vivants(cs).filter((c) => c.camp === acteur.camp && !c.estLance);
+  vivants(cs).filter((c) => c.camp === acteur.camp && !c.estLance && !c.estInvocation);
 
 /** Stat (buffable) portant chaque élément — pour buffer la carac d'un élément. */
 const ELEMENT_STAT: Record<Element, EffetStat> = {
@@ -207,6 +217,17 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   if ((sort.cible === "ennemi_tous" || sort.cible === "ennemi_ligne" || sort.cible === "mixte") &&
       sommeEffet(acteur, "tetanise") > 0 && sommeEffet(acteur, "ignoreLigne") <= 0) {
     base = base.filter((c) => c.camp === acteur.camp || estAvant(c));
+  }
+
+  // Fortification (Féca) : un buff PUR (type "buff") dont l'unique effet est
+  // `effetRangeeAlliee` ne doit jamais rester jouable si sa rangée cible est
+  // vide (ex. équipe tout-distance, rangée avant vide) — sinon il coûte 2 PA et
+  // pose son cooldown pour ne RIEN faire, en silence. Même standard que l'Égide :
+  // « doit l'indiquer plutôt que d'échouer en silence ». Les sorts de DÉGÂTS qui
+  // portent aussi `effetRangeeAlliee` (Vigie, Pâturage) ne sont pas concernés :
+  // ils infligent des dégâts même si personne n'occupe la rangée bonus.
+  if (sort.type === "buff" && sort.effetRangeeAlliee && !rangeeCibleBuff(acteur, sort.effetRangeeAlliee, cs).length) {
+    return [];
   }
 
   // Apaisement (Ouginak) : ne se lance qu'avec au moins 1 état de Rage
@@ -697,6 +718,12 @@ function infligerDegats(
   // l'exclut pas, contrairement à `ciblesValides` qui l'exclut du CIBLAGE) — un sort de zone
   // sur 3 héros + l'Égide sur la même rangée l'atteint donc 4 fois : les 3 redirections plus
   // son propre coup direct. Elle fond ~33 % plus vite en zone qu'en cible unique.
+  //
+  // Autre conséquence assumée, pas documentée jusqu'ici : cette interception `return` AVANT
+  // le code de riposte plus bas (posture de contre, Duel du Iop, Sabre Shodanwa) — un héros
+  // protégé par l'Égide ne riposte donc plus, l'attaquant n'ayant jamais frappé le héros
+  // lui-même. Défendable (comme l'Égide bloque tout le reste : bouclier, nullification), mais
+  // à connaître au même titre que les interactions déjà commentées (Étreinte de Valkyr…).
   if (!viaRedirection && dmg > 0 && ctx?.combatants && !cible.estInvocation) {
     const egide = ctx.combatants.find((c) =>
       c.estEgide && c.pvActuels > 0 && c.camp === cible.camp && estAvant(c) === estAvant(cible));
@@ -1108,22 +1135,48 @@ function deuxHerosDevant(lanceur: Combatant, cs: Combatant[]): boolean {
   return vivants(cs).filter((c) => c.camp === lanceur.camp && estAvant(c) && !c.estInvocation).length >= 2;
 }
 
+/** La rangée ALLIÉE (hors invocation) que `buff` viserait pour `lanceur` — partagée
+ *  entre `appliquerBuffRangee` (résolution) et `ciblesValides` (garde-fou : un buff
+ *  pur dont l'unique effet est une rangée vide ne doit jamais rester jouable). */
+function rangeeCibleBuff(lanceur: Combatant, buff: BuffRangeeAlliee, cs: Combatant[]): Combatant[] {
+  const devant = buff.rangee === "avant";
+  return vivants(cs).filter((c) => c.camp === lanceur.camp && estAvant(c) === devant && !c.estInvocation);
+}
+
 /** Applique un buff à une rangée ALLIÉE. Les invocations en sont exclues : un bonus de
  *  dégâts sur une Égide n'a pas de sens, et une Égide renforcée par Fortification
- *  changerait l'équilibre du sort le plus fort du kit. */
+ *  changerait l'équilibre du sort le plus fort du kit.
+ *
+ *  Non-cumul restreint À CE BUFF (`viaBuffRangee`) : sans le marqueur, la garde
+ *  « un effet existant de même stat se met à jour au lieu de s'empiler » — qui doit
+ *  rester vraie pour permettre l'escalade 10 %→15 % à deux héros devant — écrasait
+ *  aussi un débuff/buff ÉTRANGER de même stat (ex. le −15 % dégâts du Rostre broyeur,
+ *  remplacé en silence par le +15 % de Pâturage : un désenvoûtement caché). Les deux
+ *  coexistent désormais comme deux entrées distinctes de `effets[]`, sommées
+ *  normalement par `sommeEffet`. */
 function appliquerBuffRangee(lanceur: Combatant, buff: BuffRangeeAlliee, cs: Combatant[], ctx: CombatCtx): void {
+  const cibles = rangeeCibleBuff(lanceur, buff, cs);
+  if (!cibles.length) return; // rangée vide : rien à renforcer, rien à logguer (cf. ciblesValides)
   const devant = buff.rangee === "avant";
-  const cibles = vivants(cs).filter((c) => c.camp === lanceur.camp && estAvant(c) === devant && !c.estInvocation);
   const deux = deuxHerosDevant(lanceur, cs);
-  for (const m of cibles) {
-    for (const e of buff.effets) {
-      const valeur = deux && e.valeurSiDeuxDevant !== undefined ? e.valeurSiDeuxDevant : e.valeur;
-      const existant = m.effets.find((x) => x.stat === e.stat);
+  const detail: string[] = [];
+  for (const e of buff.effets) {
+    const valeur = deux && e.valeurSiDeuxDevant !== undefined ? e.valeurSiDeuxDevant : e.valeur;
+    detail.push(`${e.stat} ${valeur >= 0 ? "+" : ""}${valeur} (${e.duree}t)`);
+    for (const m of cibles) {
+      const existant = m.effets.find((x) => x.stat === e.stat && x.viaBuffRangee);
       if (existant) { existant.valeur = valeur; existant.toursRestants = e.duree; }
-      else appliquerEffet(m, { stat: e.stat, valeur, duree: e.duree });
+      else m.effets.push({ stat: e.stat, valeur, toursRestants: e.duree, viaBuffRangee: true });
     }
   }
-  ctx.log(`${lanceur.nom} renforce la rangée ${devant ? "avant" : "arrière"}${deux ? " (renfort à deux)" : ""}.`);
+  // « renfort à deux » n'a de sens que si au moins un effet PORTE une valeur
+  // conditionnelle (Pâturage/Fortification) — Vigie, qui n'en a aucune, ne doit
+  // jamais l'annoncer même quand deux héros sont effectivement devant.
+  const aSeuil = buff.effets.some((e) => e.valeurSiDeuxDevant !== undefined);
+  ctx.log(
+    `${lanceur.nom} renforce la rangée ${devant ? "avant" : "arrière"} : ${detail.join(", ")}` +
+    `${deux && aSeuil ? " (renfort à deux)" : ""}.`,
+  );
 }
 
 /** Invoque une Poupée de garde (une seule active par invocateur). */
@@ -2143,11 +2196,14 @@ export function appliquerChanceEcaflip(acteur: Combatant, ctx: CombatCtx): void 
 }
 
 // --- Fin de combat -----------------------------------------------------------
-// une Lance (Forgelance) vivante ne maintient jamais son camp « vivant » : c'est
-// un pseudo-combattant (obstacle), pas un combattant réel qui peut faire gagner
-// le combat en restant debout.
+// une Lance (Forgelance) ou une Égide (Féca) vivante ne maintient jamais son camp
+// « vivant » : ce sont des pseudo-combattants (obstacles), pas des combattants
+// réels qui peuvent faire gagner le combat en restant seuls debout. Inatteignable
+// aujourd'hui (l'Égide expire ou tombe avant que le reste de son camp ne meure —
+// aucun contenu ne peut aujourd'hui faire mourir tout le reste du camp AVANT
+// l'Égide elle-même), mais l'asymétrie avec `estLance` serait un bug latent.
 const campMort = (cs: Combatant[], camp: Camp): boolean =>
-  vivants(cs).every((c) => c.camp !== camp || c.estLance);
+  vivants(cs).every((c) => c.camp !== camp || c.estLance || c.estEgide);
 export const combatTermine = (cs: Combatant[]): boolean => campMort(cs, "joueur") || campMort(cs, "ennemi");
 export const joueurGagne = (cs: Combatant[]): boolean => campMort(cs, "ennemi") && !campMort(cs, "joueur");
 

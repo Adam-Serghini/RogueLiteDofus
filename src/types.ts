@@ -354,6 +354,13 @@ export interface EffetActif {
   valeur: number;
   toursRestants: number;
   transmet?: boolean; // poison transmissible
+  // Marqueur MOTEUR (jamais posé par le contenu) : distingue un effet posé par
+  // `appliquerBuffRangee` (Vigie/Pâturage/Fortification) de tout autre effet de
+  // même `stat` venu d'une AUTRE source (débuff de monstre, objet, autre sort).
+  // Sans lui, la garde de non-cumul du buff de rangée (qui doit pouvoir RAFRAÎCHIR
+  // sa propre valeur — l'escalade 10 %→15 % à deux héros devant) écraserait aussi
+  // un effet étranger de la même stat au lieu de coexister avec lui.
+  viaBuffRangee?: boolean;
 }
 
 export interface Combatant {
