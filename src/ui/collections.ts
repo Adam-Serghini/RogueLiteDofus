@@ -47,7 +47,7 @@ export function showEncyclopedie(): Promise<void> {
             <div>
               <h2>${escapeHtml(c.nom)}</h2>
               <p class="ency-role">${escapeHtml(ROLE_CLASSE[classeId] ?? "")}</p>
-              <p class="ency-archetype">${ligneArchetype(classeId, { noms: true, icone: true })}</p>
+              <p class="ency-archetype">${ligneArchetype(classeId, { icone: true })}</p>
               <p class="ency-bases muet">PV ${c.pvBase} · PA ${c.pa} · Initiative ${c.initiative}</p>
             </div>
           </div>
@@ -63,7 +63,7 @@ export function showEncyclopedie(): Promise<void> {
           </button>`)
         .join("");
       ecran(`
-        <h1>📖 Encyclopédie des classes</h1>
+        <h1>Encyclopédie des classes</h1>
         <p class="sous-titre">Les classes jouables et leurs sorts — les dégâts affichés sont les jets de base, avant caractéristiques.</p>
         <div class="ency-onglets">${onglets}</div>
         ${fiche(selection)}
@@ -105,16 +105,6 @@ function ocreEffetTxt(paBonus: number, degats: number): string {
   if (paBonus) parts.push(`+${paBonus} PA`);
   if (degats) parts.push(`+${Math.round(degats * 100)} % dégâts`);
   return parts.join(" · ");
-}
-
-/** Bloc « monde » des écrans de collection (Bestiaire, Armurerie) : les zones
- *  d'une tranche dans l'ORDRE DE JEU, sous un bandeau titré ; les tranches
- *  encore vides s'affichent verrouillées. */
-function mondeBloc(t: (typeof TRANCHES)[number], zoneHtml: (z: (typeof ZONES)[number]) => string): string {
-  const corps = t.zones.length
-    ? zonesDeTranche(t).map(zoneHtml).join("")
-    : `<p class="muet monde-verrouille">🔒 Verrouillé — à venir</p>`;
-  return `<div class="monde-bloc"><h2 class="monde-titre">${escapeHtml(t.nom)} <small>Niv. ${t.niveaux[0]}${t.niveaux[1] !== t.niveaux[0] ? `–${t.niveaux[1]}` : ""}</small></h2>${corps}</div>`;
 }
 
 /** Bestiaire par zone : toutes les espèces (boss & miniboss inclus) ;
@@ -200,7 +190,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
         .join("");
       const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") + errantsHtml(active) : "";
       ecran(`
-        <h1>📖 Bestiaire — Archimonstres</h1>
+        <h1>Bestiaire — Archimonstres</h1>
         <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
         <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : <b>palier ${ocre.tier}</b> (${ocreEffetTxt(ocre.paBonus, ocre.degats)})${prochain ? ` · prochain palier à ${prochain.seuil}` : " · max atteint"}</p>
         <div class="tranche-onglets">${onglets}</div>
@@ -240,13 +230,22 @@ export function showArmurerie(meta: Meta): Promise<void> {
       }
       return [];
     };
-    let total = 0, possedes = 0;
+    /** Entrées affichables d'une tranche — sert au compteur d'onglet ET au total global. */
+    const entreesTranche = (t: (typeof TRANCHES)[number]) =>
+      zonesDeTranche(t).flatMap((z) => itemsDeZone(z.id).filter((e) => ITEMS[e.id]));
+    const compte = (entrees: { id: string }[]) => ({
+      fait: entrees.filter((e) => coll[e.id]).length,
+      sur: entrees.length,
+    });
+    // Le total est calculé INDÉPENDAMMENT de ce qui est rendu. Il s'accumulait autrefois
+    // par effet de bord de `zoneHtml` : une fois la page découpée en onglets, il n'aurait
+    // plus compté que la tranche affichée et le résumé aurait menti.
+    const global = compte(TRANCHES.flatMap(entreesTranche));
+
     const zoneHtml = (z: (typeof ZONES)[number]): string => {
       const entrees = itemsDeZone(z.id).filter((e) => ITEMS[e.id]);
       if (!entrees.length) return "";
       const nb = entrees.filter((e) => coll[e.id]).length;
-      total += entrees.length;
-      possedes += nb;
       const cards = entrees
         .map(({ id, badge }) => {
           const it = ITEMS[id]!;
@@ -266,15 +265,45 @@ export function showArmurerie(meta: Meta): Promise<void> {
         .join("");
       return `<div class="archi-zone"><h3>${escapeHtml(z.nom)} <span class="archi-zone-compte">${nb}/${entrees.length} objets</span></h3><div class="archi-grid">${cards}</div></div>`;
     };
-    const zonesHtml = TRANCHES.map((t) => mondeBloc(t, zoneHtml)).join("");
-    ecran(`
-      <h1>🛡️ Armurerie</h1>
-      <p class="sous-titre">Chaque objet obtenu (butin ou Hôtel de vente) rejoint la collection pour toujours — le halo montre la meilleure rareté jamais obtenue.</p>
-      <p class="archi-resume"><b>${possedes}</b> / ${total} objets collectionnés</p>
-      ${zonesHtml}
-      <div class="boutons-ecran"><button id="armu-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
-    `);
-    document.getElementById("armu-retour")?.addEventListener("click", () => res());
+    // Onglets par tranche, comme le Bestiaire. Seules les tranches POURVUES en objets
+    // ont un onglet : les toiles 13 à 24 (toute la Tranche 2) n'en ont aucun, elles
+    // n'affichaient donc qu'un bandeau suivi de rien. Aujourd'hui un seul onglet est
+    // utile — la structure suivra d'elle-même quand la T2 recevra ses objets.
+    const pourvues = TRANCHES.filter((t) => entreesTranche(t).length > 0);
+    const aVenir = TRANCHES.filter((t) => entreesTranche(t).length === 0);
+    let selection = pourvues[0]?.id ?? "";
+
+    const draw = (): void => {
+      const active = pourvues.find((t) => t.id === selection) ?? pourvues[0];
+      const onglets = pourvues
+        .map((t) => {
+          const { fait, sur } = compte(entreesTranche(t));
+          return `<button class="tranche-onglet${t.id === active?.id ? " actif" : ""}" data-tranche="${t.id}"
+            title="${escapeHtml(t.nom)} — niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
+            ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
+          </button>`;
+        })
+        .join("");
+      const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") : "";
+      ecran(`
+        <h1>Armurerie</h1>
+        <p class="sous-titre">Chaque objet obtenu (butin ou Hôtel de vente) rejoint la collection pour toujours — le halo montre la meilleure rareté jamais obtenue.</p>
+        <p class="archi-resume"><b>${global.fait}</b> / ${global.sur} objets collectionnés</p>
+        <div class="tranche-onglets">${onglets}</div>
+        ${active ? `<p class="muet tranche-niveaux">Niveaux ${active.niveaux[0]}–${active.niveaux[1]} · ${zonesDeTranche(active).length} zones</p>` : ""}
+        ${corps}
+        ${aVenir.length ? `<p class="muet monde-verrouille">🔒 ${aVenir.map((t) => t.nom).join(", ")} : aucun objet pour l'instant</p>` : ""}
+        <div class="boutons-ecran"><button id="armu-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      `);
+      root.querySelectorAll<HTMLButtonElement>(".tranche-onglet").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selection = btn.dataset.tranche!;
+          draw();
+        });
+      });
+      root.querySelector<HTMLButtonElement>("#armu-retour")?.addEventListener("click", () => res());
+    };
+    draw();
   });
 }
 

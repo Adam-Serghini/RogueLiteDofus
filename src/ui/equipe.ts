@@ -57,7 +57,7 @@ export function showTaverne(
           .map((p) => carteClasse(p.classeId, false, "data-remplace"))
           .join("");
         ecran(`
-          <h1>🍺 Recruter ${escapeHtml(CLASSES[recrueEnCours].nom)}</h1>
+          <h1>Recruter ${escapeHtml(CLASSES[recrueEnCours].nom)}</h1>
           <p class="sous-titre">L'équipe est pleine. Choisis le membre à remplacer.</p>
           <div class="choix-grille">${membres}</div>
           <div class="boutons-ecran"><button id="tav-annuler" class="secondaire">Annuler</button></div>
@@ -87,7 +87,7 @@ export function showTaverne(
            <div class="choix-grille">${propositions.map((id) => carteClasse(id, false, "data-recrue")).join("")}</div>`
         : `<p class="muet">Aucune classe à recruter (toutes déjà dans l'équipe).</p>`;
       ecran(`
-        <h1>🍺 Taverne</h1>
+        <h1>Taverne</h1>
         <p class="sous-titre">Soigne ton équipe, ou recrute un nouveau membre.</p>
         <div class="boutons-ecran">
           <button id="tav-soin" class="primaire">Soigner (+${Math.round(soinPct * 100)} % PV)</button>

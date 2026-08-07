@@ -205,14 +205,13 @@ export const ARCHETYPE_NOM: Record<Archetype, string> = {
 };
 
 /** Archétype + les 2 éléments d'une CLASSE (et non d'un héros existant) : sert au choix
- *  d'équipe, au recrutement en taverne et à l'encyclopédie. `avecNoms` ajoute les noms
- *  en clair, pour les écrans où il y a la place et où le joueur découvre la classe.
+ *  d'équipe, au recrutement en taverne et à l'encyclopédie. Les éléments se lisent à
+ *  leurs pastilles seules : le doublon en toutes lettres a été retiré de l'encyclopédie
+ *  (2026-08-07), et avec lui l'option `noms`, restée sans aucun appelant.
  *  Les deux éléments sont fixes (ceux de la classe) ; celui qui part au moment du coup
  *  se choisit CIBLE PAR CIBLE (cf. `meilleurElement`, combat.ts) — il n'y a plus de
  *  « défaut » ni de second élément au sens hiérarchique. */
 export interface OptionsArchetype {
-  /** ajoute les noms d'éléments en clair (écrans où il y a la place) */
-  noms?: boolean;
   /** l'archétype en icône plutôt qu'en toutes lettres (encyclopédie) */
   icone?: boolean;
 }
@@ -223,16 +222,13 @@ export function ligneArchetype(classeId: string, opts: OptionsArchetype = {}): s
   const titreArch = `${ARCHETYPE_NOM[c.archetype]} : +${gains.parElement} dans chacun de ses 2 éléments et +${gains.vitalite} en Vitalité par niveau`;
   const img = (el: Element) =>
     `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="Élément de la classe : ${elNom[el]}" onerror="this.remove()" />`;
-  const noms = opts.noms
-    ? `<span class="classe-elems-noms">${c.elements.map((el) => elNom[el]).join(" + ")}</span>`
-    : "";
   // en icône, le mot reste dans `alt`/`title` — et sert de repli si l'image manque
   const arch = opts.icone
     ? `<img class="archetype-icone" src="${archetypeAsset(c.archetype)}" alt="${ARCHETYPE_NOM[c.archetype]}" title="${escapeHtml(titreArch)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'classe-archetype',textContent:this.alt,title:this.title}))" />`
     : `<span class="classe-archetype" title="${escapeHtml(titreArch)}">${ARCHETYPE_NOM[c.archetype]}</span>`;
   return `<span class="classe-elems">
     ${arch}
-    <span class="el-pastilles">${c.elements.map(img).join("")}</span>${noms}
+    <span class="el-pastilles">${c.elements.map(img).join("")}</span>
   </span>`;
 }
 

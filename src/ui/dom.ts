@@ -43,3 +43,25 @@ export function ecran(html: string): void {
   masquerTooltips(); // l'élément survolé disparaît sans mouseout : pas d'infobulle orpheline
   root.innerHTML = `<div class="ecran">${html}</div>`;
 }
+
+/** Échap ferme l'écran courant, en doublure de la barre collante.
+ *
+ *  Volontairement AVEUGLE au jeu : elle clique le bouton Retour de la barre d'actions,
+ *  quel qu'il soit, et ne fait rien s'il n'y en a pas. C'est ce qui la rend sûre en
+ *  combat — l'écran de combat n'a pas de `.boutons-ecran`, donc Échap y reste inerte
+ *  et ne peut pas entrer en conflit avec ses propres raccourcis.
+ *
+ *  Un seul bouton est cliqué (`querySelector`) : un écran qui en alignerait plusieurs
+ *  verrait le premier l'emporter, ce qui est l'ordre de lecture attendu. */
+export function initEchapRetour(): void {
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || e.defaultPrevented) return;
+    const actif = document.activeElement;
+    // ne pas voler la touche à une saisie en cours (Échap y annule l'édition)
+    if (actif instanceof HTMLInputElement || actif instanceof HTMLTextAreaElement || actif instanceof HTMLSelectElement) return;
+    const btn = root?.querySelector<HTMLButtonElement>(".ecran .boutons-ecran .btn-retour");
+    if (!btn || btn.disabled) return;
+    e.preventDefault();
+    btn.click();
+  });
+}

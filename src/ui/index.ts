@@ -2,7 +2,7 @@
 //  ui/index.ts — Rendu DOM minimal + contrôleur joueur (clic sort → clic cible).
 //  Aucune logique de combat ici : on lit l'état et on renvoie des Actions.
 // =============================================================================
-import { setRoot } from "./dom";
+import { setRoot, initEchapRetour } from "./dom";
 export { A } from "./assets";
 import { initDofusTooltip, initAideTooltip, setFondTranche } from "./composants";
 export { renderDofusRack, setFondTranche } from "./composants";
@@ -16,6 +16,7 @@ export function init(el: HTMLElement): void {
   initSortTooltip();
   initAideTooltip();
   initControlesClavier();
+  initEchapRetour();
 }
 
 // --- Écrans ------------------------------------------------------------------

@@ -168,7 +168,11 @@ button:focus-visible {
     inset 0 1px 0 #ffffff12,
     0 18px 50px #000b;
   border-radius: 16px;
-  padding: 40px 34px;
+  /* source unique : la barre d'actions collante déborde de ce padding pour que son
+     fond aille d'un bord à l'autre — les deux doivent rester d'accord */
+  --ecran-pad-x: 34px;
+  --ecran-pad-y: 40px;
+  padding: var(--ecran-pad-y) var(--ecran-pad-x);
   margin-top: 44px;
 }
 .sous-titre {
@@ -949,13 +953,28 @@ button.item-carte:disabled {
   letter-spacing: 0.08em;
   margin-bottom: 8px;
 }
+/* Barre d'actions de bas d'écran. COLLANTE : les écrans de collection (Bestiaire,
+   Armurerie, Encyclopédie) dépassent largement la fenêtre, et un mauvais clic obligeait
+   à dérouler jusqu'en bas pour retrouver le bouton Retour. Les douze écrans partagent
+   ce conteneur, donc cette seule règle les traite tous — aucun HTML à retoucher.
+   Elle redevient une simple barre en fin de page, sans rien recouvrir. */
 .boutons-ecran {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
   margin-top: 24px;
+  /* compense le padding de .ecran pour que le fond aille d'un bord à l'autre */
+  margin-inline: calc(-1 * var(--ecran-pad-x));
+  margin-bottom: calc(-1 * var(--ecran-pad-y));
+  padding: 14px var(--ecran-pad-x) calc(14px + env(safe-area-inset-bottom, 0px));
   display: flex;
   gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
   align-items: center;
+  background: linear-gradient(to top, var(--panel) 55%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 /* accueil : logo + bouton image "Jouer" + roue de paramètres en haut-droite */
@@ -1204,10 +1223,6 @@ kbd {
   padding: 1px 7px;
   cursor: help;
 }
-.classe-elems-noms {
-  font-size: 0.66rem;
-  color: var(--muet);
-}
 /* dans l'encyclopédie il y a la place : pastilles et texte plus lisibles */
 .ency-archetype {
   margin: 3px 0;
@@ -1227,9 +1242,6 @@ kbd {
   object-fit: contain;
   vertical-align: middle;
   cursor: help;
-}
-.ency-archetype .classe-elems-noms {
-  font-size: 0.8rem;
 }
 
 /* écran Équipement */
@@ -1852,24 +1864,6 @@ kbd {
 }
 
 /* Blocs « monde » (Bestiaire & Armurerie groupés par tranche, zones dans l'ordre de jeu) */
-.monde-bloc {
-  margin-top: 18px;
-}
-.monde-titre {
-  font-size: 1.05rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--or-texte);
-  border-bottom: 1px solid var(--bord);
-  padding-bottom: 4px;
-  margin-bottom: 10px;
-}
-.monde-titre small {
-  font-size: 0.72rem;
-  color: var(--muet);
-  letter-spacing: 0.05em;
-  margin-left: 8px;
-}
 .monde-verrouille {
   font-style: italic;
   padding: 4px 0 8px;

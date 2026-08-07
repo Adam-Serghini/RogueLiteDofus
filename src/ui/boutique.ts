@@ -55,7 +55,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
           .join("")
         : `<p class="muet">Rien à vendre — l'équipement non équipé de l'inventaire se revend ici.</p>`;
       ecran(`
-        <h1>🪙 Hôtel de vente</h1>
+        <h1>Hôtel de vente</h1>
         <p class="sous-titre">Tout le catalogue de la zone (exclusifs boss/élite compris) : local en épique+, zone suivante dès le rare. Revente à 50 % du prix.</p>
         <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
         <div class="equip-corps">
@@ -133,7 +133,7 @@ export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
           .join("")
         : `<p class="muet">${equipesSeul ? "Rien à forger parmi les objets équipés." : "Rien à forger — tout ton équipement à rareté est déjà au maximum."}</p>`;
       ecran(`
-        <h1>🔨 Forgemagie</h1>
+        <h1>Forgemagie</h1>
         <p class="sous-titre">Le Forgemage monte un objet au palier de rareté supérieur — même équipé. Son apprenti téméraire fait moitié prix… mais rate ${Math.round(KAMAS.forgeTemeraire.pEchec * 100)} % de ses forges.</p>
         <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
         <div class="forge-filtres"><button id="forge-filtre" class="${equipesSeul ? "primaire" : "secondaire"}" title="${equipesSeul ? "Afficher aussi l'inventaire" : "N'afficher que les objets équipés par l'équipe"}">⚔️ Équipés seulement</button></div>
