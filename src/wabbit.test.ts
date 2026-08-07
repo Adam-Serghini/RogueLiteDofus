@@ -74,7 +74,8 @@ describe("bestiaire du Terrier du Wa Wabbit", () => {
 
 describe("les sorts du Terrier", () => {
   it("la riposte mécanique arme son propre lanceur", () => {
-    // `contre` existe dans le moteur depuis le Duel du Sram et le Sabre Shodanwa,
+    // `contre` existait dans le moteur bien avant cette zone (le Sabre Shodanwa le porte
+    // toujours ; le Duel du Iop, l'autre porteur d'alors, a disparu au rework du Iop),
     // mais AUCUN ennemi n'avait jamais riposté. Le sort est de type `degats` — donc
     // jouable par `iaAgressif`, qui ignore les buffs — et la posture passe par
     // `effetLanceur`, appliqué au lanceur dans le chemin des sorts de dégâts.
