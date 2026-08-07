@@ -295,6 +295,8 @@ interface BaseDegats {
   perceResistances?: number; // fraction des résistances ignorée (Dagues Aj'Deh'La)
   bonusParPADispo?: number; // Flèche Punitive : +X % par PA dispo AVANT paiement (opts.paAvant)
   bonusParTelefrag?: number; // Rayon Obscur : +X % par Téléfrag posé sur la cible
+  elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement)
+  elementImpose?: Element; // court-circuite le choix d'élément (second coup de Bluff)
 }
 
 // --- Rage (Ouginak) -----------------------------------------------------------
@@ -423,16 +425,20 @@ function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats): n
 /** Élément de CE coup : celui qui maximise les dégâts contre CETTE cible. `jetTire` est le
  *  jet déjà obtenu, donc le choix est exact et ne consomme aucun tirage. Égalité départagée
  *  par l'ordre des candidats, pour que le résultat soit stable. */
-function meilleurElement(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element {
+/** Éléments candidats classés par dégâts attendus DÉCROISSANTS contre cette cible.
+ *  `Array.prototype.sort` est stable : à égalité, l'ordre des candidats est conservé,
+ *  donc le premier reste celui que choisissait la boucle d'avant ce refactor. */
+function elementsClasses(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element[] {
   const se = statsEffectives(lanceur);
-  const candidats = elementsCandidats(lanceur);
-  let meilleur = candidats[0];
-  let score = -Infinity;
-  for (const el of candidats) {
-    const s = (jetTire + statElement(se, el) * base.scaling) * (1 - resistanceEffective(cible, el, base));
-    if (s > score) { score = s; meilleur = el; }
-  }
-  return meilleur;
+  return elementsCandidats(lanceur)
+    .map((el): [Element, number] =>
+      [el, (jetTire + statElement(se, el) * base.scaling) * (1 - resistanceEffective(cible, el, base))])
+    .sort((a, b) => b[1] - a[1])
+    .map(([el]) => el);
+}
+
+function meilleurElement(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element {
+  return elementsClasses(lanceur, cible, base, jetTire)[0];
 }
 
 /** Élément qu'un combattant emploierait contre une cible — entrée publique de l'AFFICHAGE.
@@ -495,7 +501,10 @@ function degatsAvec(
   // élément de frappe : CALCULÉ pour cette cible, avec le jet déjà tiré (donc exact, et
   // sans consommer de tirage). Le `dmg` courant EST ce jet — ne pas déplacer ces lignes
   // avant le tirage, le choix perdrait son exactitude.
-  const el = meilleurElement(lanceur, cible, base, dmg);
+  // Bluff mise sur la MALCHANCE : il frappe dans l'élément le moins avantageux, et son
+  // second coup (sur critique) dans le meilleur — d'où le classement plutôt que le max.
+  const classes = elementsClasses(lanceur, cible, base, dmg);
+  const el = base.elementImpose ?? (base.elementPire ? classes[classes.length - 1] : classes[0]);
   dmg += statElement(se, el) * base.scaling;
 
   // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
@@ -505,6 +514,7 @@ function degatsAvec(
   let crit = false;
   if (ctx.rng() < chanceCritEffective(se)) {
     dmg *= 1 + bonusDegatsCrit(se);
+    dmg *= 1 + sommeEffet(cible, "degatsCritSubis"); // Griffe joueuse
     crit = true;
   }
 
@@ -1765,6 +1775,7 @@ export function lancerSort(
   const sauteJetDegats = sort.baseMax === 0 && (!!sort.deplaceCible || !!sort.conjuration);
 
   const nonEsquivees = new Set<string>(); // Hydra : le bouclier ne compte que les cibles réellement touchées
+  let unCritique = false; // Pile ou Face : au moins un coup critique porté (monocible = un seul coup)
   touchees.forEach((t, i) => {
     if (sauteJetDegats) return;
     const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * deMult * multLigne;
@@ -1773,7 +1784,7 @@ export function lancerSort(
       ctx.log(`${t.nom} esquive ${sort.nom} !`);
       ctx.fx?.({ type: "esquive", ref: t.ref });
     } else {
-      if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
+      if (r.crit) { ctx.fx?.({ type: "crit", ref: t.ref }); unCritique = true; }
       infligerDegats(t, r.dmg, lanceur, ctx, sort.ignoreBouclier);
       nonEsquivees.add(t.ref);
       if (!t.estLance) totalDmg += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin/bouclier fantômes
@@ -1805,10 +1816,33 @@ export function lancerSort(
           if (proc.dissipePositifs) dissiperPositifs(t, ctx);
           if (proc.effet) appliquerEffet(t, etirer(proc.effet, doubleDuree));
         }
+        // Bluff : le critique paie en frappant une seconde fois, dans l'AUTRE élément. Un
+        // seul jet de critique a eu lieu (celui du premier coup) — il déclenche ce second
+        // coup, il ne s'y applique pas : ce second appel à `frappe` effectue son propre
+        // jet de critique, indépendant, et ne redéclenche jamais un troisième coup (cette
+        // logique de relance vit ici, dans `lancerSort` — pas dans `frappe`).
+        if (sort.secondCoupSiCrit && r.crit) {
+          const meilleur = elementsClasses(lanceur, t, sort, r.dmg)[0];
+          const dmg2 = frappe(lanceur, { ...sort, elementImpose: meilleur }, t, { useMax, mult, ctx, paAvant }, `${sort.nom} (retour)`);
+          if (!t.estLance) totalDmg += dmg2;
+        }
       }
     }
     if (i === 0 && t.pvActuels <= 0) primaireMorte = true;
   });
+
+  // Ecaflip : débuff appliqué à TOUTE la rangée de la cible (même camp, même estAvant),
+  // seulement si la cible primaire a réellement été touchée. Non cumulable : une seconde
+  // application rafraîchit la durée au lieu d'empiler une entrée (appliquerEffet ne fusionne
+  // rien lui-même, c'est à ce site de le faire).
+  if (sort.effetLigneCible && nonEsquivees.has(cible.ref)) {
+    const rangee = vivants(cs).filter((c) => c.camp === cible.camp && estAvant(c) === estAvant(cible));
+    for (const m of rangee) {
+      const existant = m.effets.find((e) => e.stat === sort.effetLigneCible!.stat);
+      if (existant) existant.toursRestants = sort.effetLigneCible!.duree;
+      else appliquerEffet(m, sort.effetLigneCible);
+    }
+  }
 
   // Conjuration (Éliotrope) : pose la marque sur la cible (aucun jet — sauteJetDegats)
   // — jamais sur la Lance, qui n'est pas une cible de marque (comme bombes/téléfrags).
@@ -1857,6 +1891,17 @@ export function lancerSort(
       .sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
     if (blesse && blesse.pvActuels < blesse.pvMax) {
       soigner(blesse, Math.round(totalDmg * sort.soinAllieBlesseRatio * multSoinDe(lanceur)), ctx);
+    }
+  }
+
+  // Ecaflip : soigne le plus blessé de la RANGÉE AVANT d'une fraction des dégâts infligés
+  // (calqué sur soinAllieBlesseRatio ci-dessus, filtré à la rangée avant AVANT le tri).
+  if (sort.soinAvantBlesseRatio && totalDmg > 0) {
+    const blesse = allies(lanceur, cs)
+      .filter(estAvant)
+      .sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
+    if (blesse && blesse.pvActuels < blesse.pvMax) {
+      soigner(blesse, Math.round(totalDmg * sort.soinAvantBlesseRatio * multSoinDe(lanceur)), ctx);
     }
   }
 
@@ -1929,6 +1974,12 @@ export function lancerSort(
   if (sort.rembPA && ctx.rng() < pctRembPA(statsEffectives(lanceur))) {
     lanceur.paActuels += sort.coutPA;
     ctx.log(`${lanceur.nom} récupère ${sort.coutPA} PA (Flèche magique).`);
+  }
+
+  // Pile ou Face : le CRITIQUE rembourse, là où rembPA (Flèche magique) est piloté par la Chance
+  if (sort.rembPASiCrit && unCritique) {
+    lanceur.paActuels += sort.rembPASiCrit;
+    ctx.log(`${lanceur.nom} récupère ${sort.rembPASiCrit} PA.`);
   }
 
   // Rage (Ouginak) : la charge se gagne APRÈS la résolution (ne boost pas ce lancer)

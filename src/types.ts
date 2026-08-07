@@ -110,6 +110,7 @@ export type EffetStat =
   | "paParTour" // crédite ce nombre de PA à chaque début de tour du porteur, tant que l'effet dure
   | "aiguille" // Xélor : chaque Téléfrag reçu par le porteur le reblesse (écho d'Aiguille)
   | "crit" // Tir Puissant : + crit plat temporaire (propagé dans statsEffectives → se.crit)
+  | "degatsCritSubis" // Griffe joueuse — majore les dégâts des coups critiques SUBIS par le porteur
   // buffs/debuffs temporaires de caractéristique (sommés dans statsEffectives) :
   | "force"
   | "intelligence"
@@ -228,6 +229,13 @@ export interface Spell {
   tousSiLanceArriere?: boolean; // Jormun : si la cible est la lance en rangée ARRIÈRE, touche TOUS les ennemis
   rappelleLance?: { soinParDurabilite: number }; // Vajra : rappelle la lance (bris standard) et soigne selon sa durabilité restante ; injouable sans lance vivante
   redirigeArriere?: { ratio: number; duree: number }; // Étreinte de Valkyr : pose Combatant.redirection sur le lanceur
+  // --- rework de l'Ecaflip (primitives du pipeline de dégâts) ---
+  rembPASiCrit?: number; // Pile ou Face : rembourse ce nombre de PA quand le sort critique
+  elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement) plutôt que le meilleur
+  elementImpose?: Element; // court-circuite le choix d'élément (utilisé par le second coup de Bluff)
+  secondCoupSiCrit?: boolean; // Bluff : sur critique, frappe une seconde fois dans l'AUTRE élément (le meilleur)
+  effetLigneCible?: EffetSpec; // débuff appliqué à TOUTE la rangée de la cible ; non cumulable (durée rafraîchie)
+  soinAvantBlesseRatio?: number; // soigne l'allié le plus blessé de la RANGÉE AVANT d'une fraction des dégâts infligés
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
