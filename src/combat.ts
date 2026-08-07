@@ -1145,16 +1145,6 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.poisonAmpliTours = sort.poisonAmpli;
     ctx.log(`${cible.nom} empoisonne ses lames (Arsenic).`);
   }
-  if (sort.provoqueTours) {
-    cible.provoque = true;
-    cible.provoqueTours = sort.provoqueTours;
-    cible.provoquePoseCeTour = true;
-    ctx.log(`${cible.nom} provoque les ennemis !`);
-  }
-  if (sort.contre) {
-    appliquerEffet(cible, { stat: "contre", valeur: sort.contre.chance, duree: sort.contre.duree });
-    ctx.log(`${cible.nom} prend une posture de contre (${Math.round(sort.contre.chance * 100)} %).`);
-  }
   if (sort.maitriseArc) {
     const [princ, sec] = elementsForts(cible); // buffe les 2 éléments de frappe du lanceur
     appliquerEffet(cible, { stat: ELEMENT_STAT[princ], valeur: sort.maitriseArc.principal, duree: sort.maitriseArc.duree });
@@ -2000,7 +1990,6 @@ export function lancerSort(
     : 1;
 
   const touchees = ciblesDegats(lanceur, sort, cible, cs);
-  let primaireMorte = false;
 
   // Sorts purement utilitaires (Pendule/Roublabot : repositionnement via deplaceCible ;
   // Conjuration : pose une marque sans jet — baseMin/baseMax = 0) : pas de jet de
@@ -2075,7 +2064,6 @@ export function lancerSort(
         }
       }
     }
-    if (i === 0 && t.pvActuels <= 0) primaireMorte = true;
   });
 
   // Ecaflip : débuff appliqué à TOUTE la rangée de la cible (même camp, même estAvant),
@@ -2126,28 +2114,6 @@ export function lancerSort(
     if (t && t.pvActuels > 0) {
       const dmg = frappe(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
       if (!t.estLance) totalDmg += dmg; // pas de soin/bouclier fantôme sur la durabilité de la lance
-    }
-  }
-
-  // Épée hostile : rebond x2 si la cible primaire meurt
-  if (sort.siCibleMeurt && primaireMorte) {
-    const t = adverses(lanceur, cs)
-      .filter((e) => e.ref !== cible.ref)
-      .sort((a, b) => a.position - b.position)[0];
-    if (t) {
-      const r = degatsCible(lanceur, sort, t, { useMax: false, mult: sort.siCibleMeurt.rebondDegatsX, ctx, paAvant });
-      if (r.esquive) {
-        ctx.log(`${t.nom} esquive le rebond de ${sort.nom} !`);
-        ctx.fx?.({ type: "esquive", ref: t.ref });
-      } else {
-        if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
-        infligerDegats(t, r.dmg, lanceur, ctx);
-        if (!t.estLance) totalDmg += r.dmg; // pas de soin/bouclier fantôme sur la durabilité de la lance
-        logDegats(
-          ctx, `${sort.nom} rebondit sur ${t.nom} : `, r.dmg, r.element,
-          ` !${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
-        );
-      }
     }
   }
 
@@ -2229,9 +2195,6 @@ export function lancerSort(
       if (occupant) poserTelefrag(occupant, cs, ctx, lanceur);
     }
   }
-
-  // Colère : passe le tour si la cible survit
-  if (sort.passeTourSiSurvie && cible.pvActuels > 0) lanceur.passeProchainTour = true;
 
   // Épée du Jugement : buff appliqué au lanceur (ex. +résistances)
   if (sort.effetLanceur) appliquerEffet(lanceur, sort.effetLanceur);

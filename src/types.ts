@@ -137,19 +137,16 @@ export interface Spell {
   img?: string; // icône explicite (attaque d'arme) ; sinon dérivée de l'id via sortIcon
   // effets spéciaux (optionnels, un sort peut en cumuler) :
   rebond?: { sauts: number; bonusParSaut: number }; // touche les ennemis suivants
-  siCibleMeurt?: { rebondDegatsX: number }; // Épée hostile : x2 sur un autre ennemi
   ignoreResistances?: boolean; // Flèche intrusive
   ignoreBouclier?: boolean; // Flèche intrusive : les dégâts sautent le bouclier
   retraitPA?: number; // Fracas : −PA immédiat à la cible (visible avant son tour)
   rembPA?: boolean; // Flèche magique : chance (Chance) de rembourser le coût en PA
   maitriseArc?: { principal: number; secondaire: number; duree: number }; // +X/+Y aux 2 éléments de frappe
   doubleEffetProchain?: boolean; // Tir Puissant : double la DURÉE de l'effet de la prochaine flèche
-  passeTourSiSurvie?: boolean; // Colère
   effet?: EffetSpec; // buff/debuff appliqué à la cible
   effetLanceur?: EffetSpec; // buff appliqué au lanceur après le sort (Épée du Jugement)
   zoneLigne?: boolean; // dégâts sur TOUTE la rangée de la cible cliquée (Tempête de lames)
   cooldownTours?: number; // cooldown par sort côté lanceur (indispo Nt, toutes cibles)
-  contre?: { chance: number; duree: number }; // Duel : posture de riposte (chance/durée)
   // --- mécaniques de soutien (Eniripsa) ---
   poison?: { degats: number; duree: number; transmet?: boolean }; // applique un DoT
   soinComplet?: boolean; // soigne entièrement la cible
@@ -169,7 +166,6 @@ export interface Spell {
   coups?: Coup[]; // Coup double : plusieurs frappes sur la cible primaire
   projectiles?: Projectiles; // Déluge de lames : N frappes sur cibles aléatoires
   dissipePositifs?: boolean; // désenvoûtement : retire boucliers + effets bénéfiques
-  provoqueTours?: number; // Provocation : le lanceur provoque pendant N tours
   mixte?: { surAllie: SurAllie }; // sort lançable sur ennemi (dégâts) ou allié (soutien)
   effets?: EffetSpec[]; // plusieurs effets cumulés (ex. Maître des ombres)
   // --- signatures de boss (invocations côté monstres) ---
