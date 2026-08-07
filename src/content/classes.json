@@ -30,7 +30,7 @@
   "ecaflip": {
     "archetype": "melee",
     "elements": [
-      "terre",
+      "air",
       "eau"
     ],
     "id": "ecaflip",
@@ -40,14 +40,12 @@
     "pa": 6,
     "pvBase": 58,
     "sorts": [
-      "des_double",
-      "tarot",
-      "all_in",
-      "griffe_joueuse",
+      "pile_ou_face",
+      "bluff",
       "langue_rapeuse",
-      "odorat",
-      "perception",
-      "esprit_felin"
+      "griffe_joueuse",
+      "roulette",
+      "chateau_de_cartes"
     ],
     "stats": {
       "agilite": 0,

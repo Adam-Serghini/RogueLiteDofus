@@ -93,18 +93,19 @@ describe("elementPire / elementImpose", () => {
 describe("neutralité du refactor meilleurElement → elementsClasses", () => {
   it("à égalité de score, le classement conserve l'ordre des candidats déclarés", () => {
     // Ecaflip normal (pas elementLibre) : ses 2 candidats sont sa paire déclarée
-    // ["terre", "eau"], dans cet ordre. Force = Chance et cible sans résistance
-    // → les deux éléments ont EXACTEMENT le même score.
+    // ["air", "eau"] (Task 3 du rework : la paire est passée de terre+eau à
+    // air+eau), dans cet ordre. Agilité = Chance et cible sans résistance →
+    // les deux éléments ont EXACTEMENT le même score.
     const lanceur = ecaflip();
-    lanceur.stats = { ...lanceur.stats, force: 50, chance: 50 };
+    lanceur.stats = { ...lanceur.stats, agilite: 50, chance: 50 };
     const cible = mannequin();
-    expect(elementsCandidats(lanceur)).toEqual(["terre", "eau"]);
+    expect(elementsCandidats(lanceur)).toEqual(["air", "eau"]);
 
     const spell: Spell = { ...SORTS.morsure, id: "test_egalite" };
     const r = degatsCible(lanceur, spell, cible, { useMax: true, mult: 1, ctx: ctx() });
     // Le premier candidat déclaré doit gagner l'égalité — c'est ce que choisissait
     // la boucle « premier strictement supérieur » d'avant le refactor.
-    expect(r.element).toBe("terre");
+    expect(r.element).toBe("air");
     expect(r.element).toBe(elementsCandidats(lanceur)[0]);
   });
 });

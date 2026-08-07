@@ -35,22 +35,6 @@
     "scaling": 0.35,
     "type": "degats"
   },
-  "all_in": {
-    "baseMax": 10,
-    "baseMin": 6,
-    "cible": "ennemi_ligne",
-    "coutPA": 2,
-    "de": {
-      "faces": 6,
-      "multMax": 2.5,
-      "multMin": 0.3
-    },
-    "desc": "Mise au dé : dégâts de très faibles à très élevés selon le tirage.",
-    "id": "all_in",
-    "nom": "All in",
-    "scaling": 0.3,
-    "type": "degats"
-  },
   "apaisement": {
     "baseMax": 12,
     "baseMin": 8,
@@ -145,6 +129,20 @@
     "nom": "Bâton du berger",
     "scaling": 0,
     "type": "buff"
+  },
+  "bluff": {
+    "baseMax": 11,
+    "baseMin": 7,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Frappe dans le PIRE élément contre la cible ; sur critique, frappe une seconde fois dans le meilleur.",
+    "elementPire": true,
+    "id": "bluff",
+    "maxParTour": 2,
+    "nom": "Bluff",
+    "scaling": 0.28,
+    "secondCoupSiCrit": true,
+    "type": "degats"
   },
   "bombe_collante": {
     "baseMax": 0,
@@ -267,6 +265,21 @@
     "nom": "Charge",
     "scaling": 0.72,
     "type": "degats"
+  },
+  "chateau_de_cartes": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "bouclierPct": 0.2,
+    "bouclierPctSiCrit": 0.4,
+    "bouclierTours": 2,
+    "cible": "allie",
+    "cooldownTours": 4,
+    "coutPA": 2,
+    "desc": "Bouclier de 20 % des PV max à un allié pendant 2 tours (40 % sur critique).",
+    "id": "chateau_de_cartes",
+    "nom": "Château de cartes",
+    "scaling": 0,
+    "type": "buff"
   },
   "coalition": {
     "baseMax": 0,
@@ -556,31 +569,6 @@
     "scaling": 0.38,
     "type": "degats"
   },
-  "des_double": {
-    "baseMax": 9,
-    "baseMin": 5,
-    "cible": "mixte",
-    "coutPA": 3,
-    "desc": "Ennemi : rebondit sur 3 cibles. Allié : +5 % de dégâts finaux (non cumulable).",
-    "id": "des_double",
-    "mixte": {
-      "surAllie": {
-        "effet": {
-          "duree": 2,
-          "stat": "degatsInfliges",
-          "valeur": 0.05
-        },
-        "nonCumulable": true
-      }
-    },
-    "nom": "Dès double",
-    "rebond": {
-      "bonusParSaut": 0,
-      "sauts": 2
-    },
-    "scaling": 0.25,
-    "type": "degats"
-  },
   "duel": {
     "baseMax": 0,
     "baseMin": 0,
@@ -686,19 +674,6 @@
     "nom": "Épée du Jugement",
     "scaling": 0.4,
     "type": "degats"
-  },
-  "esprit_felin": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 2,
-    "coutPA": 4,
-    "desc": "Applique un effet aléatoire à chaque unité du combat (alliés bénéfiques, ennemis néfastes).",
-    "espritFelin": true,
-    "id": "esprit_felin",
-    "nom": "Esprit félin",
-    "scaling": 0,
-    "type": "buff"
   },
   "etreinte_de_valkyr": {
     "baseMax": 0,
@@ -939,17 +914,20 @@
     "type": "degats"
   },
   "griffe_joueuse": {
-    "baseMax": 13,
-    "baseMin": 9,
+    "baseMax": 11,
+    "baseMin": 8,
     "cible": "ennemi_ligne",
-    "cooldownTours": 2,
     "coutPA": 3,
-    "desc": "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
+    "desc": "Dégâts modérés ; majore de 5 % les dégâts critiques subis par TOUTE la rangée de la cible pendant 2 tours (non cumulable).",
+    "effetLigneCible": {
+      "duree": 2,
+      "stat": "degatsCritSubis",
+      "valeur": 0.05
+    },
     "id": "griffe_joueuse",
     "nom": "Griffe joueuse",
-    "scaling": 0.35,
-    "type": "degats",
-    "vampirismeRatio": 0.3
+    "scaling": 0.29,
+    "type": "degats"
   },
   "hydra": {
     "baseMax": 12,
@@ -1041,34 +1019,16 @@
     "type": "buff"
   },
   "langue_rapeuse": {
-    "baseMax": 14,
-    "baseMin": 10,
+    "baseMax": 9,
+    "baseMin": 5,
     "cible": "ennemi_ligne",
-    "cooldownTours": 1,
-    "coutPA": 4,
-    "desc": "Dégâts modérés + 1 effet aléatoire : désenvoûte / friction / +10 % d'échec critique.",
+    "coutPA": 3,
+    "desc": "Dégâts modérés ; soigne l'allié le plus blessé de la rangée avant d'une fraction des dégâts infligés.",
     "id": "langue_rapeuse",
+    "maxParTour": 2,
     "nom": "Langue râpeuse",
-    "procAleatoire": [
-      {
-        "dissipePositifs": true
-      },
-      {
-        "effet": {
-          "duree": 2,
-          "stat": "friction",
-          "valeur": 1
-        }
-      },
-      {
-        "effet": {
-          "duree": 2,
-          "stat": "echecCritique",
-          "valeur": 0.1
-        }
-      }
-    ],
-    "scaling": 0.4,
+    "scaling": 0.24,
+    "soinAvantBlesseRatio": 0.65,
     "type": "degats"
   },
   "machoire_du_coffre": {
@@ -1290,19 +1250,6 @@
     "type": "degats",
     "zoneLance": true
   },
-  "odorat": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 3,
-    "coutPA": 4,
-    "desc": "+1 PA aux alliés des cases adjacentes (prochain tour).",
-    "id": "odorat",
-    "nom": "Odorat",
-    "paGainAdjacents": 1,
-    "scaling": 0,
-    "type": "buff"
-  },
   "oeil_de_taupe": {
     "baseMax": 6,
     "baseMin": 4,
@@ -1351,40 +1298,6 @@
     "telefragSiOccupee": true,
     "type": "degats"
   },
-  "perception": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 4,
-    "coutPA": 2,
-    "desc": "+5 à toutes les caractéristiques pendant 2 tours.",
-    "effets": [
-      {
-        "duree": 2,
-        "stat": "force",
-        "valeur": 5
-      },
-      {
-        "duree": 2,
-        "stat": "intelligence",
-        "valeur": 5
-      },
-      {
-        "duree": 2,
-        "stat": "agilite",
-        "valeur": 5
-      },
-      {
-        "duree": 2,
-        "stat": "chance",
-        "valeur": 5
-      }
-    ],
-    "id": "perception",
-    "nom": "Perception",
-    "scaling": 0,
-    "type": "buff"
-  },
   "picotement": {
     "baseMax": 9,
     "baseMin": 5,
@@ -1394,6 +1307,19 @@
     "id": "picotement",
     "nom": "Picotement",
     "scaling": 0.3,
+    "type": "degats"
+  },
+  "pile_ou_face": {
+    "baseMax": 10,
+    "baseMin": 6,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Petits dégâts répétables ; rembourse 1 PA sur critique.",
+    "id": "pile_ou_face",
+    "maxParTour": 4,
+    "nom": "Pile ou Face",
+    "rembPASiCrit": 1,
+    "scaling": 0.27,
     "type": "degats"
   },
   "pique_fulgurant": {
@@ -1662,6 +1588,41 @@
     "scaling": 0,
     "type": "buff"
   },
+  "roulette": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 3,
+    "desc": "Tire une face au hasard (deux sur critique, cumulables) : +10 % dégâts finaux sur soi, +10 crit sur sa rangée, ou 15 % de bouclier à la rangée avant alliée.",
+    "facesAleatoires": [
+      {
+        "effet": {
+          "duree": 3,
+          "stat": "degatsInfliges",
+          "valeur": 0.1
+        },
+        "portee": "soi"
+      },
+      {
+        "effet": {
+          "duree": 3,
+          "stat": "crit",
+          "valeur": 10
+        },
+        "portee": "rangee_lanceur"
+      },
+      {
+        "bouclierPct": 0.15,
+        "portee": "rangee_avant"
+      }
+    ],
+    "id": "roulette",
+    "nom": "Roulette",
+    "scaling": 0,
+    "tiragesSiCrit": 2,
+    "type": "buff"
+  },
   "sablier_de_xelor": {
     "baseMax": 8,
     "baseMin": 5,
@@ -1831,19 +1792,6 @@
     "nom": "Souffle régénérant",
     "scaling": 0,
     "type": "soin"
-  },
-  "tarot": {
-    "baseMax": 20,
-    "baseMin": 12,
-    "cible": "mixte",
-    "cooldownTours": 2,
-    "coutPA": 6,
-    "desc": "Tire une carte : effet variable selon la couleur (ennemi ou allié).",
-    "id": "tarot",
-    "nom": "Tarot",
-    "scaling": 0.5,
-    "tarot": true,
-    "type": "degats"
   },
   "tempete_lames": {
     "baseMax": 10,

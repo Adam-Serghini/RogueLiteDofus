@@ -16,7 +16,7 @@ const TABLE: Record<string, { archetype: string; elements: string[] }> = {
   forgelance: { archetype: "melee", elements: ["terre", "feu"] },
   ouginak: { archetype: "melee", elements: ["terre", "air"] },
   sram: { archetype: "melee", elements: ["terre", "air"] },
-  ecaflip: { archetype: "melee", elements: ["terre", "eau"] },
+  ecaflip: { archetype: "melee", elements: ["air", "eau"] },
   sadida: { archetype: "melee", elements: ["terre", "eau"] },
   cra: { archetype: "distance", elements: ["feu", "air"] },
   roublard: { archetype: "distance", elements: ["feu", "eau"] },
@@ -43,12 +43,13 @@ describe("table des classes", () => {
 
   it("la répartition des éléments est celle qu'on a décidée", () => {
     // Chiffrée pour qu'un changement de paire soit un ACTE VISIBLE et non un effet
-    // de bord. L'air est volontairement rare (3 classes jouables) — c'est ce qui
-    // justifie le plancher de 5 % de coup critique pour tout le monde.
+    // de bord. L'air reste minoritaire (4 classes jouables depuis le rework de
+    // l'Ecaflip, terre+eau → air+eau) — c'est ce qui justifie le plancher de 5 %
+    // de coup critique pour tout le monde.
     const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
     const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
     expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 8, feu: 7, air: 3, eau: 4 });
+      .toEqual({ terre: 7, feu: 7, air: 4, eau: 4 });
   });
 
   it("CLASSES-ELEMENTS.md ne diverge pas de classes.json", () => {
@@ -173,8 +174,8 @@ describe("effets secondaires des éléments", () => {
   });
 
   it("multSoin lit la caractéristique de FRAPPE, pas l'intelligence", () => {
-    // Sans ça, l'Apaisement de l'Ouginak (terre+air) et le vampirisme de l'Ecaflip
-    // (terre+eau) soigneraient à plat : ni l'un ni l'autre n'a feu.
+    // Sans ça, l'Apaisement de l'Ouginak (terre+air) et le soin de Langue râpeuse
+    // de l'Ecaflip (air+eau) soigneraient à plat : ni l'un ni l'autre n'a feu.
     const oug = statsFinales(CLASSES.ouginak, { niveau: 50, xp: 0 });
     expect(oug.intelligence).toBe(CLASSES.ouginak.stats.intelligence); // aucun gain en feu
     expect(multSoin(oug, oug.force)).toBeGreaterThan(1.2); // et pourtant il soigne
