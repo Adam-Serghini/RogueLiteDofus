@@ -323,15 +323,26 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
         });
       });
       // réordonner les cartes réécrit Settings.ordre : rangs 1..n renumérotés d'un
-      // bloc, pour qu'ils restent distincts et sans trou après chaque déplacement
+      // bloc, pour qu'ils restent distincts et sans trou après chaque déplacement.
+      // `classesDisponibles()` exclut le Sadida (désactivé) : la numérotation
+      // continue ensuite sur les classes ABSENTES de cette liste (au rang qu'elles
+      // avaient déjà entre elles), sinon la dernière classe affichée hériterait
+      // du rang du Sadida dans `config.ordre` — collision qui ne se voit pas
+      // aujourd'hui (le Sadida n'entre jamais dans une liste triée) mais qui
+      // attend sa réactivation, prévue au programme.
       const reordonner = (srcId: string, dstId: string) => {
         if (srcId === dstId) return;
-        const ids = [...classesDisponibles()].sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b));
+        const disponibles = [...classesDisponibles()];
+        const ids = disponibles.sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b));
         const from = ids.indexOf(srcId);
         const to = ids.indexOf(dstId);
         if (from < 0 || to < 0) return;
         ids.splice(to, 0, ids.splice(from, 1)[0]);
         ids.forEach((id, i) => { config.ordre[id] = i + 1; });
+        const absentes = Object.keys(config.ordre)
+          .filter((id) => !ids.includes(id))
+          .sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b));
+        absentes.forEach((id, i) => { config.ordre[id] = ids.length + i + 1; });
         sauverConfig(config);
         draw();
       };

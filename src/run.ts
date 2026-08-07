@@ -167,6 +167,10 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
       for (const inst of Object.values(run.persos[idx].equipement)) {
         if (inst) run.inventaire.push(inst);
       }
+      // remplacement : la recrue hérite de la CASE DE GRILLE du partant (position),
+      // elle prend donc aussi sa place dans la file `run.persos` — délibéré, pas
+      // d'appel à `insererSelonOrdre` ici : elle joue à l'emplacement qu'occupait
+      // le partant en formation comme dans l'ordre de jeu.
       run.persos[idx] = nouveauPerso(run, classeId, run.persos[idx].position);
       appliquerPvDepartAscension(run, run.persos[idx]);
       return;
