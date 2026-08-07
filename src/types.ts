@@ -196,6 +196,16 @@ export interface Spell {
   retraitPAChance?: number; // probabilité du retrait de PA (retraitPA) ; défaut 0.3 si absent
   bonusParPADispo?: number; // Flèche Punitive : +X % de dégâts par PA dispo AVANT le paiement du coût
   bonusParTelefrag?: number; // Rayon Obscur : +X % de dégâts par Téléfrag posé sur la cible
+  /** Pugilat (Iop) : fraction des dégâts infligée aux AUTRES ennemis de la rangée de
+   *  la cible. Distinct de `zoneLigne`, qui frappe toute la rangée à pleine puissance. */
+  ratioLigne?: number;
+  /** Pugilat (Iop) : +N par RELANCE du sort dans le tour (additif). Le compteur
+   *  `lancersCeTour` étant incrémenté AVANT la résolution, le premier lancer vaut 1
+   *  et ne doit donc PAS être majoré — d'où le « −1 » du calcul. */
+  bonusParRelanceCeTour?: number;
+  /** Colère de Iop : +N par lancer PRÉCÉDENT du sort, pour tout le reste du combat.
+   *  Lit `lancersCombat`, qui survit aux tours — contrairement à `lancersCeTour`. */
+  bonusParLancerCombat?: number;
   // --- rework du Cra ---
   enflammee?: boolean; // Flèche enflammée : handler dédié (éclaboussure asymétrique avant/arrière)
   degatsPoussee?: boolean; // Flèche de recul : rider de deplaceCible "arriere" — dégâts ignoreResistances si ça bouscule
@@ -422,6 +432,10 @@ export interface Combatant {
   provoquePoseCeTour?: boolean; // vrai le tour où provoqueTours est posé : le décompte de fin de tour est sauté une fois (sinon la provocation expirerait avant le tour adverse suivant)
   dureeRestante?: number; // optionnel : disparaît après N tours
   lancersCeTour?: Record<string, number>; // clés `sortId` et `sortId:cibleRef` — remis à {} au début du tour du combattant
+  /** Lancers par sort depuis le DÉBUT DU COMBAT (clé `sortId`). Jamais remis à zéro
+   *  en cours de combat, contrairement à `lancersCeTour`. Alimenté uniquement pour les
+   *  sorts qui déclarent `bonusParLancerCombat`. */
+  lancersCombat?: Record<string, number>;
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
   bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
   telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX

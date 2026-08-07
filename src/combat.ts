@@ -285,6 +285,12 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
     const memeRangee = estAvant(primaire);
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
   }
+  // Pugilat : la rangée de la cible est touchée, mais à puissance RÉDUITE hors cible
+  // principale — le ratio lui-même est appliqué à la résolution, pas ici.
+  if (sort.ratioLigne) {
+    const memeRangee = estAvant(primaire);
+    return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
+  }
   const touchees = [primaire];
   if (sort.rebond) {
     const ennemis = adverses(acteur, cs).sort((a, b) => a.position - b.position);
@@ -1574,6 +1580,12 @@ export function lancerSort(
     l[sort.id] = (l[sort.id] ?? 0) + 1;
     if (cibleRef) l[`${sort.id}:${cibleRef}`] = (l[`${sort.id}:${cibleRef}`] ?? 0) + 1;
   }
+  // Compteur de combat (Colère de Iop) : la garde ci-dessus ne couvre que les sorts à
+  // limite de lancers, et il ne doit JAMAIS être remis à zéro en cours de combat.
+  if (sort.bonusParLancerCombat) {
+    const lc = (lanceur.lancersCombat ??= {});
+    lc[sort.id] = (lc[sort.id] ?? 0) + 1;
+  }
   const poseCooldown = (t: Combatant) => {
     if (sort.cooldown) lanceur.cooldowns[`${sort.id}:${t.ref}`] = sort.cooldown;
     if (sort.cooldownTours) lanceur.cooldowns[sort.id] = sort.cooldownTours;
@@ -1928,6 +1940,16 @@ export function lancerSort(
     return;
   }
 
+  // Les deux escalades sont des multiplicateurs DU LANCER : elles valent pour toutes
+  // les cibles touchées, éclaboussure comprise (décision d'Adam sur Pugilat).
+  // Le « −1 » vient de ce que les deux compteurs sont incrémentés AVANT d'arriver ici.
+  const multRelance = sort.bonusParRelanceCeTour
+    ? 1 + sort.bonusParRelanceCeTour * Math.max(0, (lanceur.lancersCeTour?.[sort.id] ?? 1) - 1)
+    : 1;
+  const multCombat = sort.bonusParLancerCombat
+    ? 1 + sort.bonusParLancerCombat * Math.max(0, (lanceur.lancersCombat?.[sort.id] ?? 1) - 1)
+    : 1;
+
   const touchees = ciblesDegats(lanceur, sort, cible, cs);
   let primaireMorte = false;
 
@@ -1941,7 +1963,10 @@ export function lancerSort(
   let unCritique = false; // Pile ou Face : au moins un coup critique porté (monocible = un seul coup)
   touchees.forEach((t, i) => {
     if (sauteJetDegats) return;
-    const mult = (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) * (1 + bonusVigueur) * multLigne;
+    const ratio = sort.ratioLigne && t.ref !== cible?.ref ? sort.ratioLigne : 1;
+    const mult =
+      (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) *
+      (1 + bonusVigueur) * multLigne * multRelance * multCombat * ratio;
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx, paAvant });
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${sort.nom} !`);
