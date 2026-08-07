@@ -13,13 +13,6 @@ import { SORTS, CLASSES } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 import type { Combatant } from "./types";
 
-// `node:fs` est déclaré en ambiant dans src/node-fs.d.ts (le projet n'a pas
-// @types/node — aucun autre fichier de src/ ne lit le système de fichiers) :
-// c'est le seul moyen de prouver que les identifiants de sort correspondent
-// RÉELLEMENT aux fichiers d'icônes sur le disque, plutôt qu'à une liste recopiée
-// à la main qui ne prouverait rien de plus qu'elle-même.
-import { readdirSync } from "node:fs";
-
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet haut, pas de crit
 const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
   rng: rngMax, log: () => {}, playerDamageBonus: 1, ...over,
@@ -79,21 +72,32 @@ describe("la classe", () => {
   });
 
   it("les 6 identifiants de sort correspondent aux 6 fichiers d'icônes, dans les DEUX sens", () => {
-    const fichiers = readdirSync("public/assets/spells/iop")
-      .filter((f) => f.endsWith(".png"))
-      .map((f) => f.replace(/\.png$/, ""))
+    // `import.meta.glob` (natif Vite/Vitest, aucun type Node requis) plutôt que
+    // `node:fs` : une déclaration ambiante pour `node:fs` rendrait `readdirSync`
+    // légal depuis N'IMPORTE QUEL module de src/, `combat.ts` compris — une érosion
+    // du moteur pur que le projet défend ailleurs, pour un besoin qui n'existe que
+    // dans CE test.
+    const modules = import.meta.glob("/public/assets/spells/iop/*.png", { eager: true });
+    const fichiers = Object.keys(modules)
+      .map((chemin) => chemin.replace(/^.*\//, "").replace(/\.png$/, ""))
       .sort();
     expect(fichiers).toEqual([...KIT].sort());
   });
 });
 
+// Les 5 descriptions ci-dessous sont des chaînes LITTÉRALES, pas `SORTS.x.desc` (qui se
+// compare à lui-même et laisse passer une description vidée ou modifiée en silence).
+// Ça compte double pour ce kit : `sortTooltipHtml` (ui/composants.ts) ne connaît AUCUN
+// des 5 champs neufs du moteur (bonusParPADispo, ratioLigne, bonusParRelanceCeTour,
+// bonusParLancerCombat, bouclierPortee, paImmediat) — l'escalade, l'éclaboussure, le
+// bouclier de rangée et le gain de PA n'atteignent le joueur QUE par ce texte libre.
 describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets imbriqués)", () => {
   it("Zénith", () => {
     expect(SORTS.zenith).toEqual({
       id: "zenith", nom: "Zénith", type: "degats", cible: "ennemi_ligne",
       coutPA: 4, baseMin: 7, baseMax: 11, scaling: 0.32,
       zoneLigne: true, bonusParPADispo: 0.07,
-      desc: SORTS.zenith.desc,
+      desc: "Dégâts de zone sur toute la rangée ciblée ; +7 % de dégâts par PA disponible AVANT de lancer le sort — le compteur n'est PAS plafonné par les PA de base du Iop, et les PA gagnés en cours de tour (Précipitation) comptent aussi : ouvrir par Précipitation avant Zénith vide toute la barre de PA au meilleur taux.",
     });
   });
 
@@ -102,7 +106,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "pugilat", nom: "Pugilat", type: "degats", cible: "ennemi_ligne",
       coutPA: 2, baseMin: 5, baseMax: 8, scaling: 0.22,
       maxParCibleParTour: 1, ratioLigne: 0.5, bonusParRelanceCeTour: 0.2,
-      desc: SORTS.pugilat.desc,
+      desc: "Dégâts modérés à la cible, moitié dégâts au reste de sa rangée ; +20 % (l'ensemble du coup, éclaboussure comprise) à chaque relance du sort dans le même tour, sur une AUTRE cible (une seule fois par cible et par tour).",
     });
   });
 
@@ -111,7 +115,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "endurance", nom: "Endurance", type: "degats", cible: "ennemi_ligne",
       coutPA: 2, baseMin: 6, baseMax: 9, scaling: 0.25,
       maxParTour: 2, bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
-      desc: SORTS.endurance.desc,
+      desc: "Dégâts modérés ; le Iop se boucliere de 8 % de ses PV max pour 1 tour (cumulable si relancé dans le même tour).",
     });
   });
 
@@ -120,7 +124,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "colere_de_iop", nom: "Colère de Iop", type: "degats", cible: "ennemi_ligne",
       coutPA: 5, baseMin: 16, baseMax: 22, scaling: 0.55, cooldownTours: 2,
       bonusParLancerCombat: 0.5,
-      desc: SORTS.colere_de_iop.desc,
+      desc: "Très gros dégâts ; +50 % à chaque lancer PRÉCÉDENT de ce sort depuis le début du combat (100 %, puis 150 %, puis 200 %…).",
     });
   });
 
@@ -129,7 +133,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "precipitation", nom: "Précipitation", type: "buff", cible: "soi",
       coutPA: 0, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 3,
       maxParTour: 1, paImmediat: 3,
-      desc: SORTS.precipitation.desc,
+      desc: "Ne coûte AUCUN PA ; crédite immédiatement 3 PA à dépenser ce tour-ci (perdus à la fin du tour si non utilisés).",
     });
   });
 
@@ -138,7 +142,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "vertu", nom: "Vertu", type: "buff", cible: "soi",
       coutPA: 3, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 3,
       bouclierPortee: { portee: "rangee_lanceur", pct: 0.15, tours: 2 },
-      desc: SORTS.vertu.desc,
+      desc: "Boucliere toute la rangée du Iop (lui compris) de 15 % des PV max de chacun, pour 2 tours.",
     });
   });
 });
@@ -191,6 +195,12 @@ describe("Zénith", () => {
 describe("Pugilat", () => {
   it("touche la cible à plein, le reste de sa rangée à moitié, et escalade de +20 % à la relance", () => {
     const c = iop();
+    // `iop()` met agilité ET chance à 0 par défaut : à stats nulles, le jet de base
+    // (8) est le SEUL contributeur et l'arrondi écrase l'écart entre +20 % et +30 %
+    // (round(8*1.2)=10, round(8*1.3)=10 aussi) — un sabotage du taux ne serait pas vu.
+    // La chance (eau, un des 2 éléments du Iop) est montée à 50 pour que les paliers
+    // se séparent réellement : jet max 8 + 50*0.22 = 19 → round(19*1.2)=23 ≠ round(19*1.3)=25.
+    c.stats = { ...c.stats, chance: 50 };
     const ennemis = fabriquerEnnemis("combat_3"); // 3 en rangée avant
     ennemis.forEach((e, i) => {
       e.stats = { ...e.stats, agilite: 0 }; e.position = i; e.pvActuels = 9999; e.pvMax = 9999; e.resistances = {};
@@ -255,12 +265,15 @@ describe("Précipitation", () => {
     expect(c.paActuels).toBe(9);
   });
 
-  it("ne bloque pas la fin de tour automatique : plus aucune cible valide après un lancer (maxParTour: 1)", () => {
+  it("ne bloque pas la fin de tour automatique : plus aucune cible valide après un lancer", () => {
     // `aUneActionPossible` (ui/combat.ts) ne fait que ceci pour chaque sort :
     // `paActuels >= s.coutPA && ciblesValides(...).length > 0`. Précipitation coûte
     // 0 PA, donc la condition de PA est TOUJOURS vraie — c'est `ciblesValides` seule
-    // (via maxParTour) qui doit devenir vide pour que la fin de tour automatique
-    // redevienne possible.
+    // qui doit devenir vide pour que la fin de tour automatique redevienne possible.
+    // Précipitation porte DEUX limites indépendantes (`maxParTour: 1` ET
+    // `cooldownTours: 3`), chacune suffisant À ELLE SEULE à vider `ciblesValides` :
+    // retirer l'une des deux laisse ce test vert grâce à l'autre — la propriété prouvée
+    // ici est « ciblesValides devient vide après un lancer », pas « c'est maxParTour ».
     const c = iop();
     expect(ciblesValides(c, SORTS.precipitation, [c]).length).toBeGreaterThan(0);
     lancerSort(c, SORTS.precipitation, c.ref, [c], ctx());

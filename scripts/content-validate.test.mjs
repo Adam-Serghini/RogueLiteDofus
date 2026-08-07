@@ -49,13 +49,28 @@ describe("passe 1 — schéma", () => {
     const err = validerContenu(modif((c) => { c.items.anneau_test.tiers = {}; }), base());
     expect(err.some((e) => e.includes("[items: anneau_test]") && e.includes("rareté"))).toBe(true);
   });
-  it("accepte un sort à 0 PA (Précipitation, Iop, rework 2026-08-07 : le premier sort du jeu à coûter 0 PA)", () => {
-    const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = 0; }), base());
-    expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("coutPA"))).toBe(false);
+  it("accepte un sort à 0 PA s'il déclare maxParTour (Précipitation, Iop, rework 2026-08-07 : le premier sort du jeu à coûter 0 PA)", () => {
+    // Passe 1 (schéma) seule est visée ici : `maxParTour`/`cooldownTours` sont des champs
+    // NEUFS sur `morsure`, que la passe 3 (lecture-seule/numérique, garde du game designer)
+    // refuserait par ailleurs — donc `base` = le contenu déjà modifié, pour que la passe 3
+    // ne voie aucun diff et laisse la passe 1 s'exprimer seule.
+    const c = modif((c) => { c.sorts.morsure.coutPA = 0; c.sorts.morsure.maxParTour = 1; });
+    const err = validerContenu(c, c);
+    expect(err.some((e) => e.includes("[sorts: morsure]"))).toBe(false);
   });
   it("refuse un sort à PA négatif", () => {
     const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = -1; }), base());
     expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("coutPA"))).toBe(true);
+  });
+  it("refuse un sort à 0 PA SANS maxParTour ni cooldownTours (pas de limite de lancers)", () => {
+    const c = modif((c) => { c.sorts.morsure.coutPA = 0; });
+    const err = validerContenu(c, c); // passe 3 hors-jeu, cf. test précédent
+    expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("maxParTour"))).toBe(true);
+  });
+  it("accepte un sort à 0 PA s'il déclare SEULEMENT cooldownTours (sans maxParTour)", () => {
+    const c = modif((c) => { c.sorts.morsure.coutPA = 0; c.sorts.morsure.cooldownTours = 3; });
+    const err = validerContenu(c, c); // passe 3 hors-jeu, cf. test précédent
+    expect(err.some((e) => e.includes("[sorts: morsure]"))).toBe(false);
   });
   it("refuse un archétype de classe inconnu", () => {
     const err = validerContenu(modif((c) => { c.classes.iop.archetype = "soigneur"; }), base());

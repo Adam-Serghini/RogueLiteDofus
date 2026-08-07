@@ -85,6 +85,13 @@ export function validerContenu(contenu, base) {
     // ≥ 0, pas ≥ 1 : Précipitation (Iop, rework 2026-08-07) est le premier sort du jeu
     // à coûter 0 PA — toujours lançable tant que sa limite de lancers ne l'interdit pas.
     if (!estEntier(s.coutPA) || s.coutPA < 0) E("sorts", id, "coutPA doit être un entier ≥ 0");
+    // Un sort à 0 PA sans `maxParTour` NI `cooldownTours` n'a AUCUNE limite sur son nombre
+    // de lancers dans un même tour : les PA ne décroissant jamais, un monstre qui le
+    // porterait le relancerait à chaque itération de la boucle de tour, borné par la
+    // seule sécurité anti-boucle (mesuré : 50 lancers dans le même tour). Précipitation
+    // porte les DEUX (`maxParTour: 1` ET `cooldownTours: 3`), donc elle passe cette règle.
+    if (s.coutPA === 0 && !s.maxParTour && !s.cooldownTours)
+      E("sorts", id, "un sort à 0 PA doit déclarer maxParTour ou cooldownTours");
     if (!estNombre(s.baseMin) || !estNombre(s.baseMax) || s.baseMin > s.baseMax)
       E("sorts", id, `baseMin doit être ≤ baseMax (reçu : ${s.baseMin}-${s.baseMax})`);
     if (!estNombre(s.scaling) || s.scaling < 0) E("sorts", id, "scaling doit être un nombre ≥ 0");
