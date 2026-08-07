@@ -1573,11 +1573,6 @@ export function lancerSort(
     if (cible.camp === lanceur.camp && sort.mixte) {
       ctx.log(`${lanceur.nom} lance ${sort.nom} sur ${cible.nom}.`); // annonce avant les effets
       const sa = sort.mixte.surAllie;
-      if (sa.bouclierPct && !aFriction(cible)) {
-        const b = Math.round(cible.pvMax * sa.bouclierPct);
-        cible.bouclier += b;
-        ctx.log(`${cible.nom} gagne un bouclier de ${b}.`);
-      }
       if (sa.effet) {
         if (sa.nonCumulable) cible.effets = cible.effets.filter((e) => e.stat !== sa.effet!.stat);
         appliquerEffet(cible, sa.effet);
@@ -1754,12 +1749,6 @@ export function lancerSort(
       cibles = allies(lanceur, cs);
     } else if (cible) {
       cibles = [cible];
-      if (sort.nbCibles && sort.nbCibles > 1) {
-        const autres = allies(lanceur, cs)
-          .filter((a) => a.ref !== cible.ref)
-          .sort((a, b) => Math.abs(a.position - cible.position) - Math.abs(b.position - cible.position));
-        cibles.push(...autres.slice(0, sort.nbCibles - 1));
-      }
     } else {
       cibles = [];
     }

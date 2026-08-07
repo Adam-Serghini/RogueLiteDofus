@@ -168,7 +168,6 @@ export interface Spell {
   executeSeulement?: boolean; // Mise à mort : échoue si la cible survivrait au coup
   coups?: Coup[]; // Coup double : plusieurs frappes sur la cible primaire
   projectiles?: Projectiles; // Déluge de lames : N frappes sur cibles aléatoires
-  nbCibles?: number; // buff/soin/dégâts sur N cibles (primaire + voisins par position)
   dissipePositifs?: boolean; // désenvoûtement : retire boucliers + effets bénéfiques
   provoqueTours?: number; // Provocation : le lanceur provoque pendant N tours
   mixte?: { surAllie: SurAllie }; // sort lançable sur ennemi (dégâts) ou allié (soutien)
@@ -290,7 +289,6 @@ export interface Projectiles {
 
 /** Effet appliqué quand un sort `mixte` est lancé sur un allié. */
 export interface SurAllie {
-  bouclierPct?: number;
   effet?: EffetSpec;
   soin?: { min: number; max: number }; // soigne l'allié (Mot Alternatif)
   nonCumulable?: boolean; // remplace l'effet existant au lieu de l'empiler
