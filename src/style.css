@@ -3506,3 +3506,8 @@ body.avec-fond .map-zone {
   position: relative;
   cursor: grab;
 }
+.preset-carte.drop-cible {
+  border-color: var(--or);
+  box-shadow: 0 0 0 2px var(--or);
+  opacity: 1;
+}
