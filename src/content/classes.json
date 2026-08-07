@@ -118,7 +118,7 @@
     "archetype": "melee",
     "elements": [
       "terre",
-      "feu"
+      "eau"
     ],
     "id": "feca",
     "img": "/assets/classes/feca.png",
@@ -127,14 +127,12 @@
     "pa": 6,
     "pvBase": 72,
     "sorts": [
-      "attaque_naturelle",
-      "glyphe_agressif",
-      "glyphe_stimulant",
-      "attaque_nuageuse",
+      "vigie",
+      "paturage",
       "bulle",
-      "baton_du_berger",
-      "provocation",
-      "armures"
+      "tetanie",
+      "egide",
+      "fortification"
     ],
     "stats": {
       "agilite": 0,

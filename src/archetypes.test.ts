@@ -12,7 +12,7 @@ import { combattantDepuisPerso, persoAuNiveau, fabriquerEnnemis } from "./run";
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
   iop: { archetype: "melee", elements: ["terre", "feu"] },
-  feca: { archetype: "melee", elements: ["terre", "feu"] },
+  feca: { archetype: "melee", elements: ["terre", "eau"] },
   forgelance: { archetype: "melee", elements: ["terre", "feu"] },
   ouginak: { archetype: "melee", elements: ["terre", "air"] },
   sram: { archetype: "melee", elements: ["terre", "air"] },
@@ -45,11 +45,12 @@ describe("table des classes", () => {
     // Chiffrée pour qu'un changement de paire soit un ACTE VISIBLE et non un effet
     // de bord. L'air reste minoritaire (4 classes jouables depuis le rework de
     // l'Ecaflip, terre+eau → air+eau) — c'est ce qui justifie le plancher de 5 %
-    // de coup critique pour tout le monde.
+    // de coup critique pour tout le monde. Le rework du Féca (terre+feu → terre+eau)
+    // déplace une classe de feu vers eau : 7/7/4/4 devient 7/6/4/5.
     const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
     const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
     expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 7, feu: 7, air: 4, eau: 4 });
+      .toEqual({ terre: 7, feu: 6, air: 4, eau: 5 });
   });
 
   it("CLASSES-ELEMENTS.md ne diverge pas de classes.json", () => {

@@ -47,57 +47,6 @@
     "scaling": 0,
     "type": "soin"
   },
-  "armures": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "allie_tous",
-    "cooldownTours": 4,
-    "coutPA": 2,
-    "desc": "Réduit les dégâts subis de l'équipe (2 + 0,5/niv plats, 3t).",
-    "effetParNiveau": {
-      "base": 2,
-      "duree": 3,
-      "parNiveau": 0.5,
-      "stat": "armure"
-    },
-    "id": "armures",
-    "nom": "Armures",
-    "scaling": 0,
-    "type": "buff"
-  },
-  "attaque_naturelle": {
-    "baseMax": 12,
-    "baseMin": 8,
-    "bouclierRatioDegats": 0.2,
-    "cible": "ennemi_ligne",
-    "coutPA": 3,
-    "desc": "Dégâts modérés ; bouclier = 20 % des dégâts infligés.",
-    "id": "attaque_naturelle",
-    "nom": "Attaque Naturelle",
-    "scaling": 0.3,
-    "type": "degats"
-  },
-  "attaque_nuageuse": {
-    "baseMax": 15,
-    "baseMin": 10,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 1,
-    "coutPA": 4,
-    "desc": "3 ennemis : dégâts modérés + déstabilise (+5 % d'échec critique, 2t).",
-    "effet": {
-      "duree": 2,
-      "stat": "echecCritique",
-      "valeur": 0.05
-    },
-    "id": "attaque_nuageuse",
-    "nom": "Attaque nuageuse",
-    "rebond": {
-      "bonusParSaut": 0,
-      "sauts": 2
-    },
-    "scaling": 0.4,
-    "type": "degats"
-  },
   "attaque_ombre": {
     "baseMax": 20,
     "baseMin": 14,
@@ -112,23 +61,6 @@
     },
     "scaling": 0.5,
     "type": "degats"
-  },
-  "baton_du_berger": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "allie",
-    "cooldownTours": 3,
-    "coutPA": 4,
-    "desc": "Un allié reçoit −50 % de dégâts pendant 1 tour.",
-    "effet": {
-      "duree": 1,
-      "stat": "reductionDegats",
-      "valeur": 0.5
-    },
-    "id": "baton_du_berger",
-    "nom": "Bâton du berger",
-    "scaling": 0,
-    "type": "buff"
   },
   "bluff": {
     "baseMax": 11,
@@ -184,19 +116,19 @@
     "type": "degats"
   },
   "bulle": {
-    "baseMax": 7,
-    "baseMin": 4,
-    "cible": "mixte",
-    "coutPA": 2,
-    "desc": "Ennemi : dégâts faibles. Allié : bouclier (3 % PV max).",
-    "id": "bulle",
-    "mixte": {
-      "surAllie": {
-        "bouclierPct": 0.03
-      }
+    "baseMax": 11,
+    "baseMin": 8,
+    "cible": "ennemi_tous",
+    "coutPA": 3,
+    "desc": "N'importe quel ennemi : dégâts modérés, empêche de viser la rangée arrière pendant 1 tour.",
+    "effet": {
+      "duree": 1,
+      "stat": "tetanise",
+      "valeur": 1
     },
+    "id": "bulle",
     "nom": "Bulle",
-    "scaling": 0.2,
+    "scaling": 0.28,
     "type": "degats"
   },
   "cadran_de_xelor": {
@@ -616,6 +548,21 @@
     "type": "degats",
     "zoneLigne": true
   },
+  "egide": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldownTours": 4,
+    "coutPA": 4,
+    "desc": "Invoque une garde sur la rangée de l'allié ciblé (PV = PV max du Féca) : elle intercepte tous les dégâts destinés à cette rangée pendant 2 tours.",
+    "id": "egide",
+    "invoqueEgide": {
+      "tours": 2
+    },
+    "nom": "Égide",
+    "scaling": 0,
+    "type": "buff"
+  },
   "enfer_des_zombies": {
     "baseMax": 0,
     "baseMin": 0,
@@ -813,6 +760,29 @@
     "scaling": 0.45,
     "type": "degats"
   },
+  "fortification": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 2,
+    "coutPA": 2,
+    "desc": "Renforce la rangée avant alliée : +10 % de résistance à tous les éléments (+15 % à deux héros devant), 2t.",
+    "effetRangeeAlliee": {
+      "effets": [
+        {
+          "duree": 2,
+          "stat": "resAll",
+          "valeur": 0.1,
+          "valeurSiDeuxDevant": 0.15
+        }
+      ],
+      "rangee": "avant"
+    },
+    "id": "fortification",
+    "nom": "Fortification",
+    "scaling": 0,
+    "type": "buff"
+  },
   "fracas": {
     "baseMax": 18,
     "baseMin": 14,
@@ -855,46 +825,6 @@
     "nom": "Gélification",
     "scaling": 0.45,
     "type": "degats"
-  },
-  "glyphe_agressif": {
-    "baseMax": 7,
-    "baseMin": 4,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 3,
-    "coutPA": 3,
-    "desc": "3 ennemis : dégâts faibles + −10 % de dégâts infligés (2t).",
-    "effet": {
-      "duree": 2,
-      "stat": "degatsInfliges",
-      "valeur": -0.1
-    },
-    "id": "glyphe_agressif",
-    "nom": "Glyphe Agressif",
-    "rebond": {
-      "bonusParSaut": 0,
-      "sauts": 2
-    },
-    "scaling": 0.2,
-    "type": "degats"
-  },
-  "glyphe_stimulant": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "allie",
-    "cooldownTours": 2,
-    "coutPA": 3,
-    "desc": "+10 % de dégâts finaux (+0,01/niv) à 2 alliés (2t).",
-    "effetParNiveau": {
-      "base": 0.1,
-      "duree": 2,
-      "parNiveau": 0.01,
-      "stat": "degatsInfliges"
-    },
-    "id": "glyphe_stimulant",
-    "nbCibles": 2,
-    "nom": "Glyphe Stimulant",
-    "scaling": 0,
-    "type": "buff"
   },
   "goinfrerie": {
     "baseMax": 34,
@@ -1284,6 +1214,28 @@
     "scaling": 0.45,
     "type": "degats"
   },
+  "paturage": {
+    "baseMax": 11,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Dégâts modérés ; renforce la rangée avant alliée : +10 % de dégâts finaux (+15 % à deux héros devant), 1t.",
+    "effetRangeeAlliee": {
+      "effets": [
+        {
+          "duree": 1,
+          "stat": "degatsInfliges",
+          "valeur": 0.1,
+          "valeurSiDeuxDevant": 0.15
+        }
+      ],
+      "rangee": "avant"
+    },
+    "id": "paturage",
+    "nom": "Pâturage",
+    "scaling": 0.28,
+    "type": "degats"
+  },
   "pendule": {
     "baseMax": 0,
     "baseMin": 0,
@@ -1424,19 +1376,6 @@
     "nom": "Proie",
     "scaling": 0,
     "type": "debuff"
-  },
-  "provocation": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 3,
-    "coutPA": 4,
-    "desc": "Le Feca provoque les ennemis pendant 1 tour.",
-    "id": "provocation",
-    "nom": "Provocation",
-    "provoqueTours": 1,
-    "scaling": 0,
-    "type": "buff"
   },
   "racines_ancestrales": {
     "baseMax": 42,
@@ -1806,6 +1745,19 @@
     "type": "degats",
     "zoneLigne": true
   },
+  "tetanie": {
+    "baseMax": 9,
+    "baseMin": 5,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 2,
+    "coutPA": 4,
+    "desc": "Dégâts faibles ; la cible commence son prochain tour amputée de 2 PA.",
+    "id": "tetanie",
+    "nom": "Tétanie",
+    "retraitPAProchainTour": 2,
+    "scaling": 0.22,
+    "type": "degats"
+  },
   "tetanisation": {
     "baseMax": 14,
     "baseMin": 10,
@@ -1917,6 +1869,33 @@
     "scaling": 0.5,
     "type": "degats",
     "zoneLigne": true
+  },
+  "vigie": {
+    "baseMax": 11,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "cooldownTours": 3,
+    "coutPA": 3,
+    "desc": "Dégâts modérés ; renforce la rangée arrière alliée : ignore la règle de ligne et +5 % de dégâts finaux (2t).",
+    "effetRangeeAlliee": {
+      "effets": [
+        {
+          "duree": 2,
+          "stat": "ignoreLigne",
+          "valeur": 1
+        },
+        {
+          "duree": 2,
+          "stat": "degatsInfliges",
+          "valeur": 0.05
+        }
+      ],
+      "rangee": "arriere"
+    },
+    "id": "vigie",
+    "nom": "Vigie",
+    "scaling": 0.28,
+    "type": "degats"
   },
   "vigueur_bois": {
     "baseMax": 0,

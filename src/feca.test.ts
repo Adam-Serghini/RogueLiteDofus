@@ -1,139 +1,171 @@
 // =============================================================================
-//  feca.test.ts — Feca : boucliers, échec critique, réduction de dégâts, glyphes.
+//  feca.test.ts — Le kit RÉEL du Féca, de bout en bout, via `lancerSort` dans
+//  un vrai combat. Les primitives (effetRangeeAlliee, retraitPAProchainTour,
+//  l'Égide) sont déjà couvertes par `feca-moteur.test.ts` sur des sorts
+//  synthétiques : ici on vérifie que le CONTENU réel (src/content/sorts.json)
+//  les emploie correctement, un test par sort.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, degatsCible, runCombat, controllerIA, type CombatCtx } from "./combat";
+import { lancerSort, ciblesValides, type CombatCtx } from "./combat";
 import { SORTS } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
-import type { Combatant, Action } from "./types";
 
-const rngMax: () => number = () => 0.99;
+const rngMax: () => number = () => 0.99; // pas d'esquive, jet haut, pas de crit
 const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
   rng: rngMax, log: () => {}, playerDamageBonus: 1, ...over,
 });
 
-const equipe = (ids: string[] = ["feca", "iop"]) => equipeCombattante(nouvelleRun(ids));
+const equipe = (ids: string[] = ["feca", "iop"]) => {
+  const team = equipeCombattante(nouvelleRun(ids));
+  team.forEach((c) => { c.stats = { ...c.stats, agilite: 0 }; }); // pas d'esquive/crit parasite
+  return team;
+};
+
 const mannequin = () => {
   const e = fabriquerEnnemis("combat_1")[0];
+  e.stats = { ...e.stats, agilite: 0 };
+  e.resistances = {};
   e.pvMax = 500;
   e.pvActuels = 500;
   return e;
 };
 
-describe("boucliers", () => {
-  it("Attaque céleste octroie un bouclier proportionnel aux dégâts", () => {
-    const [f] = equipe();
+describe("Vigie", () => {
+  it("inflige des dégâts et renforce la rangée arrière alliée (ignoreLigne + degatsInfliges)", () => {
+    const [f, iop] = equipe();
+    f.position = 0; // avant
+    iop.position = 4; // arrière : bénéficiaire de Vigie
     const e = mannequin();
-    expect(f.bouclier).toBe(0);
-    lancerSort(f, SORTS.attaque_naturelle, e.ref, [f, e], ctx());
+
+    lancerSort(f, SORTS.vigie, e.ref, [f, iop, e], ctx());
+
     expect(e.pvActuels).toBeLessThan(500);
-    expect(f.bouclier).toBeGreaterThan(0);
+    expect(iop.effets.some((x) => x.stat === "ignoreLigne")).toBe(true);
+    expect(iop.effets.some((x) => x.stat === "degatsInfliges" && x.valeur === 0.05)).toBe(true);
+    // le Féca lui-même (rangée avant) n'est pas concerné, c'est une rangée arrière
+    expect(f.effets.some((x) => x.stat === "degatsInfliges")).toBe(false);
   });
+});
 
-  it("Onde : dégâts sur un ennemi, bouclier sur un allié", () => {
-    const team = equipe();
-    const [f, iop] = team;
+describe("Pâturage", () => {
+  it("inflige des dégâts et renforce la rangée avant alliée, valeur de base à un seul héros devant", () => {
+    const [f, iop] = equipe();
+    f.position = 0; // avant, seul
+    iop.position = 4; // arrière : pas concerné
     const e = mannequin();
-    lancerSort(f, SORTS.bulle, e.ref, [...team, e], ctx());
+
+    lancerSort(f, SORTS.paturage, e.ref, [f, iop, e], ctx());
+
     expect(e.pvActuels).toBeLessThan(500);
-    lancerSort(f, SORTS.bulle, iop.ref, [...team, e], ctx());
-    expect(iop.bouclier).toBeGreaterThan(0);
+    const effet = f.effets.find((x) => x.stat === "degatsInfliges");
+    expect(effet?.valeur).toBe(0.10);
+    expect(iop.effets.some((x) => x.stat === "degatsInfliges")).toBe(false);
+  });
+
+  it("majore le bonus à +15 % quand DEUX héros occupent la rangée avant", () => {
+    const [f, iop] = equipe();
+    f.position = 0; // avant
+    iop.position = 1; // avant aussi : seuil des deux héros devant atteint
+    const e = mannequin();
+
+    lancerSort(f, SORTS.paturage, e.ref, [f, iop, e], ctx());
+
+    expect(f.effets.find((x) => x.stat === "degatsInfliges")?.valeur).toBe(0.15);
+    expect(iop.effets.find((x) => x.stat === "degatsInfliges")?.valeur).toBe(0.15);
   });
 });
 
-describe("échec critique (déstabilisation)", () => {
-  it("Ouragan applique l'échec critique et peut faire rater le sort de la cible", () => {
+describe("Bulle", () => {
+  it("frappe n'importe quel ennemi (ennemi_tous) et le tétanise", () => {
     const [f] = equipe();
     const e = mannequin();
-    lancerSort(f, SORTS.attaque_nuageuse, e.ref, [f, e], ctx());
-    expect(e.effets.some((x) => x.stat === "echecCritique")).toBe(true);
-    const pvAvant = f.pvActuels;
-    lancerSort(e, SORTS.morsure, f.ref, [f, e], ctx({ rng: () => 0 })); // rng bas → échec
-    expect(f.pvActuels).toBe(pvAvant); // la morsure a échoué
+    e.position = 4; // rangée arrière ennemie : atteignable seulement via ennemi_tous
+
+    lancerSort(f, SORTS.bulle, e.ref, [f, e], ctx());
+
+    expect(e.pvActuels).toBeLessThan(500);
+    expect(e.effets.some((x) => x.stat === "tetanise")).toBe(true);
+  });
+
+  it("n'a plus de branche alliée : ne peut plus être lancée sur un allié", () => {
+    const [f, iop] = equipe();
+    const e = mannequin();
+
+    const cibles = ciblesValides(f, SORTS.bulle, [f, iop, e]);
+
+    expect(cibles).toContain(e);
+    expect(cibles).not.toContain(iop);
   });
 });
 
-describe("réduction de dégâts", () => {
-  it("Bâton du berger réduit fortement les dégâts subis", () => {
-    const team = equipe();
-    const [f, iop] = team;
+describe("Tétanie", () => {
+  it("inflige des dégâts faibles et ampute la cible de 2 PA à son prochain tour", () => {
+    const [f] = equipe();
     const e = mannequin();
-    const avant = degatsCible(e, SORTS.morsure, iop, { useMax: true, mult: 1, ctx: ctx() }).dmg;
-    lancerSort(f, SORTS.baton_du_berger, iop.ref, [...team, e], ctx());
-    const apres = degatsCible(e, SORTS.morsure, iop, { useMax: true, mult: 1, ctx: ctx() }).dmg;
-    expect(apres).toBeLessThan(avant);
-  });
+    e.paActuels = 6;
 
-  it("Armures réduit les dégâts subis de toute l'équipe (réduction plate)", () => {
-    const team = equipe();
-    const [f, iop] = team;
-    const e = mannequin();
-    const avant = degatsCible(e, SORTS.morsure, iop, { useMax: true, mult: 1, ctx: ctx() }).dmg;
-    lancerSort(f, SORTS.armures, f.ref, [...team, e], ctx());
-    const apres = degatsCible(e, SORTS.morsure, iop, { useMax: true, mult: 1, ctx: ctx() }).dmg;
-    expect(apres).toBeLessThan(avant);
+    lancerSort(f, SORTS.tetanie, e.ref, [f, e], ctx());
+
+    expect(e.pvActuels).toBeLessThan(500);
+    expect(e.paBonusNextTurn).toBe(-2);
   });
 });
 
-describe("glyphes & provocation", () => {
-  it("Glyphe stimulant booste les dégâts finaux de 2 alliés", () => {
-    const team = equipe(["feca", "iop", "cra"]);
-    const [f] = team;
-    lancerSort(f, SORTS.glyphe_stimulant, team[1].ref, team, ctx());
-    const buffes = team.filter((c) => c.effets.some((e) => e.stat === "degatsInfliges" && e.valeur > 0));
-    expect(buffes.length).toBe(2);
+describe("Égide", () => {
+  it("invoque une garde sur la rangée de l'allié ciblé, PV = PV max du Féca, et se grise ensuite", () => {
+    const [f, iop] = equipe();
+    f.pvMax = 400; f.pvActuels = 400;
+    iop.position = 0; // avant
+    const cs = [f, iop];
+
+    lancerSort(f, SORTS.egide, iop.ref, cs, ctx());
+
+    const egide = cs.find((c) => c.estEgide);
+    expect(egide).toBeTruthy();
+    expect(egide!.pvMax).toBe(400);
+    expect(egide!.pvActuels).toBe(400);
+    // une Égide du lanceur est déjà vivante : le sort se grise (garde-fou du contenu réel)
+    expect(ciblesValides(f, SORTS.egide, cs).length).toBe(0);
   });
 
-  it("Glyphe naturel affaiblit les dégâts des 3 ennemis touchés", () => {
-    const [f] = equipe();
-    const ennemis = fabriquerEnnemis("combat_2"); // 3 ennemis
-    ennemis.forEach((x) => { x.pvMax = 500; x.pvActuels = 500; });
-    const front = [...ennemis].sort((a, b) => a.position - b.position)[0];
-    lancerSort(f, SORTS.glyphe_agressif, front.ref, [f, ...ennemis], ctx());
-    expect(ennemis.filter((x) => x.effets.some((e) => e.stat === "degatsInfliges" && e.valeur < 0)).length).toBeGreaterThanOrEqual(2);
+  it("intercepte réellement les dégâts destinés à la rangée de l'allié ciblé", () => {
+    const [f, iop] = equipe();
+    f.position = 0; iop.position = 1; // même rangée avant
+    const e = mannequin();
+    const cs = [f, iop, e];
+
+    lancerSort(f, SORTS.egide, iop.ref, cs, ctx());
+    const egide = cs.find((c) => c.estEgide);
+    expect(egide).toBeTruthy();
+    expect(egide!.pvMax).toBe(f.pvMax);
+
+    lancerSort(e, SORTS.morsure, iop.ref, cs, ctx());
+
+    expect(iop.pvActuels).toBe(iop.pvMax); // protégée
+    expect(egide!.pvActuels).toBeLessThan(egide!.pvMax); // l'Égide a encaissé
+  });
+});
+
+describe("Fortification", () => {
+  it("se lance sur soi et renforce la rangée avant alliée en résistance, valeur de base à un seul héros devant", () => {
+    const [f, iop] = equipe();
+    f.position = 0; // avant, seul
+    iop.position = 4; // arrière : pas concerné
+
+    lancerSort(f, SORTS.fortification, f.ref, [f, iop], ctx());
+
+    expect(f.effets.find((x) => x.stat === "resAll")?.valeur).toBe(0.10);
+    expect(iop.effets.some((x) => x.stat === "resAll")).toBe(false);
   });
 
-  it("Provocation rend le Feca provocateur (temporisé)", () => {
-    const [f] = equipe();
-    lancerSort(f, SORTS.provocation, f.ref, [f], ctx());
-    expect(f.provoque).toBe(true);
-    expect(f.provoqueTours).toBe(1);
-  });
+  it("majore le bonus à +15 % quand DEUX héros occupent la rangée avant", () => {
+    const [f, iop] = equipe();
+    f.position = 0;
+    iop.position = 1; // avant aussi
 
-  it("CRIT — Provocation force bien l'IA ennemie à cibler le Feca au tour adverse SUIVANT (runCombat)", async () => {
-    const [f, iop] = equipe(["feca", "iop"]);
-    f.position = 0; f.initiative = 100; // agit en premier, tout le combat
-    iop.position = 1; // même rangée avant que le Feca : cible normalement PRÉFÉRÉE (PV bas)
-    iop.pvActuels = 40; iop.pvMax = 400; // PV bas : l'IA la ciblerait en priorité sans provocation
-    f.pvActuels = 500; f.pvMax = 500;
-    const ennemi = fabriquerEnnemis("combat_1")[0];
-    ennemi.position = 0;
-    ennemi.resistances = {};
-    const cs = [f, iop, ennemi];
+    lancerSort(f, SORTS.fortification, f.ref, [f, iop], ctx());
 
-    let feCaAJoue = false;
-    const controllerJoueur = (acteur: Combatant): Action | null => {
-      if (acteur.ref === f.ref && !feCaAJoue) {
-        feCaAJoue = true;
-        return { sort: SORTS.provocation, cibleRef: f.ref };
-      }
-      return null;
-    };
-    // une seule décision d'IA ennemie (la toute première, juste après la pose de
-    // Provocation) : suffit à vérifier que la provocation n'a pas déjà expiré.
-    let ennemiADecide = false;
-    const controllerEnnemi = (acteur: Combatant, combatants: Combatant[]): Action | null => {
-      if (ennemiADecide) return null;
-      ennemiADecide = true;
-      return controllerIA(acteur, combatants) as Action | null; // controllerIA est synchrone en pratique
-    };
-
-    await runCombat(cs, {
-      controllers: { joueur: controllerJoueur, ennemi: controllerEnnemi },
-      rng: () => 0.99,
-    });
-
-    expect(iop.pvActuels).toBe(40); // épargnée : la provocation a forcé l'ennemi sur le Feca
-    expect(f.pvActuels).toBeLessThan(500); // le Feca a bien encaissé l'attaque
+    expect(f.effets.find((x) => x.stat === "resAll")?.valeur).toBe(0.15);
+    expect(iop.effets.find((x) => x.stat === "resAll")?.valeur).toBe(0.15);
   });
 });
