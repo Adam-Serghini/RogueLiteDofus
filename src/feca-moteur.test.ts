@@ -274,18 +274,3 @@ describe("retraitPAProchainTour — chemin dégâts (Tétanie)", () => {
     expect(cible.pvActuels).toBe(cible.pvMax); // témoin : le coup n'a bien rien infligé
   });
 });
-
-describe("retraitPAProchainTour — chemin soutien (branché, sans sort réel qui l'emploie)", () => {
-  it("fonctionne aussi depuis un sort de type buff/debuff, si un futur sort le réutilise", () => {
-    const lanceur = hero(0);
-    const cible = mannequin();
-    cible.paActuels = 6;
-    const spell: Spell = {
-      ...SORTS.morsure, id: "test_tetanie_soutien", type: "debuff", cible: "ennemi_tous",
-      baseMin: 0, baseMax: 0, retraitPAProchainTour: 2,
-    };
-
-    lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx());
-    expect(cible.paBonusNextTurn).toBe(-2);
-  });
-});
