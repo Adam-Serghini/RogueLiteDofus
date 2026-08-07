@@ -296,7 +296,8 @@ interface BaseDegats {
   bonusParPADispo?: number; // Flèche Punitive : +X % par PA dispo AVANT paiement (opts.paAvant)
   bonusParTelefrag?: number; // Rayon Obscur : +X % par Téléfrag posé sur la cible
   elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement)
-  elementImpose?: Element; // court-circuite le choix d'élément (second coup de Bluff)
+  elementImpose?: Element; // court-circuite le choix d'élément
+  sansEsquiveNiCrit?: boolean; // Bluff (second coup) : saute les jets d'esquive ET de critique — un seul jet de critique a eu lieu, il ne se rejoue pas
 }
 
 // --- Rage (Ouginak) -----------------------------------------------------------
@@ -487,8 +488,10 @@ function degatsAvec(
   const seCible = statsEffectives(cible);
 
   // esquive (Agilité de la cible + buffs + équipement « ligne arrière », plafonnée à 50 %)
+  // sansEsquiveNiCrit (second coup de Bluff) : le jet d'esquive est celui du PREMIER coup,
+  // il ne se rejoue pas — ce coup de retour en est la conséquence directe.
   const esquiveEquip = !estAvant(cible) ? (cible.esquiveArriere ?? 0) : 0; // Baguette Rikiki
-  if (ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
+  if (!base.sansEsquiveNiCrit && ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
     // `element` ici est AVEUGLE à la cible (dmg=0, jamais soumis à `meilleurElement`) :
     // n'a pas de sens réel sur ce chemin, et n'est actuellement consommé par aucun
     // journal — ne pas s'en servir pour un futur affichage sans le recalculer via la cible.
@@ -501,8 +504,10 @@ function degatsAvec(
   // élément de frappe : CALCULÉ pour cette cible, avec le jet déjà tiré (donc exact, et
   // sans consommer de tirage). Le `dmg` courant EST ce jet — ne pas déplacer ces lignes
   // avant le tirage, le choix perdrait son exactitude.
-  // Bluff mise sur la MALCHANCE : il frappe dans l'élément le moins avantageux, et son
-  // second coup (sur critique) dans le meilleur — d'où le classement plutôt que le max.
+  // Bluff mise sur la MALCHANCE : il frappe dans l'élément le moins avantageux — son
+  // second coup (sur critique) repart avec elementPire DÉSACTIVÉ, donc retombe ici
+  // même sur le meilleur élément (le comportement par défaut), d'où le classement
+  // plutôt que le simple max.
   const classes = elementsClasses(lanceur, cible, base, dmg);
   const el = base.elementImpose ?? (base.elementPire ? classes[classes.length - 1] : classes[0]);
   dmg += statElement(se, el) * base.scaling;
@@ -510,9 +515,10 @@ function degatsAvec(
   // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
   // Le tirage lui-même est borné à 35 % (chanceCritEffective) : le crit plat excédentaire
   // ne doit pas faire gonfler la PROBABILITÉ de critiquer, il devient des dégâts finaux
-  // via critExcedent.
+  // via critExcedent. sansEsquiveNiCrit (second coup de Bluff) : le jet de critique est
+  // celui du PREMIER coup, il ne se rejoue pas.
   let crit = false;
-  if (ctx.rng() < chanceCritEffective(se)) {
+  if (!base.sansEsquiveNiCrit && ctx.rng() < chanceCritEffective(se)) {
     dmg *= 1 + bonusDegatsCrit(se);
     dmg *= 1 + sommeEffet(cible, "degatsCritSubis"); // Griffe joueuse
     crit = true;
@@ -1818,12 +1824,15 @@ export function lancerSort(
         }
         // Bluff : le critique paie en frappant une seconde fois, dans l'AUTRE élément. Un
         // seul jet de critique a eu lieu (celui du premier coup) — il déclenche ce second
-        // coup, il ne s'y applique pas : ce second appel à `frappe` effectue son propre
-        // jet de critique, indépendant, et ne redéclenche jamais un troisième coup (cette
-        // logique de relance vit ici, dans `lancerSort` — pas dans `frappe`).
+        // coup, il ne s'y rejoue pas : `elementPire: false` retombe sur le comportement
+        // par défaut de `degatsAvec` (le MEILLEUR élément, calculé avec le jet RÉEL de ce
+        // coup — pas une approximation à partir de `r.dmg`, un dégât déjà final), et
+        // `sansEsquiveNiCrit` court-circuite les jets d'esquive ET de critique : ce second
+        // appel à `frappe` ne consomme donc qu'un seul tirage (son propre jet de dégâts),
+        // jamais trois, et ne redéclenche jamais un troisième coup (cette logique de
+        // relance vit ici, dans `lancerSort` — pas dans `frappe`).
         if (sort.secondCoupSiCrit && r.crit) {
-          const meilleur = elementsClasses(lanceur, t, sort, r.dmg)[0];
-          const dmg2 = frappe(lanceur, { ...sort, elementImpose: meilleur }, t, { useMax, mult, ctx, paAvant }, `${sort.nom} (retour)`);
+          const dmg2 = frappe(lanceur, { ...sort, elementPire: false, sansEsquiveNiCrit: true }, t, { useMax, mult, ctx, paAvant }, `${sort.nom} (retour)`);
           if (!t.estLance) totalDmg += dmg2;
         }
       }

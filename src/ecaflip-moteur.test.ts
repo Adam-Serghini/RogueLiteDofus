@@ -44,7 +44,6 @@ describe("rembPASiCrit", () => {
     // rng()=0 : 0 < seuil d'esquive (0) est faux (pas d'esquive), et 0 < chanceCritEffective
     // (0.05 au plancher) est vrai → critique.
     lancerSort(lanceurCrit, spell, cibleCrit.ref, [lanceurCrit, cibleCrit], ctx({ rng: () => 0 }));
-    expect(avantCrit).toBeDefined();
     expect(lanceurCrit.paActuels).toBe(avantCrit + spell.rembPASiCrit!);
 
     const lanceurSansCrit = ecaflip();
@@ -119,26 +118,45 @@ describe("secondCoupSiCrit", () => {
     return c;
   }
 
-  it("sur critique : deux coups, le second dans l'AUTRE (meilleur) élément, et le second ne critique pas", () => {
+  it("sur critique : deux coups, le second dans l'AUTRE (meilleur) élément, et ne critique JAMAIS", () => {
     const lanceur = ecaflipLibre();
     const cible = mannequin();
     const spell: Spell = { ...SORTS.morsure, id: "test_bluff", elementPire: true, secondCoupSiCrit: true };
 
     const elements: Element[] = [];
-    // Séquence de rng consommée par degatsAvec, DEUX fois (un coup, puis le retour) :
-    // [esquive, jet, crit] × 2. On force le crit du PREMIER coup (0 < 0.05) et
-    // on force l'ABSENCE de crit du second (0.5 ≥ 0.05), sans jamais esquiver (seuil 0).
-    const seq = [0, 0, 0, 0, 0, 0.5];
-    let i = 0;
-    const rngSeq = () => seq[Math.min(i++, seq.length - 1)];
+    const crits: string[] = [];
+    // rng=0 CONSTANT : adversarial au possible. Si le second coup rejouait le moindre
+    // jet de critique, il critiquerait forcément (0 < n'importe quel seuil non nul) —
+    // c'est exactement l'assertion qui manquait : la garantie « le second ne critique
+    // pas » doit tenir même face à un générateur qui rendrait tout critique. Ne dodge
+    // jamais non plus (seuil d'esquive nul à agilité 0 : 0 < 0 est faux).
     const logCtx = ctx({
-      rng: rngSeq,
+      rng: () => 0,
       log: (_msg, meta) => { if (meta) elements.push(meta.element); },
+      fx: (ev) => { if (ev.type === "crit") crits.push(ev.ref); },
     });
 
     lancerSort(lanceur, spell, cible.ref, [lanceur, cible], logCtx);
 
     expect(elements).toEqual(["feu", "terre"]); // pire, puis meilleur
+    // Un seul événement crit malgré rng=0 partout : le second coup n'a jamais rejoué
+    // de jet de critique (sansEsquiveNiCrit court-circuite le bloc dans degatsAvec).
+    expect(crits).toEqual([cible.ref]);
+  });
+
+  it("le coup de retour ne consomme qu'UN SEUL tirage (son propre jet), pas trois", () => {
+    const lanceur = ecaflipLibre();
+    const cible = mannequin();
+    const spell: Spell = { ...SORTS.morsure, id: "test_bluff_tirages", elementPire: true, secondCoupSiCrit: true };
+
+    let appels = 0;
+    const rngCompte = () => { appels++; return 0; }; // 0 force le crit du premier coup, donc déclenche le retour
+    lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx({ rng: rngCompte }));
+
+    // 3 pour le premier coup (esquive, jet, crit) + 1 pour le retour (jet seul, sansEsquiveNiCrit
+    // saute les deux autres) — PAS 6. Un Bluff critique ne doit décaler que d'UN tirage tout
+    // ce qui suit dans le combat (procs, esquives, mue du Kwakwa…), pas de trois.
+    expect(appels).toBe(4);
   });
 
   it("sans critique : un seul coup est porté", () => {

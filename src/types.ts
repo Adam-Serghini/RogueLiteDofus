@@ -232,7 +232,8 @@ export interface Spell {
   // --- rework de l'Ecaflip (primitives du pipeline de dégâts) ---
   rembPASiCrit?: number; // Pile ou Face : rembourse ce nombre de PA quand le sort critique
   elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement) plutôt que le meilleur
-  elementImpose?: Element; // court-circuite le choix d'élément (utilisé par le second coup de Bluff)
+  elementImpose?: Element; // court-circuite le choix d'élément
+  sansEsquiveNiCrit?: boolean; // Bluff (second coup) : saute les jets d'esquive ET de critique — un seul jet de critique a eu lieu, il ne se rejoue pas
   secondCoupSiCrit?: boolean; // Bluff : sur critique, frappe une seconde fois dans l'AUTRE élément (le meilleur)
   effetLigneCible?: EffetSpec; // débuff appliqué à TOUTE la rangée de la cible ; non cumulable (durée rafraîchie)
   soinAvantBlesseRatio?: number; // soigne l'allié le plus blessé de la RANGÉE AVANT d'une fraction des dégâts infligés
