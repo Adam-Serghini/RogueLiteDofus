@@ -251,6 +251,16 @@ export interface Spell {
   effetRangeeAlliee?: BuffRangeeAlliee; // buffe une rangée ALLIÉE absolue (Vigie, Pâturage, Fortification)
   retraitPAProchainTour?: number; // Tétanie : la cible commence son prochain tour amputée de N PA
   invoqueEgide?: { tours: number }; // Égide : invoque une garde sur la rangée de l'allié ciblé, qui intercepte tous les dégâts destinés à cette rangée pendant N tours ; grisé si une Égide du lanceur est déjà vivante ou si la rangée est pleine
+  // --- rework du Iop ---
+  /** Endurance / Vertu (Iop) : bouclier en % des PV max de CHAQUE bénéficiaire, sur une
+   *  portée, avec une durée. Même triplet que les faces de la Roulette, dont la
+   *  résolution est partagée (`appliquerBouclierPortee`). Sans `tours`, le bouclier est
+   *  PERMANENT et se cumule sans borne : toujours en fournir une pour un sort répétable. */
+  bouclierPortee?: { portee: "soi" | "rangee_lanceur" | "rangee_avant"; pct: number; tours?: number };
+  /** Précipitation (Iop) : PA crédités TOUT DE SUITE sur `paActuels`, utilisables dans le
+   *  tour en cours et perdus à sa fin. À distinguer de `paGain`/`paProchainTour`, qui
+   *  créditent tous deux `paBonusNextTurn`, donc le tour SUIVANT. */
+  paImmediat?: number;
 }
 
 /** Un effet de buff de rangée. Distinct d'`EffetSpec` parce qu'il porte une valeur

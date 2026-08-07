@@ -3,10 +3,10 @@
 //  sorts SYNTHÉTIQUES : ces tests doivent survivre à un rééquilibrage du kit réel.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, reinitialiserLancersTour, type CombatCtx } from "./combat";
+import { lancerSort, reinitialiserLancersTour, effetsDebutTour, runCombat, type CombatCtx } from "./combat";
 import { SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
-import type { Combatant, Spell } from "./types";
+import type { Action, Combatant, Spell } from "./types";
 
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet tiré au max, pas de crit
 const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
@@ -251,5 +251,224 @@ describe("ratioLigne — éclaboussure sur le reste de la rangée (Pugilat)", ()
 
     expect(dPrincipal2).toBe(Math.round(dPrincipal1 * 1.2));
     expect(dVoisin2).toBe(Math.round(dVoisin1 * 1.2));
+  });
+});
+
+// =============================================================================
+//  Tâche 2 : bouclier à portée (Endurance / Vertu) et PA immédiats (Précipitation)
+// =============================================================================
+
+/** Équipe de 4 héros distincts (refs distinctes de fabrique), agilité nulle et PV
+ *  ronds pour des pourcentages lisibles. Permet de placer plusieurs alliés sur des
+ *  rangées différentes — chose que `heros()` seul (un unique combattant) ne permet pas. */
+const equipeDe4 = (): Combatant[] => {
+  const eq = fabriquerEquipe();
+  for (const c of eq) {
+    c.stats = { ...c.stats, agilite: 0 };
+    c.pvMax = 500;
+    c.pvActuels = 500;
+  }
+  return eq;
+};
+
+describe("bouclierPortee — bouclier en % sur une portée, avec durée", () => {
+  it('portee "soi" depuis un sort de DÉGÂTS : le lanceur se boucliere (Endurance)', () => {
+    const l = heros();
+    l.pvMax = 500; l.pvActuels = 500;
+    const [a] = fabriquerEnnemis("combat_1");
+    a.resistances = {}; a.stats = { ...a.stats, agilite: 0 };
+    const cs = [l, a];
+    const sortEndurance: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_soi",
+      bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
+    };
+
+    lancerSort(l, sortEndurance, a.ref, cs, ctx());
+
+    expect(l.bouclier).toBe(Math.round(500 * 0.08)); // 40
+    expect(l.boucliersTemporaires).toEqual([{ montant: 40, tours: 1 }]);
+  });
+
+  it("deux lancers dans le tour CUMULENT leurs boucliers", () => {
+    // décision d'Adam : 2 × pct, pas un rafraîchissement.
+    const l = heros();
+    l.pvMax = 500; l.pvActuels = 500;
+    const [a] = fabriquerEnnemis("combat_1");
+    a.resistances = {}; a.stats = { ...a.stats, agilite: 0 }; a.pvMax = 9999; a.pvActuels = 9999;
+    const cs = [l, a];
+    const sortEndurance: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_cumul",
+      bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
+    };
+
+    lancerSort(l, sortEndurance, a.ref, cs, ctx());
+    lancerSort(l, sortEndurance, a.ref, cs, ctx());
+
+    expect(l.bouclier).toBe(2 * Math.round(500 * 0.08)); // 80, pas 40
+    expect(l.boucliersTemporaires).toEqual([
+      { montant: 40, tours: 1 },
+      { montant: 40, tours: 1 },
+    ]);
+  });
+
+  it('portee "rangee_lanceur" depuis un sort de SOUTIEN : toute la rangée, LANCEUR COMPRIS (Vertu)', () => {
+    const [l, allieMemeRangee, allieAutreRangee] = equipeDe4();
+    l.position = 0; // rangée avant
+    allieMemeRangee.position = 1; // rangée avant, même rangée que le lanceur
+    allieAutreRangee.position = 4; // rangée arrière
+    const cs = [l, allieMemeRangee, allieAutreRangee];
+    const sortVertu: Spell = {
+      ...SORTS.morsure, id: "test_vertu", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, coutPA: 3,
+      bouclierPortee: { portee: "rangee_lanceur", pct: 0.15, tours: 2 },
+    };
+
+    lancerSort(l, sortVertu, l.ref, cs, ctx());
+
+    expect(l.bouclier).toBe(Math.round(500 * 0.15)); // le lanceur EST inclus
+    expect(allieMemeRangee.bouclier).toBe(Math.round(500 * 0.15));
+    expect(allieAutreRangee.bouclier).toBe(0); // autre rangée : rien
+  });
+
+  it("n'atteint ni l'autre rangée, ni les invocations", () => {
+    // une invocation alliée posée dans la rangée du lanceur ne doit rien recevoir :
+    // allies() les exclut depuis le rework du Féca.
+    const [l, invocation, autreRangee] = equipeDe4();
+    l.position = 0;
+    invocation.position = 1; // même rangée que le lanceur
+    invocation.estInvocation = true;
+    autreRangee.position = 4;
+    const cs = [l, invocation, autreRangee];
+    const sortVertu: Spell = {
+      ...SORTS.morsure, id: "test_vertu_invocation", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, coutPA: 3,
+      bouclierPortee: { portee: "rangee_lanceur", pct: 0.15, tours: 2 },
+    };
+
+    lancerSort(l, sortVertu, l.ref, cs, ctx());
+
+    expect(l.bouclier).toBe(Math.round(500 * 0.15));
+    expect(invocation.bouclier).toBe(0); // exclue malgré sa position dans la rangée
+    expect(autreRangee.bouclier).toBe(0);
+  });
+
+  it("expire après `tours` sans jamais reprendre plus qu'il n'a donné", () => {
+    const l = heros();
+    l.pvMax = 500; l.pvActuels = 500;
+    const [a] = fabriquerEnnemis("combat_1");
+    a.resistances = {}; a.stats = { ...a.stats, agilite: 0 };
+    const cs = [l, a];
+    const sortEndurance: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_expire",
+      bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
+    };
+
+    lancerSort(l, sortEndurance, a.ref, cs, ctx());
+    expect(l.bouclier).toBe(40);
+    expect(l.boucliersTemporaires).toEqual([{ montant: 40, tours: 1 }]);
+
+    // Le bouclier a ABSORBÉ des dégâts entre-temps : il n'en reste que 5.
+    l.bouclier = 5;
+
+    // Un tour du porteur : expiration (tours: 1 → 0). min(montant=40, restant=5) = 5.
+    effetsDebutTour(l, [l], ctx());
+    expect(l.bouclier).toBe(0);
+    expect(l.boucliersTemporaires).toEqual([]);
+  });
+
+  it("la friction bloque le bouclier", () => {
+    const l = heros();
+    l.pvMax = 500; l.pvActuels = 500;
+    l.effets.push({ stat: "friction", valeur: 1, toursRestants: 3 });
+    const [a] = fabriquerEnnemis("combat_1");
+    a.resistances = {}; a.stats = { ...a.stats, agilite: 0 };
+    const cs = [l, a];
+    const sortEndurance: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_friction",
+      bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
+    };
+
+    lancerSort(l, sortEndurance, a.ref, cs, ctx());
+
+    expect(l.bouclier).toBe(0);
+    expect(l.boucliersTemporaires ?? []).toEqual([]);
+  });
+});
+
+describe("paImmediat — des PA pour le tour EN COURS (Précipitation)", () => {
+  it("crédite paActuels tout de suite, et non paBonusNextTurn", () => {
+    const l = heros();
+    l.paActuels = 6;
+    const sortPrecipitation: Spell = {
+      ...SORTS.morsure, id: "test_precipitation", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, coutPA: 0, paImmediat: 3,
+    };
+
+    lancerSort(l, sortPrecipitation, l.ref, [l], ctx());
+
+    expect(l.paActuels).toBe(9); // 6 + 3, disponible MAINTENANT
+    expect(l.paBonusNextTurn).toBe(0); // pas au tour suivant
+  });
+
+  it("les PA gagnés sont RÉELLEMENT dépensables dans le tour", async () => {
+    // Test central : il ne suffit PAS de lire paActuels. On fait jouer un vrai tour
+    // via runCombat avec un controller scripté qui lance Précipitation puis un sort
+    // que les 6 PA de départ ne permettaient PAS (8 PA) — la seule preuve que la
+    // boucle de tour relit paActuels après le retour de lancerSort au lieu d'en
+    // garder une copie périmée.
+    const l = heros();
+    l.initiative = 100;
+    const [ennemi] = fabriquerEnnemis("combat_1");
+    ennemi.initiative = 1;
+    ennemi.resistances = {};
+    ennemi.pvMax = 1; ennemi.pvActuels = 1; // one-shot garanti par le sort coûteux
+    const cs = [l, ennemi];
+
+    const sortPrecipitation: Spell = {
+      ...SORTS.morsure, id: "test_precipitation_integration", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, coutPA: 0, paImmediat: 5,
+    };
+    // 8 PA > paMax (6) : injouable sans le crédit de Précipitation.
+    const sortCher: Spell = {
+      ...SORTS.morsure, id: "test_sort_cher", coutPA: 8, baseMin: 999, baseMax: 999, scaling: 0,
+    };
+    expect(l.paMax).toBeLessThan(sortCher.coutPA); // témoin : le sort est bien hors de portée au départ
+
+    let appel = 0;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref !== l.ref) return null;
+      appel += 1;
+      if (appel === 1) return { sort: sortPrecipitation, cibleRef: l.ref };
+      if (appel === 2) return { sort: sortCher, cibleRef: ennemi.ref };
+      return null;
+    };
+    const controllerEnnemi = (): Action | null => null;
+
+    await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: controllerEnnemi },
+      rng: rngMax,
+    });
+
+    // Le sort cher a bien porté : SEULE preuve possible que la boucle de tour a relu
+    // paActuels après Précipitation — un moteur qui garderait une copie périmée (6 PA,
+    // insuffisants pour les 8 du sort cher) aurait refusé l'action, l'ennemi survivrait
+    // et `appel` s'arrêterait à 1. `l.paActuels` n'est PAS vérifié ici : la fin de tour
+    // remet toujours paActuels à paMax (recharge normale), ce qui écraserait la preuve
+    // intermédiaire sans rien dire sur la dépensabilité réelle des PA immédiats.
+    expect(appel).toBe(2); // les deux actions ont bien été proposées et jouées
+    expect(ennemi.pvActuels).toBe(0);
+  });
+
+  it("le gain peut dépasser le maximum de PA du combattant", () => {
+    const l = heros();
+    l.paActuels = l.paMax;
+    const sortPrecipitation: Spell = {
+      ...SORTS.morsure, id: "test_precipitation_depasse", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, coutPA: 0, paImmediat: 10,
+    };
+
+    lancerSort(l, sortPrecipitation, l.ref, [l], ctx());
+
+    expect(l.paActuels).toBe(l.paMax + 10); // voulu : aucun plafonnement
   });
 });

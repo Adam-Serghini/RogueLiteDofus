@@ -1044,6 +1044,32 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): void {
   if (cible.pvActuels > avant) ctx.log(`${cible.nom} récupère ${cible.pvActuels - avant} PV.`);
 }
 
+/** Applique un bouclier en % des PV max sur une portée donnée, avec une durée
+ *  facultative. SOURCE UNIQUE partagée par les faces de la Roulette (Ecaflip) et par
+ *  `Spell.bouclierPortee` (Endurance et Vertu du Iop) — ne pas la dupliquer. */
+function appliquerBouclierPortee(
+  lanceur: Combatant,
+  cs: Combatant[],
+  portee: "soi" | "rangee_lanceur" | "rangee_avant",
+  pct: number,
+  tours: number | undefined,
+  ctx: CombatCtx,
+): void {
+  const cibles =
+    portee === "soi" ? [lanceur]
+    : portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
+    : allies(lanceur, cs).filter(estAvant);
+  for (const u of cibles) {
+    if (aFriction(u)) continue;
+    const b = Math.round(u.pvMax * pct);
+    u.bouclier += b;
+    ctx.log(`${u.nom} gagne un bouclier de ${b}.`);
+    // Bouclier à DURÉE : sans `tours`, ce bouclier serait permanent et se cumulerait
+    // sans borne à chaque recharge — voir Combatant.boucliersTemporaires (types.ts).
+    if (tours) (u.boucliersTemporaires ??= []).push({ montant: b, tours });
+  }
+}
+
 /** Un sort de soutien ne tire un critique QUE s'il en dépend. Le tirer à chaque buff
  *  consommerait un aléa de plus, décalerait la séquence de TOUS les combats et rendrait
  *  faux chaque test à graine fixe du projet. */
@@ -1083,6 +1109,10 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
   if (sort.paGain) {
     cible.paBonusNextTurn += sort.paGain;
     ctx.log(`${cible.nom} recevra ${sort.paGain} PA au prochain tour.`);
+  }
+  if (sort.paImmediat) {
+    cible.paActuels += sort.paImmediat;
+    ctx.log(`${cible.nom} gagne ${sort.paImmediat} PA pour ce tour.`);
   }
   if (sort.paProchainTour) {
     // Math.max() volontaire : ce gain ne se CUMULE avec AUCUNE autre source de PA au
@@ -1811,16 +1841,8 @@ export function lancerSort(
         : allies(lanceur, cs).filter(estAvant);
       for (const u of portee) {
         if (face.effet) appliquerEffet(u, face.effet);
-        if (face.bouclierPct && !aFriction(u)) {
-          const b = Math.round(u.pvMax * face.bouclierPct);
-          u.bouclier += b;
-          ctx.log(`${u.nom} gagne un bouclier de ${b}.`);
-          // Bouclier à DURÉE : sans `face.duree`, ce bouclier serait permanent et se
-          // cumulerait sans borne à chaque recharge — voir Combatant.boucliersTemporaires
-          // (types.ts) pour l'imperfection assumée (même mécanisme que Château de cartes).
-          if (face.duree) (u.boucliersTemporaires ??= []).push({ montant: b, tours: face.duree });
-        }
       }
+      if (face.bouclierPct) appliquerBouclierPortee(lanceur, cs, face.portee, face.bouclierPct, face.duree, ctx);
     }
     poseCooldown(lanceur);
     return;
@@ -1845,6 +1867,13 @@ export function lancerSort(
     // Féca (Fortification) : buff sur une rangée ALLIÉE, absolue — indépendant des
     // cibles ci-dessus (un sort de soutien peut n'en avoir aucune, ex. `cible: "soi"`).
     if (sort.effetRangeeAlliee) appliquerBuffRangee(lanceur, sort.effetRangeeAlliee, cs, ctx);
+    // Vertu (Iop) : bouclier à portée, UNE SEULE FOIS par lancement (et non une fois
+    // par cible ci-dessus) — la portée ne dépend pas de qui le sort a touché, même
+    // raisonnement que `effetRangeeAlliee` juste au-dessus.
+    if (sort.bouclierPortee) {
+      const { portee, pct, tours } = sort.bouclierPortee;
+      appliquerBouclierPortee(lanceur, cs, portee, pct, tours, ctx);
+    }
     return;
   }
 
@@ -2063,6 +2092,13 @@ export function lancerSort(
   // Féca (Vigie, Pâturage) : buff sur une rangée ALLIÉE, absolue — indépendante de la
   // cible cliquée (contrairement à effetLigneCible ci-dessus, qui suit la cible).
   if (sort.effetRangeeAlliee) appliquerBuffRangee(lanceur, sort.effetRangeeAlliee, cs, ctx);
+
+  // Endurance (Iop) : sort de DÉGÂTS qui boucliere aussi son lanceur — une seule fois
+  // par lancement, indépendamment du nombre de cibles touchées.
+  if (sort.bouclierPortee) {
+    const { portee, pct, tours } = sort.bouclierPortee;
+    appliquerBouclierPortee(lanceur, cs, portee, pct, tours, ctx);
+  }
 
   // Conjuration (Éliotrope) : pose la marque sur la cible (aucun jet — sauteJetDegats)
   // — jamais sur la Lance, qui n'est pas une cible de marque (comme bombes/téléfrags).
