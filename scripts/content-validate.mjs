@@ -82,7 +82,9 @@ export function validerContenu(contenu, base) {
   }
 
   for (const [id, s] of Object.entries(contenu.sorts)) {
-    if (!estEntier(s.coutPA) || s.coutPA < 1) E("sorts", id, "coutPA doit être un entier ≥ 1");
+    // ≥ 0, pas ≥ 1 : Précipitation (Iop, rework 2026-08-07) est le premier sort du jeu
+    // à coûter 0 PA — toujours lançable tant que sa limite de lancers ne l'interdit pas.
+    if (!estEntier(s.coutPA) || s.coutPA < 0) E("sorts", id, "coutPA doit être un entier ≥ 0");
     if (!estNombre(s.baseMin) || !estNombre(s.baseMax) || s.baseMin > s.baseMax)
       E("sorts", id, `baseMin doit être ≤ baseMax (reçu : ${s.baseMin}-${s.baseMax})`);
     if (!estNombre(s.scaling) || s.scaling < 0) E("sorts", id, "scaling doit être un nombre ≥ 0");

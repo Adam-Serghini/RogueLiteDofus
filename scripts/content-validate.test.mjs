@@ -49,8 +49,12 @@ describe("passe 1 — schéma", () => {
     const err = validerContenu(modif((c) => { c.items.anneau_test.tiers = {}; }), base());
     expect(err.some((e) => e.includes("[items: anneau_test]") && e.includes("rareté"))).toBe(true);
   });
-  it("refuse un sort à 0 PA", () => {
+  it("accepte un sort à 0 PA (Précipitation, Iop, rework 2026-08-07 : le premier sort du jeu à coûter 0 PA)", () => {
     const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = 0; }), base());
+    expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("coutPA"))).toBe(false);
+  });
+  it("refuse un sort à PA négatif", () => {
+    const err = validerContenu(modif((c) => { c.sorts.morsure.coutPA = -1; }), base());
     expect(err.some((e) => e.includes("[sorts: morsure]") && e.includes("coutPA"))).toBe(true);
   });
   it("refuse un archétype de classe inconnu", () => {

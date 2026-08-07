@@ -230,17 +230,17 @@
     "scaling": 0,
     "type": "buff"
   },
-  "colere": {
-    "baseMax": 24,
-    "baseMin": 18,
+  "colere_de_iop": {
+    "baseMax": 22,
+    "baseMin": 16,
+    "bonusParLancerCombat": 0.5,
     "cible": "ennemi_ligne",
     "cooldownTours": 2,
-    "coutPA": 6,
-    "desc": "Très gros dégâts ; le Iop passe son prochain tour si la cible survit.",
-    "id": "colere",
+    "coutPA": 5,
+    "desc": "Très gros dégâts ; +50 % à chaque lancer PRÉCÉDENT de ce sort depuis le début du combat (100 %, puis 150 %, puis 200 %…).",
+    "id": "colere_de_iop",
     "nom": "Colère de Iop",
-    "passeTourSiSurvie": true,
-    "scaling": 0.6,
+    "scaling": 0.55,
     "type": "degats"
   },
   "colere_royale": {
@@ -501,23 +501,6 @@
     "scaling": 0.38,
     "type": "degats"
   },
-  "duel": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "contre": {
-      "chance": 0.2,
-      "duree": 2
-    },
-    "cooldownTours": 3,
-    "coutPA": 4,
-    "desc": "Provoque les ennemis (2t) et prend une posture de contre : 20 % de riposte quand frappé.",
-    "id": "duel",
-    "nom": "Duel",
-    "provoqueTours": 2,
-    "scaling": 0,
-    "type": "buff"
-  },
   "durcissement": {
     "baseMax": 30,
     "baseMin": 22,
@@ -563,6 +546,23 @@
     "scaling": 0,
     "type": "buff"
   },
+  "endurance": {
+    "baseMax": 9,
+    "baseMin": 6,
+    "bouclierPortee": {
+      "pct": 0.08,
+      "portee": "soi",
+      "tours": 1
+    },
+    "cible": "ennemi_ligne",
+    "coutPA": 2,
+    "desc": "Dégâts modérés ; le Iop se boucliere de 8 % de ses PV max pour 1 tour (cumulable si relancé dans le même tour).",
+    "id": "endurance",
+    "maxParTour": 2,
+    "nom": "Endurance",
+    "scaling": 0.25,
+    "type": "degats"
+  },
   "enfer_des_zombies": {
     "baseMax": 0,
     "baseMin": 0,
@@ -577,50 +577,6 @@
     },
     "scaling": 0,
     "type": "invocation"
-  },
-  "epee_celeste": {
-    "baseMax": 14,
-    "baseMin": 10,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 1,
-    "coutPA": 5,
-    "desc": "Si la cible meurt, rebondit sur un ennemi proche en infligeant le double.",
-    "id": "epee_celeste",
-    "nom": "Épée Céleste",
-    "scaling": 0.4,
-    "siCibleMeurt": {
-      "rebondDegatsX": 2
-    },
-    "type": "degats"
-  },
-  "epee_divine": {
-    "baseMax": 13,
-    "baseMin": 9,
-    "cible": "ennemi_ligne",
-    "coutPA": 4,
-    "desc": "Dégâts modérés ; rend 30 % des dégâts infligés en PV au lanceur.",
-    "id": "epee_divine",
-    "nom": "Épée divine",
-    "scaling": 0.35,
-    "type": "degats",
-    "vampirismeRatio": 0.3
-  },
-  "epee_jugement": {
-    "baseMax": 16,
-    "baseMin": 12,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 2,
-    "coutPA": 4,
-    "desc": "Dégâts modérés à élevés ; +5 % de résistances au lanceur (2t).",
-    "effetLanceur": {
-      "duree": 2,
-      "stat": "resAll",
-      "valeur": 0.05
-    },
-    "id": "epee_jugement",
-    "nom": "Épée du Jugement",
-    "scaling": 0.4,
-    "type": "degats"
   },
   "etreinte_de_valkyr": {
     "baseMax": 0,
@@ -782,18 +738,6 @@
     "nom": "Fortification",
     "scaling": 0,
     "type": "buff"
-  },
-  "fracas": {
-    "baseMax": 18,
-    "baseMin": 14,
-    "cible": "ennemi_ligne",
-    "coutPA": 5,
-    "desc": "Gros dégâts ; 30 % de chance de retirer 3 PA à la cible au prochain tour.",
-    "id": "fracas",
-    "nom": "Fracas",
-    "retraitPA": 3,
-    "scaling": 0.5,
-    "type": "degats"
   },
   "fumee_de_curare": {
     "baseMax": 30,
@@ -1323,6 +1267,20 @@
     "scaling": 0,
     "type": "invocation"
   },
+  "precipitation": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 0,
+    "desc": "Ne coûte AUCUN PA ; crédite immédiatement 3 PA à dépenser ce tour-ci (perdus à la fin du tour si non utilisés).",
+    "id": "precipitation",
+    "maxParTour": 1,
+    "nom": "Précipitation",
+    "paImmediat": 3,
+    "scaling": 0,
+    "type": "buff"
+  },
   "premonition": {
     "baseMax": 0,
     "baseMin": 0,
@@ -1346,6 +1304,20 @@
     "nom": "Proie",
     "scaling": 0,
     "type": "debuff"
+  },
+  "pugilat": {
+    "baseMax": 8,
+    "baseMin": 5,
+    "bonusParRelanceCeTour": 0.2,
+    "cible": "ennemi_ligne",
+    "coutPA": 2,
+    "desc": "Dégâts modérés à la cible, moitié dégâts au reste de sa rangée ; +20 % (l'ensemble du coup, éclaboussure comprise) à chaque relance du sort dans le même tour, sur une AUTRE cible (une seule fois par cible et par tour).",
+    "id": "pugilat",
+    "maxParCibleParTour": 1,
+    "nom": "Pugilat",
+    "ratioLigne": 0.5,
+    "scaling": 0.22,
+    "type": "degats"
   },
   "racines_ancestrales": {
     "baseMax": 42,
@@ -1703,18 +1675,6 @@
     "scaling": 0,
     "type": "soin"
   },
-  "tempete_lames": {
-    "baseMax": 10,
-    "baseMin": 6,
-    "cible": "ennemi_ligne",
-    "coutPA": 3,
-    "desc": "Dégâts de zone sur toute la ligne ciblée (avant ou arrière).",
-    "id": "tempete_lames",
-    "nom": "Tempête de lames",
-    "scaling": 0.25,
-    "type": "degats",
-    "zoneLigne": true
-  },
   "tetanie": {
     "baseMax": 9,
     "baseMin": 5,
@@ -1840,6 +1800,23 @@
     "type": "degats",
     "zoneLigne": true
   },
+  "vertu": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "bouclierPortee": {
+      "pct": 0.15,
+      "portee": "rangee_lanceur",
+      "tours": 2
+    },
+    "cible": "soi",
+    "cooldownTours": 3,
+    "coutPA": 3,
+    "desc": "Boucliere toute la rangée du Iop (lui compris) de 15 % des PV max de chacun, pour 2 tours.",
+    "id": "vertu",
+    "nom": "Vertu",
+    "scaling": 0,
+    "type": "buff"
+  },
   "vigie": {
     "baseMax": 11,
     "baseMin": 8,
@@ -1879,21 +1856,17 @@
     "scaling": 0,
     "type": "buff"
   },
-  "vitalite": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 5,
-    "coutPA": 2,
-    "desc": "+20 % PV max au lanceur pendant 5 tours.",
-    "effet": {
-      "duree": 5,
-      "stat": "vitalite",
-      "valeur": 0.2
-    },
-    "id": "vitalite",
-    "nom": "Vitalité",
-    "scaling": 0,
-    "type": "buff"
+  "zenith": {
+    "baseMax": 11,
+    "baseMin": 7,
+    "bonusParPADispo": 0.07,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Dégâts de zone sur toute la rangée ciblée ; +7 % de dégâts par PA disponible AVANT de lancer le sort (donc jusqu'à +7 %×PA MAX du Iop, comptés avant paiement).",
+    "id": "zenith",
+    "nom": "Zénith",
+    "scaling": 0.32,
+    "type": "degats",
+    "zoneLigne": true
   }
 }

@@ -48,8 +48,12 @@ describe("élément de frappe", () => {
     // la stat DÉCLARÉE (force/intelligence) est ignorée — seulement que le candidat
     // hors paire l'est. `elementDeFrappe(iop)` retombe sur "terre" ici par égalité
     // force = intelligence (voir le test d'archétypes correspondant), pas parce que
-    // la stat ne compterait pas entre les 2 éléments déclarés.
-    const [iop] = fabriquerEquipe(); // iop : terre + feu
+    // la stat ne compterait pas entre les 2 éléments déclarés. Iop est passé à air+eau
+    // au rework 2026-08-07 : la paire terre+feu est forcée ici pour isoler la règle
+    // testée (un candidat HORS paire, même très fort, ne l'emporte jamais), sans
+    // dépendre du kit réel d'une classe donnée.
+    const [iop] = fabriquerEquipe();
+    iop.elements = ["terre", "feu"];
     iop.stats = { ...iop.stats, agilite: 9999 }; // Air en tête des stats, mais hors de la paire
     expect(elementDeFrappe(iop)).toBe("terre");
   });
@@ -76,6 +80,8 @@ describe("élément de frappe", () => {
 describe("degatsCible", () => {
   it("applique jet max + scaling + résistance + puissance offensive", () => {
     const [iop] = fabriquerEquipe();
+    iop.elements = ["terre", "feu"]; // Iop est air+eau depuis le rework 2026-08-07 : la
+    // paire terre+feu est forcée ici pour isoler la formule testée, sans dépendre du kit réel.
     iop.stats = { ...iop.stats, force: 60, intelligence: 10 };
     const [cible] = fabriquerEnnemis("combat_1");
     cible.resistances = { terre: 0.15 }; // résiste +15 % à la Terre
@@ -220,43 +226,55 @@ describe("boucle de combat (IA vs IA)", () => {
   });
 });
 
-describe("Iop — nouvelles mécaniques", () => {
+// Le rework du Iop a retiré les sorts qui portaient historiquement ces mécaniques
+// génériques du moteur (zoneLigne, cooldownTours, effetLanceur, retraitPA/Chance).
+// Elles restent utilisées par d'autres classes/contenus (zoneLigne : Vigie du Féca ;
+// effetLanceur : les Wobots du Terrier ; retraitPA : le Sablier de Xélor…) : on les
+// teste ici via des sorts synthétiques plutôt que via un sort réel, sur le modèle du
+// bloc « socle — mécaniques génériques (ex-fixtures Cra) » ci-dessous.
+describe("socle — mécaniques génériques (ex-fixtures Iop)", () => {
   const rngK = (k: number): (() => number) => () => k;
 
-  it("Tempête de lames frappe toute la rangée ciblée (zoneLigne)", () => {
+  it("zoneLigne : frappe toute la rangée ciblée", () => {
+    const synZone: Spell = { id: "syn_zone_ligne", nom: "Syn Zone", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 6, baseMax: 10, scaling: 0.25, zoneLigne: true };
     const [iop] = fabriquerEquipe();
     const ennemis = fabriquerEnnemis("combat_2"); // 0,1 (avant) + 4 (arrière)
     ennemis.forEach((e) => { e.pvActuels = 500; e.pvMax = 500; e.resistances = {}; });
     const avant = ennemis.filter((e) => e.position < 4);
     const arriere = ennemis.filter((e) => e.position >= 4);
-    lancerSort(iop, SORTS.tempete_lames, avant[0].ref, [iop, ...ennemis], ctx());
+    lancerSort(iop, synZone, avant[0].ref, [iop, ...ennemis], ctx());
     expect(avant.every((e) => e.pvActuels < 500)).toBe(true); // toute la ligne avant touchée
     expect(arriere.every((e) => e.pvActuels === 500)).toBe(true); // l'arrière épargné
   });
 
   it("cooldownTours rend le sort indisponible puis disponible", () => {
+    const synCd: Spell = { id: "syn_cooldown", nom: "Syn CD", type: "degats", cible: "ennemi_ligne", coutPA: 6, baseMin: 18, baseMax: 24, scaling: 0.5, cooldownTours: 2 };
     const [iop] = fabriquerEquipe();
     iop.cooldowns = {};
     const [e] = fabriquerEnnemis("combat_1");
     e.pvActuels = 500; e.pvMax = 500;
-    expect(ciblesValides(iop, SORTS.colere, [iop, e]).length).toBeGreaterThan(0);
-    lancerSort(iop, SORTS.colere, e.ref, [iop, e], ctx()); // pose le cooldown (2t)
-    expect(iop.cooldowns["colere"]).toBe(2);
-    expect(ciblesValides(iop, SORTS.colere, [iop, e]).length).toBe(0); // indispo pendant le CD
+    expect(ciblesValides(iop, synCd, [iop, e]).length).toBeGreaterThan(0);
+    lancerSort(iop, synCd, e.ref, [iop, e], ctx()); // pose le cooldown (2t)
+    expect(iop.cooldowns["syn_cooldown"]).toBe(2);
+    expect(ciblesValides(iop, synCd, [iop, e]).length).toBe(0); // indispo pendant le CD
     iop.cooldowns = {}; // recharge écoulée
-    expect(ciblesValides(iop, SORTS.colere, [iop, e]).length).toBeGreaterThan(0);
+    expect(ciblesValides(iop, synCd, [iop, e]).length).toBeGreaterThan(0);
   });
 
-  it("Épée du Jugement applique un buff de résistances au lanceur (effetLanceur)", () => {
+  it("effetLanceur : applique un buff de résistances au LANCEUR (pas à la cible)", () => {
+    const synEffetLanceur: Spell = {
+      id: "syn_effet_lanceur", nom: "Syn Effet Lanceur", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 12, baseMax: 16, scaling: 0.4, cooldownTours: 2,
+      effetLanceur: { duree: 2, stat: "resAll", valeur: 0.05 },
+    };
     const [iop] = fabriquerEquipe();
     iop.effets = [];
     const [e] = fabriquerEnnemis("combat_1");
     e.pvActuels = 500; e.pvMax = 500;
-    lancerSort(iop, SORTS.epee_jugement, e.ref, [iop, e], ctx());
+    lancerSort(iop, synEffetLanceur, e.ref, [iop, e], ctx());
     expect(iop.effets.some((x) => x.stat === "resAll" && x.valeur === 0.05)).toBe(true);
   });
 
-  it("Duel : la posture de contre fait riposter contre l'attaquant", () => {
+  it("contre (posture de riposte) : fait riposter contre l'attaquant", () => {
     const [iop] = fabriquerEquipe(); // agilité 0 → pas d'esquive
     iop.effets = [{ stat: "contre", valeur: 0.2, toursRestants: 2 }];
     const [bouftou] = fabriquerEnnemis("combat_1");
@@ -267,7 +285,8 @@ describe("Iop — nouvelles mécaniques", () => {
     expect(bouftou.pvActuels).toBeLessThan(pvBouftouAvant); // l'attaquant a encaissé la riposte
   });
 
-  it("Fracas : le retrait de PA (30 % de chance) est IMMÉDIAT et visible", () => {
+  it("retraitPA : le retrait de PA (30 % de chance par défaut) est IMMÉDIAT et visible", () => {
+    const synRetraitPA: Spell = { id: "syn_retrait_pa", nom: "Syn Retrait PA", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 18, baseMax: 24, scaling: 0.5, retraitPA: 3 };
     const [iop] = fabriquerEquipe();
     const mkEnnemi = (ref: string) => {
       const [e] = fabriquerEnnemis("combat_1");
@@ -277,10 +296,10 @@ describe("Iop — nouvelles mécaniques", () => {
     };
     const rate = mkEnnemi("rate");
     const paAvant = rate.paActuels;
-    lancerSort(iop, SORTS.fracas, "rate", [iop, rate], ctx({ rng: rngK(0.99) })); // 0.99 ≥ 0.3
+    lancerSort(iop, synRetraitPA, "rate", [iop, rate], ctx({ rng: rngK(0.99) })); // 0.99 ≥ 0.3
     expect(rate.paActuels).toBe(paAvant); // pas de proc
     const proc = mkEnnemi("proc");
-    lancerSort(iop, SORTS.fracas, "proc", [iop, proc], ctx({ rng: rngK(0.1) })); // 0.1 < 0.3
+    lancerSort(iop, synRetraitPA, "proc", [iop, proc], ctx({ rng: rngK(0.1) })); // 0.1 < 0.3
     expect(proc.paActuels).toBe(Math.max(0, paAvant - 3)); // PA retirés sur-le-champ
   });
 });

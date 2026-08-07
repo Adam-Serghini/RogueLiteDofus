@@ -11,7 +11,7 @@ import { combattantDepuisPerso, persoAuNiveau, fabriquerEnnemis } from "./run";
 
 /** La table de référence, telle que validée avec Adam le 2026-08-05. */
 const TABLE: Record<string, { archetype: string; elements: string[] }> = {
-  iop: { archetype: "melee", elements: ["terre", "feu"] },
+  iop: { archetype: "melee", elements: ["air", "eau"] },
   feca: { archetype: "melee", elements: ["terre", "eau"] },
   forgelance: { archetype: "melee", elements: ["terre", "feu"] },
   ouginak: { archetype: "melee", elements: ["terre", "air"] },
@@ -46,11 +46,13 @@ describe("table des classes", () => {
     // de bord. L'air reste minoritaire (4 classes jouables depuis le rework de
     // l'Ecaflip, terre+eau → air+eau) — c'est ce qui justifie le plancher de 5 %
     // de coup critique pour tout le monde. Le rework du Féca (terre+feu → terre+eau)
-    // déplace une classe de feu vers eau : 7/7/4/4 devient 7/6/4/5.
+    // déplace une classe de feu vers eau : 7/7/4/4 devient 7/6/4/5. Le rework du Iop
+    // (terre+feu → air+eau) déplace une classe de terre ET de feu vers air ET eau :
+    // 7/6/4/5 devient 6/5/5/6 — air et feu sont désormais à égalité, minoritaires.
     const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
     const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
     expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 7, feu: 6, air: 4, eau: 5 });
+      .toEqual({ terre: 6, feu: 5, air: 5, eau: 6 });
   });
 
   it("CLASSES-ELEMENTS.md ne diverge pas de classes.json", () => {
@@ -89,11 +91,13 @@ describe("courbes de progression", () => {
   });
 
   it("les DEUX éléments de la classe montent, les deux autres restent à la base", () => {
-    const s = statsFinales(CLASSES.iop, { niveau: 50, xp: 0 }); // terre + feu
+    // Iop est passé à air+eau au rework 2026-08-07 : le Forgelance (terre+feu)
+    // reprend ici le rôle de sonde force+intelligence que jouait l'ancien Iop.
+    const s = statsFinales(CLASSES.forgelance, { niveau: 50, xp: 0 }); // terre + feu
     expect(s.force).toBe(147);
     expect(s.intelligence).toBe(147);
-    expect(s.agilite).toBe(CLASSES.iop.stats.agilite); // air : non concerné
-    expect(s.chance ?? 0).toBe(CLASSES.iop.stats.chance ?? 0);
+    expect(s.agilite).toBe(CLASSES.forgelance.stats.agilite); // air : non concerné
+    expect(s.chance ?? 0).toBe(CLASSES.forgelance.stats.chance ?? 0);
   });
 
   it("statPourPoints applique le tarif croissant aux seuils", () => {
@@ -106,13 +110,14 @@ describe("courbes de progression", () => {
   });
 
   it("la vitalité finale distingue le mêlée du distance, de bout en bout via statsFinales", () => {
-    // iop (mêlée, terre+feu) niveau 50 : 98 de vitalité au tarif d'archétype
+    // forgelance (mêlée, terre+feu) niveau 50 : 98 de vitalité au tarif d'archétype
     // (2/niveau × 49 niveaux, sous le seuil de 200 → tarif 1, donc 98 tel quel)
     // + le passif de terre, PAR-DESSUS le tarif : force finale 147 (voir le test
     // de courbe ci-dessus) / VITA_PAR_FORCE (5) = floor(147/5) = 29.
-    // Total : 98 + 29 = 127.
-    const iop = statsFinales(CLASSES.iop, { niveau: 50, xp: 0 });
-    expect(iop.vitalite).toBe(127);
+    // Total : 98 + 29 = 127. Iop est passé à air+eau au rework 2026-08-07 : le
+    // Forgelance reprend ici le rôle de sonde terre que jouait l'ancien Iop.
+    const forgelance = statsFinales(CLASSES.forgelance, { niveau: 50, xp: 0 });
+    expect(forgelance.vitalite).toBe(127);
 
     // cra (distance, feu+air) niveau 50 : 49 de vitalité au tarif d'archétype
     // (1/niveau × 49 niveaux, tarif 1). La terre n'est pas un de ses éléments,
@@ -121,7 +126,7 @@ describe("courbes de progression", () => {
     expect(cra.vitalite).toBe(49);
 
     // le compromis central des deux archétypes : le mêlée est plus robuste.
-    expect(iop.vitalite).toBeGreaterThan(cra.vitalite);
+    expect(forgelance.vitalite).toBeGreaterThan(cra.vitalite);
   });
 
   it("au niveau 1, un héros n'a que sa base de classe", () => {
@@ -163,7 +168,9 @@ describe("effets secondaires des éléments", () => {
 
   it("terre : vitalité passive, 1 pour 5 de force", () => {
     expect(VITA_PAR_FORCE).toBe(5);
-    const s = statsFinales(CLASSES.iop, { niveau: 50, xp: 0 }); // terre + feu, mêlée
+    // Iop est passé à air+eau au rework 2026-08-07 (CLASSES-ELEMENTS.md) : le
+    // Forgelance reprend ici le rôle de sonde terre+feu que jouait l'ancien Iop.
+    const s = statsFinales(CLASSES.forgelance, { niveau: 50, xp: 0 }); // terre + feu, mêlée
     // 98 de vitalité d'archétype + floor(147 / 5) = 29
     expect(s.vitalite).toBe(98 + 29);
   });
@@ -205,16 +212,18 @@ describe("les éléments en combat", () => {
   });
 
   it("persoAuNiveau produit les stats de l'archétype — c'est la porte de la Tranche 2", () => {
-    const p = persoAuNiveau("iop", 50, 0);
+    // Forgelance (terre + feu) reprend ici le rôle de sonde force que jouait
+    // l'ancien Iop, passé à air+eau au rework 2026-08-07.
+    const p = persoAuNiveau("forgelance", 50, 0);
     const c = combattantDepuisPerso(p);
     expect(c.stats.force).toBe(147);
-    expect(c.pvMax).toBe(CLASSES.iop.pvBase + 98 + 29); // vitalité d'archétype + passif terre
+    expect(c.pvMax).toBe(CLASSES.forgelance.pvBase + 98 + 29); // vitalité d'archétype + passif terre
     expect(c.pvActuels).toBe(c.pvMax);
   });
 
   it("une vieille save portant des points investis se charge sans broncher", () => {
     const vieille = {
-      classeId: "iop", position: 0, equipement: {}, pvActuels: 50,
+      classeId: "forgelance", position: 0, equipement: {}, pvActuels: 50,
       progression: { niveau: 20, xp: 0, pointsDispo: 57, pointsInvestis: { force: 40, intelligence: 0, agilite: 0, vitalite: 17, chance: 0 } },
     } as never;
     const c = combattantDepuisPerso(vieille);

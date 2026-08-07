@@ -171,8 +171,8 @@
   "iop": {
     "archetype": "melee",
     "elements": [
-      "terre",
-      "feu"
+      "air",
+      "eau"
     ],
     "id": "iop",
     "img": "/assets/classes/iop.png",
@@ -181,14 +181,12 @@
     "pa": 6,
     "pvBase": 60,
     "sorts": [
-      "epee_celeste",
-      "epee_divine",
-      "tempete_lames",
-      "fracas",
-      "colere",
-      "epee_jugement",
-      "duel",
-      "vitalite"
+      "zenith",
+      "pugilat",
+      "endurance",
+      "colere_de_iop",
+      "precipitation",
+      "vertu"
     ],
     "stats": {
       "agilite": 0,

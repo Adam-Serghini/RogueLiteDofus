@@ -151,13 +151,15 @@ describe("l'élément de frappe suit la cible", () => {
     // résistance de la cible. Au niveau 1 — le premier combat de chaque run — l'indicateur
     // pouvait ainsi mettre en évidence un élément que le moteur ne frappait jamais (lui
     // reste correct : il emploie le jet RÉEL, non nul, qui départage par la résistance).
-    const heros = combattantDepuisPerso(persoAuNiveau("iop", 1, 0)); // terre + feu
+    // Iop est passé à air+eau au rework 2026-08-07 (CLASSES-ELEMENTS.md) : le
+    // Forgelance reprend ici le rôle de sonde terre+feu que jouait l'ancien Iop.
+    const heros = combattantDepuisPerso(persoAuNiveau("forgelance", 1, 0)); // terre + feu
     expect(statsEffectives(heros).force).toBe(0);
     expect(statsEffectives(heros).intelligence).toBe(0);
     const vulnerableAuFeu = cible({ terre: 0, feu: -0.2 });
     expect(elementContre(heros, vulnerableAuFeu)).toBe("feu");
     // le moteur réel, via un vrai sort et un vrai jet non nul, doit choisir le MÊME élément.
-    const r = degatsCible(heros, SORTS.epee_celeste, vulnerableAuFeu, { useMax: false, mult: 1, ctx: ctx(() => 0.5) });
+    const r = degatsCible(heros, SORTS.morsure, vulnerableAuFeu, { useMax: false, mult: 1, ctx: ctx(() => 0.5) });
     expect(r.element).toBe("feu");
   });
 

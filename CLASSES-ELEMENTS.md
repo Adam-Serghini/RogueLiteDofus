@@ -27,7 +27,7 @@ c'est de la souplesse face aux résistances adverses.
 
 | Classe | id | Archétype | Éléments |
 |---|---|---|---|
-| Iop | `iop` | melee | terre + feu |
+| Iop | `iop` | melee | air + eau |
 | Feca | `feca` | melee | terre + eau |
 | Forgelance | `forgelance` | melee | terre + feu |
 | Ouginak | `ouginak` | melee | terre + air |
@@ -40,6 +40,6 @@ c'est de la souplesse face aux résistances adverses.
 | Éliotrope | `eliotrope` | distance | feu + terre |
 | Xélor | `xelor` | distance | eau + terre |
 
-Répartition sur les onze jouables : terre 7, feu 6, air 4, eau 5.
-**L'air reste minoritaire**, et c'est ce qui justifie le plancher de 5 % de coup critique
-pour tout le monde : sans lui, sept classes sur onze ne critiqueraient jamais.
+Répartition sur les onze jouables : terre 6, feu 5, air 5, eau 6.
+**L'air et le feu restent minoritaires**, et c'est ce qui justifie le plancher de 5 % de
+coup critique pour tout le monde : sans lui, six classes sur onze ne critiqueraient jamais.
