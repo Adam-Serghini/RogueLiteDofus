@@ -326,6 +326,10 @@ describe("Égide — interception pour la rangée", () => {
     lancerSort(ennemi, { ...SORTS.morsure }, allieArriere.ref, cs, ctx());
 
     expect(allieArriere.pvActuels).toBeLessThan(allieArriere.pvMax);
+    // témoin : l'Égide (posée en avant) n'a strictement rien pris de ce coup — sans cette
+    // assertion, le test passerait à l'identique même si l'Égide protégeait TOUTE la grille.
+    const egide = cs.find((c) => c.estEgide)!;
+    expect(egide.pvActuels).toBe(egide.pvMax);
   });
 
   it("posée en rangée ARRIÈRE, elle protège la rangée arrière — c'est la moitié du sort", () => {
@@ -360,16 +364,45 @@ describe("Égide — interception pour la rangée", () => {
     expect(allie.pvActuels).toBeLessThan(allie.pvMax);
   });
 
-  it("n'est pas ciblable (ciblesValides)", () => {
+  it("n'est pas ciblable (ciblesValides), pour ennemi_tous ET ennemi_ligne", () => {
     const feca = hero(0);
     const allie = hero(1);
     const ennemi = mannequin();
     const cs = [feca, allie, ennemi];
     invoquerEgide(feca, allie, 3, cs, ctx());
 
-    const cibles = ciblesValides(ennemi, { ...SORTS.morsure, cible: "ennemi_tous" }, cs);
+    const ciblesTous = ciblesValides(ennemi, { ...SORTS.morsure, cible: "ennemi_tous" }, cs);
+    const ciblesLigne = ciblesValides(ennemi, { ...SORTS.morsure, cible: "ennemi_ligne" }, cs);
 
-    expect(cibles.some((c) => c.estEgide)).toBe(false);
+    expect(ciblesTous.some((c) => c.estEgide)).toBe(false);
+    // ennemi_ligne est le chemin exact du défaut critique de revue : `ligneFront` calculée
+    // AVANT le retrait de l'Égide la voyait occuper la rangée avant sans être ciblable.
+    expect(ciblesLigne.some((c) => c.estEgide)).toBe(false);
+  });
+
+  it("CRITIQUE (revue) — Égide seule vivante en rangée avant : la rangée arrière reste atteignable pour ennemi_ligne", () => {
+    // Reproduit le bug trouvé en revue : `base.filter((c) => !c.estEgide)` appliqué APRÈS
+    // `ligneFront` laissait l'Égide compter comme occupante de la rangée avant (elle y est
+    // physiquement), donc `ligneFront` ne considérait JAMAIS la rangée avant comme vide et
+    // n'exposait jamais la rangée arrière — puis le filtre retirait l'Égide, laissant une
+    // liste de cibles VIDE pour `ennemi_ligne` (75 sorts sur 125, dont le kit partagé de tous
+    // les monstres) alors que des héros vivent en rangée arrière. Atteignable en jeu réel dès
+    // que le seul héros de rangée avant meurt, est repoussé (Bourrasque de pollen) ou se
+    // déplace lui-même (Dagues Eurfolles) après la pose de l'Égide.
+    const feca = hero(0); // avant : va "mourir", laissant l'Égide seule vivante en avant
+    const arriere1 = hero(4);
+    const arriere2 = hero(5);
+    const ennemi = mannequin();
+    const cs = [feca, arriere1, arriere2, ennemi];
+    const egide = invoquerEgide(feca, feca, 3, cs, ctx())!; // posée sur SA PROPRE rangée (avant)
+    expect(egide.position).toBeLessThan(4); // bien plantée en avant
+    feca.pvActuels = 0; // le Féca tombe : l'Égide devient la SEULE unité vivante en avant
+
+    const cibles = ciblesValides(ennemi, { ...SORTS.morsure, cible: "ennemi_ligne" }, cs);
+
+    expect(cibles.length).toBe(2);
+    expect(cibles).toContain(arriere1);
+    expect(cibles).toContain(arriere2);
   });
 
   it("meurt avec son lanceur (purgerInvocationsOrphelines)", () => {
@@ -391,14 +424,20 @@ describe("Égide — interception pour la rangée", () => {
     const ennemi = mannequin();
     const cs = [feca, allie, ennemi];
     const egide = invoquerEgide(feca, allie, 3, cs, ctx())!;
+    const logs: string[] = [];
 
     // La cible du sort est directement l'Égide elle-même : si la garde `!cible.estInvocation`
     // n'existait pas, `infligerDegats` la trouverait comme protectrice d'ELLE-MÊME
     // (`c.camp === cible.camp && estAvant(c) === estAvant(cible)` est vrai pour elle contre
-    // elle-même) et boucleraient à l'infini via l'appel imbriqué.
-    lancerSort(ennemi, { ...SORTS.morsure }, egide.ref, cs, ctx());
+    // elle-même) et logguerait « L'Égide encaisse… » avant de se rediriger vers elle-même —
+    // borné par la seconde garde (`viaRedirection`), mais ce n'est PAS ce qui doit se produire :
+    // une frappe directe ne doit jamais passer par le chemin d'interception, point.
+    lancerSort(ennemi, { ...SORTS.morsure }, egide.ref, cs, ctx({ log: (msg) => logs.push(msg) }));
 
     expect(egide.pvActuels).toBeLessThan(egide.pvMax);
+    // Épingle `!cible.estInvocation` : sans cette garde, le message d'interception apparaîtrait
+    // au moins une fois (la revue a montré que le retirer seul passe 26/26 en silence sinon).
+    expect(logs.some((m) => m.includes("L'Égide encaisse"))).toBe(false);
   });
 
   it("ses PV valent les PV MAX du lanceur au moment du lancer", () => {

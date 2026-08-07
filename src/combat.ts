@@ -141,37 +141,50 @@ const enCooldownSort = (acteur: Combatant, sort: Spell): boolean =>
 
 /** Cibles valides pour un sort lancé par `acteur` (règle de ligne symétrique). */
 export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): Combatant[] {
+  // Égide (Féca) : jamais une cible directe, ni pour un allié ni pour un ennemi — elle
+  // n'intercepte que via `infligerDegats` (automatique, sans ciblage). Contrairement à
+  // la Poupée (ciblable, elle provoque) ou la Lance (ciblable via zoneLance).
+  //
+  // Retirée ICI, AVANT le `switch` — donc avant `ligneFront` — et pas après par un simple
+  // filtre sur `base` : si elle restait dans la liste au moment de `ligneFront`, elle
+  // compterait comme occupant de la rangée avant (dernière unité vivante) sans jamais être
+  // elle-même ciblable. `ligneFront` verrait alors une rangée avant non vide et n'exposerait
+  // JAMAIS la rangée arrière, puis le filtre la retirerait après coup — laissant une liste de
+  // cibles VIDE pour `ennemi_ligne` alors que des héros vivent en rangée arrière (bug trouvé en
+  // revue : 75 sorts sur 125 sont `ennemi_ligne`, dont le kit partagé de tous les monstres —
+  // morsure/charge/écrasement — soit une invulnérabilité quasi totale et un blocage de l'IA
+  // ennemie). Atteignable sans effort : il suffit que le seul héros de la rangée avant soit
+  // repoussé en arrière (Bourrasque de pollen), meure d'un poison (qui ne passe pas par
+  // `infligerDegats`, donc que l'Égide ne prévient pas), ou se déplace lui-même (Dagues
+  // Eurfolles).
+  const csSansEgide = cs.filter((c) => !c.estEgide);
+
   let base: Combatant[];
   switch (sort.cible) {
     case "soi":
       base = [acteur];
       break;
     case "allie":
-      base = allies(acteur, cs);
+      base = allies(acteur, csSansEgide);
       break;
     case "allie_tous":
-      base = allies(acteur, cs);
+      base = allies(acteur, csSansEgide);
       break;
     case "ennemi_tous":
-      base = adverses(acteur, cs);
+      base = adverses(acteur, csSansEgide);
       break;
     case "ennemi_ligne": {
       // règle de ligne SYMÉTRIQUE : on ne vise que la ligne avant (cases 0-3),
       // sauf si le lanceur ignore la ligne (Œil perçant…) : alors comme ennemi_tous
-      const adv = adverses(acteur, cs);
+      const adv = adverses(acteur, csSansEgide);
       base = sommeEffet(acteur, "ignoreLigne") > 0 ? adv : ligneFront(adv);
       break;
     }
     case "mixte":
       // toute unité vivante (l'effet dépend du camp ciblé, résolu dans lancerSort)
-      base = vivants(cs);
+      base = vivants(csSansEgide);
       break;
   }
-
-  // Égide (Féca) : jamais une cible directe, ni pour un allié ni pour un ennemi — elle
-  // n'intercepte que via `infligerDegats` (automatique, sans ciblage). Contrairement à
-  // la Poupée (ciblable, elle provoque) ou la Lance (ciblable via zoneLance).
-  base = base.filter((c) => !c.estEgide);
 
   // provocation : un ennemi doit viser en priorité un allié (joueur) qui provoque
   if (acteur.camp === "ennemi") {
@@ -666,9 +679,27 @@ function infligerDegats(
   // PARTAGE une fraction et laisse donc le bouclier de la victime absorber d'abord, l'Égide
   // intercepte tout : le bouclier du héros n'est jamais entamé tant qu'elle tient. Placée
   // avant les gardes de nullification pour ne pas les consommer non plus.
+  //
+  // `viaRedirection` protège contre la récursion infinie (l'appel imbriqué ci-dessous le
+  // passe à `true`) ; `!cible.estInvocation` protège en plus contre le cas où `cible` EST
+  // l'Égide elle-même (frappée directement) — sans lui, elle se trouverait « protectrice
+  // d'elle-même ». Les deux gardes sont donc redondantes l'une avec l'autre par construction,
+  // et c'est voulu : si l'une saute un jour (ex. laisser l'Égide protéger une Poupée), l'autre
+  // retient seule la garantie de non-récursion.
+  //
+  // `.find` direct sur `ctx.combatants` plutôt que `vivants(ctx.combatants).find(...)` : ce
+  // chemin s'exécute à CHAQUE point de dégât de CHAQUE combat, y compris les 100 % de combats
+  // sans Égide — l'allocation d'un tableau filtré à chaque appel n'a aucune raison d'être ici,
+  // le filtre `pvActuels > 0` se teste tout aussi bien dans le prédicat du `find`.
+  //
+  // Conséquence assumée, pas un bug : une Égide qui occupe elle-même un emplacement de sa
+  // rangée est elle aussi une cible de `ciblesDegats` pour un sort de ZONE (`zoneLigne` ne
+  // l'exclut pas, contrairement à `ciblesValides` qui l'exclut du CIBLAGE) — un sort de zone
+  // sur 3 héros + l'Égide sur la même rangée l'atteint donc 4 fois : les 3 redirections plus
+  // son propre coup direct. Elle fond ~33 % plus vite en zone qu'en cible unique.
   if (!viaRedirection && dmg > 0 && ctx?.combatants && !cible.estInvocation) {
-    const egide = vivants(ctx.combatants).find((c) =>
-      c.estEgide && c.camp === cible.camp && estAvant(c) === estAvant(cible));
+    const egide = ctx.combatants.find((c) =>
+      c.estEgide && c.pvActuels > 0 && c.camp === cible.camp && estAvant(c) === estAvant(cible));
     if (egide) {
       ctx.log(`🛡️ L'Égide encaisse le coup destiné à ${cible.nom}.`);
       infligerDegats(egide, dmg, attaquant, ctx, false, true);
@@ -2237,9 +2268,17 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       // Égide (Féca) : minuteur décompté au DÉBUT du tour de son invocateur, comme la
       // marque de Conjuration de l'Éliotrope (mais l'Égide ne joue pas de tour à elle,
       // donc pas d'occasion de la décompter à SA propre fin de tour).
+      // `?? 0` plutôt qu'un `!` non-null : `toursRestantsInvocation` est TOUJOURS posé par
+      // `invoquerEgide`, mais si ce contrat se rompait un jour, `--undefined!` donnerait
+      // `NaN`, et `NaN <= 0` est FAUX — l'Égide ne mourrait alors plus jamais, en silence,
+      // l'exact inverse de « échouer bruyamment ». `?? 0` la fait au contraire expirer
+      // immédiatement dans ce cas : une disparition inattendue se remarque en playtest,
+      // une invocation devenue permanente ne se remarque pas.
       for (const c of combatants) {
         if (c.estEgide && c.lanceurRef === acteur.ref && c.pvActuels > 0) {
-          if (--c.toursRestantsInvocation! <= 0) {
+          const restant = (c.toursRestantsInvocation ?? 0) - 1;
+          c.toursRestantsInvocation = restant;
+          if (restant <= 0) {
             c.pvActuels = 0;
             ctx.log(`🛡️ L'Égide de ${acteur.nom} expire.`);
           }
