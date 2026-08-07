@@ -6,7 +6,7 @@
 import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
-import { chargerConfig } from "./config";
+import { chargerConfig, rangClasse } from "./config";
 import type { Combatant, Element, EquipSlot, GameMap, HeritageEquipe, HeritagePerso, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
@@ -97,6 +97,21 @@ export function persoAuNiveau(classeId: string, niveau: number, position: number
   return { classeId, progression, pvActuels: pvMaxFor(CLASSES[classeId], progression), position, equipement: {} };
 }
 
+/** Trie une équipe par rang de jeu (copie ; le tri de `Array.prototype.sort` est stable). */
+export function trierParOrdre(persos: PersoState[], ordre: Record<string, number>): PersoState[] {
+  return [...persos].sort((a, b) => rangClasse(ordre, a.classeId) - rangClasse(ordre, b.classeId));
+}
+
+/** Insère une recrue devant le premier héros de rang strictement moins bon ; en queue
+ *  si elle est la moins bien classée. Reste défini même si le joueur a réorganisé sa
+ *  liste à la main : on ne suppose jamais que la liste suit les rangs. */
+export function insererSelonOrdre(persos: PersoState[], recrue: PersoState, ordre: Record<string, number>): void {
+  const r = rangClasse(ordre, recrue.classeId);
+  const i = persos.findIndex((p) => rangClasse(ordre, p.classeId) > r);
+  if (i < 0) persos.push(recrue);
+  else persos.splice(i, 0, recrue);
+}
+
 export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, trancheId = "t1"): RunState {
   const cells = cellulesPour(choix);
   const eff = effetsAscension(ascension);
@@ -110,7 +125,7 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
     if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
   });
-  return { persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension, philtres: 0, trancheId };
+  return { persos: trierParOrdre(persos, chargerConfig().ordre), carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension, philtres: 0, trancheId };
 }
 
 // --- Recrutement (Taverne) ---------------------------------------------------
@@ -159,7 +174,7 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
   }
   const pris = new Set(run.persos.map((p) => p.position));
   const recrue = nouveauPerso(run, classeId, caseLibrePreferee(classeId, pris));
-  run.persos.push(recrue);
+  insererSelonOrdre(run.persos, recrue, chargerConfig().ordre);
   appliquerPvDepartAscension(run, recrue);
 }
 
@@ -213,7 +228,7 @@ export function runDepuisHeritage(
     return perso;
   });
   const run: RunState = {
-    persos, carte: null, inventaire: [], stats: statsRunVides(), kamas: 0,
+    persos: trierParOrdre(persos, chargerConfig().ordre), carte: null, inventaire: [], stats: statsRunVides(), kamas: 0,
     choixDepart: persos.map((p) => p.classeId), ascension, philtres: 0, trancheId,
   };
   for (const p of run.persos) appliquerPvDepartAscension(run, p); // Ascension : PV de départ réduits

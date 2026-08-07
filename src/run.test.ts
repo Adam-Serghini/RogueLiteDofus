@@ -6,9 +6,11 @@ import {
   nouvelleRun, recruter, propositionsRecrutement, classesHorsEquipe, equipePleine, enregistrerRun,
   classesDisponibles,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours,
+  trierParOrdre, insererSelonOrdre, EQUIPE_DEPART,
 } from "./run";
 import { chargerConfig } from "./config";
 import type { Meta } from "./types";
+import type { PersoState } from "./run";
 
 describe("compteur de runs", () => {
   it("enregistrerRun compte les runs et n'ajoute une victoire que si réussie", () => {
@@ -421,5 +423,67 @@ describe("forgemagie", () => {
     expect(rareteSuivante(leg)).toBeNull();
     run.kamas = 99999;
     expect(forgerInstance(run, leg, false, () => 0.5)).toBeNull();
+  });
+});
+
+describe("ordre de jeu de l'équipe", () => {
+  const perso = (classeId: string): PersoState =>
+    ({ classeId, progression: { niveau: 1, xp: 0 }, pvActuels: 1, position: 0, equipement: {} });
+
+  it("trie l'équipe par rang de préférence", () => {
+    const ordre = { cra: 1, eniripsa: 2, iop: 3, sram: 4 };
+    const tri = trierParOrdre([perso("sram"), perso("cra"), perso("iop")], ordre);
+    expect(tri.map((p) => p.classeId)).toEqual(["cra", "iop", "sram"]);
+  });
+
+  it("ne modifie pas le tableau d'origine", () => {
+    const src = [perso("sram"), perso("cra")];
+    trierParOrdre(src, { cra: 1, sram: 4 });
+    expect(src.map((p) => p.classeId)).toEqual(["sram", "cra"]);
+  });
+
+  it("une classe sans rang part en queue", () => {
+    const tri = trierParOrdre([perso("xelor"), perso("cra")], { cra: 1 });
+    expect(tri.map((p) => p.classeId)).toEqual(["cra", "xelor"]);
+  });
+
+  it("insère une recrue à son rang, même dans une liste réorganisée à la main", () => {
+    // le joueur a mis Sram(4) devant Iop(3) : la liste ne suit plus les rangs
+    const ordre = { cra: 1, eniripsa: 2, iop: 3, sram: 4 };
+    const equipe = [perso("sram"), perso("iop")];
+    insererSelonOrdre(equipe, perso("cra"), ordre);
+    expect(equipe.map((p) => p.classeId)).toEqual(["cra", "sram", "iop"]);
+  });
+
+  it("une recrue moins bien classée que tout le monde va en queue", () => {
+    const ordre = { cra: 1, eniripsa: 2, iop: 3, sram: 4 };
+    const equipe = [perso("cra"), perso("eniripsa")];
+    insererSelonOrdre(equipe, perso("sram"), ordre);
+    expect(equipe.map((p) => p.classeId)).toEqual(["cra", "eniripsa", "sram"]);
+  });
+
+  it("une nouvelle run naît triée par rang de préférence", () => {
+    // feca rang 12, xelor rang 5 dans ORDRE_DEFAUT → le Xélor passe devant
+    const run = nouvelleRun(["feca", "xelor"]);
+    expect(run.persos.map((p) => p.classeId)).toEqual(["xelor", "feca"]);
+  });
+
+  it("l'équipe par défaut est INCHANGÉE par le tri", () => {
+    // corollaire du garde-fou de config.test.ts, vérifié ici bout en bout :
+    // `fabriquerEquipe()` et les 35 destructurations positionnelles de la suite
+    // dépendent de cet ordre.
+    expect(nouvelleRun().persos.map((p) => p.classeId)).toEqual(EQUIPE_DEPART);
+  });
+
+  it("choixDepart retient la paire CHOISIE, pas les deux premiers du tableau trié", () => {
+    // garde-fou du repli « recommencer avec les mêmes héros » (main.ts)
+    const run = nouvelleRun(["feca", "xelor"]);
+    expect(run.choixDepart).toEqual(["feca", "xelor"]);
+  });
+
+  it("le recrutement place la recrue à son rang", () => {
+    const run = nouvelleRun(["iop", "feca"]); // rangs 1 et 12
+    recruter(run, "xelor"); // rang 5 → entre les deux
+    expect(run.persos.map((p) => p.classeId)).toEqual(["iop", "xelor", "feca"]);
   });
 });
