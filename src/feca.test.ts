@@ -21,8 +21,14 @@ const equipe = (ids: string[] = ["feca", "iop"]) => {
   return team;
 };
 
+// `fabriquerEnnemis("combat_1")` fabrique toujours le même ref (`e0_<monstre>`) :
+// deux mannequins dans le même test doivent recevoir un ref DISTINCT, sans quoi
+// `lancerSort` résout la cible sur le premier trouvé dans la liste et non sur
+// celui réellement visé.
+let mannequinSeq = 0;
 const mannequin = () => {
   const e = fabriquerEnnemis("combat_1")[0];
+  e.ref = `${e.ref}_${mannequinSeq++}`;
   e.stats = { ...e.stats, agilite: 0 };
   e.resistances = {};
   e.pvMax = 500;
@@ -76,12 +82,21 @@ describe("Pâturage", () => {
 });
 
 describe("Bulle", () => {
-  it("frappe n'importe quel ennemi (ennemi_tous) et le tétanise", () => {
+  it("atteint la rangée arrière derrière un ennemi vivant (ennemi_tous) et le tétanise", () => {
+    // `lancerSort` n'applique lui-même AUCUN filtre de ligne (c'est `ciblesValides`
+    // qui gate le ciblage, en amont, côté IA/UI) : appeler `lancerSort` directement
+    // avec n'importe quelle cible ne prouverait donc rien sur `ennemi_tous` vs
+    // `ennemi_ligne` — la seule assertion discriminante est sur `ciblesValides`.
     const [f] = equipe();
-    const e = mannequin();
+    const devant = mannequin(); // rangée avant ennemie VIVANTE : sans elle, la règle de
+    devant.position = 0;        // ligne exposerait déjà la rangée arrière d'elle-même,
+    const e = mannequin();      // et le test ne distinguerait pas ennemi_tous d'ennemi_ligne.
     e.position = 4; // rangée arrière ennemie : atteignable seulement via ennemi_tous
+    const cs = [f, devant, e];
 
-    lancerSort(f, SORTS.bulle, e.ref, [f, e], ctx());
+    expect(ciblesValides(f, SORTS.bulle, cs)).toContain(e);
+
+    lancerSort(f, SORTS.bulle, e.ref, cs, ctx());
 
     expect(e.pvActuels).toBeLessThan(500);
     expect(e.effets.some((x) => x.stat === "tetanise")).toBe(true);
