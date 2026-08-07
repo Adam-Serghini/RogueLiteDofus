@@ -47,7 +47,7 @@ export function showEncyclopedie(): Promise<void> {
             <div>
               <h2>${escapeHtml(c.nom)}</h2>
               <p class="ency-role">${escapeHtml(ROLE_CLASSE[classeId] ?? "")}</p>
-              <p class="ency-archetype">${ligneArchetype(classeId, true)}</p>
+              <p class="ency-archetype">${ligneArchetype(classeId, { noms: true, icone: true })}</p>
               <p class="ency-bases muet">PV ${c.pvBase} · PA ${c.pa} · Initiative ${c.initiative}</p>
             </div>
           </div>

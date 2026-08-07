@@ -8,7 +8,7 @@ import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffect
 import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
-import { A, elementAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
+import { A, elementAsset, archetypeAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
 import { escapeHtml, tipsFlottants, setFond } from "./dom";
 
 /** Fond d'écran de la tranche en cours (null = retour au fond de l'accueil). */
@@ -210,17 +210,28 @@ export const ARCHETYPE_NOM: Record<Archetype, string> = {
  *  Les deux éléments sont fixes (ceux de la classe) ; celui qui part au moment du coup
  *  se choisit CIBLE PAR CIBLE (cf. `meilleurElement`, combat.ts) — il n'y a plus de
  *  « défaut » ni de second élément au sens hiérarchique. */
-export function ligneArchetype(classeId: string, avecNoms = false): string {
+export interface OptionsArchetype {
+  /** ajoute les noms d'éléments en clair (écrans où il y a la place) */
+  noms?: boolean;
+  /** l'archétype en icône plutôt qu'en toutes lettres (encyclopédie) */
+  icone?: boolean;
+}
+
+export function ligneArchetype(classeId: string, opts: OptionsArchetype = {}): string {
   const c = CLASSES[classeId];
   const gains = GAINS_ARCHETYPE[c.archetype];
   const titreArch = `${ARCHETYPE_NOM[c.archetype]} : +${gains.parElement} dans chacun de ses 2 éléments et +${gains.vitalite} en Vitalité par niveau`;
   const img = (el: Element) =>
     `<img class="el-pastille" src="${elementAsset(el)}" alt="" title="Élément de la classe : ${elNom[el]}" onerror="this.remove()" />`;
-  const noms = avecNoms
+  const noms = opts.noms
     ? `<span class="classe-elems-noms">${c.elements.map((el) => elNom[el]).join(" + ")}</span>`
     : "";
+  // en icône, le mot reste dans `alt`/`title` — et sert de repli si l'image manque
+  const arch = opts.icone
+    ? `<img class="archetype-icone" src="${archetypeAsset(c.archetype)}" alt="${ARCHETYPE_NOM[c.archetype]}" title="${escapeHtml(titreArch)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'classe-archetype',textContent:this.alt,title:this.title}))" />`
+    : `<span class="classe-archetype" title="${escapeHtml(titreArch)}">${ARCHETYPE_NOM[c.archetype]}</span>`;
   return `<span class="classe-elems">
-    <span class="classe-archetype" title="${escapeHtml(titreArch)}">${ARCHETYPE_NOM[c.archetype]}</span>
+    ${arch}
     <span class="el-pastilles">${c.elements.map(img).join("")}</span>${noms}
   </span>`;
 }

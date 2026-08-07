@@ -14,6 +14,7 @@ import {
   rareteCls,
   itemNomHtml,
   itemStatsHtml,
+  ligneArchetype,
 } from "./composants";
 import {
   classesDisponibles,
@@ -243,10 +244,21 @@ export function showDrop(drops: ItemInstance[]): Promise<void> {
   });
 }
 
+/**
+ * Réinitialisation des Dofus, branchée par l'appelant qui détient le `Meta`.
+ * `nb` est une fonction et non un nombre : l'écran se redessine après la remise
+ * à zéro et doit lire le compte à jour, pas celui de l'ouverture.
+ */
+export interface ResetDofus {
+  nb: () => number;
+  onReset: () => void;
+}
+
 /** Écran Paramètres : touche de fin de tour (rebindable) + auto-passe. */
-export function showSettings(): Promise<void> {
+export function showSettings(dofus?: ResetDofus): Promise<void> {
   return new Promise((res) => {
     let capture = false;
+    let confirmReset = false; // 1er clic = armer, 2e = exécuter (action irréversible)
     const draw = () => {
       ecran(`
         <h1>Paramètres</h1>
@@ -268,21 +280,35 @@ export function showSettings(): Promise<void> {
             </span>
           </div>
           <p id="set-import-msg" class="muet settings-sous" style="display:none"></p>
+          ${dofus ? (() => {
+            // toujours visible, désactivée à zéro : une option qui apparaît et
+            // disparaît serait plus déroutante qu'utile une fois enfouie ici
+            const n = dofus.nb();
+            const desc = n > 0
+              ? `Efface définitivement les ${n} Dofus collectés. Succès, réglages et run en cours sont conservés.`
+              : `Aucun Dofus collecté pour l'instant.`;
+            return `<div class="setting-ligne ${n > 0 ? "setting-danger" : ""}">
+            <span class="setting-lbl">Réinitialiser les Dofus<br><small class="muet">${desc}</small></span>
+            <button id="set-reset-dofus" class="secondaire ${confirmReset ? "danger-arme" : ""}" ${n > 0 ? "" : "disabled"}>${confirmReset ? "Confirmer l'effacement" : "Réinitialiser"}</button>
+          </div>`;
+          })() : ""}
         </div>
         <h2 class="settings-titre">Préréglages des héros</h2>
         <p class="muet settings-sous">Position par défaut, appliquée au début de chaque run.</p>
         <div class="presets">
           ${classesDisponibles().map((cid) => {
             const rangee = config.formation[cid] === "arriere" ? "arriere" : "avant";
-            return `<div class="preset-classe">
+            // archétype + éléments : ils sont fixes depuis la refonte, donc informatifs
+            // et non réglables — ils redonnent à la carte le contenu qu'avait la ligne
+            // quand l'élément se choisissait ici.
+            return `<div class="preset-carte">
               <img class="preset-sym" src="${classSymbol(cid)}" alt="" onerror="this.remove()" />
               <span class="preset-nom">${escapeHtml(CLASSES[cid].nom)}</span>
-              <div class="preset-el">
-                <span class="preset-pos">
-                  <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
-                  <button class="form-el-btn ${rangee === "arriere" ? "sel" : ""}" data-classe="${cid}" data-rangee="arriere" title="Ligne arrière (les héros s'y empilent)">Arrière</button>
-                </span>
-              </div>
+              ${ligneArchetype(cid)}
+              <span class="preset-pos">
+                <button class="form-el-btn ${rangee === "avant" ? "sel" : ""}" data-classe="${cid}" data-rangee="avant" title="Ligne avant (les héros s'y empilent)">Avant</button>
+                <button class="form-el-btn ${rangee === "arriere" ? "sel" : ""}" data-classe="${cid}" data-rangee="arriere" title="Ligne arrière (les héros s'y empilent)">Arrière</button>
+              </span>
             </div>`;
           }).join("")}
         </div>
@@ -337,6 +363,13 @@ export function showSettings(): Promise<void> {
           msg.textContent = "✗ Fichier invalide : ce n'est pas une sauvegarde Roguefus Lite.";
           msg.style.display = "";
         }
+      });
+      // réinitialisation des Dofus : deux clics, le premier arme seulement
+      document.getElementById("set-reset-dofus")?.addEventListener("click", () => {
+        if (!confirmReset) { confirmReset = true; draw(); return; }
+        dofus!.onReset();
+        confirmReset = false;
+        draw();
       });
       document
         .getElementById("set-retour")

@@ -39,12 +39,13 @@ export function showStart(
   reprise: RepriseInfo | null = null,
 ): Promise<{ action: StartAction; ascension: number; trancheId: string }> {
   return new Promise((res) => {
-    const nbUniques = new Set(meta.dofus).size;
     const total = Object.keys(DOFUS).length;
     let trancheSel = reprise?.trancheId ?? "t1"; // tranche choisie (figée pendant une reprise)
     let sel = 0; // palier d'Ascension sélectionné (nouvelle run uniquement)
 
     const draw = () => {
+      // lu à chaque rendu : la réinitialisation des Dofus (Paramètres) le fait tomber à 0
+      const nbUniques = new Set(meta.dofus).size;
       const record = recordAscension(meta, trancheSel);
       // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
       const boutons = reprise
@@ -106,13 +107,13 @@ export function showStart(
         ${ascensionHtml}
         <div class="boutons-ecran">
           ${boutons}
-          ${meta.dofus.length ? `<button id="btn-reset" class="secondaire">Réinitialiser les Dofus</button>` : ""}
         </div>
       `);
       document
         .getElementById("btn-settings")
         ?.addEventListener("click", async () => {
-          await showSettings();
+          // la réinitialisation des Dofus vit dans les Paramètres, plus sur l'accueil
+          await showSettings({ nb: () => meta.dofus.length, onReset });
           draw();
         });
       document
@@ -164,10 +165,6 @@ export function showStart(
       document
         .getElementById("btn-abandon")
         ?.addEventListener("click", () => res({ action: "abandonner", ascension: 0, trancheId: reprise!.trancheId }));
-      document.getElementById("btn-reset")?.addEventListener("click", () => {
-        onReset();
-        draw();
-      });
     };
     draw();
   });

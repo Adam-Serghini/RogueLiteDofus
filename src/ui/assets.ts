@@ -40,6 +40,10 @@ export const ICON_KAMAS = A("/assets/divers/kamas.png");
 
 export const elementAsset = (el: string): string => A(`/assets/elements/${el}.png`);
 
+/** Icône d'archétype (mêlée / distance) — `Classe.archetype`. */
+export const archetypeAsset = (a: string): string =>
+  A(`/assets/elements/${a === "melee" ? "dmgMelee" : "dmgDistance"}.png`);
+
 /** Fond d'écran in-run par tranche — tranche absente : fond de l'accueil. */
 export const FOND_TRANCHE: Record<string, string> = {
   t1: A("/assets/fonds/incarnam.png"),

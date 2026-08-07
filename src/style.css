@@ -995,13 +995,21 @@ button.item-carte:disabled {
   height: 40px;
   object-fit: contain;
   display: block;
-  transition: transform 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease;
 }
 .coin-param:hover:not(:disabled) {
   transform: none;
   box-shadow: none;
 }
+/* survol : simple mise en lumière. La rotation ne va qu'à l'engrenage des
+   Paramètres, où elle évoque un réglage ; sur un Dofus ou un livre elle n'a
+   aucun sens (voir #btn-settings ci-dessous). */
 .coin-param:hover img {
+  filter: brightness(1.14) drop-shadow(0 0 6px #e8b54e99);
+}
+#btn-settings:hover img {
   transform: rotate(35deg);
 }
 .btn-jouer {
@@ -1210,6 +1218,15 @@ kbd {
 }
 .ency-archetype .classe-archetype {
   font-size: 0.68rem;
+}
+/* archétype en icône (encyclopédie) : même gabarit que les pastilles d'élément
+   qui la suivent, pour que la ligne reste alignée */
+.archetype-icone {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+  cursor: help;
 }
 .ency-archetype .classe-elems-noms {
   font-size: 0.8rem;
@@ -1480,42 +1497,48 @@ kbd {
   margin: 0 0 10px;
   font-size: 0.85rem;
 }
+/* Préréglages : une petite carte par classe. C'était une liste d'une ligne par
+   classe du temps où l'élément se réglait ici ; depuis la refonte archétypes il
+   ne reste que la rangée, et la ligne sonnait creux. La carte porte le symbole,
+   le nom, l'archétype + les 2 éléments (informatifs, fixes) et le choix de rangée. */
 .presets {
-  max-width: 620px;
+  max-width: 860px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+.preset-carte {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.preset-classe {
-  display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 5px;
   background: var(--panel-2);
   border: 1px solid var(--bord);
   border-radius: 12px;
-  padding: 6px 10px;
+  padding: 10px 8px;
 }
 .preset-sym {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 .preset-nom {
-  min-width: 92px;
   font-weight: 700;
-  text-align: left;
+  text-align: center;
+  line-height: 1.15;
 }
-.preset-el {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+/* l'archétype se met en colonne sous le nom, au lieu de la ligne des écrans larges */
+.preset-carte .classe-elems {
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 .preset-pos {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin-top: 2px;
 }
 /* écran Formation — grille 4×2 */
 .formation-grille {
@@ -3317,4 +3340,115 @@ body.avec-fond .map-zone {
   display: flex;
   align-items: stretch;
   gap: 12px;
+}
+
+/* =========================================================================
+   Cartes de combat fluides — une rangée ne passe JAMAIS à la ligne.
+   Avant : .carte faisait 172px fixes et .ligne-cards était en flex-wrap:wrap,
+   donc dès que la place manquait les combattants d'une même rangée passaient
+   au-dessous et les lignes avant/arrière se mélangeaient visuellement. Le camp
+   ennemi peut aligner 8 combattants (cases 0-7), soit ~1450px : ça débordait
+   déjà sur un écran large en salle de boss.
+   Maintenant : les cartes se partagent la place (flex) entre 172px et un
+   plancher de 120px, et tout leur contenu suit via des unités `cqw`
+   (1cqw = 1% de la largeur de la carte, base 172px → 1cqw ≈ 1.72px).
+   Sous le plancher, c'est le plateau qui défile horizontalement — jamais la
+   rangée qui se casse. Les textes ont un plancher plus haut que la géométrie
+   pour rester lisibles quand les cartes sont au plus petit.
+   ========================================================================= */
+.ligne-cards {
+  flex-wrap: nowrap; /* la règle d'origine (wrap) est ce qui mélangeait les rangées */
+  min-width: 0;
+}
+.ligne-col {
+  min-width: 0; /* sans ça, la colonne refuse de se comprimer et rien ne rétrécit */
+}
+.carte {
+  flex: 1 1 172px;
+  width: auto;
+  min-width: 120px;
+  max-width: 172px;
+  container-type: inline-size; /* ouvre les unités cqw au contenu ci-dessous */
+  padding: clamp(7px, 6.4cqw, 11px);
+}
+.plateau {
+  overflow-x: auto; /* dernier recours sous le plancher : on défile, on ne casse pas */
+}
+
+/* — contenu de la carte, proportionnel à sa largeur — */
+.carte .carte-nom {
+  font-size: clamp(0.68rem, 8.37cqw, 0.9rem);
+}
+.carte .rang {
+  font-size: clamp(0.46rem, 5.02cqw, 0.54rem);
+}
+.carte .portrait,
+.carte .portrait-wrap {
+  width: clamp(52px, 45.3cqw, 78px);
+}
+.carte .portrait {
+  height: clamp(52px, 45.3cqw, 78px);
+}
+.carte .portrait-wrap {
+  margin-bottom: clamp(15px, 12.8cqw, 22px);
+}
+.carte .pv-gem {
+  width: clamp(32px, 26.7cqw, 46px);
+  height: clamp(32px, 26.7cqw, 46px);
+  bottom: calc(-1 * clamp(18px, 15.1cqw, 26px));
+}
+.carte .pv-num {
+  font-size: clamp(0.6rem, 7.26cqw, 0.78rem);
+}
+.carte .pv-num span {
+  font-size: clamp(0.45rem, 5.1cqw, 0.55rem);
+}
+.carte .pv-bouclier {
+  min-width: clamp(17px, 13.4cqw, 23px);
+  font-size: clamp(0.58rem, 7.07cqw, 0.76rem);
+}
+.carte .pa-gem {
+  width: clamp(46px, 38.4cqw, 66px);
+  height: clamp(46px, 38.4cqw, 66px);
+  top: calc(-1 * clamp(18px, 15.1cqw, 26px));
+  left: calc(-1 * clamp(14px, 11.6cqw, 20px));
+}
+.carte .pa-gem b {
+  font-size: clamp(0.48rem, 5.4cqw, 0.58rem);
+}
+.carte .ms,
+.carte .pp-row {
+  font-size: clamp(0.52rem, 5.95cqw, 0.64rem);
+}
+.carte .ms img {
+  width: clamp(11px, 8.7cqw, 15px);
+  height: clamp(11px, 8.7cqw, 15px);
+}
+.carte .pp-row img {
+  width: clamp(10px, 7.6cqw, 13px);
+  height: clamp(10px, 7.6cqw, 13px);
+}
+.carte .res-chip {
+  font-size: clamp(0.5rem, 5.77cqw, 0.62rem);
+}
+.carte .res-chip img {
+  width: clamp(10px, 7.6cqw, 13px);
+  height: clamp(10px, 7.6cqw, 13px);
+}
+.carte .badge {
+  font-size: clamp(0.46rem, 5.2cqw, 0.56rem);
+}
+
+/* Paramètres — action destructive (réinitialisation des Dofus).
+   Le premier clic arme le bouton (.danger-arme), le second exécute. */
+.setting-danger {
+  border-color: #7a3030;
+}
+.setting-danger .setting-lbl {
+  color: #e8a5a5;
+}
+.setting-ligne button.danger-arme {
+  background: linear-gradient(180deg, #9d2f2f, #742020);
+  border-color: #c85454;
+  color: #fff0f0;
 }
