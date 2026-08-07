@@ -9,6 +9,7 @@ import {
   invoquerLance, LANCE_DURABILITE,
   prochainActeur, purgerInvocationsOrphelines,
   type CombatCtx,
+  ordreDuCombat,
 } from "./combat";
 import { SORTS, DOFUS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus, bonusEquipe, equipeCombattante, nouvelleRun } from "./run";
@@ -472,8 +473,8 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
       combattant("boss", "ennemi", 40),
       combattant("invoc", "ennemi", 99, { invoquePar: "boss" }), // init 99 mais ATTACHÉ au boss
     ];
-    expect(round(cs)).toEqual(["a1", "boss", "invoc", "a2"]);
-    expect(round(cs)).toEqual(["a1", "boss", "invoc", "a2"]); // round suivant : pareil (attachement permanent)
+    expect(round(cs)).toEqual(["boss", "invoc", "a1", "a2"]);
+    expect(round(cs)).toEqual(["boss", "invoc", "a1", "a2"]); // round suivant : pareil (attachement permanent)
   });
 
   it("les invocations-obstacles (Poupée, Lance) n'occupent aucun créneau", () => {
@@ -498,6 +499,67 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
     expect(invoc.pvActuels).toBe(0); // meurt avec son invocateur
     expect(lance.pvActuels).toBe(0); // la lance se brise avec son porteur
     expect(forgelance.bouclier).toBe(bouclierAvant); // pas de bouclier de bris (porteur mort)
+  });
+
+  it("le camp qui ouvre est celui de meilleure MOYENNE, pas celui du meilleur combattant", () => {
+    // l'ennemi aligne LE plus rapide (50) mais traîne un lent (5) : moyenne 27,5
+    // le joueur est régulier : moyenne 30 → il ouvre malgré e1
+    const cs = [
+      combattant("a1", "joueur", 30), combattant("a2", "joueur", 30),
+      combattant("e1", "ennemi", 50), combattant("e2", "ennemi", 5),
+    ];
+    expect(round(cs)[0]).toBe("a1");
+    // symétrique : on baisse le joueur sous la moyenne ennemie
+    const cs2 = [
+      combattant("a1", "joueur", 20), combattant("a2", "joueur", 20),
+      combattant("e1", "ennemi", 50), combattant("e2", "ennemi", 5),
+    ];
+    expect(round(cs2)[0]).toBe("e1");
+  });
+
+  it("égalité de moyenne : le joueur ouvre", () => {
+    const cs = [combattant("a1", "joueur", 30), combattant("e1", "ennemi", 30)];
+    expect(round(cs)).toEqual(["a1", "e1"]);
+  });
+
+  it("la file du joueur suit l'ordre DU TABLEAU, pas l'initiative", () => {
+    // a2 est le plus lent mais placé en premier par le joueur
+    const cs = [
+      combattant("a2", "joueur", 10), combattant("a1", "joueur", 40),
+      combattant("e1", "ennemi", 20),
+    ];
+    expect(round(cs)).toEqual(["a2", "e1", "a1"]);
+    // et la file ENNEMIE reste triée par initiative décroissante : e1(30) passe avant
+    // e2(10) alors que le tableau les donne dans l'ordre inverse
+    const cs2 = [
+      combattant("a1", "joueur", 40),
+      combattant("e2", "ennemi", 10), combattant("e1", "ennemi", 30),
+    ];
+    expect(round(cs2)).toEqual(["a1", "e1", "e2"]);
+  });
+
+  it("la moyenne compte les MORTS : la séquence ne peut pas se retourner en plein combat", () => {
+    // vivants seuls, après la mort de a1 : joueur 10 < ennemi 20 → l'ennemi ouvrirait
+    // morts compris : joueur 25 > ennemi 20 → la séquence reste la même
+    // On interroge `ordreDuCombat` DIRECTEMENT : passer par `round()` mesurerait
+    // autre chose, puisque sauter le créneau d'un mort ne redonne pas la main au
+    // même camp (cf. le test « séquence figée » voisin).
+    const a1 = combattant("a1", "joueur", 40);
+    const a2 = combattant("a2", "joueur", 10);
+    const cs = [a1, a2, combattant("e1", "ennemi", 20), combattant("e2", "ennemi", 20)];
+    const avant = ordreDuCombat(cs);
+    expect(avant[0]).toBe("a1");
+    a1.pvActuels = 0;
+    expect(ordreDuCombat(cs)).toEqual(avant);
+  });
+
+  it("la moyenne ignore les INVOCATIONS : en poser une ne retourne pas l'ouverture", () => {
+    const cs = [
+      combattant("a1", "joueur", 30),
+      combattant("e1", "ennemi", 20),
+      combattant("inv", "ennemi", 999, { estInvocation: true, invoquePar: "e1" }),
+    ];
+    expect(round(cs)[0]).toBe("a1");
   });
 });
 

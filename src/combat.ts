@@ -2219,10 +2219,11 @@ export const joueurGagne = (cs: Combatant[]): boolean => campMort(cs, "ennemi") 
  * simplement sauté tant qu'ils sont à 0 PV — un ressuscité retrouve sa place).
  * Construction :
  * 1. Combattants « principaux » (ni invocations-obstacles, ni invoqués) entrelacés
- *    allié/ennemi : la meilleure initiative de BASE ouvre, chaque camp défile dans
- *    son ordre d'initiative, le surplus du camp majoritaire ferme le round
- *    (4v2 → A E A E A A). L'initiative de DÉPART seule compte : un debuff d'init
- *    en cours de combat ne réordonne plus rien (séquence figée, choix design).
+ *    allié/ennemi : le camp de meilleure MOYENNE d'initiative ouvre (égalité au
+ *    joueur), le camp joueur défile dans l'ordre choisi par le joueur, le camp
+ *    ennemi dans son ordre d'initiative, le surplus du camp majoritaire ferme le
+ *    round (4v2 → A E A E A A). Seule l'initiative de DÉPART compte : un debuff
+ *    d'init en cours de combat n'a plus d'effet sur l'ordre.
  * 2. Chaque invoqué (`invoquePar`) est inséré juste APRÈS son invocateur — il joue
  *    collé à lui à chaque round, même si ça enchaîne deux tours du même camp.
  */
@@ -2230,11 +2231,18 @@ export function ordreDuCombat(cs: Combatant[]): string[] {
   const principaux = cs.filter((c) => !c.estInvocation && !c.invoquePar);
   const parInit = (l: Combatant[]) => [...l].sort((a, b) => b.initiative - a.initiative);
   const files: Record<Camp, Combatant[]> = {
-    joueur: parInit(principaux.filter((c) => c.camp === "joueur")),
+    // le joueur choisit son ordre (cf. run.persos) ; l'ennemi défile par initiative
+    joueur: principaux.filter((c) => c.camp === "joueur"),
     ennemi: parInit(principaux.filter((c) => c.camp === "ennemi")),
   };
-  const premier = parInit(principaux)[0];
-  let camp: Camp = premier ? premier.camp : "joueur";
+  // Le camp qui ouvre : meilleure MOYENNE d'initiative, égalité au joueur.
+  // Calculée sur TOUS les principaux, morts compris : `prochainActeur` rappelle
+  // cette fonction à chaque interrogation, donc une moyenne sur les seuls vivants
+  // dériverait au fil des morts et pourrait retourner l'ouverture en plein combat,
+  // ce qui contredirait la séquence figée.
+  const moyenneInit = (l: Combatant[]): number =>
+    l.length ? l.reduce((s, c) => s + c.initiative, 0) / l.length : 0;
+  let camp: Camp = moyenneInit(files.ennemi) > moyenneInit(files.joueur) ? "ennemi" : "joueur";
   const ordre: string[] = [];
   while (files.joueur.length || files.ennemi.length) {
     if (!files[camp].length) camp = camp === "joueur" ? "ennemi" : "joueur"; // surplus de l'autre camp
