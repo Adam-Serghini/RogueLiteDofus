@@ -1044,6 +1044,19 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): void {
   if (cible.pvActuels > avant) ctx.log(`${cible.nom} récupère ${cible.pvActuels - avant} PV.`);
 }
 
+/** Résout la liste de bénéficiaires d'une « portée » (soi / rangée du lanceur / rangée
+ *  avant alliée) — partagée par les faces de la Roulette (effet ET bouclier) et par
+ *  `appliquerBouclierPortee`, pour ne calculer cette même expression qu'une seule fois. */
+function ciblesPortee(
+  lanceur: Combatant,
+  cs: Combatant[],
+  portee: "soi" | "rangee_lanceur" | "rangee_avant",
+): Combatant[] {
+  return portee === "soi" ? [lanceur]
+    : portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
+    : allies(lanceur, cs).filter(estAvant);
+}
+
 /** Applique un bouclier en % des PV max sur une portée donnée, avec une durée
  *  facultative. SOURCE UNIQUE partagée par les faces de la Roulette (Ecaflip) et par
  *  `Spell.bouclierPortee` (Endurance et Vertu du Iop) — ne pas la dupliquer. */
@@ -1055,11 +1068,7 @@ function appliquerBouclierPortee(
   tours: number | undefined,
   ctx: CombatCtx,
 ): void {
-  const cibles =
-    portee === "soi" ? [lanceur]
-    : portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
-    : allies(lanceur, cs).filter(estAvant);
-  for (const u of cibles) {
+  for (const u of ciblesPortee(lanceur, cs, portee)) {
     if (aFriction(u)) continue;
     const b = Math.round(u.pvMax * pct);
     u.bouclier += b;
@@ -1835,11 +1844,7 @@ export function lancerSort(
       // Un sort de hasard doit annoncer son tirage : sans cette ligne, deux tirages
       // sur critique produisent des effets qui apparaissent sans trace au journal.
       ctx.log(`${lanceur.nom} tire : ${libelleFace(face)}.`);
-      const portee =
-        face.portee === "soi" ? [lanceur]
-        : face.portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
-        : allies(lanceur, cs).filter(estAvant);
-      for (const u of portee) {
+      for (const u of ciblesPortee(lanceur, cs, face.portee)) {
         if (face.effet) appliquerEffet(u, face.effet);
       }
       if (face.bouclierPct) appliquerBouclierPortee(lanceur, cs, face.portee, face.bouclierPct, face.duree, ctx);
@@ -2094,7 +2099,12 @@ export function lancerSort(
   if (sort.effetRangeeAlliee) appliquerBuffRangee(lanceur, sort.effetRangeeAlliee, cs, ctx);
 
   // Endurance (Iop) : sort de DÉGÂTS qui boucliere aussi son lanceur — une seule fois
-  // par lancement, indépendamment du nombre de cibles touchées.
+  // par lancement, indépendamment du nombre de cibles touchées. Ce point de résolution
+  // est situé APRÈS les branches à retour anticipé (executeSeulement, projectiles,
+  // coups, soinLigneAvantRatio) : un futur sort de l'une de ces familles qui porterait
+  // aussi `bouclierPortee` ne le verrait jamais résolu, en silence. Aucun porteur
+  // aujourd'hui — même situation que `retraitPAProchainTour` (Tétanie, Féca), qui ne
+  // couvre lui aussi que le chemin de dégâts « normal ».
   if (sort.bouclierPortee) {
     const { portee, pct, tours } = sort.bouclierPortee;
     appliquerBouclierPortee(lanceur, cs, portee, pct, tours, ctx);

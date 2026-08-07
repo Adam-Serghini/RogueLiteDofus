@@ -311,6 +311,75 @@ describe("bouclierPortee — bouclier en % sur une portée, avec durée", () => 
     ]);
   });
 
+  it("côté DÉGÂTS : ne s'applique qu'UNE FOIS par lancement, même si le sort touche plusieurs cibles (zoneLigne)", () => {
+    // Revue : un relecteur a déplacé la résolution de bouclierPortee À L'INTÉRIEUR de
+    // la boucle sur les cibles touchées, et les 912 tests d'alors restaient verts —
+    // rien ne tendait la propriété « une fois par lancer, pas une fois par cible ».
+    // Ce test la tend réellement avec 3 cibles dans la même zoneLigne.
+    const l = heros();
+    l.pvMax = 500; l.pvActuels = 500;
+    const ennemis = fabriquerEnnemis("combat_3");
+    for (const e of ennemis) { e.resistances = {}; e.stats = { ...e.stats, agilite: 0 }; }
+    ennemis.forEach((e, i) => (e.position = i)); // les 3 en rangée avant : zoneLigne les touche TOUTES
+    const cs = [l, ...ennemis];
+    const sortEnduranceZone: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_zone", zoneLigne: true,
+      bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
+    };
+
+    lancerSort(l, sortEnduranceZone, ennemis[0].ref, cs, ctx());
+
+    // 3 cibles touchées par CE lancer : un moteur qui résoudrait le bouclier par
+    // cible plutôt que par lancement le donnerait 3× (120), pas 1× (40).
+    expect(l.bouclier).toBe(Math.round(500 * 0.08)); // 40, pas 120
+    expect(l.boucliersTemporaires).toEqual([{ montant: 40, tours: 1 }]); // UNE seule entrée
+  });
+
+  it("côté SOUTIEN : ne s'applique qu'UNE FOIS par lancement, même si le sort vise allie_tous (3 alliés)", () => {
+    // Même propriété que le test précédent, sur le chemin de soutien (Vertu peut être
+    // repris en allie_tous demain — la garantie doit tenir indépendamment du kit réel).
+    const [l, allie2, allie3] = equipeDe4();
+    l.position = 0; allie2.position = 1; allie3.position = 2; // 3 alliés, même rangée
+    const cs = [l, allie2, allie3];
+    const sortVertuTous: Spell = {
+      ...SORTS.morsure, id: "test_vertu_allie_tous", type: "buff", cible: "allie_tous",
+      baseMin: 0, baseMax: 0, coutPA: 3,
+      // portée "soi" volontaire : seul le LANCEUR doit en profiter, ce qui rend une
+      // triplication (une par cible du allie_tous) immédiatement visible sur lui.
+      bouclierPortee: { portee: "soi", pct: 0.15, tours: 2 },
+    };
+
+    lancerSort(l, sortVertuTous, l.ref, cs, ctx());
+
+    expect(l.bouclier).toBe(Math.round(500 * 0.15)); // 75, pas 225 (3×)
+    expect(l.boucliersTemporaires).toEqual([{ montant: 75, tours: 2 }]); // UNE seule entrée
+    expect(allie2.bouclier).toBe(0); // portée "soi" : jamais les alliés visés par le sort
+    expect(allie3.bouclier).toBe(0);
+  });
+
+  it("sans `tours`, le bouclier est PERMANENT : aucune inscription à expirer", () => {
+    const l = heros();
+    l.pvMax = 500; l.pvActuels = 500;
+    const [a] = fabriquerEnnemis("combat_1");
+    a.resistances = {}; a.stats = { ...a.stats, agilite: 0 };
+    const cs = [l, a];
+    const sortEnduranceSansDuree: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_permanent",
+      bouclierPortee: { portee: "soi", pct: 0.08 }, // pas de `tours`
+    };
+
+    lancerSort(l, sortEnduranceSansDuree, a.ref, cs, ctx());
+    expect(l.bouclier).toBe(40);
+    expect(l.boucliersTemporaires ?? []).toEqual([]); // rien n'est inscrit : rien à expirer
+
+    // Plusieurs tours du porteur passent : sans inscription dans boucliersTemporaires,
+    // effetsDebutTour n'a rien à décompter ni à retirer.
+    effetsDebutTour(l, cs, ctx());
+    effetsDebutTour(l, cs, ctx());
+    effetsDebutTour(l, cs, ctx());
+    expect(l.bouclier).toBe(40);
+  });
+
   it('portee "rangee_lanceur" depuis un sort de SOUTIEN : toute la rangée, LANCEUR COMPRIS (Vertu)', () => {
     const [l, allieMemeRangee, allieAutreRangee] = equipeDe4();
     l.position = 0; // rangée avant
@@ -457,6 +526,48 @@ describe("paImmediat — des PA pour le tour EN COURS (Précipitation)", () => {
     // intermédiaire sans rien dire sur la dépensabilité réelle des PA immédiats.
     expect(appel).toBe(2); // les deux actions ont bien été proposées et jouées
     expect(ennemi.pvActuels).toBe(0);
+  });
+
+  it("sont PERDUS à la fin du tour : la recharge normale de runCombat les efface", async () => {
+    // Garanti par du code préexistant (la recharge `acteur.paActuels = acteur.paMax`
+    // en fin de tour, inconditionnelle), mais rien ne le figeait pour ce champ précis.
+    const l = heros();
+    l.initiative = 100;
+    const [ennemi] = fabriquerEnnemis("combat_1");
+    ennemi.initiative = 1;
+    ennemi.resistances = {};
+    ennemi.paMax = 0; ennemi.paActuels = 0; // ne joue jamais, ne meurt jamais : le round 2 arrive
+    const cs = [l, ennemi];
+
+    const sortPrecipitation: Spell = {
+      ...SORTS.morsure, id: "test_precipitation_fin_tour", type: "buff", cible: "soi",
+      baseMin: 0, baseMax: 0, coutPA: 0, paImmediat: 3,
+    };
+    const sortTue: Spell = {
+      ...SORTS.morsure, id: "test_tue_fin_tour", coutPA: 0, baseMin: 999, baseMax: 999, scaling: 0,
+    };
+
+    let appel = 0;
+    let paAuDebutRound2: number | null = null;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      appel += 1;
+      if (appel === 1) return { sort: sortPrecipitation, cibleRef: l.ref }; // round 1, action 1
+      if (appel === 2) return null; // round 1 : fin de tour volontaire, PA immédiat non dépensé
+      if (appel === 3) {
+        paAuDebutRound2 = acteur.paActuels; // round 2 : capturé AVANT toute nouvelle action
+        return { sort: sortTue, cibleRef: ennemi.ref }; // achève l'ennemi, borne le test
+      }
+      return null;
+    };
+    const controllerEnnemi = (): Action | null => null;
+
+    await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: controllerEnnemi },
+      rng: rngMax,
+    });
+
+    expect(paAuDebutRound2).toBe(l.paMax); // 6, pas 9 : le crédit ne survit pas à la fin du tour
+    expect(ennemi.pvActuels).toBe(0); // témoin : le combat s'est bien terminé au round 2
   });
 
   it("le gain peut dépasser le maximum de PA du combattant", () => {
