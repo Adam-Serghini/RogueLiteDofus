@@ -424,7 +424,6 @@ export interface Combatant {
   elements?: [Element, Element];
   // état transitoire :
   maxRollCharges: number; // Œil affûté
-  passeProchainTour: boolean; // Colère
   bouclier: number; // points d'absorption (encaissés avant les PV)
   paBonusNextTurn: number; // delta de PA appliqué à la prochaine recharge, positif ou négatif (Mot Ivation, Tétanie)
   cooldowns: Record<string, number>; // `${sortId}:${cibleRef}` -> tours restants
@@ -437,8 +436,6 @@ export interface Combatant {
   estInvocation?: boolean; // ne joue pas de tour
   joueTour?: boolean; // false pour une invocation
   provoque?: boolean; // les ennemis doivent la cibler en priorité
-  provoqueTours?: number; // Provocation : tours restants de provocation (sinon permanent)
-  provoquePoseCeTour?: boolean; // vrai le tour où provoqueTours est posé : le décompte de fin de tour est sauté une fois (sinon la provocation expirerait avant le tour adverse suivant)
   dureeRestante?: number; // optionnel : disparaît après N tours
   lancersCeTour?: Record<string, number>; // clés `sortId` et `sortId:cibleRef` — remis à {} au début du tour du combattant
   /** Lancers par sort depuis le DÉBUT DU COMBAT (clé `sortId`). Jamais remis à zéro
@@ -455,7 +452,7 @@ export interface Combatant {
   estLance?: boolean; // vrai pour le pseudo-combattant « Lance » (camp ennemi, invocation)
   lanceurRef?: string; // ref du Forgelance propriétaire de la lance (réutilisé par l'Égide du Féca : ref du lanceur)
   redirection?: { ratio: number; tours: number }; // Étreinte : redirige une fraction des dégâts subis par un allié arrière vers le porteur
-  redirectionPoseCeTour?: boolean; // vrai le tour où redirection est posée : le décompte de fin de tour est sauté une fois (même bug/fix que provoquePoseCeTour)
+  redirectionPoseCeTour?: boolean; // vrai le tour où redirection est posée : le décompte de fin de tour est sauté une fois (même mécanique de garde qu'un minuteur posé en cours de tour)
   // --- Féca (Égide) ---
   estEgide?: boolean; // vrai pour le pseudo-combattant « Égide » (camp du lanceur, invocation qui intercepte pour sa rangée)
   toursRestantsInvocation?: number; // minuteur de l'Égide, décompté au début du tour de son invocateur (comme Combatant.conjuration)

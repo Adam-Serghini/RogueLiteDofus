@@ -311,12 +311,11 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
  *  Combatant (héros, monstre, invocation). SOURCE UNIQUE : un nouveau champ
  *  d'état s'ajoute ici, pas dans chacune des quatre fabriques. */
 export function etatCombatInitial(): Pick<Combatant,
-  "effets" | "maxRollCharges" | "passeProchainTour" | "bouclier" | "paBonusNextTurn" |
+  "effets" | "maxRollCharges" | "bouclier" | "paBonusNextTurn" |
   "cooldowns" | "bonusOffensifProchain" | "poisonAmpliTours"> {
   return {
     effets: [],
     maxRollCharges: 0,
-    passeProchainTour: false,
     bouclier: 0,
     paBonusNextTurn: 0,
     cooldowns: {},
@@ -975,12 +974,6 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
     }
     acteur.boucliersTemporaires = acteur.boucliersTemporaires.filter((bt) => bt.tours > 0);
   }
-  // passe le tour (Colère)
-  if (acteur.passeProchainTour) {
-    acteur.passeProchainTour = false;
-    ctx.log(`${acteur.nom} passe son tour (Colère).`);
-    return true;
-  }
   return false;
 }
 
@@ -994,18 +987,8 @@ function decrementerEffets(acteur: Combatant): void {
   acteur.effets = acteur.effets.filter((e) => e.toursRestants > 0);
   if (toucheVitalite) recomputePvMax(acteur);
 
-  // compteurs temporisés (Arsenic, Provocation)
+  // compteurs temporisés (Arsenic)
   if (acteur.poisonAmpliTours > 0) acteur.poisonAmpliTours -= 1;
-  // Provocation : posée pendant CE tour → on saute le décompte une fois (sinon elle
-  // expirerait avant même le tour adverse suivant, qu'elle est censée contraindre).
-  if (acteur.provoqueTours) {
-    if (acteur.provoquePoseCeTour) {
-      acteur.provoquePoseCeTour = false;
-    } else if (--acteur.provoqueTours <= 0) {
-      acteur.provoqueTours = 0;
-      acteur.provoque = false;
-    }
-  }
   acteur.resquilleActive = undefined; // Resquille (Roublard) : ne dure que le tour où elle est posée
 
   // redirection (Étreinte) : décompte sur le porteur, retirée à 0 — même garde
