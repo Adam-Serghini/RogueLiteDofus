@@ -609,6 +609,9 @@ function appliquerPoison(
 /** Retire les boucliers et les effets bénéfiques d'une cible (désenvoûtement). */
 function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
   cible.bouclier = 0;
+  // vide aussi la liste des boucliers à durée : sinon leur expiration retirerait plus
+  // tard un bouclier reçu ENTRE-TEMPS (fantôme d'un bouclier déjà dissipé).
+  cible.boucliersTemporaires = [];
   const benefiques: EffetStat[] = ["hot", "esquive", "reductionDegats", "armure", "resAll", "vitalite", "force", "intelligence", "agilite", "chance"];
   const avant = cible.effets.length;
   cible.effets = cible.effets.filter(
@@ -856,6 +859,19 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
     e.toursRestants -= 1; // durée au tick (cf. EFFETS_TICK_DEBUT)
   }
   acteur.effets = acteur.effets.filter((e) => !(EFFETS_TICK_DEBUT.includes(e.stat) && e.toursRestants <= 0));
+  // Bouclier à DURÉE (Château de cartes) : décompte au début du tour du porteur, retire
+  // à expiration min(montant donné, bouclier restant) — jamais plus que ce qui a été
+  // octroyé (l'absorption ne trace pas la source, voir Combatant.boucliersTemporaires).
+  if (acteur.boucliersTemporaires?.length) {
+    for (const bt of acteur.boucliersTemporaires) bt.tours -= 1;
+    const expires = acteur.boucliersTemporaires.filter((bt) => bt.tours <= 0);
+    for (const bt of expires) {
+      const retire = Math.min(bt.montant, acteur.bouclier);
+      acteur.bouclier -= retire;
+      if (retire > 0) ctx.log(`Le bouclier temporaire de ${acteur.nom} s'estompe (−${retire}).`);
+    }
+    acteur.boucliersTemporaires = acteur.boucliersTemporaires.filter((bt) => bt.tours > 0);
+  }
   // passe le tour (Colère)
   if (acteur.passeProchainTour) {
     acteur.passeProchainTour = false;
@@ -926,17 +942,29 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): void {
   if (cible.pvActuels > avant) ctx.log(`${cible.nom} récupère ${cible.pvActuels - avant} PV.`);
 }
 
-/** Applique les effets de soutien d'un sort (Eniripsa) à une cible. */
-function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx: CombatCtx): void {
+/** Un sort de soutien ne tire un critique QUE s'il en dépend. Le tirer à chaque buff
+ *  consommerait un aléa de plus, décalerait la séquence de TOUS les combats et rendrait
+ *  faux chaque test à graine fixe du projet. */
+const dependDuCritique = (s: Spell): boolean => !!(s.bouclierPctSiCrit || s.tiragesSiCrit);
+
+/** Applique les effets de soutien d'un sort (Eniripsa) à une cible. `critSoutien` :
+ *  résultat du jet de critique de soutien (voir `dependDuCritique`), déjà tiré une seule
+ *  fois par lancement — jamais recalculé par cible. */
+function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx: CombatCtx, critSoutien = false): void {
   if (sort.dissipe) {
     const avant = cible.effets.length;
     cible.effets = cible.effets.filter((e) => e.stat !== "poison" && e.stat !== "degatsInfliges");
     if (cible.effets.length < avant) ctx.log(`${cible.nom} est purgé de ses effets négatifs.`);
   }
   if (sort.bouclierPct && !aFriction(cible)) {
-    const b = Math.round(cible.pvMax * sort.bouclierPct);
+    const pct = critSoutien && sort.bouclierPctSiCrit ? sort.bouclierPctSiCrit : sort.bouclierPct;
+    const b = Math.round(cible.pvMax * pct);
     cible.bouclier += b;
     ctx.log(`${cible.nom} gagne un bouclier de ${b}.`);
+    // Bouclier à DURÉE (Château de cartes) : on retient ce qui a été donné pour ne
+    // jamais retirer plus que ça à l'expiration — voir le commentaire sur
+    // Combatant.boucliersTemporaires (types.ts) pour l'imperfection assumée.
+    if (sort.bouclierTours) (cible.boucliersTemporaires ??= []).push({ montant: b, tours: sort.bouclierTours });
   }
   if (sort.hotPct && !aFriction(cible)) {
     const h = Math.max(1, Math.round(cible.stats.vitalite * sort.hotPct * multSoinDe(lanceur)));
@@ -1627,9 +1655,37 @@ export function lancerSort(
     return;
   }
 
+  // --- ROULETTE (Ecaflip) : tire 1 face au hasard (sort.tiragesSiCrit sur critique) ---
+  if (sort.facesAleatoires) {
+    ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
+    const critSoutien = dependDuCritique(sort) && ctx.rng() < chanceCritEffective(statsEffectives(lanceur));
+    const tirages = critSoutien && sort.tiragesSiCrit ? sort.tiragesSiCrit : 1;
+    for (let i = 0; i < tirages; i++) {
+      // Tirage INDÉPENDANT à chaque itération : la même face peut sortir plusieurs
+      // fois, ses effets s'additionnent naturellement (sommeEffet somme par stat) —
+      // pas de déduplication.
+      const face = sort.facesAleatoires[Math.floor(ctx.rng() * sort.facesAleatoires.length)];
+      const portee =
+        face.portee === "soi" ? [lanceur]
+        : face.portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
+        : allies(lanceur, cs).filter(estAvant);
+      for (const u of portee) {
+        if (face.effet) appliquerEffet(u, face.effet);
+        if (face.bouclierPct && !aFriction(u)) {
+          const b = Math.round(u.pvMax * face.bouclierPct);
+          u.bouclier += b;
+          ctx.log(`${u.nom} gagne un bouclier de ${b}.`);
+        }
+      }
+    }
+    poseCooldown(lanceur);
+    return;
+  }
+
   // --- BUFF / DEBUFF (soutien) ---
   if (sort.type === "buff" || sort.type === "debuff") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
+    const critSoutien = dependDuCritique(sort) && ctx.rng() < chanceCritEffective(statsEffectives(lanceur));
     // Tactique féline : +PA aux alliés des cases adjacentes
     if (sort.paGainAdjacents) {
       const voisines = adjacents(lanceur.position);
@@ -1655,7 +1711,7 @@ export function lancerSort(
       cibles = [];
     }
     for (const t of cibles) {
-      appliquerSoutien(sort, t, lanceur, ctx);
+      appliquerSoutien(sort, t, lanceur, ctx, critSoutien);
       poseCooldown(t);
     }
     return;

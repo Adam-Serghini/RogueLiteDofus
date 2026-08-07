@@ -7,7 +7,7 @@
 //  un sort synthétique à partir d'un sort existant (SORTS.morsure).
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, degatsCible, elementsCandidats, estAvant, type CombatCtx } from "./combat";
+import { lancerSort, degatsCible, elementsCandidats, estAvant, effetsDebutTour, type CombatCtx } from "./combat";
 import { SORTS } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 import type { Combatant, Element, Spell } from "./types";
@@ -238,6 +238,154 @@ describe("effetLigneCible", () => {
     expect(marquesE0.length).toBe(1); // pas de doublon
     expect(marquesE0[0].valeur).toBe(-0.1); // pas doublé
     expect(marquesE0[0].toursRestants).toBe(2); // durée rafraîchie
+  });
+});
+
+describe("critique de soutien (dependDuCritique)", () => {
+  it("un buff SANS champ conditionné au critique ne consomme AUCUN aléa (comme avant)", () => {
+    // Le test le plus important de la tâche : tirer le critique de soutien à CHAQUE
+    // buff décalerait la séquence de tout le combat. Un buff ordinaire (ni
+    // bouclierPctSiCrit, ni tiragesSiCrit) ne doit rien tirer du tout.
+    const lanceur = ecaflip();
+    const cible = mannequin();
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_buff_ordinaire", type: "buff", cible: "soi",
+      effet: { stat: "force", valeur: 10, duree: 3 },
+    };
+
+    let appels = 0;
+    const rngCompte = () => { appels++; return 0.99; };
+    lancerSort(lanceur, spell, lanceur.ref, [lanceur, cible], ctx({ rng: rngCompte }));
+
+    expect(appels).toBe(0);
+    expect(lanceur.effets.some((e) => e.stat === "force" && e.valeur === 10)).toBe(true);
+  });
+
+  it("un sort de soutien AVEC bouclierPctSiCrit tire un critique et double son bouclier", () => {
+    const lanceurCrit = ecaflip();
+    lanceurCrit.pvMax = 500; lanceurCrit.pvActuels = 500;
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_crit", type: "buff", cible: "soi",
+      bouclierPct: 0.1, bouclierPctSiCrit: 0.2,
+    };
+
+    // rng()=0 : 0 < chanceCritEffective (0.05 au plancher) → critique.
+    lancerSort(lanceurCrit, spell, lanceurCrit.ref, [lanceurCrit], ctx({ rng: () => 0 }));
+    expect(lanceurCrit.bouclier).toBe(100); // round(500 * 0.2)
+
+    const lanceurSansCrit = ecaflip();
+    lanceurSansCrit.pvMax = 500; lanceurSansCrit.pvActuels = 500;
+    // rng()=0.5 : jamais de critique (seuil 0.05).
+    lancerSort(lanceurSansCrit, spell, lanceurSansCrit.ref, [lanceurSansCrit], ctx({ rng: () => 0.5 }));
+    expect(lanceurSansCrit.bouclier).toBe(50); // round(500 * 0.1)
+  });
+});
+
+describe("bouclier temporaire (Château de cartes)", () => {
+  it("expire après N tours du porteur et ne retire jamais plus que ce qui a été donné", () => {
+    const lanceur = ecaflip();
+    lanceur.pvMax = 500; lanceur.pvActuels = 500;
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_duree", type: "buff", cible: "soi",
+      bouclierPct: 0.2, bouclierTours: 2,
+    };
+
+    lancerSort(lanceur, spell, lanceur.ref, [lanceur], ctx({ rng: () => 0.5 })); // pas de crit
+    expect(lanceur.bouclier).toBe(100); // round(500 * 0.2)
+    expect(lanceur.boucliersTemporaires).toEqual([{ montant: 100, tours: 2 }]);
+
+    // Un tour passe : ne doit pas encore expirer.
+    effetsDebutTour(lanceur, [lanceur], ctx());
+    expect(lanceur.boucliersTemporaires).toEqual([{ montant: 100, tours: 1 }]);
+    expect(lanceur.bouclier).toBe(100);
+
+    // Le bouclier a ABSORBÉ des dégâts entre-temps : il n'en reste que 30.
+    lanceur.bouclier = 30;
+
+    // Second tour : expiration. min(montant=100, restant=30) = 30, jamais plus.
+    effetsDebutTour(lanceur, [lanceur], ctx());
+    expect(lanceur.bouclier).toBe(0);
+    expect(lanceur.boucliersTemporaires).toEqual([]);
+  });
+
+  it("friction empêche le bouclier temporaire : aucun point, et aucune entrée dans la liste", () => {
+    const lanceur = ecaflip();
+    lanceur.pvMax = 500; lanceur.pvActuels = 500;
+    lanceur.effets.push({ stat: "friction", valeur: 1, toursRestants: 3 });
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_friction", type: "buff", cible: "soi",
+      bouclierPct: 0.2, bouclierTours: 2,
+    };
+
+    lancerSort(lanceur, spell, lanceur.ref, [lanceur], ctx({ rng: () => 0.5 }));
+
+    expect(lanceur.bouclier).toBe(0);
+    // Aucune entrée fantôme : sinon une expiration future retirerait un bouclier
+    // reçu plus tard, alors que celui-ci n'a jamais été octroyé.
+    expect(lanceur.boucliersTemporaires ?? []).toEqual([]);
+  });
+
+  it("dissipePositifs vide la liste des boucliers temporaires EN PLUS de mettre le bouclier à 0", () => {
+    const lanceur = ecaflip();
+    lanceur.pvMax = 500; lanceur.pvActuels = 500;
+    const pose: Spell = {
+      ...SORTS.morsure, id: "test_bouclier_avant_dissipe", type: "buff", cible: "soi",
+      bouclierPct: 0.2, bouclierTours: 3,
+    };
+    lancerSort(lanceur, pose, lanceur.ref, [lanceur], ctx({ rng: () => 0.5 }));
+    expect(lanceur.boucliersTemporaires).toEqual([{ montant: 100, tours: 3 }]);
+
+    const cible = mannequin(); // sert de lanceur du désenvoûtement (peu importe qui)
+    const dissipe: Spell = { ...SORTS.morsure, id: "test_dissipe", type: "debuff", cible: "soi", dissipePositifs: true };
+    lancerSort(lanceur, dissipe, lanceur.ref, [lanceur, cible], ctx());
+
+    expect(lanceur.bouclier).toBe(0);
+    expect(lanceur.boucliersTemporaires).toEqual([]);
+  });
+});
+
+describe("facesAleatoires (Roulette)", () => {
+  const spell = (over: Partial<Spell> = {}): Spell => ({
+    ...SORTS.morsure, id: "test_roulette", type: "buff", cible: "soi",
+    facesAleatoires: [
+      { portee: "soi", effet: { stat: "force", valeur: 5, duree: 3 } },
+      { portee: "soi", effet: { stat: "agilite", valeur: 7, duree: 3 } },
+    ],
+    tiragesSiCrit: 2,
+    ...over,
+  });
+
+  it("sans critique : une seule face est tirée", () => {
+    const lanceur = ecaflip();
+    const queue = [0.99, 0]; // pas de crit (0.99), puis face d'index 0 (force)
+    let i = 0;
+    lancerSort(lanceur, spell(), lanceur.ref, [lanceur], ctx({ rng: () => queue[i++] }));
+
+    expect(lanceur.effets.filter((e) => e.stat === "force" || e.stat === "agilite")).toHaveLength(1);
+    expect(lanceur.effets.some((e) => e.stat === "force" && e.valeur === 5)).toBe(true);
+  });
+
+  it("sur critique : deux faces sont tirées", () => {
+    const lanceur = ecaflip();
+    // crit (0), face 0 = force (0), face 1 = agilite (0.99 → index 1)
+    const queue = [0, 0, 0.99];
+    let i = 0;
+    lancerSort(lanceur, spell(), lanceur.ref, [lanceur], ctx({ rng: () => queue[i++] }));
+
+    expect(lanceur.effets.filter((e) => e.stat === "force")).toHaveLength(1);
+    expect(lanceur.effets.filter((e) => e.stat === "agilite")).toHaveLength(1);
+  });
+
+  it("deux faces identiques se cumulent (pas de déduplication)", () => {
+    const lanceur = ecaflip();
+    // crit (0), face 0 deux fois de suite (0, 0)
+    const queue = [0, 0, 0];
+    let i = 0;
+    lancerSort(lanceur, spell(), lanceur.ref, [lanceur], ctx({ rng: () => queue[i++] }));
+
+    const forces = lanceur.effets.filter((e) => e.stat === "force");
+    expect(forces).toHaveLength(2); // deux entrées distinctes, pas fusionnées
+    expect(forces.reduce((s, e) => s + e.valeur, 0)).toBe(10); // 5 + 5, cumulés
   });
 });
 

@@ -237,6 +237,18 @@ export interface Spell {
   secondCoupSiCrit?: boolean; // Bluff : sur critique, frappe une seconde fois dans l'AUTRE élément (le meilleur)
   effetLigneCible?: EffetSpec; // débuff appliqué à TOUTE la rangée de la cible ; non cumulable (durée rafraîchie)
   soinAvantBlesseRatio?: number; // soigne l'allié le plus blessé de la RANGÉE AVANT d'une fraction des dégâts infligés
+  // --- rework de l'Ecaflip (primitives du chemin de soutien) ---
+  bouclierPctSiCrit?: number; // remplace bouclierPct si le sort de soutien critique (voir tiragesSiCrit)
+  bouclierTours?: number; // Château de cartes : le bouclier octroyé expire après N tours du porteur
+  facesAleatoires?: FaceRoulette[]; // Roulette : handler dédié (tirage(s) de face indépendants)
+  tiragesSiCrit?: number; // Roulette : nombre de faces tirées si le sort critique (sinon 1 seule)
+}
+
+/** Une face de Roulette (Ecaflip) : une portée, et ce qu'elle applique à chaque unité. */
+export interface FaceRoulette {
+  portee: "soi" | "rangee_lanceur" | "rangee_avant";
+  effet?: EffetSpec; // buff appliqué à chaque unité de la portée
+  bouclierPct?: number; // ou bouclier en % des PV max
 }
 
 /** Un effet possible d'un proc aléatoire (Langue râpeuse). */
@@ -405,6 +417,13 @@ export interface Combatant {
   lanceurRef?: string; // ref du Forgelance propriétaire de la lance
   redirection?: { ratio: number; tours: number }; // Étreinte : redirige une fraction des dégâts subis par un allié arrière vers le porteur
   redirectionPoseCeTour?: boolean; // vrai le tour où redirection est posée : le décompte de fin de tour est sauté une fois (même bug/fix que provoquePoseCeTour)
+  // --- Ecaflip (Château de cartes) ---
+  /** Boucliers à DURÉE (distincts du bouclier permanent) : chaque entrée retient le
+   *  montant octroyé pour ne jamais retirer plus que ce qui a été donné à l'expiration.
+   *  L'absorption (`infligerDegats`) ne trace pas la source des points de bouclier : si un
+   *  bouclier permanent coexiste avec un temporaire, l'expiration retire ce qui reste du
+   *  bouclier total sans savoir à qui il appartenait — imperfection assumée, pas un oubli. */
+  boucliersTemporaires?: { montant: number; tours: number }[];
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort).
