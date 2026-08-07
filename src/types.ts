@@ -199,9 +199,12 @@ export interface Spell {
   /** Pugilat (Iop) : fraction des dégâts infligée aux AUTRES ennemis de la rangée de
    *  la cible. Distinct de `zoneLigne`, qui frappe toute la rangée à pleine puissance. */
   ratioLigne?: number;
-  /** Pugilat (Iop) : +N par RELANCE du sort dans le tour (additif). Le compteur
-   *  `lancersCeTour` étant incrémenté AVANT la résolution, le premier lancer vaut 1
-   *  et ne doit donc PAS être majoré — d'où le « −1 » du calcul. */
+  /** Pugilat (Iop) : +N par RELANCE du sort dans le tour (additif). Alimente lui-même
+   *  `lancersCeTour` (même garde que `maxParTour`/`maxParCibleParTour`, jamais en
+   *  double si le sort porte aussi l'une de ces limites) : porter ce champ SUFFIT à
+   *  escalader, aucune limite de lancers n'est requise en plus. Le compteur étant
+   *  incrémenté AVANT la résolution, le premier lancer vaut 1 et ne doit donc PAS
+   *  être majoré — d'où le « −1 » du calcul dans `combat.ts`. */
   bonusParRelanceCeTour?: number;
   /** Colère de Iop : +N par lancer PRÉCÉDENT du sort, pour tout le reste du combat.
    *  Lit `lancersCombat`, qui survit aux tours — contrairement à `lancersCeTour`. */

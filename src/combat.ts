@@ -286,7 +286,10 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
   }
   // Pugilat : la rangée de la cible est touchée, mais à puissance RÉDUITE hors cible
-  // principale — le ratio lui-même est appliqué à la résolution, pas ici.
+  // principale — le ratio lui-même est appliqué à la résolution, pas ici. Ce retour
+  // anticipé annule silencieusement `rebond` sur un sort qui porterait les deux
+  // champs — aucun porteur aujourd'hui, donc pas de branche à écrire, mais à revoir
+  // si un futur sort combine les deux.
   if (sort.ratioLigne) {
     const memeRangee = estAvant(primaire);
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
@@ -1575,13 +1578,25 @@ export function lancerSort(
   // avant d'appeler lancerSort, donc « avant paiement » = paActuels + coutPA ici.
   const paAvant = lanceur.paActuels + sort.coutPA;
   const cible = parRef(cs, cibleRef);
-  if (sort.maxParTour || sort.maxParCibleParTour) {
+  // Pugilat (bonusParRelanceCeTour) rejoint la garde : sans ça, un sort portant
+  // l'escalade sans AUCUNE limite de lancers ne verrait jamais `lancersCeTour`
+  // alimenté et n'escaladerait donc jamais, en silence. L'ajout à cette MÊME garde
+  // (plutôt qu'un bloc séparé, sur le modèle du compteur de combat plus bas) évite
+  // toute double incrémentation pour un sort qui porterait aussi une limite de
+  // lancers (le futur Pugilat porte `maxParCibleParTour` ET `bonusParRelanceCeTour`).
+  if (sort.maxParTour || sort.maxParCibleParTour || sort.bonusParRelanceCeTour) {
     const l = (lanceur.lancersCeTour ??= {});
     l[sort.id] = (l[sort.id] ?? 0) + 1;
     if (cibleRef) l[`${sort.id}:${cibleRef}`] = (l[`${sort.id}:${cibleRef}`] ?? 0) + 1;
   }
   // Compteur de combat (Colère de Iop) : la garde ci-dessus ne couvre que les sorts à
   // limite de lancers, et il ne doit JAMAIS être remis à zéro en cours de combat.
+  // Les deux compteurs incrémentés ICI (lancersCeTour/lancersCombat) ne sont LUS que
+  // plus bas, dans le chemin de dégâts « normal » — donc APRÈS les branches à retour
+  // anticipé (projectiles, coups, kaboom, boomerang, enflammée, soinLigneAvantRatio).
+  // Un sort de l'une de ces familles qui porterait `bonusParLancerCombat` verrait son
+  // compteur incrémenté mais jamais relu : même famille d'inertie silencieuse que
+  // celle corrigée ci-dessus pour `bonusParRelanceCeTour`. Aucun porteur aujourd'hui.
   if (sort.bonusParLancerCombat) {
     const lc = (lanceur.lancersCombat ??= {});
     lc[sort.id] = (lc[sort.id] ?? 0) + 1;
