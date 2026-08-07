@@ -71,6 +71,13 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.baseMax).toBe(11);
     expect(s.scaling).toBeCloseTo(0.28);
     expect(s.cooldownTours).toBe(3);
+    expect(s.effetRangeeAlliee).toEqual({
+      rangee: "arriere",
+      effets: [
+        { stat: "ignoreLigne", valeur: 1, duree: 2 },
+        { stat: "degatsInfliges", valeur: 0.05, duree: 2 },
+      ],
+    });
     expect(s.type).toBe("degats");
   });
 
@@ -82,6 +89,10 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.baseMax).toBe(11);
     expect(s.scaling).toBeCloseTo(0.28);
     expect(s.cooldownTours).toBeUndefined();
+    expect(s.effetRangeeAlliee).toEqual({
+      rangee: "avant",
+      effets: [{ stat: "degatsInfliges", valeur: 0.1, valeurSiDeuxDevant: 0.15, duree: 1 }],
+    });
     expect(s.type).toBe("degats");
   });
 
@@ -92,6 +103,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.baseMin).toBe(8);
     expect(s.baseMax).toBe(11);
     expect(s.scaling).toBeCloseTo(0.28);
+    expect(s.effet).toEqual({ stat: "tetanise", valeur: 1, duree: 1 });
     expect(s.type).toBe("degats");
   });
 

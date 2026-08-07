@@ -1164,9 +1164,15 @@ function appliquerBuffRangee(lanceur: Combatant, buff: BuffRangeeAlliee, cs: Com
     const valeur = deux && e.valeurSiDeuxDevant !== undefined ? e.valeurSiDeuxDevant : e.valeur;
     detail.push(`${e.stat} ${valeur >= 0 ? "+" : ""}${valeur} (${e.duree}t)`);
     for (const m of cibles) {
+      // Le non-cumul impose de chercher une entrée existante, donc on ne peut pas
+      // déléguer à `appliquerEffet` — mais ses deux cas spéciaux doivent être repris
+      // à l'identique, sans quoi un buff de rangée en `maxRoll` serait une entrée
+      // morte et un buff en `vitalite` ne recalculerait pas les PV max, en silence.
+      if (e.stat === "maxRoll") { m.maxRollCharges += valeur; continue; }
       const existant = m.effets.find((x) => x.stat === e.stat && x.viaBuffRangee);
       if (existant) { existant.valeur = valeur; existant.toursRestants = e.duree; }
       else m.effets.push({ stat: e.stat, valeur, toursRestants: e.duree, viaBuffRangee: true });
+      if (e.stat === "vitalite") recomputePvMax(m);
     }
   }
   // « renfort à deux » n'a de sens que si au moins un effet PORTE une valeur

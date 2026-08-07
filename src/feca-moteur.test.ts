@@ -238,6 +238,38 @@ describe("effetRangeeAlliee — deux chemins de résolution", () => {
   });
 });
 
+// Le non-cumul par `viaBuffRangee` oblige `appliquerBuffRangee` à chercher une entrée
+// existante, donc à écrire dans `effets[]` sans passer par `appliquerEffet`. Les deux cas
+// spéciaux de cette dernière doivent être repris à l'identique : aucun sort du jeu ne porte
+// aujourd'hui un buff de rangée en `maxRoll` ou en `vitalite`, mais le premier qui le fera
+// échouerait EN SILENCE (entrée d'effet morte, PV max jamais recalculés).
+describe("effetRangeeAlliee — parité avec appliquerEffet", () => {
+  it("un buff de rangée en `vitalite` recalcule les PV max, comme un effet normal", () => {
+    const lanceur = hero(0);
+    lanceur.pvBase = 100; lanceur.pvMax = 100; lanceur.pvActuels = 100;
+    const cs = [lanceur];
+    const spell = sortSoutienRangee({ rangee: "avant", effets: [{ stat: "vitalite", valeur: 0.5, duree: 2 }] });
+
+    lancerSort(lanceur, spell, lanceur.ref, cs, ctx());
+
+    expect(lanceur.effets.some((e) => e.stat === "vitalite" && e.valeur === 0.5)).toBe(true);
+    expect(lanceur.pvMax).toBe(150); // 100 × (1 + 0,5)
+    expect(lanceur.pvActuels).toBe(150); // le buff de vitalité agit comme un bouclier
+  });
+
+  it("un buff de rangée en `maxRoll` crédite une charge au lieu de pousser une entrée morte", () => {
+    const lanceur = hero(0);
+    const cs = [lanceur];
+    const avant = lanceur.maxRollCharges;
+    const spell = sortSoutienRangee({ rangee: "avant", effets: [{ stat: "maxRoll", valeur: 1, duree: 2 }] });
+
+    lancerSort(lanceur, spell, lanceur.ref, cs, ctx());
+
+    expect(lanceur.maxRollCharges).toBe(avant + 1);
+    expect(lanceur.effets.some((e) => e.stat === "maxRoll")).toBe(false);
+  });
+});
+
 describe("retraitPAProchainTour — chemin dégâts (Tétanie)", () => {
   it("la cible commence son prochain tour avec N PA de moins", () => {
     const lanceur = hero(0);
