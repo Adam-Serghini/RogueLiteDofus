@@ -1031,6 +1031,9 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.resquilleActive = sort.resquille;
     ctx.log(`${cible.nom} prépare une Resquille (−${sort.resquille} PA au prochain Kaboom).`);
   }
+  // Tétanie est en réalité un sort de DÉGÂTS (voir le second point d'appel dans le
+  // chemin dégâts de lancerSort) : ce bloc reste branché sans porteur actuel, pour
+  // qu'un futur sort de soutien puisse réemployer le champ sans repasser ici.
   if (sort.retraitPAProchainTour) {
     cible.paBonusNextTurn -= sort.retraitPAProchainTour;
     ctx.log(`${cible.nom} commencera son prochain tour amputé de ${sort.retraitPAProchainTour} PA (Tétanie).`);
@@ -1800,6 +1803,13 @@ export function lancerSort(
             ? { ...sort.effet, valeur: sort.effetSiPortails.valeur }
             : sort.effet;
           appliquerEffet(t, etirer(effetFinal, doubleDuree));
+        }
+        // Féca (Tétanie) : sort de DÉGÂTS — comme sort.effet ci-dessus, ce rider ne
+        // s'applique que si le coup a porté (on est dans la branche `!r.esquive`, et
+        // `t.pvActuels > 0` exclut en plus une cible tuée par ce même coup).
+        if (sort.retraitPAProchainTour) {
+          t.paBonusNextTurn -= sort.retraitPAProchainTour;
+          ctx.log(`${t.nom} commencera son prochain tour amputé de ${sort.retraitPAProchainTour} PA (Tétanie).`);
         }
         if (sort.procAleatoire && sort.procAleatoire.length) {
           const proc = sort.procAleatoire[Math.floor(ctx.rng() * sort.procAleatoire.length)];

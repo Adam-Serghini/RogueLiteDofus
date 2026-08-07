@@ -231,15 +231,13 @@ describe("effetRangeeAlliee — deux chemins de résolution", () => {
   });
 });
 
-describe("retraitPAProchainTour", () => {
+describe("retraitPAProchainTour — chemin dégâts (Tétanie)", () => {
   it("la cible commence son prochain tour avec N PA de moins", () => {
     const lanceur = hero(0);
     const cible = mannequin();
+    cible.stats = { ...cible.stats, agilite: 0 }; // pas d'esquive : le coup porte
     cible.paActuels = 6;
-    const spell: Spell = {
-      ...SORTS.morsure, id: "test_tetanie", type: "debuff", cible: "ennemi_tous",
-      baseMin: 0, baseMax: 0, retraitPAProchainTour: 2,
-    };
+    const spell: Spell = { ...SORTS.morsure, id: "test_tetanie", retraitPAProchainTour: 2 };
 
     lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx());
     expect(cible.paBonusNextTurn).toBe(-2);
@@ -251,15 +249,43 @@ describe("retraitPAProchainTour", () => {
   it("les PA de la cible ne deviennent JAMAIS négatifs, même si le malus dépasse le stock", () => {
     const lanceur = hero(0);
     const cible = mannequin();
+    cible.stats = { ...cible.stats, agilite: 0 };
     cible.paActuels = 1;
-    const spell: Spell = {
-      ...SORTS.morsure, id: "test_tetanie_excedent", type: "debuff", cible: "ennemi_tous",
-      baseMin: 0, baseMax: 0, retraitPAProchainTour: 5,
-    };
+    const spell: Spell = { ...SORTS.morsure, id: "test_tetanie_excedent", retraitPAProchainTour: 5 };
 
     lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx());
     effetsDebutTour(cible, [lanceur, cible], ctx());
 
     expect(cible.paActuels).toBe(0);
+  });
+
+  it("un coup ESQUIVÉ n'applique AUCUN malus de PA (même précédent que sort.effet/effetLigneCible)", () => {
+    const lanceur = hero(0);
+    const cible = mannequin();
+    // Agilité haute → chance d'esquive non nulle (min(0.5, agilite*0.002)) ; rng()=0
+    // est alors < chance d'esquive : l'esquive est garantie.
+    cible.stats = { ...cible.stats, agilite: 300 };
+    cible.paActuels = 6;
+    const spell: Spell = { ...SORTS.morsure, id: "test_tetanie_esquive", retraitPAProchainTour: 2 };
+
+    lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx({ rng: () => 0 }));
+
+    expect(cible.paBonusNextTurn).toBe(0);
+    expect(cible.pvActuels).toBe(cible.pvMax); // témoin : le coup n'a bien rien infligé
+  });
+});
+
+describe("retraitPAProchainTour — chemin soutien (branché, sans sort réel qui l'emploie)", () => {
+  it("fonctionne aussi depuis un sort de type buff/debuff, si un futur sort le réutilise", () => {
+    const lanceur = hero(0);
+    const cible = mannequin();
+    cible.paActuels = 6;
+    const spell: Spell = {
+      ...SORTS.morsure, id: "test_tetanie_soutien", type: "debuff", cible: "ennemi_tous",
+      baseMin: 0, baseMax: 0, retraitPAProchainTour: 2,
+    };
+
+    lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx());
+    expect(cible.paBonusNextTurn).toBe(-2);
   });
 });
