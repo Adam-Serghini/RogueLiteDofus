@@ -418,6 +418,16 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     else if (e.stat === "armure") badges.push(`🪨 Armure +${e.valeur} (${e.toursRestants})`);
     else if (e.stat === "degatsCritSubis")
       badges.push(`🃏 Crit subis +${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
+    // Esquive (effet temporaire, dont Brume du Sram) : trou préexistant à cette
+    // classe — un seul sort de monstre en posait déjà — mais la Brume le rend
+    // structurant (elle en fait profiter toute une rangée), d'où l'ajout ici.
+    else if (e.stat === "esquive")
+      badges.push(`💨 Esquive +${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
+    // Concentration de Chakra (Sram) : posée sur le LANCEUR, majore tous les pièges
+    // qu'il déclenche (ou fait déclencher par un allié) tant que l'effet dure — sans
+    // ce badge, rien sur sa carte n'indique que ses pièges frappent plus fort.
+    else if (e.stat === "bonusPieges")
+      badges.push(`🪤 Pièges +${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
   }
   if ((c.bombes ?? 0) > 0) badges.push(`💣 ×${c.bombes}`);
   if ((c.telefrags ?? 0) > 0) badges.push(`⌛ ×${c.telefrags}`); // ⌛ distinct de ⏳ (badge d'init ci-dessus)

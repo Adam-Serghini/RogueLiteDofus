@@ -921,11 +921,17 @@ function deplacerCible(cible: Combatant, mode: "toggle" | "arriere", cs: Combata
   if (dest === null) return; // rangée opposée pleine : échec silencieux
   cible.position = dest;
   ctx.log(`${cible.nom} est repoussé en ligne ${dest < NB_COLONNES ? "AVANT" : "ARRIÈRE"}.`);
-  // Déclencheur de piège (Sram) : branché ici, point de passage unique de tout
-  // déplacement de rangée du moteur (les deux appelants de `deplacerCible` — le rider
-  // de bousculade de Flèche de recul et la résolution générique de `deplaceCible` —
-  // en héritent tous les deux sans code dédié). Appelé APRÈS que la position a
-  // effectivement changé et que le journal a parlé, comme demandé.
+  // Déclencheur de piège (Sram) : branché ici, point de passage de tout déplacement de
+  // rangée résolu via `Spell.deplaceCible` (Flèche de recul, Pendule, Roublabot,
+  // Tibias) — les deux appelants de `deplacerCible` en héritent tous les deux sans code
+  // dédié. Appelé APRÈS que la position a effectivement changé et que le journal a
+  // parlé, comme demandé.
+  // PAS le point de passage unique de tout changement de rangée du moteur : `Item.changeLigne`
+  // (Dagues Eurfolles → `Spell.changeLigne`, résolu ailleurs dans `lancerSort`) déplace
+  // son porteur EN DUR sans passer par ici. Inerte aujourd'hui — il ne déplace que le
+  // LANCEUR, dans son propre camp, et un piège de héros ne surveille que le camp ennemi —
+  // mais si un jour un monstre porte ce champ, le déclenchement serait silencieusement
+  // manqué : `declencherPiege` n'aurait aucune chance de tourner.
   declencherPiege(cible, cs, ctx);
 }
 
@@ -1609,6 +1615,12 @@ function declencherPiege(cible: Combatant, cs: Combatant[], ctx: CombatCtx): voi
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
       adverses(poseur, cs).filter((e) => e.ref !== cible.ref && !e.estLance && estAvant(e) === estAvant(cible)).length;
   }
+  // `frappe(poseur, ...)` : le POSEUR est l'attaquant de ce coup, pas l'allié qui a
+  // provoqué le déplacement (cohérent avec le cumul de Chausse-Trappe ci-dessus, crédité
+  // au même poseur). Conséquence assumée, non testée avant ce commentaire : si la cible
+  // porte une posture de riposte (`contre`), c'est le POSEUR qui encaisse la contre-attaque
+  // dans `infligerDegats`, alors qu'il n'a rien joué ce tour-là — défendable (c'est SON
+  // piège) mais nulle part écrit avant cette ligne.
   const touchees = ciblesDegats(poseur, sort, cible, cs);
   for (const t of touchees) {
     const estEclaboussure = !!sort.ratioLigne && t.ref !== cible.ref;
@@ -1766,7 +1778,8 @@ export function lancerSort(
   // limite de lancers, et il ne doit JAMAIS être remis à zéro en cours de combat.
   // Les deux compteurs incrémentés ICI (lancersCeTour/lancersCombat) ne sont LUS que
   // plus bas, dans le chemin de dégâts « normal » — donc APRÈS les branches à retour
-  // anticipé (projectiles, coups, kaboom, boomerang, enflammée, soinLigneAvantRatio).
+  // anticipé (poseBombe, posePiege, kaboom, boomerang, enflammée, soinLigneAvantRatio,
+  // entre autres — la liste a suivi les chantiers successifs, voir chacune plus bas).
   // Un sort de l'une de ces familles qui porterait `bonusParLancerCombat` verrait son
   // compteur incrémenté mais jamais relu : même famille d'inertie silencieuse que
   // celle corrigée ci-dessus pour `bonusParRelanceCeTour`. Aucun porteur aujourd'hui.

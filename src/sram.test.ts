@@ -139,7 +139,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "concentration_de_chakra", nom: "Concentration de Chakra", type: "buff", cible: "soi",
       coutPA: 2, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 2,
       bonusPieges: 0.5, bonusPiegesDuree: 1,
-      desc: "Majore de 50 % les dégâts du prochain piège déclenché, pendant 1 tour.",
+      desc: "Majore de 50 % les dégâts de TOUS les pièges déclenchés (les siens comme ceux déclenchés par un allié), pendant 1 tour.",
     });
   });
 
@@ -382,8 +382,8 @@ describe("Attaque Mortelle : majore avec le Chausse-Trappe, puis remet le compte
   });
 });
 
-describe("Concentration de Chakra : majore le prochain piège déclenché, pour 1 tour", () => {
-  it("pose bien un effet `bonusPieges` de 50 % sur le lanceur, et il majore le déclenchement suivant", () => {
+describe("Concentration de Chakra : majore TOUS les pièges déclenchés pendant sa fenêtre, pas seulement le premier", () => {
+  it("pose bien un effet `bonusPieges` de 50 % sur le lanceur, et il majore chaque déclenchement tant qu'il dure", () => {
     const c = sram();
     lancerSort(c, SORTS.concentration_de_chakra, c.ref, [c], ctx());
     expect(c.effets).toEqual([{ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 }]);
@@ -410,6 +410,19 @@ describe("Concentration de Chakra : majore le prochain piège déclenché, pour 
     lancerSort(cAvecChakra, sortMouvement2, cibleAvec.ref, [cAvecChakra, cibleAvec], ctx());
     const dmgAvec = avantAvec - cibleAvec.pvActuels;
     expect(dmgAvec).toBe(Math.round(dmgSans * 1.5));
+
+    // Discriminant : l'effet n'est PAS consommé par ce premier déclenchement — un
+    // SECOND piège du même poseur, déclenché AVANT l'expiration de la fenêtre, est
+    // ENCORE majoré. Si Chakra ne majorait vraiment que « le prochain piège » (comme
+    // le prétendait l'ancienne description), ce second coup retomberait à `dmgSans`.
+    const cibleAvec2 = mannequin();
+    cibleAvec2.position = 4;
+    cAvecChakra.pieges = [{ sortId: "piege_funeste", camp: cibleAvec2.camp, avant: true }];
+    const sortMouvement3 = { ...SORTS.roublabot, id: "test_mouvement_chakra_avec_2", baseMin: 0, baseMax: 0, scaling: 0 };
+    const avantAvec2 = cibleAvec2.pvActuels;
+    lancerSort(cAvecChakra, sortMouvement3, cibleAvec2.ref, [cAvecChakra, cibleAvec2], ctx());
+    const dmgAvec2 = avantAvec2 - cibleAvec2.pvActuels;
+    expect(dmgAvec2).toBe(Math.round(dmgSans * 1.5));
   });
 });
 

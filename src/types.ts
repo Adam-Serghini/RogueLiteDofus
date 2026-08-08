@@ -202,7 +202,7 @@ export interface Spell {
   bonusParLancerCombat?: number;
   // --- rework du Cra ---
   enflammee?: boolean; // Flèche enflammée : handler dédié (éclaboussure asymétrique avant/arrière)
-  degatsPoussee?: boolean; // Flèche de recul : rider de deplaceCible "arriere" — dégâts ignoreResistances si ça bouscule
+  degatsPoussee?: boolean; // Flèche de recul : rider du handler dédié `lancerFlecheDeRecul` (deplaceCible "arriere" a été retiré du sort, orphelin) — dégâts ignoreResistances si ça bouscule
   // --- kit du Roublard ---
   poseBombe?: boolean; // Bombe collante : colle une charge sur la cible (sans dégâts), cap BOMBES_MAX
   kaboom?: boolean; // Kaboom : handler dédié (détonne toutes les bombes posées)

@@ -281,7 +281,7 @@
     "cible": "soi",
     "cooldownTours": 2,
     "coutPA": 2,
-    "desc": "Majore de 50 % les dégâts du prochain piège déclenché, pendant 1 tour.",
+    "desc": "Majore de 50 % les dégâts de TOUS les pièges déclenchés (les siens comme ceux déclenchés par un allié), pendant 1 tour.",
     "id": "concentration_de_chakra",
     "nom": "Concentration de Chakra",
     "scaling": 0,

@@ -257,6 +257,32 @@ describe("déclenchement", () => {
     expect(poseur.pieges).toHaveLength(1); // le piège n'est PAS consommé
     expect(poseur.chausseTrappe ?? 0).toBe(0);
   });
+
+  it("un poseur MORT garde ses pièges actifs (contrairement à toute invocation du jeu)", () => {
+    // Documenté dans la docstring de `declencherPiege` (combat.ts) comme un choix
+    // délibéré, à rebours de la jurisprudence du projet — Poupée/Lance/Égide sont
+    // toutes purgées avec leur invocateur par `purgerInvocationsOrphelines`. Le piège
+    // n'est PAS une invocation (voir Piege dans types.ts), donc rien ne le purge ici ;
+    // ce test est le seul à l'exercer avant ce commit — la règle tenait par lecture
+    // du code, jamais par une assertion. Le poseur étant mort, c'est un ALLIÉ qui
+    // provoque le déplacement (un mort ne joue plus de tour dans `runCombat`).
+    const poseur = heros();
+    const allie = heros2();
+    const [victime, ar1] = ennemisProbes(2);
+    victime.position = 0; // avant, sera déplacée vers l'arrière
+    ar1.position = 4;
+    const cs = [poseur, allie, victime, ar1];
+    poseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    poseur.pvActuels = 0; // le poseur est mort AVANT le déclenchement
+
+    const avantPV = victime.pvActuels;
+    lancerSort(allie, sortDeplace("test_poseur_mort", "arriere"), victime.ref, cs, ctx());
+
+    expect(victime.pvActuels).toBeLessThan(avantPV); // le piège a bien frappé malgré le poseur mort
+    expect(poseur.pieges).toHaveLength(0); // consommé comme n'importe quel autre déclenchement
+    expect(poseur.chausseTrappe).toBe(1); // le cumul est crédité au poseur mort tout de même
+    expect(allie.chausseTrappe ?? 0).toBe(0); // jamais à l'allié qui a provoqué le déplacement
+  });
 });
 
 describe("le déclencheur plie les mêmes auras qu'un lancer direct (Éliotrope)", () => {
