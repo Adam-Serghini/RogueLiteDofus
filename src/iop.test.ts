@@ -84,7 +84,7 @@ describe("la classe", () => {
   });
 });
 
-// Les 5 descriptions ci-dessous sont des chaînes LITTÉRALES, pas `SORTS.x.desc` (qui se
+// Les 6 descriptions ci-dessous sont des chaînes LITTÉRALES, pas `SORTS.x.desc` (qui se
 // compare à lui-même et laisse passer une description vidée ou modifiée en silence).
 // Ça compte double pour ce kit : `sortTooltipHtml` (ui/composants.ts) ne connaît AUCUN
 // des 5 champs neufs du moteur (bonusParPADispo, ratioLigne, bonusParRelanceCeTour,
@@ -96,7 +96,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "zenith", nom: "Zénith", type: "degats", cible: "ennemi_ligne",
       coutPA: 4, baseMin: 7, baseMax: 11, scaling: 0.32,
       zoneLigne: true, bonusParPADispo: 0.07,
-      desc: "Dégâts de zone sur toute la rangée ciblée ; +7 % de dégâts par PA disponible AVANT de lancer le sort — le compteur n'est PAS plafonné par les PA de base du Iop, et les PA gagnés en cours de tour (Précipitation) comptent aussi : ouvrir par Précipitation avant Zénith vide toute la barre de PA au meilleur taux.",
+      desc: "Dégâts de zone sur toute la rangée ciblée ; +7 % de dégâts par PA disponible avant le lancer.",
     });
   });
 
@@ -105,7 +105,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "pugilat", nom: "Pugilat", type: "degats", cible: "ennemi_ligne",
       coutPA: 2, baseMin: 5, baseMax: 8, scaling: 0.22,
       maxParCibleParTour: 1, ratioLigne: 0.5, bonusParRelanceCeTour: 0.2,
-      desc: "Dégâts modérés à la cible, moitié dégâts au reste de sa rangée ; +20 % (l'ensemble du coup, éclaboussure comprise) à chaque relance du sort dans le même tour, sur une AUTRE cible (une seule fois par cible et par tour).",
+      desc: "Dégâts modérés à la cible, moitié dégâts au reste de sa rangée ; +20 % sur l'ensemble du coup à chaque relance dans le même tour (une seule fois par cible).",
     });
   });
 
@@ -114,7 +114,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "endurance", nom: "Endurance", type: "degats", cible: "ennemi_ligne",
       coutPA: 2, baseMin: 6, baseMax: 9, scaling: 0.25,
       maxParTour: 2, bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
-      desc: "Dégâts modérés ; le Iop se boucliere de 8 % de ses PV max pour 1 tour (cumulable si relancé dans le même tour).",
+      desc: "Dégâts modérés ; bouclier de 8 % des PV max du Iop pour 1 tour, cumulable si relancé dans le même tour.",
     });
   });
 
@@ -123,7 +123,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "colere_de_iop", nom: "Colère de Iop", type: "degats", cible: "ennemi_ligne",
       coutPA: 5, baseMin: 16, baseMax: 22, scaling: 0.55, cooldownTours: 2,
       bonusParLancerCombat: 0.5,
-      desc: "Très gros dégâts ; +50 % à chaque lancer PRÉCÉDENT de ce sort depuis le début du combat (100 %, puis 150 %, puis 200 %…).",
+      desc: "Très gros dégâts ; +50 % par lancer précédent de ce sort depuis le début du combat.",
     });
   });
 
@@ -132,7 +132,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "precipitation", nom: "Précipitation", type: "buff", cible: "soi",
       coutPA: 0, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 3,
       maxParTour: 1, paImmediat: 3,
-      desc: "Ne coûte AUCUN PA ; crédite immédiatement 3 PA à dépenser ce tour-ci (perdus à la fin du tour si non utilisés).",
+      desc: "Crédite immédiatement 3 PA pour ce tour-ci ; ils sont perdus s'ils ne sont pas dépensés.",
     });
   });
 
@@ -141,7 +141,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "vertu", nom: "Vertu", type: "buff", cible: "soi",
       coutPA: 3, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 3,
       bouclierPortee: { portee: "rangee_lanceur", pct: 0.15, tours: 2 },
-      desc: "Boucliere toute la rangée du Iop (lui compris) de 15 % des PV max de chacun, pour 2 tours.",
+      desc: "Bouclier de 15 % des PV max à toute la rangée du Iop, lui compris, pendant 2 tours.",
     });
   });
 });

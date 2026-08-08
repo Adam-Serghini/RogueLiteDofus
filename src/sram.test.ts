@@ -103,7 +103,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "attaque_mortelle", nom: "Attaque Mortelle", type: "degats", cible: "ennemi_ligne",
       coutPA: 4, baseMin: 9, baseMax: 13, scaling: 0.32,
       bonusParChausseTrappe: 0.15, consommeChausseTrappe: true,
-      desc: "Dégâts qui montent avec le Chausse-Trappe (+15 %/cumul), puis remet le compteur à zéro.",
+      desc: "Le plus gros coup du Sram, d'autant plus fort qu'il a déjà fait mouche : +15 % de dégâts par Chausse-Trappe accumulé, puis le compteur repart de zéro.",
     });
   });
 
@@ -112,7 +112,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "sournoiserie", nom: "Sournoiserie", type: "degats", cible: "ennemi_tous",
       coutPA: 2, baseMin: 3, baseMax: 5, scaling: 0.12,
       maxParTour: 2, deplaceCible: "toggle",
-      desc: "Petits dégâts sur n'importe quel ennemi (rangée arrière comprise), puis échange sa rangée.",
+      desc: "Petit coup qui atteint n'importe quel ennemi, rangée arrière comprise, puis le fait passer sur la rangée opposée. Deux lancers par tour au maximum.",
     });
   });
 
@@ -121,7 +121,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "piege_funeste", nom: "Piège Funeste", type: "degats", cible: "ennemi_ligne",
       coutPA: 3, baseMin: 10, baseMax: 14, scaling: 0.35,
       maxParTour: 2, posePiege: true, bonusParEnnemiLigneCible: 0.3,
-      desc: "Pose un piège sur la rangée de la cible (aucun dégât immédiat) ; au déclenchement, +30 % par autre ennemi vivant sur cette rangée.",
+      desc: "Pose un piège sur la rangée de la cible, sans aucun dégât immédiat. Il part dès qu'un ennemi est déplacé sur cette rangée, avec +30 % de dégâts par autre ennemi vivant qui s'y trouve.",
     });
   });
 
@@ -130,7 +130,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "piege_a_fragmentation", nom: "Piège à Fragmentation", type: "degats", cible: "ennemi_ligne",
       coutPA: 3, baseMin: 8, baseMax: 11, scaling: 0.28,
       maxParTour: 2, posePiege: true, ratioLigne: 0.5,
-      desc: "Pose un piège sur la rangée de la cible (aucun dégât immédiat) ; au déclenchement, éclabousse le reste de la rangée à moitié dégâts.",
+      desc: "Pose un piège sur la rangée de la cible, sans aucun dégât immédiat. Au déclenchement, il éclabousse le reste de la rangée pour la moitié des dégâts.",
     });
   });
 
@@ -139,7 +139,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "concentration_de_chakra", nom: "Concentration de Chakra", type: "buff", cible: "soi",
       coutPA: 2, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 2,
       bonusPieges: 0.5, bonusPiegesDuree: 1,
-      desc: "Majore de 50 % les dégâts de TOUS les pièges déclenchés (les siens comme ceux déclenchés par un allié), pendant 1 tour.",
+      desc: "Pendant 1 tour, les pièges du Sram infligent 50 % de dégâts en plus, y compris ceux qu'un allié fait partir en déplaçant un ennemi.",
     });
   });
 
@@ -148,7 +148,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
       id: "brume", nom: "Brume", type: "buff", cible: "allie",
       coutPA: 3, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 5,
       esquivePartageeRangee: { duree: 2 },
-      desc: "Partage l'esquive du Sram (hors bonus de position) avec toute la rangée de la cible, lanceur compris s'il s'y trouve, pour 2 tours.",
+      desc: "Pendant 2 tours, toute la rangée de l'allié ciblé profite de l'esquive du Sram, bonus de position exclu.",
     });
   });
 });
