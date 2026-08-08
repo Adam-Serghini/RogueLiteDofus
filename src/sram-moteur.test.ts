@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { lancerSort, PIEGES_MAX, CHAUSSE_TRAPPE_MAX, type CombatCtx } from "./combat";
 import { SORTS } from "./data";
-import { fabriquerEquipe, fabriquerEnnemis } from "./run";
+import { fabriquerEquipe, fabriquerEnnemis, nouvelleRun, equipeCombattante, synchroniserPV } from "./run";
 import type { Combatant, Piege, Spell } from "./types";
 
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet tiré au max, pas de crit
@@ -184,6 +184,49 @@ describe("déclenchement", () => {
     expect(poseur.chausseTrappe ?? 0).toBe(0);
   });
 
+  it("un piège sur le camp ennemi ne part pas quand un ALLIÉ est déplacé sur la rangée de même indice", () => {
+    // Scénario atteignable en jeu réel, pas théorique : `bourrasque_de_pollen` (Blop
+    // Coco, toile 13) est le seul sort de monstre qui déplace un HÉROS, et il le
+    // pousse en rangée arrière. Un piège du Sram posé sur la rangée arrière ENNEMIE
+    // partagerait le même `avant: false` qu'une rangée arrière ALLIÉE — seul le
+    // contrôle de `camp` les distingue. Sans lui, ce piège frapperait son propre
+    // allié et lui créditerait un cumul de Chausse-Trappe au poseur.
+    const poseur = heros();
+    const allie = heros2();
+    poseur.position = 1; // avant, colonne différente : ne dispute pas la case d'arrivée
+    allie.position = 0; // avant, sera repoussé en arrière (camp "joueur")
+    const cs = [poseur, allie];
+    // Le piège surveille la rangée arrière ENNEMIE, pas la rangée arrière alliée.
+    poseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+
+    const avantPV = allie.pvActuels;
+    lancerSort(poseur, sortDeplace("test_camp_allie", "arriere"), allie.ref, cs, ctx());
+
+    expect(allie.position).toBeGreaterThanOrEqual(4); // l'allié a bien été déplacé
+    expect(allie.pvActuels).toBe(avantPV); // mais n'a subi AUCUN dégât
+    expect(poseur.pieges).toHaveLength(1); // le piège (camp ennemi) reste posé
+    expect(poseur.chausseTrappe ?? 0).toBe(0);
+  });
+
+  it("un sort inconnu (`sortId` introuvable dans SORTS) laisse le piège intact", () => {
+    // Ne devrait jamais arriver en jeu réel (un piège référence toujours un vrai
+    // sort du contenu), mais un test peut délibérément en poser un fictif — et le
+    // moteur doit alors se comporter comme si le piège n'existait pas, plutôt que
+    // de le consommer sans effet ni cumul (la garde défensive doit s'exécuter AVANT
+    // le retrait de la liste, pas après).
+    const poseur = heros();
+    const [victime, ar1] = ennemisProbes(2);
+    victime.position = 0;
+    ar1.position = 4;
+    const cs = [poseur, victime, ar1];
+    poseur.pieges = [{ sortId: "sort_qui_n_existe_pas", camp: "ennemi", avant: false }];
+
+    lancerSort(poseur, sortDeplace("test_sort_inconnu", "arriere"), victime.ref, cs, ctx());
+
+    expect(poseur.pieges).toHaveLength(1); // toujours là : rien n'a pu le résoudre
+    expect(poseur.chausseTrappe ?? 0).toBe(0);
+  });
+
   it("rangée de destination pleine : échec silencieux, aucun déclenchement", () => {
     const poseur = heros();
     const [victime, ar1, ar2, ar3, ar4] = ennemisProbes(5);
@@ -201,6 +244,113 @@ describe("déclenchement", () => {
     expect(victime.pvActuels).toBe(avantPV);
     expect(poseur.pieges).toHaveLength(1); // le piège n'est PAS consommé
     expect(poseur.chausseTrappe ?? 0).toBe(0);
+  });
+});
+
+describe("le déclencheur plie les mêmes auras qu'un lancer direct (Éliotrope)", () => {
+  // `multConjuration` documente explicitement que « les handlers dédiés doivent
+  // plier ce calcul dans leur propre multiplicateur pour ne pas ignorer la marque
+  // quand ils frappent une cible marquée » — `declencherPiege` EST un tel handler
+  // dédié. Ces deux tests comparent un déclenchement AVEC l'aura à un déclenchement
+  // IDENTIQUE (même poseur frais, même victime fraîche, même RNG déterministe) SANS
+  // elle : toute divergence vient exclusivement du multiplicateur sous test.
+
+  it("l'aura de portails majore les dégâts d'un piège déclenché", () => {
+    const sans = heros();
+    const [victimeSans, ar1Sans] = ennemisProbes(2);
+    victimeSans.position = 0; ar1Sans.position = 4;
+    const csSans = [sans, victimeSans, ar1Sans];
+    sans.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    const pvAvantSans = victimeSans.pvActuels;
+    lancerSort(sans, sortDeplace("test_portails_sans", "arriere"), victimeSans.ref, csSans, ctx());
+    const degatsSans = pvAvantSans - victimeSans.pvActuels;
+
+    const avec = heros();
+    avec.portails = 3; // l'aura de portails ne dépend pas de la classe réelle du porteur
+    const [victimeAvec, ar1Avec] = ennemisProbes(2);
+    victimeAvec.position = 0; ar1Avec.position = 4;
+    const csAvec = [avec, victimeAvec, ar1Avec];
+    avec.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    const pvAvantAvec = victimeAvec.pvActuels;
+    lancerSort(avec, sortDeplace("test_portails_avec", "arriere"), victimeAvec.ref, csAvec, ctx());
+    const degatsAvec = pvAvantAvec - victimeAvec.pvActuels;
+
+    expect(degatsSans).toBeGreaterThan(0);
+    expect(degatsAvec).toBe(Math.round(degatsSans * (1 + 0.02 * 3))); // multPortails : 1 + 0,02 × 3
+  });
+
+  it("la marque de Conjuration majore les dégâts d'un piège déclenché par son poseur", () => {
+    const sans = heros();
+    const [victimeSans, ar1Sans] = ennemisProbes(2);
+    victimeSans.position = 0; ar1Sans.position = 4;
+    const csSans = [sans, victimeSans, ar1Sans];
+    sans.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    const pvAvantSans = victimeSans.pvActuels;
+    lancerSort(sans, sortDeplace("test_conjuration_sans", "arriere"), victimeSans.ref, csSans, ctx());
+    const degatsSans = pvAvantSans - victimeSans.pvActuels;
+
+    const avec = heros();
+    const [victimeAvec, ar1Avec] = ennemisProbes(2);
+    victimeAvec.position = 0; ar1Avec.position = 4;
+    const csAvec = [avec, victimeAvec, ar1Avec];
+    avec.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    // La victime est marquée par le POSEUR lui-même : `multConjuration` majore un
+    // coup du marqueur (ou de sa rangée) contre sa propre marque.
+    victimeAvec.conjuration = { pct: 0.5, lanceurRef: avec.ref, tours: 2 };
+    const pvAvantAvec = victimeAvec.pvActuels;
+    lancerSort(avec, sortDeplace("test_conjuration_avec", "arriere"), victimeAvec.ref, csAvec, ctx());
+    const degatsAvec = pvAvantAvec - victimeAvec.pvActuels;
+
+    expect(degatsSans).toBeGreaterThan(0);
+    expect(degatsAvec).toBe(Math.round(degatsSans * 1.5));
+  });
+});
+
+describe("un piège peut tuer la cible AVANT que l'appelant ait fini son travail", () => {
+  it("la bousculade de Flèche de recul ne frappe pas un cadavre (pas de double K.O.)", () => {
+    const poseur = heros(); // le Sram, poseur du piège mortel
+    const lanceurRecul = heros2(); // un autre héros lance le sort qui repousse
+    const [victime, occupant] = ennemisProbes(2);
+    victime.position = 0; // avant, seule sur sa rangée (aucun autre ennemi avant)
+    occupant.position = 4; // occupe déjà la case d'arrivée en rangée arrière
+    const cs = [poseur, lanceurRecul, victime, occupant];
+    victime.pvActuels = 1; // un rien la tue
+    poseur.pieges = [{ sortId: "charge", camp: "ennemi", avant: false }]; // très largement letal
+
+    const sortRecul: Spell = {
+      ...SORTS.morsure, id: "test_recul_mortel",
+      degatsPoussee: true, baseMin: 5, baseMax: 5, scaling: 0, ignoreResistances: true,
+    };
+    const lignes: string[] = [];
+    lancerSort(lanceurRecul, sortRecul, victime.ref, cs, ctx({ log: (m) => lignes.push(m) }));
+
+    expect(victime.pvActuels).toBe(0); // morte au piège, plafonnée à 0 (pas de négatif)
+    expect(poseur.pieges).toHaveLength(0); // le piège a bien été consommé au passage
+    expect(occupant.pvActuels).toBe(9999); // la bousculade n'a JAMAIS eu lieu : occupant intact
+    const koVictime = lignes.filter((l) => l.includes(`${victime.nom} est K.O.`));
+    expect(koVictime).toHaveLength(1); // UNE SEULE annonce de K.O., pas deux
+  });
+
+  it("le Téléfrag de Pendule ne s'applique pas à une cible tuée par le piège pendant le déplacement", () => {
+    const poseur = heros(); // le Sram, poseur du piège mortel
+    const lanceurPendule = heros2(); // un autre héros lance le sort qui déplace
+    const [victime, occupant] = ennemisProbes(2);
+    victime.position = 0; // avant
+    occupant.position = 4; // déjà en rangée arrière : rend la destination « occupée »
+    const cs = [poseur, lanceurPendule, victime, occupant];
+    victime.pvActuels = 1;
+    poseur.pieges = [{ sortId: "charge", camp: "ennemi", avant: false }];
+
+    const sortPendule: Spell = {
+      ...SORTS.morsure, id: "test_pendule_mortel",
+      baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: "toggle", telefragSiOccupee: true,
+    };
+    lancerSort(lanceurPendule, sortPendule, victime.ref, cs, ctx());
+
+    expect(victime.pvActuels).toBe(0); // tuée par le piège
+    expect(poseur.pieges).toHaveLength(0); // le piège a bien été consommé au passage
+    expect(victime.telefrags ?? 0).toBe(0); // aucun Téléfrag posé sur un cadavre
+    expect(occupant.telefrags ?? 0).toBe(0); // ni sur l'occupant bousculé
   });
 });
 
@@ -292,16 +442,21 @@ describe("plafond et Chausse-Trappe", () => {
     expect(poseur.chausseTrappe).toBe(CHAUSSE_TRAPPE_MAX); // pas 6
   });
 
-  it("un sort `consommeChausseTrappe` remet à zéro, même à 0 cumul", () => {
+  it("un sort `consommeChausseTrappe` écrit explicitement 0, même sans cumul préalable", () => {
+    // `poseur.chausseTrappe` n'est PAS pré-initialisé à 0 ici (délibérément) : il
+    // vaut `undefined` avant le lancer. Un sabotage qui retirerait la ligne de
+    // consommation laisserait la valeur `undefined` — distincte de `0` pour
+    // `toBe` — ce qu'une version qui pré-initialisait à 0 ne pouvait pas détecter
+    // (0 → 0 est vrai avec ou sans la ligne testée).
     const poseur = heros();
-    poseur.chausseTrappe = 0;
+    expect(poseur.chausseTrappe).toBeUndefined(); // témoin : rien ne l'a initialisé
     const [cible] = ennemisProbes(1);
     const cs = [poseur, cible];
     const sort: Spell = { ...SORTS.morsure, id: "test_consomme_zero", consommeChausseTrappe: true };
 
     lancerSort(poseur, sort, cible.ref, cs, ctx());
 
-    expect(poseur.chausseTrappe).toBe(0);
+    expect(poseur.chausseTrappe).toBe(0); // explicitement écrit à 0, pas resté `undefined`
   });
 
   it("un sort `consommeChausseTrappe` remet à zéro même si la cible esquive", () => {
@@ -340,17 +495,26 @@ describe("plafond et Chausse-Trappe", () => {
     expect(majore).toBe(Math.round(reference * (1 + 0.15 * 3)));
   });
 
-  it("les cumuls ne fuient pas d'un combat à l'autre", () => {
-    const poseur1 = heros();
-    const [victime1, ar1] = ennemisProbes(2);
-    victime1.position = 0; ar1.position = 4;
-    const cs1 = [poseur1, victime1, ar1];
-    poseur1.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
-    lancerSort(poseur1, sortDeplace("test_fuite_1", "arriere"), victime1.ref, cs1, ctx());
-    expect(poseur1.chausseTrappe).toBe(1);
+  it("les cumuls ne fuient pas d'un combat à l'autre : un combattant reconstruit depuis PersoState repart à zéro", () => {
+    // Comparer deux objets JS totalement indépendants (deux `heros()`) ne prouve
+    // rien : rien dans le langage ne les relie, aucun sabotage plausible du moteur
+    // ne peut faire fuir un champ entre deux objets qui ne se référencent jamais.
+    // La vraie garantie du jeu est ailleurs : « les combattants sont reconstruits à
+    // CHAQUE COMBAT depuis RunState » (CLAUDE.md) — donc ce test exerce le VRAI
+    // mécanisme de persistance inter-combats, `equipeCombattante`/`synchroniserPV`
+    // (run.ts), plutôt que deux fabrications indépendantes. Il serait discriminant
+    // contre le défaut plausible symétrique de tous les autres champs d'état de
+    // combat (bombes, telefrags, portails…) : faire transiter `chausseTrappe` par
+    // `PersoState` par erreur.
+    const run = nouvelleRun();
+    const equipe1 = equipeCombattante(run);
+    const poseur1 = equipe1[0];
+    poseur1.chausseTrappe = 5;
+    synchroniserPV(run, equipe1); // le VRAI mécanisme de persistance entre deux combats
 
-    // Un combattant neuf, fabriqué séparément — `chausseTrappe` n'a jamais été initialisé.
-    const poseur2 = heros();
+    const equipe2 = equipeCombattante(run); // reconstruction pour le combat SUIVANT
+    const poseur2 = equipe2.find((c) => c.ref === poseur1.ref)!;
+
     expect(poseur2.chausseTrappe ?? 0).toBe(0);
   });
 });

@@ -1538,13 +1538,21 @@ function declencherPiege(cible: Combatant, cs: Combatant[], ctx: CombatCtx): voi
   }
   if (!trouve) return;
   const { poseur, index } = trouve;
-  const [piege] = poseur.pieges!.splice(index, 1);
-
-  const sort = SORTS[piege.sortId];
-  if (!sort) return; // sort inconnu : garde défensive, ne devrait jamais arriver en jeu
+  // Résolu AVANT de retirer le piège de sa liste : un `sortId` introuvable dans
+  // `SORTS` (ne devrait jamais arriver en jeu réel — seuls des tests peuvent en
+  // poser un délibérément) laisse le piège INTACT plutôt que de le consommer sans
+  // effet ni cumul.
+  const sort = SORTS[poseur.pieges![index].sortId];
+  if (!sort) return;
+  poseur.pieges!.splice(index, 1);
 
   ctx.log(`💥 Le piège de ${poseur.nom} se déclenche sur ${cible.nom} !`);
-  let multLigne = 1;
+  // Auras du lanceur (Éliotrope) : `declencherPiege` est un handler DÉDIÉ au sens
+  // de la docstring de `multConjuration` ci-dessus — il doit plier ces deux
+  // multiplicateurs dans son propre calcul, sans quoi un piège déclenché ignorerait
+  // silencieusement les portails ET la marque de Conjuration qu'un lancer DIRECT du
+  // même sort aurait reçus.
+  let multLigne = multPortails(poseur, cs) * multConjuration(poseur, cible, cs);
   if (sort.bonusParEnnemiLigneCible) {
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
       adverses(poseur, cs).filter((e) => e.ref !== cible.ref && !e.estLance && estAvant(e) === estAvant(cible)).length;
@@ -1659,6 +1667,13 @@ function lancerFlecheDeRecul(
   const posAvant = cible.position;
   deplacerCible(cible, "arriere", cs, ctx);
   if (cible.position === posAvant) return; // déplacement échoué (arrivée pleine, ou déjà en arrière) : aucun dégât
+  // Un piège du Sram (branché dans deplacerCible) a pu tuer `cible` PENDANT le
+  // déplacement qu'on vient de déclencher : la bousculade ne doit pas frapper un
+  // cadavre (double annonce de K.O., dégâts fantômes). Revérifié ICI, au site
+  // appelant — pas par une garde globale dans `infligerDegats`/`degatsAvec`, qui
+  // changerait le comportement de tout le moteur pour un problème local à cette
+  // seule bousculade.
+  if (cible.pvActuels <= 0) return;
 
   const autre = plusProches(cible, occupantsArriveeAvant, 1)[0];
   if (!autre) return; // arrivée vide (cas 3) : rien à bousculer
@@ -2291,7 +2306,10 @@ export function lancerSort(
       : false;
     const posAvant = cible.position;
     deplacerCible(cible, sort.deplaceCible, cs, ctx);
-    if (sort.telefragSiOccupee && rangeeDestOccupee && cible.position !== posAvant) {
+    // Même garde locale qu'à `lancerFlecheDeRecul` : un piège du Sram peut avoir tué
+    // `cible` PENDANT le déplacement — un Téléfrag (et l'Écho d'Aiguille qu'il peut
+    // déclencher) ne doit pas s'appliquer à un cadavre.
+    if (sort.telefragSiOccupee && rangeeDestOccupee && cible.position !== posAvant && cible.pvActuels > 0) {
       poserTelefrag(cible, cs, ctx, lanceur);
       const occupant = vivants(cs)
         .filter((x) => x.camp === cible.camp && x.ref !== cible.ref && estAvant(x) === estAvant(cible))
