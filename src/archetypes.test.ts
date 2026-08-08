@@ -15,7 +15,7 @@ const TABLE: Record<string, { archetype: string; elements: string[] }> = {
   feca: { archetype: "melee", elements: ["terre", "eau"] },
   forgelance: { archetype: "melee", elements: ["terre", "feu"] },
   ouginak: { archetype: "melee", elements: ["terre", "air"] },
-  sram: { archetype: "melee", elements: ["terre", "air"] },
+  sram: { archetype: "melee", elements: ["air", "feu"] },
   ecaflip: { archetype: "melee", elements: ["air", "eau"] },
   sadida: { archetype: "melee", elements: ["terre", "eau"] },
   cra: { archetype: "distance", elements: ["feu", "air"] },
@@ -48,11 +48,13 @@ describe("table des classes", () => {
     // de coup critique pour tout le monde. Le rework du Féca (terre+feu → terre+eau)
     // déplace une classe de feu vers eau : 7/7/4/4 devient 7/6/4/5. Le rework du Iop
     // (terre+feu → air+eau) déplace une classe de terre ET de feu vers air ET eau :
-    // 7/6/4/5 devient 6/5/5/6 — air et feu sont désormais à égalité, minoritaires.
+    // 7/6/4/5 devient 6/5/5/6 — air et feu sont désormais à égalité, minoritaires. Le
+    // rework du Sram (terre+air → air+feu) déplace une classe de terre vers feu :
+    // 6/5/5/6 devient 5/6/5/6.
     const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
     const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
     expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 6, feu: 5, air: 5, eau: 6 });
+      .toEqual({ terre: 5, feu: 6, air: 5, eau: 6 });
   });
 
   it("CLASSES-ELEMENTS.md ne diverge pas de classes.json", () => {

@@ -47,19 +47,17 @@
     "scaling": 0,
     "type": "soin"
   },
-  "attaque_ombre": {
-    "baseMax": 20,
-    "baseMin": 14,
+  "attaque_mortelle": {
+    "baseMax": 13,
+    "baseMin": 9,
+    "bonusParChausseTrappe": 0.15,
     "cible": "ennemi_ligne",
+    "consommeChausseTrappe": true,
     "coutPA": 4,
-    "desc": "Dégâts élevés + poison (2t).",
-    "id": "attaque_ombre",
-    "nom": "Attaque d'ombre",
-    "poison": {
-      "degats": 6,
-      "duree": 2
-    },
-    "scaling": 0.5,
+    "desc": "Dégâts qui montent avec le Chausse-Trappe (+15 %/cumul), puis remet le compteur à zéro.",
+    "id": "attaque_mortelle",
+    "nom": "Attaque Mortelle",
+    "scaling": 0.32,
     "type": "degats"
   },
   "bluff": {
@@ -114,6 +112,21 @@
     "nom": "Bourrasque de pollen",
     "scaling": 0.4,
     "type": "degats"
+  },
+  "brume": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "cible": "allie",
+    "cooldownTours": 5,
+    "coutPA": 3,
+    "desc": "Partage l'esquive du Sram (hors bonus de position) avec toute la rangée de la cible, lanceur compris s'il s'y trouve, pour 2 tours.",
+    "esquivePartageeRangee": {
+      "duree": 2
+    },
+    "id": "brume",
+    "nom": "Brume",
+    "scaling": 0,
+    "type": "buff"
   },
   "bulle": {
     "baseMax": 11,
@@ -260,6 +273,20 @@
     "scaling": 0.45,
     "type": "degats"
   },
+  "concentration_de_chakra": {
+    "baseMax": 0,
+    "baseMin": 0,
+    "bonusPieges": 0.5,
+    "bonusPiegesDuree": 1,
+    "cible": "soi",
+    "cooldownTours": 2,
+    "coutPA": 2,
+    "desc": "Majore de 50 % les dégâts du prochain piège déclenché, pendant 1 tour.",
+    "id": "concentration_de_chakra",
+    "nom": "Concentration de Chakra",
+    "scaling": 0,
+    "type": "buff"
+  },
   "confiture_bouillante": {
     "baseMax": 24,
     "baseMin": 18,
@@ -339,56 +366,6 @@
     "scaling": 0.4,
     "type": "degats"
   },
-  "coup_insidieux": {
-    "baseMax": 12,
-    "baseMin": 8,
-    "cible": "ennemi_ligne",
-    "coutPA": 3,
-    "desc": "Dégâts modérés + poison (2t).",
-    "id": "coup_insidieux",
-    "nom": "Coup Insidieux",
-    "poison": {
-      "degats": 5,
-      "duree": 2
-    },
-    "scaling": 0.3,
-    "type": "degats"
-  },
-  "coup_sournois": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 1,
-    "coups": [
-      {
-        "baseMax": 12,
-        "baseMin": 8,
-        "proc": {
-          "p": 0.3,
-          "poison": {
-            "degats": 5,
-            "duree": 2
-          }
-        },
-        "scaling": 0.3
-      },
-      {
-        "baseMax": 7,
-        "baseMin": 4,
-        "proc": {
-          "friction": 2,
-          "p": 0.3
-        },
-        "scaling": 0.15
-      }
-    ],
-    "coutPA": 4,
-    "desc": "2 coups ; 30 % poison au 1er, 30 % friction (anti-soin/bouclier) au 2nd.",
-    "id": "coup_sournois",
-    "nom": "Coup sournois",
-    "scaling": 0,
-    "type": "degats"
-  },
   "crachat_de_seve": {
     "baseMax": 12,
     "baseMin": 8,
@@ -462,29 +439,6 @@
       "sauts": 1
     },
     "scaling": 0.25,
-    "type": "degats"
-  },
-  "deluge_lames": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "ennemi_tous",
-    "cooldownTours": 1,
-    "coutPA": 5,
-    "desc": "10 lames sur des ennemis au hasard ; 20 % de poison (1t) par lame.",
-    "id": "deluge_lames",
-    "nom": "Déluge de lames",
-    "projectiles": {
-      "baseMax": 3,
-      "baseMin": 1,
-      "nb": 10,
-      "pProc": 0.2,
-      "poison": {
-        "degats": 3,
-        "duree": 1
-      },
-      "scaling": 0.05
-    },
-    "scaling": 0,
     "type": "degats"
   },
   "depouille": {
@@ -629,19 +583,6 @@
     "scaling": 0.35,
     "type": "degats"
   },
-  "expert_poisons": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 2,
-    "coutPA": 2,
-    "desc": "Double les dégâts des poisons appliqués pendant 2 tours.",
-    "id": "expert_poisons",
-    "nom": "Expert des poisons",
-    "poisonAmpli": 2,
-    "scaling": 0,
-    "type": "buff"
-  },
   "fil_collant": {
     "baseMax": 25,
     "baseMin": 19,
@@ -656,26 +597,6 @@
     "id": "fil_collant",
     "nom": "Fil collant",
     "scaling": 0.42,
-    "type": "degats"
-  },
-  "flasque_empoisonnee": {
-    "baseMax": 6,
-    "baseMin": 3,
-    "cible": "ennemi_ligne",
-    "cooldownTours": 2,
-    "coutPA": 3,
-    "desc": "Poison (3t) sur 3 cibles.",
-    "id": "flasque_empoisonnee",
-    "nom": "Flasque empoisonnée",
-    "poison": {
-      "degats": 5,
-      "duree": 3
-    },
-    "rebond": {
-      "bonusParSaut": 0,
-      "sauts": 2
-    },
-    "scaling": 0.15,
     "type": "degats"
   },
   "fleche_de_recul": {
@@ -817,31 +738,6 @@
     "type": "degats",
     "zoneLance": true
   },
-  "invisibilite": {
-    "baseMax": 0,
-    "baseMin": 0,
-    "cible": "soi",
-    "cooldownTours": 3,
-    "coutPA": 3,
-    "desc": "+25 % d'esquive (3t) et boost d'Agilité (15 + 0,5/niv, 2t).",
-    "effetParNiveau": {
-      "base": 15,
-      "duree": 2,
-      "parNiveau": 0.5,
-      "stat": "agilite"
-    },
-    "effets": [
-      {
-        "duree": 3,
-        "stat": "esquive",
-        "valeur": 0.25
-      }
-    ],
-    "id": "invisibilite",
-    "nom": "Invisibilité",
-    "scaling": 0,
-    "type": "buff"
-  },
   "jormun": {
     "baseMax": 12,
     "baseMin": 8,
@@ -937,19 +833,6 @@
     "id": "maree_d_encre",
     "nom": "Marée d'encre",
     "scaling": 0.45,
-    "type": "degats"
-  },
-  "mise_a_mort": {
-    "baseMax": 46,
-    "baseMin": 32,
-    "cible": "ennemi_tous",
-    "cooldownTours": 3,
-    "coutPA": 6,
-    "desc": "Très lourds dégâts — échoue si la cible n'en meurt pas.",
-    "executeSeulement": true,
-    "id": "mise_a_mort",
-    "nom": "Mise à mort",
-    "scaling": 0.7,
     "type": "degats"
   },
   "molosse": {
@@ -1173,6 +1056,34 @@
     "id": "picotement",
     "nom": "Picotement",
     "scaling": 0.3,
+    "type": "degats"
+  },
+  "piege_a_fragmentation": {
+    "baseMax": 11,
+    "baseMin": 8,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Pose un piège sur la rangée de la cible (aucun dégât immédiat) ; au déclenchement, éclabousse le reste de la rangée à moitié dégâts.",
+    "id": "piege_a_fragmentation",
+    "maxParTour": 2,
+    "nom": "Piège à Fragmentation",
+    "posePiege": true,
+    "ratioLigne": 0.5,
+    "scaling": 0.28,
+    "type": "degats"
+  },
+  "piege_funeste": {
+    "baseMax": 14,
+    "baseMin": 10,
+    "bonusParEnnemiLigneCible": 0.3,
+    "cible": "ennemi_ligne",
+    "coutPA": 3,
+    "desc": "Pose un piège sur la rangée de la cible (aucun dégât immédiat) ; au déclenchement, +30 % par autre ennemi vivant sur cette rangée.",
+    "id": "piege_funeste",
+    "maxParTour": 2,
+    "nom": "Piège Funeste",
+    "posePiege": true,
+    "scaling": 0.35,
     "type": "degats"
   },
   "pile_ou_face": {
@@ -1674,6 +1585,19 @@
     "nom": "Souffle régénérant",
     "scaling": 0,
     "type": "soin"
+  },
+  "sournoiserie": {
+    "baseMax": 5,
+    "baseMin": 3,
+    "cible": "ennemi_tous",
+    "coutPA": 2,
+    "deplaceCible": "toggle",
+    "desc": "Petits dégâts sur n'importe quel ennemi (rangée arrière comprise), puis échange sa rangée.",
+    "id": "sournoiserie",
+    "maxParTour": 2,
+    "nom": "Sournoiserie",
+    "scaling": 0.12,
+    "type": "degats"
   },
   "tetanie": {
     "baseMax": 9,

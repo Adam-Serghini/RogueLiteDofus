@@ -284,8 +284,8 @@
   "sram": {
     "archetype": "melee",
     "elements": [
-      "terre",
-      "air"
+      "air",
+      "feu"
     ],
     "id": "sram",
     "img": "/assets/classes/sram.png",
@@ -294,14 +294,12 @@
     "pa": 6,
     "pvBase": 48,
     "sorts": [
-      "attaque_ombre",
-      "coup_insidieux",
-      "coup_sournois",
-      "flasque_empoisonnee",
-      "deluge_lames",
-      "mise_a_mort",
-      "expert_poisons",
-      "invisibilite"
+      "attaque_mortelle",
+      "sournoiserie",
+      "piege_funeste",
+      "piege_a_fragmentation",
+      "concentration_de_chakra",
+      "brume"
     ],
     "stats": {
       "agilite": 0,

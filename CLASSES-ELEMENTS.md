@@ -31,7 +31,7 @@ c'est de la souplesse face aux résistances adverses.
 | Feca | `feca` | melee | terre + eau |
 | Forgelance | `forgelance` | melee | terre + feu |
 | Ouginak | `ouginak` | melee | terre + air |
-| Sram | `sram` | melee | terre + air |
+| Sram | `sram` | melee | air + feu |
 | Ecaflip | `ecaflip` | melee | air + eau |
 | Sadida *(désactivée)* | `sadida` | melee | terre + eau |
 | Cra | `cra` | distance | feu + air |
@@ -40,6 +40,7 @@ c'est de la souplesse face aux résistances adverses.
 | Éliotrope | `eliotrope` | distance | feu + terre |
 | Xélor | `xelor` | distance | eau + terre |
 
-Répartition sur les onze jouables : terre 6, feu 5, air 5, eau 6.
-**L'air et le feu restent minoritaires**, et c'est ce qui justifie le plancher de 5 % de
-coup critique pour tout le monde : sans lui, six classes sur onze ne critiqueraient jamais.
+Répartition sur les onze jouables : terre 5, feu 6, air 5, eau 6 (rework du Sram,
+terre + air → air + feu). **L'air et la terre restent minoritaires**, et c'est ce qui
+justifie le plancher de 5 % de coup critique pour tout le monde : sans lui, six classes
+sur onze ne critiqueraient jamais.

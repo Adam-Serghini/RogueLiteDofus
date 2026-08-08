@@ -64,11 +64,11 @@ describe("la classe", () => {
     }
   });
 
-  it("la répartition des éléments des 11 jouables est terre 6 / feu 5 / air 5 / eau 6", () => {
+  it("la répartition des éléments des 11 jouables est terre 5 / feu 6 / air 5 / eau 6 (post-rework Sram)", () => {
     const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
     const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
     expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 6, feu: 5, air: 5, eau: 6 });
+      .toEqual({ terre: 5, feu: 6, air: 5, eau: 6 });
   });
 
   it("les 6 identifiants de sort correspondent aux 6 fichiers d'icônes, dans les DEUX sens", () => {
