@@ -1,13 +1,17 @@
 // =============================================================================
 //  ecaflip-moteur.test.ts — Task 1 du rework Ecaflip : les primitives du pipeline
-//  de dégâts (rembPASiCrit, elementPire, secondCoupSiCrit,
+//  de dégâts (reduitCoutSiCrit/coutEffectif, elementPire, secondCoupSiCrit,
 //  degatsCritSubis, effetLigneCible, soinAvantBlesseRatio).
 //
 //  Aucun contenu réel n'utilise encore ces champs (Task 3) : chaque bloc construit
 //  un sort synthétique à partir d'un sort existant (SORTS.morsure).
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, degatsCible, elementsCandidats, estAvant, effetsDebutTour, type CombatCtx } from "./combat";
+import {
+  lancerSort, degatsCible, elementsCandidats, estAvant, effetsDebutTour,
+  coutEffectif, reinitialiserLancersTour, controllerIA,
+  type CombatCtx,
+} from "./combat";
 import { SORTS } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 import type { Combatant, Element, Spell } from "./types";
@@ -34,24 +38,69 @@ function mannequin(id = "combat_1"): Combatant {
   return e;
 }
 
-describe("rembPASiCrit", () => {
-  it("rend les PA sur critique, et rien sans critique", () => {
-    const spell: Spell = { ...SORTS.morsure, id: "test_remb_crit", rembPASiCrit: 2 };
+describe("reduitCoutSiCrit / coutEffectif", () => {
+  it("un critique réduit le coût du PROCHAIN lancer du MÊME sort, et rien sans critique", () => {
+    const spell: Spell = { ...SORTS.morsure, id: "test_remise_crit", reduitCoutSiCrit: 2 };
 
     const lanceurCrit = ecaflip();
     const cibleCrit = mannequin();
-    const avantCrit = lanceurCrit.paActuels;
     // rng()=0 : 0 < seuil d'esquive (0) est faux (pas d'esquive), et 0 < chanceCritEffective
     // (0.05 au plancher) est vrai → critique.
     lancerSort(lanceurCrit, spell, cibleCrit.ref, [lanceurCrit, cibleCrit], ctx({ rng: () => 0 }));
-    expect(lanceurCrit.paActuels).toBe(avantCrit + spell.rembPASiCrit!);
+    // aucun remboursement immédiat : le PA du lanceur n'a pas bougé, seul coutEffectif change
+    expect(coutEffectif(spell, lanceurCrit)).toBe(spell.coutPA - 2);
 
     const lanceurSansCrit = ecaflip();
     const cibleSansCrit = mannequin();
-    const avantSansCrit = lanceurSansCrit.paActuels;
     // rng()=0.5 : ni esquive (seuil 0), ni critique (seuil 0.05).
     lancerSort(lanceurSansCrit, spell, cibleSansCrit.ref, [lanceurSansCrit, cibleSansCrit], ctx({ rng: () => 0.5 }));
-    expect(lanceurSansCrit.paActuels).toBe(avantSansCrit);
+    expect(coutEffectif(spell, lanceurSansCrit)).toBe(spell.coutPA); // inchangé sans critique
+  });
+
+  it("la remise s'accumule d'un critique à l'autre, avec un plancher à 1 PA", () => {
+    const spell: Spell = { ...SORTS.morsure, id: "test_remise_cumul", coutPA: 3, reduitCoutSiCrit: 1 };
+    const lanceur = ecaflip();
+    for (const attendu of [3, 2, 1, 1]) {
+      expect(coutEffectif(spell, lanceur)).toBe(attendu);
+      const cible = mannequin();
+      lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx({ rng: () => 0 })); // crit forcé
+    }
+    expect(coutEffectif(spell, lanceur)).toBe(1); // plancher tenu au-delà de 3 remises
+  });
+
+  it("la remise n'est jamais lue pour un AUTRE sort, même du même lanceur", () => {
+    const spellA: Spell = { ...SORTS.morsure, id: "test_remise_a", reduitCoutSiCrit: 2 };
+    const spellB: Spell = { ...SORTS.morsure, id: "test_remise_b", coutPA: spellA.coutPA };
+    const lanceur = ecaflip();
+    const cible = mannequin();
+    lancerSort(lanceur, spellA, cible.ref, [lanceur, cible], ctx({ rng: () => 0 })); // crit forcé sur A
+    expect(coutEffectif(spellA, lanceur)).toBe(spellA.coutPA - 2);
+    expect(coutEffectif(spellB, lanceur)).toBe(spellB.coutPA); // B n'a rien gagné
+  });
+
+  it("la remise tombe au changement de tour — même point de réinitialisation que lancersCeTour", () => {
+    const spell: Spell = { ...SORTS.morsure, id: "test_remise_tour", reduitCoutSiCrit: 1 };
+    const lanceur = ecaflip();
+    const cible = mannequin();
+    lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx({ rng: () => 0 })); // crit forcé
+    expect(coutEffectif(spell, lanceur)).toBe(spell.coutPA - 1);
+
+    reinitialiserLancersTour(lanceur); // point d'entrée réellement utilisé par la boucle de combat
+    expect(coutEffectif(spell, lanceur)).toBe(spell.coutPA); // remise effacée
+  });
+
+  it("l'IA lit le coût EFFECTIF, pas le coût nominal (via coutEffectif, sur le VRAI Pile ou Face)", async () => {
+    // Pile ou Face coûte 3 PA nominalement. Avec une remise de 2 PA déjà acquise
+    // (coût effectif 1) et seulement 1 PA restant, le sort serait injouable au
+    // coût NOMINAL mais doit rester choisi par l'IA au coût EFFECTIF — exactement
+    // ce que `controllerIA` (et, par le même appel, la barre de sorts de
+    // l'interface) consultent via `coutEffectif`.
+    const acteur = ecaflip();
+    acteur.remisesCout = { pile_ou_face: 2 }; // coût effectif = max(1, 3-2) = 1
+    acteur.paActuels = 1;
+    const cible = mannequin();
+    const action = await controllerIA(acteur, [acteur, cible]);
+    expect(action?.sort.id).toBe("pile_ou_face"); // choisi malgré paActuels(1) < coutPA nominal(3)
   });
 });
 

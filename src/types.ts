@@ -228,7 +228,13 @@ export interface Spell {
   rappelleLance?: { soinParDurabilite: number }; // Vajra : rappelle la lance (bris standard) et soigne selon sa durabilité restante ; injouable sans lance vivante
   redirigeArriere?: { ratio: number; duree: number }; // Étreinte de Valkyr : pose Combatant.redirection sur le lanceur
   // --- rework de l'Ecaflip (primitives du pipeline de dégâts) ---
-  rembPASiCrit?: number; // Pile ou Face : rembourse ce nombre de PA quand le sort critique
+  /** Pile ou Face : quand ce sort critique, réduit de N PA le coût de son PROCHAIN
+   *  lancer (cumulatif d'un critique à l'autre, plancher 1 PA — voir `coutEffectif`).
+   *  Remise posée sur `Combatant.remisesCout`, remise à {} en DÉBUT de tour du porteur
+   *  (même point d'entrée que `lancersCeTour`) : elle ne survit jamais au tour où elle
+   *  a été gagnée. Anciennement `rembPASiCrit` (remboursement immédiat) — remplacé, pas
+   *  ajouté : un seul champ porte la mécanique. */
+  reduitCoutSiCrit?: number;
   elementPire?: boolean; // Bluff : frappe dans le PIRE élément (dernier du classement) plutôt que le meilleur
   secondCoupSiCrit?: boolean; // Bluff : sur critique, frappe une seconde fois dans l'AUTRE élément (le meilleur)
   effetLigneCible?: EffetSpec; // débuff appliqué à TOUTE la rangée de la cible ; non cumulable (durée rafraîchie)
@@ -486,6 +492,10 @@ export interface Combatant {
    *  bouclier permanent coexiste avec un temporaire, l'expiration retire ce qui reste du
    *  bouclier total sans savoir à qui il appartenait — imperfection assumée, pas un oubli. */
   boucliersTemporaires?: { montant: number; tours: number }[];
+  /** Pile ou Face (Ecaflip) : remise de coût accumulée PAR sortId (clé = `Spell.id`),
+   *  lue par `coutEffectif()`. Remise à {} au DÉBUT du tour du porteur, comme
+   *  `lancersCeTour` — une remise ne survit donc jamais au tour où elle a été gagnée. */
+  remisesCout?: Record<string, number>;
 }
 
 /** Progression d'un personnage pendant une run (réinitialisée à la mort).

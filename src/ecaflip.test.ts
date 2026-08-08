@@ -1,15 +1,16 @@
 // =============================================================================
 //  ecaflip.test.ts — Task 3 du rework Ecaflip : le kit RÉEL (6 sorts, paire
-//  air+eau). Les primitives moteur qu'il emploie (rembPASiCrit, elementPire,
-//  secondCoupSiCrit, degatsCritSubis/effetLigneCible, soinAvantBlesseRatio,
-//  bouclierPctSiCrit/bouclierTours, facesAleatoires/tiragesSiCrit) sont déjà
-//  couvertes contre des sorts synthétiques dans ecaflip-moteur.test.ts : ici on
-//  vérifie le CONTENU réel — les valeurs exactes du tableau du plan, la
-//  disparition des 6 anciens sorts, la nouvelle paire, et chaque sort produisant
-//  son effet de bout en bout via lancerSort dans un vrai combat.
+//  air+eau). Les primitives moteur qu'il emploie (reduitCoutSiCrit/coutEffectif,
+//  elementPire, secondCoupSiCrit, degatsCritSubis/effetLigneCible,
+//  soinAvantBlesseRatio, bouclierPctSiCrit/bouclierTours,
+//  facesAleatoires/tiragesSiCrit) sont déjà couvertes contre des sorts
+//  synthétiques dans ecaflip-moteur.test.ts : ici on vérifie le CONTENU réel —
+//  les valeurs exactes du tableau du plan, la disparition des 6 anciens sorts,
+//  la nouvelle paire, et chaque sort produisant son effet de bout en bout via
+//  lancerSort dans un vrai combat.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, estAvant, effetsDebutTour, type CombatCtx } from "./combat";
+import { lancerSort, estAvant, effetsDebutTour, coutEffectif, type CombatCtx } from "./combat";
 import { SORTS, CLASSES } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 import type { Combatant } from "./types";
@@ -64,24 +65,43 @@ describe("Pile ou Face", () => {
     expect(s.baseMax).toBe(10);
     expect(s.scaling).toBeCloseTo(0.27);
     expect(s.maxParTour).toBe(4);
-    expect(s.rembPASiCrit).toBe(1);
+    expect(s.reduitCoutSiCrit).toBe(1);
     expect(s.type).toBe("degats");
   });
 
-  it("bout en bout : inflige des dégâts, et rembourse 1 PA SEULEMENT sur critique", () => {
+  it("bout en bout : inflige des dégâts, et réduit le coût du PROCHAIN lancer de 1 PA SEULEMENT sur critique", () => {
     const eca = ecaflip();
     const cible = mannequin();
-    const avant = eca.paActuels;
     lancerSort(eca, SORTS.pile_ou_face, cible.ref, [eca, cible], ctx({ rng: () => 0 })); // crit forcé
     expect(cible.pvActuels).toBeLessThan(500);
-    expect(eca.paActuels).toBe(avant + 1);
+    // aucun remboursement immédiat de PA : la remise ne se voit que sur le PROCHAIN lancer
+    expect(coutEffectif(SORTS.pile_ou_face, eca)).toBe(2); // 3 - 1
 
     const eca2 = ecaflip();
     const cible2 = mannequin();
-    const avant2 = eca2.paActuels;
     lancerSort(eca2, SORTS.pile_ou_face, cible2.ref, [eca2, cible2], ctx({ rng: () => 0.5 })); // pas de crit
     expect(cible2.pvActuels).toBeLessThan(500);
-    expect(eca2.paActuels).toBe(avant2);
+    expect(coutEffectif(SORTS.pile_ou_face, eca2)).toBe(3); // inchangé sans critique
+  });
+
+  it("la séquence complète d'un tour avec critiques forcés : 3 → 2 → 1 → 1 (plancher 1 PA)", () => {
+    const eca = ecaflip();
+    const coups = [0, 1, 2, 3].map(() => mannequin());
+    const attendus = [3, 2, 1, 1];
+    for (let i = 0; i < 4; i++) {
+      expect(coutEffectif(SORTS.pile_ou_face, eca)).toBe(attendus[i]);
+      lancerSort(eca, SORTS.pile_ou_face, coups[i].ref, [eca, coups[i]], ctx({ rng: () => 0 })); // crit forcé
+    }
+    expect(coutEffectif(SORTS.pile_ou_face, eca)).toBe(1); // 3 - 4 remises d'affilée, plancher tenu
+  });
+
+  it("la remise ne profite PAS à un autre sort de la même Ecaflip", () => {
+    const eca = ecaflip();
+    const cible = mannequin();
+    lancerSort(eca, SORTS.pile_ou_face, cible.ref, [eca, cible], ctx({ rng: () => 0 })); // crit forcé sur Pile ou Face
+    expect(coutEffectif(SORTS.pile_ou_face, eca)).toBe(2);
+    // Bluff n'a jamais porté `reduitCoutSiCrit` : son coût effectif reste son coût nominal
+    expect(coutEffectif(SORTS.bluff, eca)).toBe(SORTS.bluff.coutPA);
   });
 });
 
@@ -93,7 +113,7 @@ describe("Bluff", () => {
     expect(s.baseMin).toBe(7);
     expect(s.baseMax).toBe(11);
     expect(s.scaling).toBeCloseTo(0.28);
-    expect(s.maxParTour).toBe(2);
+    expect(s.maxParTour).toBe(1); // retour d'équilibrage : un seul lancer par tour (était 2)
     expect(s.elementPire).toBe(true);
     expect(s.secondCoupSiCrit).toBe(true);
     expect(s.type).toBe("degats");

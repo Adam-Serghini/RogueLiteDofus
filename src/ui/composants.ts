@@ -4,7 +4,7 @@
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
-import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort } from "../combat";
+import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort, coutEffectif } from "../combat";
 import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
@@ -59,7 +59,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
   const restant = acteur?.cooldowns[s.id] ?? 0;
   if (restant > 0) cd.push(`<b class="tip-cd-actif">en recharge (${restant}t)</b>`);
   return [
-    `<div class="tip-nom">${escapeHtml(s.nom)}<span class="tip-pa">${s.coutPA} PA</span></div>`,
+    `<div class="tip-nom">${escapeHtml(s.nom)}<span class="tip-pa">${acteur ? coutEffectif(s, acteur) : s.coutPA} PA</span></div>`,
     principal ? `<div class="tip-stat">${principal}</div>` : "",
     s.desc ? `<div class="tip-effet">${escapeHtml(s.desc)}</div>` : "",
     `<div class="tip-cible">🎯 ${CIBLE_LBL[s.cible] ?? s.cible}${cd.length ? ` · ${cd.join(" · ")}` : ""}</div>`,

@@ -12,6 +12,7 @@ import {
   resistanceAffichee,
   statsEffectives,
   ordreDuCombat,
+  coutEffectif,
   type FxEvent,
 } from "../combat";
 import { statElement } from "../progression";
@@ -134,7 +135,7 @@ function aUneActionPossible(acteur: Combatant, cs: Combatant[]): boolean {
     .map((id) => SORTS[id])
     .some(
       (s) =>
-        acteur.paActuels >= s.coutPA && ciblesValides(acteur, s, cs).length > 0,
+        acteur.paActuels >= coutEffectif(s, acteur) && ciblesValides(acteur, s, cs).length > 0,
     );
 }
 
@@ -329,7 +330,7 @@ function finir(action: Action | null): void {
 function choisirSort(s: Spell): void {
   const acteur = activeActeur;
   if (!acteur || !resolver) return;
-  if (acteur.paActuels < s.coutPA) return; // pas assez de PA
+  if (acteur.paActuels < coutEffectif(s, acteur)) return; // pas assez de PA
   if (s.cible === "soi" || s.cible === "allie_tous") {
     // auto-résolu (pas de clic de cible) : encore faut-il que le sort ait une cible
     // valable (ex. Kaboom sans bombe posée) — sinon on ne consomme rien.
@@ -653,10 +654,10 @@ function renderBarreSorts(): string {
   const arme = acteur.armeSort;
   const cac = arme
     ? `<button class="sort ${selectedSpell?.id === arme.id ? "choisi" : ""}" data-arme="1" ${
-        acteur.paActuels >= arme.coutPA ? "" : "disabled"
+        acteur.paActuels >= coutEffectif(arme, acteur) ? "" : "disabled"
       } title="${escapeHtml(arme.nom)} — attaque d'arme">
         <span class="sort-touche">1</span>
-        <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${arme.coutPA}</b></span>
+        <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${coutEffectif(arme, acteur)}</b></span>
         <span class="sort-icon-wrap"><img class="sort-icon" src="${arme.img ? A(arme.img) : ""}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
       </button>`
     : `<div class="sort sort-cac" title="Corps à corps — aucune arme équipée">
@@ -671,13 +672,14 @@ function renderBarreSorts(): string {
         const cd = acteur.cooldowns[s.id] ?? 0; // cooldown par sort (côté lanceur)
         // pas de cible valable (Kaboom sans bombe, Apaisement sans Rage, maxParTour atteint…) : griser
         const sansCible = ciblesValides(acteur, s, combatants).length === 0;
-        const abordable = acteur.paActuels >= s.coutPA && cd <= 0 && !sansCible;
+        const cout = coutEffectif(s, acteur);
+        const abordable = acteur.paActuels >= cout && cd <= 0 && !sansCible;
         const choisi = selectedSpell?.id === s.id;
         return `<button class="sort ${choisi ? "choisi" : ""} ${cd > 0 ? "cooldown" : ""}" data-sort="${s.id}" ${
           abordable ? "" : "disabled"
         } ${sansCible ? `title="Aucune cible valable"` : ""}>
         <span class="sort-touche">${i + 2}</span>
-        <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${s.coutPA}</b></span>
+        <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${cout}</b></span>
         <span class="sort-icon-wrap"><span class="sort-nom-fallback">${escapeHtml(s.nom)}</span><img class="sort-icon" src="${sortIcon(s.id)}" alt="" onerror="this.closest('.sort-icon-wrap')?.classList.add('noicon'); this.remove()" /></span>
         ${cd > 0 ? `<span class="sort-cd" title="Rechargement : ${cd} tour(s)">${cd}</span>` : ""}
       </button>`;

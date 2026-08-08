@@ -164,6 +164,18 @@ export function chanceEsquive(
   return options?.sansPlafond ? brut : Math.min(0.5, brut);
 }
 
+/** Coût RÉEL en PA d'un sort pour ce lanceur — SOURCE UNIQUE, à consommer par tout
+ *  lecteur du coût (boucle de tour, IA, interface, tooltip…), jamais `sort.coutPA`
+ *  directement. Aujourd'hui la seule variation vient de `reduitCoutSiCrit` (Pile ou
+ *  Face de l'Ecaflip, voir `Combatant.remisesCout`), plancher à 1 PA — mais toute
+ *  future mécanique de coût variable doit passer par ICI, sur le même précédent que
+ *  `multiplicateurEscaladeSort`/`chanceEsquive` (une formule recopiée finit toujours
+ *  par diverger). */
+export function coutEffectif(sort: Spell, lanceur: Combatant): number {
+  const remise = lanceur.remisesCout?.[sort.id] ?? 0;
+  return remise > 0 ? Math.max(1, sort.coutPA - remise) : sort.coutPA;
+}
+
 /** Combattants ciblables par un sort de ligne dans un camp : la ligne avant,
  *  ou (si elle est vide) toute la ligne arrière qui devient exposée. */
 function ligneFront(cibles: Combatant[]): Combatant[] {
@@ -295,8 +307,14 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   return base;
 }
 
-/** Remise à zéro des limites de lancer « par tour » (appelée au début du tour du combatant). */
-export function reinitialiserLancersTour(c: Combatant): void { c.lancersCeTour = {}; }
+/** Remise à zéro des compteurs « par tour » (appelée au début du tour du combattant) :
+ *  les limites de lancer (`lancersCeTour`) ET les remises de coût de Pile ou Face
+ *  (`remisesCout`) — une remise ne survit jamais au tour où elle a été gagnée, même
+ *  point d'entrée que les limites de lancer. */
+export function reinitialiserLancersTour(c: Combatant): void {
+  c.lancersCeTour = {};
+  c.remisesCout = {};
+}
 
 /**
  * Multiplicateur d'escalade « par lancer » d'un sort pour son lanceur, À L'INSTANT T
@@ -1754,9 +1772,11 @@ export function lancerSort(
   ctx: CombatCtx,
 ): void {
   ctx.combatants = cs; // Lance/redirection : lookup depuis infligerDegats, référence à jour
-  // Flèche Punitive : PA dispo AVANT paiement — la boucle de combat débite paActuels
-  // avant d'appeler lancerSort, donc « avant paiement » = paActuels + coutPA ici.
-  const paAvant = lanceur.paActuels + sort.coutPA;
+  // Flèche Punitive / Zénith : PA dispo AVANT paiement — la boucle de combat débite
+  // paActuels du coût EFFECTIF avant d'appeler lancerSort, donc « avant paiement » =
+  // paActuels + coutEffectif(sort, lanceur) ici, jamais + sort.coutPA (sinon une remise
+  // active désynchroniserait ce calcul de ce que la boucle a réellement débité).
+  const paAvant = lanceur.paActuels + coutEffectif(sort, lanceur);
   const cible = parRef(cs, cibleRef);
   // Multiplicateur d'escalade (Pugilat/Colère de Iop) : calculé AVANT les incréments
   // de compteur ci-dessous, donc sur les valeurs de « lancers déjà comptés » — c'est
@@ -2350,16 +2370,22 @@ export function lancerSort(
   // Mâchoire du Coffre / Colère royale : buff appliqué au lanceur (ex. +résistances)
   if (sort.effetLanceur) appliquerEffet(lanceur, sort.effetLanceur);
 
-  // Flèche magique : chance (scale Chance) de rembourser le coût en PA du sort
+  // Flèche magique : chance (scale Chance) de rembourser le coût en PA du sort —
+  // le coût EFFECTIF, jamais `sort.coutPA` brut (même précaution que la boucle de
+  // tour : un sort à coût variable ne doit rembourser que ce qu'il a réellement coûté).
   if (sort.rembPA && ctx.rng() < pctRembPA(statsEffectives(lanceur))) {
-    lanceur.paActuels += sort.coutPA;
-    ctx.log(`${lanceur.nom} récupère ${sort.coutPA} PA (Flèche magique).`);
+    const remb = coutEffectif(sort, lanceur);
+    lanceur.paActuels += remb;
+    ctx.log(`${lanceur.nom} récupère ${remb} PA (Flèche magique).`);
   }
 
-  // Pile ou Face : le CRITIQUE rembourse, là où rembPA (Flèche magique) est piloté par la Chance
-  if (sort.rembPASiCrit && unCritique) {
-    lanceur.paActuels += sort.rembPASiCrit;
-    ctx.log(`${lanceur.nom} récupère ${sort.rembPASiCrit} PA.`);
+  // Pile ou Face : le CRITIQUE réduit le coût du PROCHAIN lancer de CE MÊME sort
+  // (cumulatif, plancher 1 PA géré par `coutEffectif`) — là où rembPA (Flèche
+  // magique) rembourse IMMÉDIATEMENT et est piloté par la Chance.
+  if (sort.reduitCoutSiCrit && unCritique) {
+    lanceur.remisesCout ??= {};
+    lanceur.remisesCout[sort.id] = (lanceur.remisesCout[sort.id] ?? 0) + sort.reduitCoutSiCrit;
+    ctx.log(`${lanceur.nom} réduit le coût de son prochain ${sort.nom} de ${sort.reduitCoutSiCrit} PA.`);
   }
 
   // Rage (Ouginak) : la charge se gagne APRÈS la résolution (ne boost pas ce lancer)
@@ -2519,7 +2545,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       if (!acteur) break;
       aJoue.add(acteur.ref);
 
-      reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer par tour
+      reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer ET des remises de coût par tour
       if (acteur.nullifieParTour) acteur.coupsAnnulesRestants = acteur.nullifieParTour; // Meulou
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       appliquerEnrage(acteur, ctx); // Ascension : boss enragés
@@ -2557,8 +2583,9 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
         if (++secu > 50) break;
         const action = await hooks.controllers[acteur.camp](acteur, combatants);
         if (!action) break; // fin de tour volontaire
-        if (acteur.paActuels < action.sort.coutPA) break;
-        acteur.paActuels -= action.sort.coutPA;
+        const cout = coutEffectif(action.sort, acteur);
+        if (acteur.paActuels < cout) break;
+        acteur.paActuels -= cout;
         lancerSort(acteur, action.sort, action.cibleRef, combatants, ctx);
         purgerInvocationsOrphelines(combatants, ctx); // un invocateur vient-il de tomber ?
         await hooks.onUpdate?.();
@@ -2593,14 +2620,14 @@ function iaAgressif(acteur: Combatant, cs: Combatant[]): Action | null {
   const invoc = acteur.sorts
     .map((id) => SORTS[id])
     .find((s) =>
-      s.type === "invocation" && acteur.paActuels >= s.coutPA &&
+      s.type === "invocation" && acteur.paActuels >= coutEffectif(s, acteur) &&
       ciblesValides(acteur, s, cs).length > 0 && invocationUtile(acteur, s, cs));
   if (invoc) return { sort: invoc, cibleRef: acteur.ref };
 
   const sorts = acteur.sorts
     .map((id) => SORTS[id])
-    .filter((s) => s.type === "degats" && acteur.paActuels >= s.coutPA)
-    .sort((a, b) => b.coutPA - a.coutPA); // le plus cher d'abord
+    .filter((s) => s.type === "degats" && acteur.paActuels >= coutEffectif(s, acteur))
+    .sort((a, b) => coutEffectif(b, acteur) - coutEffectif(a, acteur)); // le plus cher d'abord (coût EFFECTIF)
   for (const s of sorts) {
     const cibles = ciblesValides(acteur, s, cs).sort((a, b) => a.pvActuels - b.pvActuels);
     if (cibles.length) return { sort: s, cibleRef: cibles[0].ref };
@@ -2609,7 +2636,7 @@ function iaAgressif(acteur: Combatant, cs: Combatant[]): Action | null {
 }
 
 function iaSoutien(acteur: Combatant, cs: Combatant[]): Action | null {
-  const soin = acteur.sorts.map((id) => SORTS[id]).find((s) => s.type === "soin" && acteur.paActuels >= s.coutPA);
+  const soin = acteur.sorts.map((id) => SORTS[id]).find((s) => s.type === "soin" && acteur.paActuels >= coutEffectif(s, acteur));
   if (soin) {
     const blesses = allies(acteur, cs)
       .filter((a) => a.pvActuels < a.pvMax)
