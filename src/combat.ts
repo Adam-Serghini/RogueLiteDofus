@@ -456,6 +456,10 @@ export function multPortails(lanceur: Combatant, cs: Combatant[]): number {
   return 1 + 0.01 * meilleur;
 }
 
+// --- Pièges et Chausse-Trappe (Sram) -------------------------------------------
+export const PIEGES_MAX = 4; // pièges vivants max par poseur ; le plus ancien s'efface au-delà
+export const CHAUSSE_TRAPPE_MAX = 5; // cumuls de Chausse-Trappe, crédités au poseur au déclenchement
+
 /** Bonus de Conjuration (Éliotrope) : la cible est marquée, le marqueur (et sa
  *  rangée) frappe plus fort dessus. Source unique (aussi utilisée par le chemin
  *  générique de `lancerSort`) : c'est CE calcul que les handlers dédiés (Kaboom,
@@ -891,6 +895,12 @@ function deplacerCible(cible: Combatant, mode: "toggle" | "arriere", cs: Combata
   if (dest === null) return; // rangée opposée pleine : échec silencieux
   cible.position = dest;
   ctx.log(`${cible.nom} est repoussé en ligne ${dest < NB_COLONNES ? "AVANT" : "ARRIÈRE"}.`);
+  // Déclencheur de piège (Sram) : branché ici, point de passage unique de tout
+  // déplacement de rangée du moteur (les deux appelants de `deplacerCible` — le rider
+  // de bousculade de Flèche de recul et la résolution générique de `deplaceCible` —
+  // en héritent tous les deux sans code dédié). Appelé APRÈS que la position a
+  // effectivement changé et que le journal a parlé, comme demandé.
+  declencherPiege(cible, cs, ctx);
 }
 
 /** Les `n` combattants de `pool` les plus proches en COLONNE de `ref` (rework Cra :
@@ -1498,6 +1508,57 @@ function frappe(
   return r.dmg;
 }
 
+/** Déclenche AU PLUS UN piège sur la rangée d'arrivée de `cible` : le plus ancien,
+ *  tous poseurs confondus. Ne doit être appelée qu'APRÈS que `cible.position` a
+ *  effectivement changé — `deplacerCible` en est le seul appelant, une fois ses deux
+ *  sorties anticipées passées. Le piège réutilise le chemin de dégâts normal de son
+ *  sort (`ciblesDegats`/`frappe`), donc ses riders (`bonusParEnnemiLigneCible`,
+ *  `ratioLigne`) s'appliquent sans code dédié — pas de second pipeline de dégâts.
+ *
+ *  Le poseur gagne un cumul de Chausse-Trappe MÊME si c'est un ALLIÉ qui a provoqué
+ *  le déplacement : c'est SON piège, pas celui de l'acteur qui a bougé la cible.
+ *
+ *  Le poseur MORT garde ses pièges actifs : ce ne sont PAS des invocations
+ *  (contrairement à la Poupée / la Lance / l'Égide, purgées avec leur lanceur par
+ *  `purgerInvocationsOrphelines`) — noté explicitement, la jurisprudence inverse
+ *  existe et un futur lecteur pourrait la supposer par défaut ici aussi.
+ *
+ *  « Le plus ancien, tous poseurs confondus » suppose qu'un SEUL Sram existe par
+ *  équipe (recrutement une classe par personnage) : avec un seul poseur possible,
+ *  le premier piège de SA liste (parcourue dans l'ordre de pose) est déjà le plus
+ *  ancien au sens global. Cette recherche ne fusionne PAS plusieurs files par ordre
+ *  d'insertion réel si plusieurs poseurs coexistaient un jour — elle s'arrête au
+ *  premier poseur trouvé dans `cs`, dans son ordre. */
+function declencherPiege(cible: Combatant, cs: Combatant[], ctx: CombatCtx): void {
+  let trouve: { poseur: Combatant; index: number } | null = null;
+  for (const poseur of cs) {
+    if (!poseur.pieges?.length) continue;
+    const index = poseur.pieges.findIndex((p) => p.camp === cible.camp && p.avant === estAvant(cible));
+    if (index >= 0) { trouve = { poseur, index }; break; }
+  }
+  if (!trouve) return;
+  const { poseur, index } = trouve;
+  const [piege] = poseur.pieges!.splice(index, 1);
+
+  const sort = SORTS[piege.sortId];
+  if (!sort) return; // sort inconnu : garde défensive, ne devrait jamais arriver en jeu
+
+  ctx.log(`💥 Le piège de ${poseur.nom} se déclenche sur ${cible.nom} !`);
+  let multLigne = 1;
+  if (sort.bonusParEnnemiLigneCible) {
+    multLigne *= 1 + sort.bonusParEnnemiLigneCible *
+      adverses(poseur, cs).filter((e) => e.ref !== cible.ref && !e.estLance && estAvant(e) === estAvant(cible)).length;
+  }
+  const touchees = ciblesDegats(poseur, sort, cible, cs);
+  for (const t of touchees) {
+    const estEclaboussure = !!sort.ratioLigne && t.ref !== cible.ref;
+    const ratio = estEclaboussure ? sort.ratioLigne! : 1;
+    const nomAffiche = estEclaboussure ? `${sort.nom} (piège, éclaboussure)` : `${sort.nom} (piège)`;
+    frappe(poseur, sort, t, { useMax: false, mult: multLigne * ratio, ctx }, nomAffiche);
+  }
+  poseur.chausseTrappe = Math.min(CHAUSSE_TRAPPE_MAX, (poseur.chausseTrappe ?? 0) + 1);
+}
+
 /** Kaboom (Roublard) : détonne toutes les bombes posées sur les ennemis vivants.
  *  Chaque bombe inflige un jet plein au porteur + 50 % (arrondi) aux AUTRES
  *  vivants de sa rangée. Si le lanceur a une Resquille active, chaque ennemi
@@ -1661,6 +1722,21 @@ export function lancerSort(
   // --- BOMBE COLLANTE (Roublard) : pose une charge, pas de dégâts ---
   if (sort.poseBombe && cible) {
     if (!poserBombe(cible, ctx)) ctx.log(`La bombe glisse : ${cible.nom} est déjà chargé au maximum.`);
+    poseCooldown(cible);
+    return;
+  }
+
+  // --- POSE D'UN PIÈGE (Sram) : aucun dégât au lancer — le sort est réservé à sa
+  // pose ; ses jets/riders ne sont lus qu'au DÉCLENCHEMENT (`declencherPiege`, via
+  // `SORTS[piege.sortId]`), jamais ici. Le piège n'occupe AUCUNE case de la grille
+  // (voir `Piege` dans types.ts) : il ne prend donc jamais part à `caseLibreRangeeOpposee`.
+  // Au-delà de PIEGES_MAX, le plus ANCIEN s'efface — le joueur pose toujours
+  // effectivement le piège qu'il vient de payer.
+  if (sort.posePiege && cible) {
+    const p = (lanceur.pieges ??= []);
+    if (p.length >= PIEGES_MAX) p.shift();
+    p.push({ sortId: sort.id, camp: cible.camp, avant: estAvant(cible) });
+    ctx.log(`${lanceur.nom} pose un piège sur la rangée ${estAvant(cible) ? "avant" : "arrière"} de ${cible.nom}.`);
     poseCooldown(cible);
     return;
   }
@@ -1911,6 +1987,12 @@ export function lancerSort(
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
       adverses(lanceur, cs).filter((e) => e.ref !== cible.ref && !e.estLance && estAvant(e) === estAvant(cible)).length;
   }
+  // Chausse-Trappe (Sram) : +N par cumul du LANCEUR, plafonné à CHAUSSE_TRAPPE_MAX —
+  // même patron que `multEscalade` (Iop), lu AVANT toute consommation de ce lancer
+  // (voir `sort.consommeChausseTrappe` plus bas, appliqué après la boucle sur les cibles).
+  const multChausse = sort.bonusParChausseTrappe
+    ? 1 + sort.bonusParChausseTrappe * Math.min(lanceur.chausseTrappe ?? 0, CHAUSSE_TRAPPE_MAX)
+    : 1;
   // Muspel (Forgelance) : ×(1 + taux × nb d'ennemis non-lance de la zone), calculé AVANT les jets
   if (sort.bonusParEnnemiToucheZone) {
     const nbNonLance = ciblesDegats(lanceur, sort, cible, cs).filter((t) => !t.estLance).length;
@@ -2020,7 +2102,7 @@ export function lancerSort(
     const nomAffiche = estEclaboussure ? `${sort.nom} (éclaboussure)` : sort.nom;
     const mult =
       (sort.rebond ? 1 + sort.rebond.bonusParSaut * i : 1) *
-      (1 + bonusVigueur) * multLigne * multEscalade * ratio;
+      (1 + bonusVigueur) * multLigne * multEscalade * multChausse * ratio;
     const r = degatsCible(lanceur, sort, t, { useMax, mult, ctx, paAvant });
     if (r.esquive) {
       ctx.log(`${t.nom} esquive ${nomAffiche} !`);
@@ -2081,6 +2163,12 @@ export function lancerSort(
       }
     }
   });
+
+  // Chausse-Trappe (Sram) : consommation INCONDITIONNELLE — c'est un coût payé au
+  // lancer, pas au succès. Remet le compteur à zéro même à 0 cumul, et même si le
+  // (ou les) coup(s) ont été esquivés (hors de la boucle ci-dessus : rien dans
+  // `r.esquive` ne doit conditionner cette remise à zéro).
+  if (sort.consommeChausseTrappe) lanceur.chausseTrappe = 0;
 
   // Ecaflip : débuff appliqué à TOUTE la rangée de la cible (même camp, même estAvant),
   // seulement si la cible primaire a réellement été touchée. Non cumulable : une seconde

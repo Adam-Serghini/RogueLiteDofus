@@ -257,6 +257,28 @@ export interface Spell {
    *  tour en cours et perdus à sa fin. À distinguer de `paGain`/`paProchainTour`, qui
    *  créditent tous deux `paBonusNextTurn`, donc le tour SUIVANT. */
   paImmediat?: number;
+  // --- kit du Sram ---
+  /** Pose un piège sur la rangée de la cible (voir `Piege`). Un SEUL champ, pas de
+   *  variante « funeste »/« fragmentation » : le piège retient son `sortId`, donc
+   *  c'est le sort lui-même qui porte ses riders de déclenchement — deux pièges
+   *  diffèrent par leurs riders, jamais par un discriminant à maintenir en double.
+   *  Aucun dégât au LANCER : ses jets/riders ne sont lus qu'au déclenchement. */
+  posePiege?: boolean;
+  bonusParChausseTrappe?: number; // Attaque Mortelle : +N par cumul de Chausse-Trappe du lanceur, cap CHAUSSE_TRAPPE_MAX
+  consommeChausseTrappe?: boolean; // remet le compteur de Chausse-Trappe du lanceur à zéro APRÈS lecture, inconditionnellement
+}
+
+/** Piège du Sram : posé sur une rangée d'un camp, déclenché quand un adversaire y
+ *  est DÉPLACÉ (voir `deplacerCible`, combat.ts). N'est PAS un combattant et
+ *  n'occupe AUCUNE case de la grille — s'il en prenait une, il remplirait la
+ *  rangée de destination, `caseLibreRangeeOpposee` renverrait `null`, le
+ *  déplacement échouerait EN SILENCE, et le piège ne pourrait alors jamais se
+ *  déclencher : il serait sa propre négation. C'est la contrainte qui décide de
+ *  toute l'implémentation. */
+export interface Piege {
+  sortId: string; // le sort qui l'a posé : porte jet, scaling et riders de déclenchement
+  camp: Camp; // camp des victimes potentielles (la rangée surveillée appartient à CE camp)
+  avant: boolean; // rangée surveillée (avant/arrière) de ce camp
 }
 
 /** Un effet de buff de rangée. Distinct d'`EffetSpec` parce qu'il porte une valeur
@@ -448,6 +470,9 @@ export interface Combatant {
   resquilleActive?: number; // Resquille (Roublard) : PA à retirer par ennemi touché au prochain Kaboom (expire en fin de tour)
   portails?: number; // portails ouverts (Éliotrope), cap PORTAILS_MAX — aura de dégâts pour le porteur et sa rangée
   conjuration?: { pct: number; lanceurRef: string; tours: number }; // marque Conjuration (Éliotrope) : +pct dégâts pour le lanceur et sa rangée, décompte en fin de tour du lanceur
+  // --- Sram (pièges) ---
+  pieges?: Piege[]; // pièges vivants de CE poseur, dans l'ordre de pose ; cap PIEGES_MAX. Un poseur MORT les garde actifs (ce ne sont pas des invocations).
+  chausseTrappe?: number; // cumuls de Chausse-Trappe, cap CHAUSSE_TRAPPE_MAX ; crédités au poseur à chaque déclenchement, même provoqué par un allié
   // --- Forgelance ---
   estLance?: boolean; // vrai pour le pseudo-combattant « Lance » (camp ennemi, invocation)
   lanceurRef?: string; // ref du Forgelance propriétaire de la lance (réutilisé par l'Égide du Féca : ref du lanceur)
