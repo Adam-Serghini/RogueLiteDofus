@@ -2089,6 +2089,20 @@ kbd {
   color: #8a7350;
   margin: 0 0 6px 2px;
 }
+.piege-indicateur {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--txt);
+  background: #e4d6b2;
+  border: 1px solid var(--bord);
+  border-radius: 6px;
+  padding: 0 5px;
+  cursor: help;
+}
 .ligne-cards {
   display: flex;
   flex-direction: row;

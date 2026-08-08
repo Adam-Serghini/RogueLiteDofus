@@ -42,6 +42,13 @@ import {
 } from "./composants";
 import type { Action, Camp, Combatant, Meta, Spell } from "../types";
 
+/** Règle du piège (Sram), redite au survol de son indicateur de rangée — la même
+ *  phrase qu'Adam a demandée : sans elle, un joueur voit un chiffre sans savoir
+ *  ce qu'il déclenche ni dans quel ordre. */
+const TITRE_PIEGE =
+  "Piège du Sram : si un adversaire est déplacé sur cette rangée, il le déclenche. " +
+  "Un seul piège part par déplacement. Le premier posé part le premier.";
+
 let combatants: Combatant[] = [];
 /** Une ligne de journal : son texte, plus la méta que le moteur y attache pour les lignes
  *  de dégâts (quel fragment concerne quel élément — voir `CombatCtx.log`). */
@@ -351,6 +358,20 @@ function archiIndicateur(c: Combatant): string {
   return `<img class="archi-badge capture" src="${A("/assets/divers/Archmonster.webp")}" alt="" title="${escapeHtml(titre)}" onerror="this.remove()" />`;
 }
 
+/** Pièges du Sram en attente sur une rangée d'un camp — lit `Combatant.pieges` de TOUS
+ *  les combattants (le poseur peut être mort, ses pièges restent actifs, voir `Piege`
+ *  dans types.ts) et se contente de compter : le moteur reste la seule source de vérité
+ *  sur ce qui est réellement posé, l'affichage ne recalcule jamais la règle. */
+function piegesSurRangee(camp: Camp, avant: boolean): number {
+  let n = 0;
+  for (const c of combatants) {
+    for (const p of c.pieges ?? []) {
+      if (p.camp === camp && p.avant === avant) n++;
+    }
+  }
+  return n;
+}
+
 function carteCombattant(c: Combatant, clickable: boolean): string {
   const ko = c.pvActuels <= 0;
   const pvCur = Math.max(0, Math.round(c.pvActuels));
@@ -402,6 +423,9 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
   if ((c.telefrags ?? 0) > 0) badges.push(`⌛ ×${c.telefrags}`); // ⌛ distinct de ⏳ (badge d'init ci-dessus)
   if ((c.portails ?? 0) > 0) badges.push(`🌀 ×${c.portails}`);
   if ((c.rage ?? 0) > 0) badges.push(`🐺 Rage ×${c.rage}`);
+  // Chausse-Trappe (Sram) : pilote sa frappe la plus forte (Attaque Mortelle) —
+  // sans ce badge le cumul serait invisible alors qu'il conditionne le sort clé du kit.
+  if ((c.chausseTrappe ?? 0) > 0) badges.push(`🪤 Chausse-Trappe ×${c.chausseTrappe}`);
   if (c.provoque) badges.push(`🛡 Provoque`);
   if ((c.coupsAnnulesRestants ?? 0) > 0) badges.push(`🐺 ${c.coupsAnnulesRestants} coup(s) annulé(s)`);
   if (c.bonusOffensifProchain > 0)
@@ -493,15 +517,22 @@ function render(): void {
     const membres = combatants
       .filter((c) => c.camp === camp)
       .sort((a, b) => a.position - b.position);
-    const grp = (titreLigne: string, liste: Combatant[]) =>
-      `<div class="ligne-col">
-         <span class="ligne-label">${titreLigne}</span>
+    const grp = (titreLigne: string, liste: Combatant[], estRangeeAvant: boolean) => {
+      const nPieges = piegesSurRangee(camp, estRangeeAvant);
+      const piegeBadge =
+        nPieges > 0
+          ? `<span class="piege-indicateur" title="${escapeHtml(TITRE_PIEGE)}">🪤 ×${nPieges}</span>`
+          : "";
+      return `<div class="ligne-col">
+         <span class="ligne-label">${titreLigne}${piegeBadge}</span>
          <div class="ligne-cards">${liste.map((c) => carteCombattant(c, estCiblable(c))).join("") || `<span class="ligne-vide">—</span>`}</div>
        </div>`;
-    const avant = grp("Ligne avant", membres.filter(estAvant));
+    };
+    const avant = grp("Ligne avant", membres.filter(estAvant), true);
     const arriere = grp(
       "Ligne arrière",
       membres.filter((c) => !estAvant(c)),
+      false,
     );
     const sep = `<img class="ligne-sep" src="${A("/assets/divers/delimiter.png")}" alt="" onerror="this.remove()" />`;
     // les deux lignes côte à côte ; l'arrière est « derrière » = côté extérieur
