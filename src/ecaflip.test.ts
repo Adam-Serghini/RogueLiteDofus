@@ -10,7 +10,7 @@
 //  lancerSort dans un vrai combat.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, estAvant, effetsDebutTour, coutEffectif, type CombatCtx } from "./combat";
+import { lancerSort, estAvant, effetsDebutTour, coutEffectif, runCombat, type CombatCtx } from "./combat";
 import { SORTS, CLASSES } from "./data";
 import { nouvelleRun, equipeCombattante, fabriquerEnnemis } from "./run";
 import type { Combatant } from "./types";
@@ -102,6 +102,45 @@ describe("Pile ou Face", () => {
     expect(coutEffectif(SORTS.pile_ou_face, eca)).toBe(2);
     // Bluff n'a jamais porté `reduitCoutSiCrit` : son coût effectif reste son coût nominal
     expect(coutEffectif(SORTS.bluff, eca)).toBe(SORTS.bluff.coutPA);
+  });
+
+  it("la BOUCLE DE COMBAT (runCombat) débite le coût EFFECTIF, pas le coût nominal — séquence 3 → 2 → 1 → 1", async () => {
+    // 4 mannequins à 1 PV : chaque lancer de Pile ou Face (crit forcé, dégâts très
+    // supérieurs à 1) en tue un, ce qui fait progresser le combat sans dépendre d'un
+    // second tour — la remise se lit donc uniquement sur ce que la boucle a RÉELLEMENT
+    // débité de `paActuels`, pas sur un appel direct à `lancerSort` (qui ne débite rien).
+    const eca = ecaflip();
+    eca.paMax = 10; eca.paActuels = 10; // large assez pour les 4 casts (3+2+1+1 = 7)
+    // `mannequin()` réutilise le même combat de fabrique à chaque appel, donc la même
+    // ref (`e0_<monstre>`) : sans les forcer à être DISTINCTES, `parRef` retrouverait
+    // toujours le premier mannequin quelle que soit la cible visée par l'action.
+    const cibles = [0, 1, 2, 3].map((n) => {
+      const c = mannequin();
+      c.ref = `mannequin_${n}`;
+      c.pvMax = 1; c.pvActuels = 1;
+      return c;
+    });
+    const cs = [eca, ...cibles];
+
+    let i = 0;
+    const paAvantChaqueCast: number[] = [];
+    const controllerJoueur = (acteur: typeof eca) => {
+      if (i >= cibles.length) return null;
+      paAvantChaqueCast.push(acteur.paActuels);
+      return { sort: SORTS.pile_ou_face, cibleRef: cibles[i++].ref };
+    };
+
+    const gagne = await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0, // pas d'esquive, critique forcé à chaque coup
+    });
+
+    expect(gagne).toBe(true);
+    expect(cibles.every((c) => c.pvActuels <= 0)).toBe(true);
+    // PA restant AVANT chaque cast, tel que RÉELLEMENT débité par la boucle de
+    // combat (pas par un appel direct à `lancerSort`, qui ne débite rien) :
+    // 10, puis 10-3=7, puis 7-2=5, puis 5-1=4 — la séquence 3 → 2 → 1 → 1.
+    expect(paAvantChaqueCast).toEqual([10, 7, 5, 4]);
   });
 });
 
