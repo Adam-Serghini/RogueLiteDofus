@@ -64,12 +64,11 @@ describe("la classe", () => {
     }
   });
 
-  it("la répartition des éléments des 11 jouables est terre 5 / feu 6 / air 5 / eau 6 (post-rework Sram)", () => {
-    const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
-    const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
-    expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 5, feu: 6, air: 5, eau: 6 });
-  });
+  // La répartition élémentaire des 11 jouables est un invariant GLOBAL vérifié dans
+  // `archetypes.test.ts` (seul propriétaire de la synchro avec `CLASSES-ELEMENTS.md`),
+  // pas ici — la dupliquer par classe forcerait N fichiers à changer pour un seul
+  // invariant, et un oubli ferait échouer les tests d'une AUTRE classe (retiré au
+  // rework du Sram, qui l'avait trouvée dupliquée ici).
 
   it("les 6 identifiants de sort correspondent aux 6 fichiers d'icônes, dans les DEUX sens", () => {
     // `import.meta.glob` (natif Vite/Vitest, aucun type Node requis) plutôt que

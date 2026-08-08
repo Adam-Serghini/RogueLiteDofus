@@ -73,12 +73,12 @@ describe("la classe", () => {
     }
   });
 
-  it("la répartition des éléments des 11 jouables est terre 5 / feu 6 / air 5 / eau 6", () => {
-    const jouables = Object.keys(CLASSES).filter((id) => id !== "sadida");
-    const compte = (el: string) => jouables.filter((id) => CLASSES[id].elements.includes(el as never)).length;
-    expect({ terre: compte("terre"), feu: compte("feu"), air: compte("air"), eau: compte("eau") })
-      .toEqual({ terre: 5, feu: 6, air: 5, eau: 6 });
-  });
+  // La répartition élémentaire des 11 jouables est un invariant GLOBAL, pas un fait
+  // du Sram : il vit dans `archetypes.test.ts`, seul propriétaire de la synchronisation
+  // avec `CLASSES-ELEMENTS.md`. Le dupliquer ici (et dans chaque test de classe
+  // rework précédent) forcerait à éditer N fichiers pour un seul invariant, et
+  // l'oubli de l'un ferait échouer les tests d'une AUTRE classe pour un chantier
+  // qui n'y touche pas.
 
   it("les 6 identifiants de sort correspondent aux 6 fichiers d'icônes, dans les DEUX sens", () => {
     // `import.meta.glob` (natif Vite/Vitest) plutôt que `node:fs` : une déclaration
@@ -268,9 +268,14 @@ describe("Piège à Fragmentation : éclaboussure au déclenchement", () => {
 // Décision de conception explicitée dans le plan : TOUT déplacement de rangée
 // déclenche un piège, y compris ceux imposés par d'AUTRES classes. Les quatre
 // sorts ci-dessous existaient déjà avant ce rework (Flèche de recul du Cra,
-// Pendule du Xélor, Roublabot du Roublard, Tibias de l'Ouginak) — aucun n'a été
-// modifié pour ce chantier, c'est `deplacerCible` (tâche 1) qui les fait tous
-// passer par `declencherPiege` sans code dédié à chacun.
+// Pendule du Xélor, Roublabot du Roublard, Tibias de l'Ouginak) et aucun n'a été
+// modifié pour ce chantier. Pendule, Roublabot et Tibias passent par la
+// résolution GÉNÉRIQUE de `sort.deplaceCible` dans `lancerSort` ; Flèche de recul
+// a son propre handler dédié (`lancerFlecheDeRecul`) qui appelle `deplacerCible`
+// en dur pour sa bousculade — mais les QUATRE finissent par `deplacerCible`,
+// point de passage unique où `declencherPiege` est branché (tâche 1) : aucun n'a
+// eu besoin de code dédié AU PIÈGE lui-même, seule Flèche de recul en avait déjà
+// un pour sa propre mécanique de bousculade.
 describe("quatre sorts d'autres classes déclenchent réellement un piège du Sram", () => {
   function deuxEnnemisAvantArriere(): [Combatant, Combatant] {
     const [avant, arriere] = fabriquerEnnemis("combat_2");
@@ -280,6 +285,16 @@ describe("quatre sorts d'autres classes déclenchent réellement un piège du Sr
   }
 
   it("Flèche de recul (Cra) : pousse la cible en arrière et déclenche un piège qui y attend", () => {
+    // Flèche de recul inflige elle-même des dégâts de bousculade (collision à
+    // l'arrivée, cf. `lancerFlecheDeRecul`) : `pvActuels` en baisse est vrai QUE le
+    // piège se déclenche ou non. La preuve du déclenchement est donc un ÉCART —
+    // comparé à un lancer témoin SANS piège — pas la seule baisse de PV.
+    const [avantTemoin, arriereTemoin] = deuxEnnemisAvantArriere();
+    const craTemoin = equipeCombattante(nouvelleRun(["cra"]))[0];
+    lancerSort(craTemoin, SORTS.fleche_de_recul, avantTemoin.ref, [craTemoin, avantTemoin, arriereTemoin], ctx());
+    const dmgSeul = 9999 - avantTemoin.pvActuels;
+    expect(dmgSeul).toBeGreaterThan(0); // le sort seul frappe déjà (bousculade)
+
     const cra = equipeCombattante(nouvelleRun(["cra"]))[0];
     const [avant, arriere] = deuxEnnemisAvantArriere();
     const cs = [cra, avant, arriere];
@@ -289,7 +304,8 @@ describe("quatre sorts d'autres classes déclenchent réellement un piège du Sr
     const avantPV = avant.pvActuels;
     lancerSort(cra, SORTS.fleche_de_recul, avant.ref, cs, ctx());
     expect(avant.position).toBeGreaterThanOrEqual(4); // effectivement repoussé en arrière
-    expect(avant.pvActuels).toBeLessThan(avantPV); // dégâts du sort ET du piège cumulés
+    const dmgAvecPiege = avantPV - avant.pvActuels;
+    expect(dmgAvecPiege).toBeGreaterThan(dmgSeul); // le piège a ajouté SES dégâts, au-delà de la bousculade seule
     expect(cra.pieges).toHaveLength(0); // le piège s'est déclenché
     expect(cra.chausseTrappe).toBe(1);
   });
@@ -321,6 +337,16 @@ describe("quatre sorts d'autres classes déclenchent réellement un piège du Sr
   });
 
   it("Tibias (Ouginak) : repousse la cible principale en arrière et déclenche un piège qui y attend", () => {
+    // Tibias inflige lui-même des dégâts de zone (zoneLigne) sur la rangée AVANT
+    // avant de repousser sa cible principale : `pvActuels` en baisse est vrai QUE
+    // le piège se déclenche ou non. Même méthode que Flèche de recul — un lancer
+    // témoin sans piège isole la part du piège dans le total.
+    const [avantTemoin, arriereTemoin] = deuxEnnemisAvantArriere();
+    const ouginakTemoin = equipeCombattante(nouvelleRun(["ouginak"]))[0];
+    lancerSort(ouginakTemoin, SORTS.tibias, avantTemoin.ref, [ouginakTemoin, avantTemoin, arriereTemoin], ctx());
+    const dmgSeul = 9999 - avantTemoin.pvActuels;
+    expect(dmgSeul).toBeGreaterThan(0); // le sort seul frappe déjà (zoneLigne)
+
     const ouginak = equipeCombattante(nouvelleRun(["ouginak"]))[0];
     const [avant, arriere] = deuxEnnemisAvantArriere();
     const cs = [ouginak, avant, arriere];
@@ -328,8 +354,77 @@ describe("quatre sorts d'autres classes déclenchent réellement un piège du Sr
     const avantPV = avant.pvActuels;
     lancerSort(ouginak, SORTS.tibias, avant.ref, cs, ctx());
     expect(avant.position).toBeGreaterThanOrEqual(4);
-    expect(avant.pvActuels).toBeLessThan(avantPV);
+    const dmgAvecPiege = avantPV - avant.pvActuels;
+    expect(dmgAvecPiege).toBeGreaterThan(dmgSeul); // le piège a ajouté SES dégâts, au-delà de Tibias seul
     expect(ouginak.pieges).toHaveLength(0);
     expect(ouginak.chausseTrappe).toBe(1);
+  });
+});
+
+describe("Attaque Mortelle : majore avec le Chausse-Trappe, puis remet le compteur à zéro", () => {
+  it("+15 % par cumul de Chausse-Trappe, et consomme le compteur après lecture", () => {
+    const c = sram();
+    const e = mannequin();
+    const avantPV = e.pvActuels;
+    lancerSort(c, SORTS.attaque_mortelle, e.ref, [c, e], ctx());
+    const dmgSansCumul = avantPV - e.pvActuels;
+    expect(dmgSansCumul).toBeGreaterThan(0);
+    expect(c.chausseTrappe ?? 0).toBe(0); // rien à consommer, mais explicitement remis à zéro
+
+    const c2 = sram();
+    c2.chausseTrappe = 3; // simule 3 déclenchements de piège déjà crédités
+    const e2 = mannequin();
+    const avantPV2 = e2.pvActuels;
+    lancerSort(c2, SORTS.attaque_mortelle, e2.ref, [c2, e2], ctx());
+    const dmgAvecCumul = avantPV2 - e2.pvActuels;
+    expect(dmgAvecCumul).toBe(Math.round(dmgSansCumul * (1 + 0.15 * 3)));
+    expect(c2.chausseTrappe).toBe(0); // consommé après lecture
+  });
+});
+
+describe("Concentration de Chakra : majore le prochain piège déclenché, pour 1 tour", () => {
+  it("pose bien un effet `bonusPieges` de 50 % sur le lanceur, et il majore le déclenchement suivant", () => {
+    const c = sram();
+    lancerSort(c, SORTS.concentration_de_chakra, c.ref, [c], ctx());
+    expect(c.effets).toEqual([{ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 }]);
+
+    // Sans Chakra : baseline.
+    const cSansChakra = sram();
+    const cibleSans = mannequin();
+    cibleSans.position = 4;
+    cSansChakra.pieges = [{ sortId: "piege_funeste", camp: cibleSans.camp, avant: true }];
+    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_chakra_sans", baseMin: 0, baseMax: 0, scaling: 0 };
+    const avantSans = cibleSans.pvActuels;
+    lancerSort(cSansChakra, sortMouvement, cibleSans.ref, [cSansChakra, cibleSans], ctx());
+    const dmgSans = avantSans - cibleSans.pvActuels;
+    expect(dmgSans).toBeGreaterThan(0);
+
+    // Avec Chakra actif sur le POSEUR : le déclenchement suivant est majoré de 50 %.
+    const cAvecChakra = sram();
+    lancerSort(cAvecChakra, SORTS.concentration_de_chakra, cAvecChakra.ref, [cAvecChakra], ctx());
+    const cibleAvec = mannequin();
+    cibleAvec.position = 4;
+    cAvecChakra.pieges = [{ sortId: "piege_funeste", camp: cibleAvec.camp, avant: true }];
+    const sortMouvement2 = { ...SORTS.roublabot, id: "test_mouvement_chakra_avec", baseMin: 0, baseMax: 0, scaling: 0 };
+    const avantAvec = cibleAvec.pvActuels;
+    lancerSort(cAvecChakra, sortMouvement2, cibleAvec.ref, [cAvecChakra, cibleAvec], ctx());
+    const dmgAvec = avantAvec - cibleAvec.pvActuels;
+    expect(dmgAvec).toBe(Math.round(dmgSans * 1.5));
+  });
+});
+
+describe("Brume : partage l'esquive du lanceur avec la rangée de la cible", () => {
+  it("pose sur l'allié ciblé (et sa rangée) un effet `esquive` égal à l'agilité du lanceur × 0,002, pour 2 tours", () => {
+    const team = equipeCombattante(nouvelleRun(["sram", "iop", "cra"]));
+    const [c, memeRangee, autreRangee] = team;
+    c.stats = { ...c.stats, agilite: 100, chance: 0, intelligence: 0 };
+    c.position = 0; memeRangee.position = 1; autreRangee.position = 4;
+
+    lancerSort(c, SORTS.brume, memeRangee.ref, team, ctx());
+
+    const attendu = { stat: "esquive", valeur: 100 * 0.002, toursRestants: 2, viaBrume: true };
+    expect(memeRangee.effets).toEqual([attendu]); // la cible visée
+    expect(c.effets).toEqual([attendu]); // le lanceur, sur la MÊME rangée
+    expect(autreRangee.effets).toEqual([]); // rangée arrière : hors portée
   });
 });
