@@ -134,18 +134,34 @@ const multSoinDe = (c: Combatant): number =>
 export const NB_COLONNES = 4;
 export const estAvant = (c: Combatant): boolean => c.position < NB_COLONNES;
 
-/** Probabilité d'esquive EFFECTIVEMENT tirée, plafond compris (50 %). SOURCE UNIQUE,
- *  partagée par le pipeline de dégâts (`degatsAvec`), par la Brume du Sram et par un
- *  futur affichage — recopier la formule ailleurs, c'est garantir qu'un des
- *  consommateurs mentira un jour (précédent : l'infobulle d'escalade du Iop, rework
- *  2026-08-07). Inclut l'Agilité effective, les effets `esquive` (dont ceux posés par
- *  Brume — voir `partagerEsquive`) et le bonus d'équipement de ligne arrière
- *  (`esquiveArriere`, Baguette Rikiki), actif seulement si le porteur n'est pas en
- *  ligne avant. */
-export function chanceEsquive(c: Combatant): number {
+/** Probabilité d'esquive, SOURCE UNIQUE partagée par le pipeline de dégâts
+ *  (`degatsAvec`), par la Brume du Sram (`partagerEsquive`) et par un futur affichage —
+ *  recopier la formule ailleurs, c'est garantir qu'un des consommateurs mentira un jour
+ *  (précédent : l'infobulle d'escalade du Iop, rework 2026-08-07 ; ce précédent s'est
+ *  reproduit UNE FOIS de plus dans cette même fonction — voir revue de tâche 5, corrigée
+ *  en donnant des OPTIONS à la fonction plutôt qu'en la recopiant une seconde fois).
+ *  Sans options (le cas du pipeline) : Agilité effective, tous les effets `esquive`
+ *  (Brume comprise), le bonus d'équipement de ligne arrière (`esquiveArriere`, Baguette
+ *  Rikiki, actif seulement hors ligne avant), plafond 50 % appliqué. La Brume a besoin
+ *  d'une variante de ce même calcul : `sansBonusPosition` (le bonus dépend de la case du
+ *  PORTEUR de l'objet, pas de celle du lanceur qui partage — n'a pas de sens à partager),
+ *  `sansViaBrume` (exclut une Brume ANTÉRIEURE déjà active sur le lanceur — sans quoi
+ *  relancer Brume sur soi-même gonflerait la valeur partagée à chaque relance), et
+ *  `sansPlafond` (la Brume pose la valeur BRUTE comme effet `esquive` normal ; le
+ *  plafond de 50 % s'applique alors en AVAL, à la lecture, exactement comme n'importe
+ *  quel autre effet `esquive` — le plafonner ICI doublerait l'écrêtage). */
+export function chanceEsquive(
+  c: Combatant,
+  options?: { sansBonusPosition?: boolean; sansViaBrume?: boolean; sansPlafond?: boolean },
+): number {
   const se = statsEffectives(c);
-  const esquiveEquip = !estAvant(c) ? (c.esquiveArriere ?? 0) : 0; // Baguette Rikiki
-  return Math.min(0.5, se.agilite * 0.002 + sommeEffet(c, "esquive") + esquiveEquip);
+  const esquiveEquip =
+    !options?.sansBonusPosition && !estAvant(c) ? (c.esquiveArriere ?? 0) : 0; // Baguette Rikiki
+  const effetsEsquive = c.effets
+    .filter((e) => e.stat === "esquive" && !(options?.sansViaBrume && e.viaBrume))
+    .reduce((s, e) => s + e.valeur, 0);
+  const brut = se.agilite * 0.002 + effetsEsquive + esquiveEquip;
+  return options?.sansPlafond ? brut : Math.min(0.5, brut);
 }
 
 /** Combattants ciblables par un sort de ligne dans un camp : la ligne avant,
@@ -1261,24 +1277,19 @@ function appliquerBuffRangee(lanceur: Combatant, buff: BuffRangeeAlliee, cs: Com
   );
 }
 
-/** Brume (Sram) : partage l'esquive PROPRE du lanceur (agilité effective + ses effets
- *  `esquive` — hors ceux posés par une Brume ANTÉRIEURE, `viaBrume`, sans quoi une
- *  Brume déjà active sur le lanceur gonflerait la valeur qu'il partage à la prochaine
- *  relance) à TOUS les alliés vivants de la rangée de la CIBLE, lanceur compris s'il
- *  s'y trouve (`allies()` exclut déjà Lance/invocations). Volontairement SANS le bonus
- *  de position `esquiveArriere` : il dépend de la case du PORTEUR de l'objet, pas de
- *  celle du lanceur, et n'a donc pas de sens à partager. Volontairement SANS plafond
- *  ici : le plafond de 50 % s'applique en AVAL, dans `chanceEsquive`, au moment où le
- *  bénéficiaire encaisse un coup — poser la valeur brute comme un effet `esquive`
+/** Brume (Sram) : partage l'esquive PROPRE du lanceur, via `chanceEsquive` (voir sa
+ *  docstring pour le détail des options `sansBonusPosition`/`sansViaBrume`/
+ *  `sansPlafond` employées ici — CONSOMMER cette fonction plutôt que recopier sa
+ *  formule est précisément ce qui en fait une source unique), à TOUS les alliés
+ *  vivants de la rangée de la CIBLE, lanceur compris s'il s'y trouve (`allies()`
+ *  exclut déjà Lance/invocations). Poser la valeur brute comme un effet `esquive`
  *  normal laisse `sommeEffet` faire le cumul, exactement comme n'importe quel autre
- *  effet `esquive`. Appelée UNE SEULE FOIS par lancer (jamais une fois par membre de la
- *  rangée) : la portée ne dépend pas de qui le sort a « touché », un buff n'a pas cette
- *  notion — même raisonnement que `appliquerBuffRangee`/`appliquerBouclierPortee`. */
+ *  effet `esquive` — le plafond s'applique en AVAL, à la lecture. Appelée UNE SEULE
+ *  FOIS par lancer (jamais une fois par membre de la rangée) : la portée ne dépend pas
+ *  de qui le sort a « touché », un buff n'a pas cette notion — même raisonnement que
+ *  `appliquerBuffRangee`/`appliquerBouclierPortee`. */
 function partagerEsquive(lanceur: Combatant, cible: Combatant, duree: number, cs: Combatant[], ctx: CombatCtx): void {
-  const se = statsEffectives(lanceur);
-  const brut = se.agilite * 0.002 + lanceur.effets
-    .filter((e) => e.stat === "esquive" && !e.viaBrume)
-    .reduce((s, e) => s + e.valeur, 0);
+  const brut = chanceEsquive(lanceur, { sansBonusPosition: true, sansViaBrume: true, sansPlafond: true });
   const rangee = allies(lanceur, cs).filter((c) => estAvant(c) === estAvant(cible));
   // Push direct plutôt que `appliquerEffet` : c'est le seul poseur du fichier à
   // contourner cet helper, et c'est délibéré — `EffetSpec` (le type qu'attend
