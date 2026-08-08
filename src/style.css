@@ -3446,3 +3446,68 @@ body.avec-fond .map-zone {
   border-color: #c85454;
   color: #fff0f0;
 }
+
+/* Vue Formation — bande « Ordre de jeu » (réorganise l'équipe de la run) */
+.ordre-bande {
+  max-width: 560px;
+  margin: 6px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.ordre-jeton {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--bord);
+  border-radius: 12px;
+  cursor: grab;
+}
+.ordre-jeton img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.ordre-rang {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  min-width: 18px;
+  padding: 0 4px;
+  background: var(--or);
+  color: #2a1d08;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.5;
+  border-radius: 999px;
+  border: 1px solid var(--bord);
+}
+.ordre-nom {
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+.ordre-jeton.sel {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px var(--cyan);
+}
+.ordre-jeton.drop-cible {
+  border-color: var(--or);
+  box-shadow: 0 0 0 2px var(--or);
+  opacity: 1;
+}
+
+/* Paramètres — les cartes de préréglage portent leur rang de jeu */
+.preset-carte {
+  position: relative;
+  cursor: grab;
+}
+.preset-carte.drop-cible {
+  border-color: var(--or);
+  box-shadow: 0 0 0 2px var(--or);
+  opacity: 1;
+}

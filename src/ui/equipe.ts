@@ -124,6 +124,7 @@ export function showTaverne(
 export function showFormation(persos: PersoState[]): Promise<void> {
   return new Promise((res) => {
     let selCell = -1; // case sélectionnée
+    let selOrdre = -1; // index sélectionné dans la bande d'ordre (repli clic-puis-clic)
     const occupant = (cell: number) => persos.find((p) => p.position === cell);
     const enregistrer = () => {
       // la config ne retient que la RANGÉE préférée (le placement exact vit dans PersoState.position)
@@ -164,6 +165,17 @@ export function showFormation(persos: PersoState[]): Promise<void> {
       draw();
     };
 
+    // — Ordre de jeu : réorganise run.persos en place. N'écrit PAS la préférence
+    //   durable (Settings.ordre), qui se règle dans les Paramètres : un ordre
+    //   dépend de l'équipe réunie ce jour-là, une rangée est un rôle de classe.
+    const deplacerOrdre = (src: number, dst: number) => {
+      if (src === dst || src < 0 || dst < 0 || src >= persos.length || dst >= persos.length) return;
+      const [p] = persos.splice(src, 1);
+      persos.splice(dst, 0, p);
+      selOrdre = -1;
+      draw();
+    };
+
     const draw = () => {
       ecran(`
         <h1>Formation</h1>
@@ -172,6 +184,16 @@ export function showFormation(persos: PersoState[]): Promise<void> {
         <div class="formation-grille">
           <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
+        </div>
+        <h2 class="settings-titre">Ordre de jeu</h2>
+        <p class="muet settings-sous">Glisse-dépose pour choisir qui joue en premier. Le camp qui ouvre le combat reste décidé par la moyenne d'initiative des deux équipes — ton ordre ne la change pas.</p>
+        <div class="ordre-bande">
+          ${persos.map((p, i) => `
+            <button class="ordre-jeton ${selOrdre === i ? "sel" : ""}" data-ordre="${i}" draggable="true" title="${escapeHtml(CLASSES[p.classeId].nom)} — position ${i + 1}">
+              <span class="ordre-rang">${i + 1}</span>
+              <img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
+              <span class="ordre-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
+            </button>`).join("")}
         </div>
         <div class="boutons-ecran"><button id="form-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
       `);
@@ -191,18 +213,29 @@ export function showFormation(persos: PersoState[]): Promise<void> {
             deplacer(selCell, cell);
           }
         });
-        // — glisser-déposer
+        // — glisser-déposer : payload préfixée "cell:<n>" — la grille de placement
+        //   et la bande d'ordre partagent l'écran et acceptent toutes deux un
+        //   dépôt ; sans préfixe, un jeton d'ordre (charge = un INDEX dans
+        //   `persos`) déposé ici serait lu comme un numéro de case, et vice-versa.
         btn.addEventListener("dragstart", (e) => {
           if (!occupant(cell)) {
             e.preventDefault();
             return;
           }
-          e.dataTransfer!.setData("text/plain", String(cell));
+          // deux types MIME : "text/plain" porte la charge lue au drop, le type
+          // "roguefus/cell" marqueur sert UNIQUEMENT à distinguer l'origine dès
+          // le dragover (getData n'est pas fiable avant le drop, seul .types l'est)
+          e.dataTransfer!.setData("text/plain", `cell:${cell}`);
+          e.dataTransfer!.setData("roguefus/cell", String(cell));
           e.dataTransfer!.effectAllowed = "move";
           btn.classList.add("drag-src");
         });
         btn.addEventListener("dragend", () => btn.classList.remove("drag-src"));
         btn.addEventListener("dragover", (e) => {
+          // ne promet un dépôt valide (et n'autorise le drop) que pour une
+          // charge issue de CETTE grille — un jeton d'ordre glissé ici n'a pas
+          // le type "roguefus/cell" et doit rester refusé, visuellement et en fait
+          if (!e.dataTransfer?.types.includes("roguefus/cell")) return;
           e.preventDefault();
           btn.classList.add("drop-cible");
         });
@@ -212,8 +245,41 @@ export function showFormation(persos: PersoState[]): Promise<void> {
         btn.addEventListener("drop", (e) => {
           e.preventDefault();
           btn.classList.remove("drop-cible");
-          const src = Number(e.dataTransfer!.getData("text/plain"));
+          const data = e.dataTransfer!.getData("text/plain");
+          if (!data.startsWith("cell:")) return; // charge étrangère (jeton d'ordre) : ignorée
+          const src = Number(data.slice(5));
           if (!Number.isNaN(src)) deplacer(src, cell);
+        });
+      });
+      root.querySelectorAll<HTMLButtonElement>(".ordre-jeton").forEach((btn) => {
+        const idx = Number(btn.dataset.ordre);
+        btn.addEventListener("click", () => {
+          if (selOrdre < 0) { selOrdre = idx; draw(); }
+          else if (selOrdre === idx) { selOrdre = -1; draw(); }
+          else deplacerOrdre(selOrdre, idx);
+        });
+        // payload préfixée "ordre:<idx>" + type marqueur "roguefus/ordre" —
+        // voir le commentaire sur .form-cell ci-dessus
+        btn.addEventListener("dragstart", (e) => {
+          e.dataTransfer!.setData("text/plain", `ordre:${idx}`);
+          e.dataTransfer!.setData("roguefus/ordre", String(idx));
+          e.dataTransfer!.effectAllowed = "move";
+          btn.classList.add("drag-src");
+        });
+        btn.addEventListener("dragend", () => btn.classList.remove("drag-src"));
+        btn.addEventListener("dragover", (e) => {
+          if (!e.dataTransfer?.types.includes("roguefus/ordre")) return;
+          e.preventDefault();
+          btn.classList.add("drop-cible");
+        });
+        btn.addEventListener("dragleave", () => btn.classList.remove("drop-cible"));
+        btn.addEventListener("drop", (e) => {
+          e.preventDefault();
+          btn.classList.remove("drop-cible");
+          const data = e.dataTransfer!.getData("text/plain");
+          if (!data.startsWith("ordre:")) return; // charge étrangère (case de grille) : ignorée
+          const src = Number(data.slice(6));
+          if (!Number.isNaN(src)) deplacerOrdre(src, idx);
         });
       });
       document.getElementById("form-retour")?.addEventListener("click", () => {
