@@ -97,7 +97,7 @@ export function showInventaire(
             </button>`;
             })
             .join("")
-        : `<p class="muet">Inventaire vide — gagne des combats pour trouver de l'équipement.</p>`;
+        : `<p class="muet">Inventaire vide : gagne des combats pour trouver de l'équipement.</p>`;
 
       const b = bonusEquipement(perso);
       const totalTxt = itemLignes(b.stats, b.pvBonus, b.resistances) || "aucun bonus";
@@ -272,7 +272,7 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
             <button id="set-auto" class="secondaire ${config.autoFinTour ? "on" : ""}">${config.autoFinTour ? "Activé" : "Désactivé"}</button>
           </div>
           <div class="setting-ligne">
-            <span class="setting-lbl">Sauvegarde<br><small class="muet">Dofus, succès, réglages et run en cours — pour changer de PC</small></span>
+            <span class="setting-lbl">Sauvegarde<br><small class="muet">Dofus, succès, réglages et run en cours, pour changer de PC</small></span>
             <span class="setting-actions">
               <button id="set-export" class="secondaire">Exporter</button>
               <button id="set-import" class="secondaire">Importer…</button>
@@ -397,7 +397,7 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
         const msg = document.getElementById("set-import-msg");
         const ok = importerSauvegarde(await f.text());
         if (ok) {
-          if (msg) { msg.textContent = "✓ Sauvegarde importée — rechargement…"; msg.style.display = ""; }
+          if (msg) { msg.textContent = "✓ Sauvegarde importée, rechargement…"; msg.style.display = ""; }
           setTimeout(() => location.reload(), 600); // ré-initialise Meta/config/run proprement
         } else if (msg) {
           msg.textContent = "✗ Fichier invalide : ce n'est pas une sauvegarde Roguefus Lite.";

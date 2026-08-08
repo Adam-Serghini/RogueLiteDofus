@@ -65,7 +65,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Reine Nyée & Abraknyde Ancestral"
+    "nom": "Donjon : Reine Nyée & Abraknyde Ancestral"
   },
   "abr_elite": {
     "ennemis": [
@@ -158,7 +158,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Gourlo le Terrible"
+    "nom": "Donjon : Gourlo le Terrible"
   },
   "arc_elite": {
     "ennemis": [
@@ -251,7 +251,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Blops Royaux Griotte & Coco"
+    "nom": "Donjon : Blops Royaux Griotte & Coco"
   },
   "blp_boss_griotte_indigo": {
     "ennemis": [
@@ -272,7 +272,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Blops Royaux Griotte & Indigo"
+    "nom": "Donjon : Blops Royaux Griotte & Indigo"
   },
   "blp_boss_griotte_reinette": {
     "ennemis": [
@@ -293,7 +293,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Blops Royaux Griotte & Reinette"
+    "nom": "Donjon : Blops Royaux Griotte & Reinette"
   },
   "blp_boss_indigo_coco": {
     "ennemis": [
@@ -314,7 +314,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Blops Royaux Indigo & Coco"
+    "nom": "Donjon : Blops Royaux Indigo & Coco"
   },
   "blp_boss_indigo_reinette": {
     "ennemis": [
@@ -335,7 +335,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Blops Royaux Indigo & Reinette"
+    "nom": "Donjon : Blops Royaux Indigo & Reinette"
   },
   "blp_boss_reinette_coco": {
     "ennemis": [
@@ -356,7 +356,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Blops Royaux Reinette & Coco"
+    "nom": "Donjon : Blops Royaux Reinette & Coco"
   },
   "blp_elite": {
     "ennemis": [
@@ -390,7 +390,7 @@
         "position": 2
       }
     ],
-    "nom": "Donjon — Tournesol Affamé"
+    "nom": "Donjon : Tournesol Affamé"
   },
   "cho_1": {
     "ennemis": [
@@ -458,7 +458,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Le Chouque & Kanniboul Ebil"
+    "nom": "Donjon : Le Chouque & Kanniboul Ebil"
   },
   "cho_elite": {
     "ennemis": [
@@ -615,7 +615,7 @@
         "position": 2
       }
     ],
-    "nom": "Donjon — Boostache"
+    "nom": "Donjon : Boostache"
   },
   "fan_elite": {
     "ennemis": [
@@ -704,7 +704,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Coffre des Forgerons"
+    "nom": "Donjon : Coffre des Forgerons"
   },
   "frg_elite": {
     "ennemis": [
@@ -793,7 +793,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Gelées Royales Bleuet & Citron"
+    "nom": "Donjon : Gelées Royales Bleuet & Citron"
   },
   "gel_boss_bleuet_menthe": {
     "ennemis": [
@@ -814,7 +814,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Gelées Royales Bleuet & Menthe"
+    "nom": "Donjon : Gelées Royales Bleuet & Menthe"
   },
   "gel_boss_fraise_bleuet": {
     "ennemis": [
@@ -835,7 +835,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Gelées Royales Fraise & Bleuet"
+    "nom": "Donjon : Gelées Royales Fraise & Bleuet"
   },
   "gel_boss_fraise_citron": {
     "ennemis": [
@@ -856,7 +856,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Gelées Royales Fraise & Citron"
+    "nom": "Donjon : Gelées Royales Fraise & Citron"
   },
   "gel_boss_fraise_menthe": {
     "ennemis": [
@@ -877,7 +877,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Gelées Royales Fraise & Menthe"
+    "nom": "Donjon : Gelées Royales Fraise & Menthe"
   },
   "gel_boss_menthe_citron": {
     "ennemis": [
@@ -898,7 +898,7 @@
         "position": 5
       }
     ],
-    "nom": "Donjon — Gelées Royales Menthe & Citron"
+    "nom": "Donjon : Gelées Royales Menthe & Citron"
   },
   "gel_elite": {
     "ennemis": [
@@ -983,7 +983,7 @@
         "position": 2
       }
     ],
-    "nom": "Donjon — Directeur Grunob"
+    "nom": "Donjon : Directeur Grunob"
   },
   "gob_elite": {
     "ennemis": [
@@ -1068,7 +1068,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Corailleur Magistral"
+    "nom": "Donjon : Corailleur Magistral"
   },
   "hsk_elite": {
     "ennemis": [
@@ -1149,7 +1149,7 @@
         "position": 1
       }
     ],
-    "nom": "Donjon — Kardorim"
+    "nom": "Donjon : Kardorim"
   },
   "inc_elite": {
     "ennemis": [
@@ -1234,7 +1234,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Kankreblath"
+    "nom": "Donjon : Kankreblath"
   },
   "kan_elite": {
     "ennemis": [
@@ -1323,7 +1323,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Kharnozor & Draegnerys"
+    "nom": "Donjon : Kharnozor & Draegnerys"
   },
   "khz_elite": {
     "ennemis": [
@@ -1412,7 +1412,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Kwakwa"
+    "nom": "Donjon : Kwakwa"
   },
   "kwa_elite": {
     "ennemis": [
@@ -1501,7 +1501,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Nelween"
+    "nom": "Donjon : Nelween"
   },
   "lab_elite": {
     "ennemis": [
@@ -1582,7 +1582,7 @@
         "position": 2
       }
     ],
-    "nom": "Donjon — Shin Larve"
+    "nom": "Donjon : Shin Larve"
   },
   "lrv_elite": {
     "ennemis": [
@@ -1671,7 +1671,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Meulou"
+    "nom": "Donjon : Meulou"
   },
   "mlo_elite": {
     "ennemis": [
@@ -1764,7 +1764,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Moon"
+    "nom": "Donjon : Moon"
   },
   "moo_elite": {
     "ennemis": [
@@ -1857,7 +1857,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Dragon Cochon"
+    "nom": "Donjon : Dragon Cochon"
   },
   "por_elite": {
     "ennemis": [
@@ -1946,7 +1946,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Craqueleur Légendaire"
+    "nom": "Donjon : Craqueleur Légendaire"
   },
   "roc_elite": {
     "ennemis": [
@@ -2035,7 +2035,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Scarabosse Doré"
+    "nom": "Donjon : Scarabosse Doré"
   },
   "scr_elite": {
     "ennemis": [
@@ -2120,7 +2120,7 @@
         "position": 2
       }
     ],
-    "nom": "Donjon — Bouftou Royal"
+    "nom": "Donjon : Bouftou Royal"
   },
   "tai_elite": {
     "ennemis": [
@@ -2209,7 +2209,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Batofu"
+    "nom": "Donjon : Batofu"
   },
   "tof_elite": {
     "ennemis": [
@@ -2302,7 +2302,7 @@
         "position": 4
       }
     ],
-    "nom": "Donjon — Wa Wabbit & Wa Wobot"
+    "nom": "Donjon : Wa Wabbit & Wa Wobot"
   },
   "wab_elite": {
     "ennemis": [

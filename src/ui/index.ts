@@ -20,7 +20,7 @@ export function init(el: HTMLElement): void {
 }
 
 // --- Écrans ------------------------------------------------------------------
-export { showStart, showChoixEquipe, showSucces, showCollectionDofus, showDepartTranche } from "./accueil";
+export { showStart, showChoixEquipe, showSucces, showCollectionDofus } from "./accueil";
 export type { RepriseInfo, StartAction } from "./accueil";
 export { showCarte, showZaap, showTransition } from "./carte";
 export { showRecap, showWipe } from "./fin";

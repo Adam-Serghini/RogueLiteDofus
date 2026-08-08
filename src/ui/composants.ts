@@ -5,7 +5,7 @@
 // =============================================================================
 import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
 import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort, coutEffectif } from "../combat";
-import { statElement, multSoin, multOffensif, pctRembPA as rembPA, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
+import { statElement, multSoin, multOffensif, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, archetypeAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
@@ -238,7 +238,6 @@ export const pctCrit = (s: Stats): number => Math.round(chanceCritEffective(s) *
 export const pctDmgCrit = (s: Stats): number => Math.round(bonusDegatsCrit(s) * 100);
 export const pctSoin = (s: Stats, statFrappe: number): number => Math.round((multSoin(s, statFrappe) - 1) * 100);
 export const pctDgtsFinaux = (s: Stats): number => Math.round((multOffensif(s) - 1) * 100);
-export const pctRembPA = (s: Stats): number => Math.round(rembPA(s) * 100);
 
 /**
  * Collection de reliques (Dofus). Affiche TOUT le catalogue ; les Dofus non
@@ -264,19 +263,20 @@ export function renderDofusRack(meta: Meta, compact = false): string {
 }
 
 // Rôle court par classe (écran de choix d'équipe / recrutement).
+// Ces lignes décrivent le kit RÉEL : à chaque refonte de classe, les relire.
 export const ROLE_CLASSE: Record<string, string> = {
-  iop: "Bourrin — gros dégâts Terre au corps à corps",
-  cra: "Archère — artillerie à conditions, ligne de vue",
-  eniripsa: "Soigneuse — soins, boucliers, poisons",
-  sadida: "Invocateur — poupée, contrôle, dégâts sur la durée",
-  sram: "Assassin — DPT monocible & poisons",
-  feca: "Protecteur — boucliers, glyphes, réduction de dégâts",
-  ecaflip: "Joueur — mixte, hasard (dés & cartes)",
-  ouginak: "Chasseur — marque sa Proie, Rage croissante, contrôle de ligne",
-  roublard: "Artificier — bombes collantes à détoner, contrôle de position",
-  xelor: "Horloger — Téléfrags, vol et don de PA, burst conditionné",
-  eliotrope: "Portailleur — buffs de rangée, soins par les dégâts, burst à portails",
-  forgelance: "Lancier — zones autour de sa lance, boucliers, redirection",
+  iop: "Bourrin, frappe de plus en plus fort à mesure qu'il enchaîne",
+  cra: "Archère, ouvre sa ligne de vue et ferme celle d'en face",
+  eniripsa: "Soigneuse, remet debout, protège et redonne des PA",
+  sadida: "Invocateur, une poupée qui encaisse et du poison qui use",
+  sram: "Assassin, sème des pièges et frappe quand ils ont mordu",
+  feca: "Protecteur, durcit sa rangée et prend les coups à la place des autres",
+  ecaflip: "Flambeur, tout son kit s'emballe au coup critique",
+  ouginak: "Chasseur, s'acharne sur sa Proie et monte en Rage",
+  roublard: "Artificier, colle des bombes et les fait toutes sauter d'un coup",
+  xelor: "Horloger, vole des PA et empile les Téléfrags pour un gros coup",
+  eliotrope: "Portailleur, ses portails dopent toute sa rangée",
+  forgelance: "Lancier, plante sa lance et balaye tout autour d'elle",
 };
 
 /** Carte de classe (portrait + rôle) pour le choix d'équipe / recrutement. */
@@ -423,7 +423,7 @@ export const STAT_AIDE: Record<keyof Stats, string> = {
   soin: "Puissance des soins prodigués : <b>+0,5 %</b> par point (max 50 %).",
   prospection:
     "Augmente les chances de butin d'équipement (cumulé sur toute l'équipe).",
-  crit: "% plat de coup critique (équipement) — s'ajoute au taux dérivé de l'Agilité.",
+  crit: "% plat de coup critique (équipement), s'ajoute au taux dérivé de l'Agilité.",
 };
 // L'élément de frappe est l'un des 2 éléments DÉCLARÉS par la classe (le Kwakwaffe
 // ouvre les 4) — voir `elementsForts`/`elementDeFrappe`, combat.ts.

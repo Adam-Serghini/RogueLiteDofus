@@ -2,7 +2,7 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, xpEffective, zonesDeTranche, trancheDe, TRANCHES, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, xpEffective, zonesDeTranche, trancheDe, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
 import { genererCarte } from "./carte";
 import {
@@ -14,7 +14,6 @@ import {
   appliquerArchimonstres, appliquerErrants, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
-  archiverEquipe, heritagePour, runDepuisHeritage, archiveDe,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -278,27 +277,10 @@ async function jouerRun(
   if (reprise) {
     run = reprise.run;
     depart = reprise.zoneIdx;
-  } else if (tranche.id !== TRANCHES[0].id) {
-    // tranche ≠ première : départ hérité ou équipe neuve au niveau de la tranche
-    const arch = heritagePour(meta, tranche.id);
-    if (!arch) {
-      // Pas d'archive (tranche déverrouillée par la victoire, équipe non archivée) :
-      // rien à hériter → départ « équipe neuve » au niveau de départ de la tranche.
-      const choix = choixImpose ?? (await ui.showChoixEquipe());
-      if (!choix) return null;
-      run = nouvelleRun(choix, ascension, tranche.id);
-    } else {
-      const choixDepart = await ui.showDepartTranche(tranche, arch);
-      if (!choixDepart) return null;
-      if (choixDepart === "neuve") {
-        const choix = choixImpose ?? (await ui.showChoixEquipe());
-        if (!choix) return null;
-        run = nouvelleRun(choix, ascension, tranche.id);
-      } else {
-        run = runDepuisHeritage(arch, choixDepart === "heritage-stuff", tranche.id, ascension);
-      }
-    }
   } else {
+    // Toute tranche démarre de la même façon : on compose une équipe neuve, qui
+    // naît au niveau de DÉPART de la tranche (`TrancheDef.niveaux[0]`, 50 pour
+    // la t2). Il n'y a plus d'héritage d'équipe d'une tranche à l'autre.
     const choix = choixImpose ?? (await ui.showChoixEquipe());
     if (!choix) return null; // retour à l'accueil depuis la sélection
     run = nouvelleRun(choix, ascension, tranche.id);
@@ -335,14 +317,7 @@ async function jouerRun(
     effacerRunEnCours();
     enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
     enregistrerAscension(meta, tranche.id, run.ascension); // record d'Ascension de la tranche
-    // l'archive déjà en place (s'il y en a une) est passée à l'écran pour qu'il
-    // demande confirmation avant de la remplacer — l'UI ne lit jamais la Meta
-    const deja = archiveDe(meta, tranche.id);
-    await ui.showRecap(
-      run, true, verifierSucces(meta, run, true),
-      () => archiverEquipe(meta, tranche.id, run),
-      deja?.persos.map((p) => ({ classeId: p.classeId, niveau: p.progression.niveau })),
-    );
+    await ui.showRecap(run, true, verifierSucces(meta, run, true));
     return null;
   } finally {
     ui.setFondTranche(null);

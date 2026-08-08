@@ -179,17 +179,17 @@ export function showFormation(persos: PersoState[]): Promise<void> {
     const draw = () => {
       ecran(`
         <h1>Formation</h1>
-        <p class="sous-titre">Glisse-dépose un perso sur une case pour le déplacer (ou l'échanger) — ou clique-le puis clique la case. La <b>ligne avant</b> encaisse les sorts de ligne ennemis ; la <b>ligne arrière</b> est protégée. Effet dès le prochain combat.</p>
+        <p class="sous-titre">Glisse-dépose un perso sur une case pour le déplacer (ou l'échanger), ou clique-le puis clique la case. La <b>ligne avant</b> encaisse les sorts de ligne ennemis ; la <b>ligne arrière</b> est protégée. Effet dès le prochain combat.</p>
         <p id="form-msg" class="muet settings-sous" style="display:none"></p>
         <div class="formation-grille">
           <div class="form-rangee"><span class="form-ligne-lbl">Ligne avant</span><div class="form-cells">${rangee([0, 1, 2, 3])}</div></div>
           <div class="form-rangee arriere"><span class="form-ligne-lbl">Ligne arrière</span><div class="form-cells">${rangee([4, 5, 6, 7])}</div></div>
         </div>
         <h2 class="settings-titre">Ordre de jeu</h2>
-        <p class="muet settings-sous">Glisse-dépose pour choisir qui joue en premier. Le camp qui ouvre le combat reste décidé par la moyenne d'initiative des deux équipes — ton ordre ne la change pas.</p>
+        <p class="muet settings-sous">Glisse-dépose pour choisir qui joue en premier. Le camp qui ouvre le combat reste décidé par la moyenne d'initiative des deux équipes : ton ordre ne la change pas.</p>
         <div class="ordre-bande">
           ${persos.map((p, i) => `
-            <button class="ordre-jeton ${selOrdre === i ? "sel" : ""}" data-ordre="${i}" draggable="true" title="${escapeHtml(CLASSES[p.classeId].nom)} — position ${i + 1}">
+            <button class="ordre-jeton ${selOrdre === i ? "sel" : ""}" data-ordre="${i}" draggable="true" title="${escapeHtml(CLASSES[p.classeId].nom)}, position ${i + 1}">
               <span class="ordre-rang">${i + 1}</span>
               <img src="${classSymbol(p.classeId)}" alt="" onerror="this.remove()" />
               <span class="ordre-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
@@ -352,7 +352,7 @@ function sectionBonusDofus(meta: Meta | null): string {
   if (b.resAllBonus) parts.push(`+${Math.round(b.resAllBonus * 100)} % résistances`);
   if (!parts.length) return "";
   return `<div class="bonus-dofus">
-    <span class="bonus-dofus-titre">🐉 Bonus de Dofus — toute l'équipe</span>
+    <span class="bonus-dofus-titre">🐉 Bonus de Dofus : toute l'équipe</span>
     <div class="bonus-dofus-liste">${parts.map((p) => `<span class="bonus-dofus-chip">${p}</span>`).join("")}</div>
   </div>`;
 }

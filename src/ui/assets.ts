@@ -56,7 +56,6 @@ export const ICON_DMGCRIT = A("/assets/elements/dmgCritique.png");
 export const ICON_SOIN = A("/assets/elements/soin.png");
 export const ICON_PUISS = A("/assets/elements/puissance.png");
 export const ICON_PP = A("/assets/elements/pp.png");
-export const ICON_REMB_PA = A("/assets/elements/rembPA.png");
 export const resAsset: Record<Element, string> = {
   terre: A("/assets/elements/resTerre.png"),
   feu: A("/assets/elements/resFeu.png"),

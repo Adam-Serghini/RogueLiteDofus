@@ -76,12 +76,31 @@ function creerEntite(collection, nomDefaut, fabrique) {
   return id;
 }
 
+// Dernier état rendu : sert à décider si la position de défilement doit être
+// conservée ou remise en haut (voir `rendre`).
+let derniereCategorie = null;
+let derniereSelection = null;
+
 function rendre() {
   const app = document.getElementById("app");
   // La recherche perd le focus à chaque frappe car rendre() détruit tout le DOM :
   // on mémorise le focus/curseur avant, on les restaure sur le nouvel input après.
   const rechercheActive = document.activeElement?.id === "recherche-input";
   const curseur = rechercheActive ? document.activeElement.selectionStart : null;
+  // Même cause, autre symptôme : `#liste` et `#fiche` défilent (overflow-y: auto),
+  // et les reconstruire remet leur défilement à zéro. Cliquer une entrée en bas
+  // d'une longue liste la renvoyait donc en haut à chaque fois.
+  // On conserve la position de la LISTE tant qu'on reste dans la même catégorie
+  // (changer d'onglet affiche un contenu sans rapport : repartir en haut est
+  // alors ce qu'on attend), et celle de la FICHE seulement si l'on reste sur la
+  // même entrée — ouvrir une autre fiche doit la montrer depuis son début.
+  const memeCategorie = derniereCategorie === E.categorie;
+  const scrollListe = memeCategorie ? (document.getElementById("liste")?.scrollTop ?? 0) : 0;
+  const scrollFiche = memeCategorie && derniereSelection === E.selection
+    ? (document.getElementById("fiche")?.scrollTop ?? 0)
+    : 0;
+  derniereCategorie = E.categorie;
+  derniereSelection = E.selection;
   app.replaceChildren();
   const cat = CATEGORIES.find((c) => c.id === E.categorie);
   // --- nav ---
@@ -96,6 +115,10 @@ function rendre() {
   // --- fiche ---
   const fiche = el("div", { id: "fiche" }, ...(E.selection != null || cat.sansSelection ? cat.fiche(E.selection) : [el("p", { class: "note" }, "Sélectionner une entrée à gauche, ou en créer une nouvelle.")]));
   app.append(nav, liste, fiche);
+  // après l'insertion : les deux conteneurs ont enfin une hauteur, donc un
+  // défilement possible (une valeur trop grande est bornée d'elle-même)
+  liste.scrollTop = scrollListe;
+  fiche.scrollTop = scrollFiche;
   if (rechercheActive) {
     const s = document.getElementById("recherche-input");
     s.focus();

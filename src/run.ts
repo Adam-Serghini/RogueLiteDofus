@@ -7,7 +7,7 @@ import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PA
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
-import type { Combatant, Element, EquipSlot, GameMap, HeritageEquipe, HeritagePerso, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
+import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -186,57 +186,6 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
 function appliquerPvDepartAscension(run: RunState, perso: PersoState): void {
   const eff = effetsAscension(run.ascension);
   if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
-}
-
-/** Instantané PROFOND de l'équipe : archivé à la victoire, sert au départ de la
- *  tranche suivante. Ni l'inventaire ni les kamas ne traversent. */
-export function archiverEquipe(meta: Meta, trancheId: string, run: RunState): void {
-  const persos: HeritagePerso[] = run.persos.map((p) => ({
-    classeId: p.classeId,
-    progression: JSON.parse(JSON.stringify(p.progression)) as Progression,
-    position: p.position,
-    equipement: JSON.parse(JSON.stringify(p.equipement)) as Partial<Record<EquipSlot, ItemInstance>>,
-  }));
-  meta.heritage = { ...(meta.heritage ?? {}), [trancheId]: { trancheId, persos } };
-  sauverMeta(meta);
-}
-
-/** Archive DÉJÀ enregistrée pour cette tranche (celle qu'un nouvel archivage
- *  remplacerait) — sert à demander confirmation au récap. */
-export function archiveDe(meta: Meta, trancheId: string): HeritageEquipe | null {
-  return meta.heritage?.[trancheId] ?? null;
-}
-
-/** Archive permettant de DÉMARRER `trancheId` : celle de la tranche précédente. */
-export function heritagePour(meta: Meta, trancheId: string): HeritageEquipe | null {
-  const idx = TRANCHES.findIndex((t) => t.id === trancheId);
-  if (idx <= 0) return null;
-  return meta.heritage?.[TRANCHES[idx - 1].id] ?? null;
-}
-
-/** Run neuve bâtie sur une archive (niveaux conservés ; équipement optionnel). */
-export function runDepuisHeritage(
-  arch: HeritageEquipe, avecStuff: boolean, trancheId: string, ascension = 0,
-): RunState {
-  const persos: PersoState[] = arch.persos.map((h) => {
-    const perso: PersoState = {
-      classeId: h.classeId,
-      progression: JSON.parse(JSON.stringify(h.progression)) as Progression,
-      pvActuels: 0, // fixé juste après, équipement compris
-      position: h.position,
-      equipement: avecStuff
-        ? (JSON.parse(JSON.stringify(h.equipement)) as Partial<Record<EquipSlot, ItemInstance>>)
-        : {},
-    };
-    perso.pvActuels = pvMaxPerso(perso); // départ à pleine vie
-    return perso;
-  });
-  const run: RunState = {
-    persos: trierParOrdre(persos, chargerConfig().ordre), carte: null, inventaire: [], stats: statsRunVides(), kamas: 0,
-    choixDepart: persos.map((p) => p.classeId), ascension, philtres: 0, trancheId,
-  };
-  for (const p of run.persos) appliquerPvDepartAscension(run, p); // Ascension : PV de départ réduits
-  return run;
 }
 
 // --- Équipement --------------------------------------------------------------
@@ -1040,12 +989,12 @@ export function chargerMeta(): Meta {
       // qui a remporté la T1 AVANT cette fonctionnalité ne porte que `victoires`.
       // On lui crédite donc un clear de t1 en A0 — seule tranche qui existait.
       const ascension = m.ascension ?? ((m.victoires ?? 0) > 0 ? { t1: 0 } : undefined);
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension, heritage: m.heritage ?? {} };
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
   }
-  return { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {}, heritage: {} };
+  return { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
 }
 
 export function sauverMeta(meta: Meta): void {

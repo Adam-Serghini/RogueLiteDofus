@@ -169,7 +169,7 @@ export function showCarte(
           const modifs = n.type === "combat_dur"
             ? (n.eliteModifs ?? []).map((id) => MODIFICATEURS_ELITE.find((m) => m.id === id)).filter((m): m is NonNullable<typeof m> => !!m)
             : [];
-          const tip = modifs.length ? ` data-tip="${escapeHtml(`Combat dur — ${modifs.map((m) => m.nom).join(" · ")}
+          const tip = modifs.length ? ` data-tip="${escapeHtml(`Combat dur : ${modifs.map((m) => m.nom).join(" · ")}
 ${modifs.map((m) => m.desc).join(" · ")}
 Butin au taux donjon.`)}"` : "";
           return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px"${tip}>
@@ -209,7 +209,7 @@ Butin au taux donjon.`)}"` : "";
       root.innerHTML = `
         <div class="carte-ecran map-layout">
           <header class="map-topbar">
-            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension — ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}${philtres >= 1 ? `<span class="asc-badge" title="Philtres d'Otomai bus — les archimonstres apparaissent plus souvent">🧪 ×${philtres}</span>` : ""}</h2>
+            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension : ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}${philtres >= 1 ? `<span class="asc-badge" title="Philtres d'Otomai bus : les archimonstres apparaissent plus souvent">🧪 ×${philtres}</span>` : ""}</h2>
             <div class="topbar-actions">
               <button id="carte-persos" class="aside-icone" title="Caractéristiques"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" /></button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>

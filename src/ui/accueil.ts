@@ -1,7 +1,7 @@
 // =============================================================================
 //  ui/accueil.ts — écrans d'accueil : démarrage, choix d'équipe, succès, Dofus.
 // =============================================================================
-import { DOFUS, TRANCHES, ASCENSION, ASCENSION_MAX, CLASSES, type TrancheDef } from "../data";
+import { DOFUS, TRANCHES, ASCENSION, ASCENSION_MAX } from "../data";
 import { escapeHtml, ecran, root } from "./dom";
 import {
   LOGO,
@@ -19,7 +19,7 @@ import { renderDofusRack, carteClasse } from "./composants";
 import { classesDisponibles, SUCCES, recordAscension, trancheDeverrouillee, trancheJouable } from "../run";
 import { showSettings } from "./inventaire";
 import { showBestiaire, showArmurerie, showEncyclopedie } from "./collections";
-import type { Meta, HeritageEquipe } from "../types";
+import type { Meta } from "../types";
 
 // --- Écrans ------------------------------------------------------------------
 /** Infos affichées pour proposer la reprise d'une run sauvegardée. */
@@ -49,7 +49,7 @@ export function showStart(
       const record = recordAscension(meta, trancheSel);
       // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
       const boutons = reprise
-        ? `<button id="btn-reprendre" class="btn-jouer btn-reprendre" title="Reprendre la run — Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}"><img src="${BTN_JOUER}" alt="Reprendre" onerror="this.remove()" /></button>
+        ? `<button id="btn-reprendre" class="btn-jouer btn-reprendre" title="Reprendre la run, zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}"><img src="${BTN_JOUER}" alt="Reprendre" onerror="this.remove()" /></button>
            <button id="btn-abandon" class="secondaire">Abandonner la run</button>`
         : `<button id="btn-start" class="btn-jouer" title="Lancer une run"><img src="${BTN_JOUER}" alt="Jouer" onerror="this.remove()" /></button>`;
 
@@ -63,7 +63,7 @@ export function showStart(
         }
         if (max < ASCENSION_MAX) rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats A${max} pour la débloquer">🔒 A${max + 1}</button>`);
         const malus = sel > 0
-          ? `<ul class="asc-malus">${ASCENSION.slice(0, sel).map((p) => `<li>• ${escapeHtml(p.nom)} — ${escapeHtml(p.desc)}</li>`).join("")}</ul>`
+          ? `<ul class="asc-malus">${ASCENSION.slice(0, sel).map((p) => `<li>• ${escapeHtml(p.nom)} : ${escapeHtml(p.desc)}</li>`).join("")}</ul>`
           : "";
         return `<div class="asc-section">
           <div class="asc-rangee">${rangs.join("")}</div>
@@ -85,7 +85,7 @@ export function showStart(
         <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
         <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
         <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
-        ${reprise ? `<p class="accueil-reprise">⚔ Run en cours — <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b>${reprise.ascension >= 1 ? ` <span class="asc-badge" title="Palier d'Ascension de cette run">A${reprise.ascension}</span>` : ""}</p>` : ""}
+        ${reprise ? `<p class="accueil-reprise">⚔ Run en cours : <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b>${reprise.ascension >= 1 ? ` <span class="asc-badge" title="Palier d'Ascension de cette run">A${reprise.ascension}</span>` : ""}</p>` : ""}
         <div class="tranches-rack">
           ${TRANCHES.map((t) => {
             const ouverte = trancheDeverrouillee(meta, t.id);
@@ -108,7 +108,7 @@ export function showStart(
         <div class="boutons-ecran">
           ${boutons}
         </div>
-      `);
+      `, "ecran-accueil");
       document
         .getElementById("btn-settings")
         ?.addEventListener("click", async () => {
@@ -205,32 +205,6 @@ export function showChoixEquipe(): Promise<string[] | null> {
       document.getElementById("choix-retour")?.addEventListener("click", () => res(null));
     };
     draw();
-  });
-}
-
-/** Écran de départ d'une tranche ≠ 1 : reprendre l'équipe archivée (avec/sans stuff) ou en composer une neuve. */
-export function showDepartTranche(
-  tranche: TrancheDef, arch: HeritageEquipe,
-): Promise<"heritage-stuff" | "heritage-nu" | "neuve" | null> {
-  return new Promise((res) => {
-    const equipe = arch.persos
-      .map((p) => `${escapeHtml(CLASSES[p.classeId].nom)} <small>Niv. ${p.progression.niveau}</small>`)
-      .join(" · ");
-    const pieces = arch.persos.reduce((n, p) => n + Object.values(p.equipement).filter(Boolean).length, 0);
-    ecran(`
-      <h1>${escapeHtml(tranche.nom)}</h1>
-      <p class="sous-titre">Niveaux ${tranche.niveaux[0]}–${tranche.niveaux[1]}. Comment veux-tu partir ?</p>
-      <div class="depart-options">
-        <button id="dep-stuff" class="primaire">Reprendre l'équipe archivée<small>${equipe} — avec son équipement (${pieces} pièce(s))</small></button>
-        <button id="dep-nu" class="secondaire">Reprendre l'équipe, sans l'équipement<small>Mêmes héros, mêmes niveaux, nus</small></button>
-        <button id="dep-neuve" class="secondaire">Composer une équipe neuve<small>2 classes au choix, niveau ${tranche.niveaux[0]}, sans équipement</small></button>
-      </div>
-      <div class="boutons-ecran"><button id="dep-retour" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
-    `);
-    document.getElementById("dep-stuff")?.addEventListener("click", () => res("heritage-stuff"));
-    document.getElementById("dep-nu")?.addEventListener("click", () => res("heritage-nu"));
-    document.getElementById("dep-neuve")?.addEventListener("click", () => res("neuve"));
-    document.getElementById("dep-retour")?.addEventListener("click", () => res(null));
   });
 }
 

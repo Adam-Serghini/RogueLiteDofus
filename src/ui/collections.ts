@@ -64,7 +64,7 @@ export function showEncyclopedie(): Promise<void> {
         .join("");
       ecran(`
         <h1>Encyclopédie des classes</h1>
-        <p class="sous-titre">Les classes jouables et leurs sorts — les dégâts affichés sont les jets de base, avant caractéristiques.</p>
+        <p class="sous-titre">Les classes jouables et leurs sorts : les dégâts affichés sont les jets de base, avant caractéristiques.</p>
         <div class="ency-onglets">${onglets}</div>
         ${fiche(selection)}
         <div class="boutons-ecran"><button id="retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
@@ -127,7 +127,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
       const badge = m.boss ? `<span class="bestiaire-badge">Boss</span>` : "";
       if (!m.archiNom) {
         // espèce sans Archimonstre : simple entrée d'encyclopédie
-        return `<div class="archi-mon simple" title="${escapeHtml(m.nom)}${m.boss ? " — Boss de donjon" : ""} (pas d'Archimonstre connu)">
+        return `<div class="archi-mon simple" title="${escapeHtml(m.nom)}${m.boss ? ", boss de donjon" : ""} (pas d'Archimonstre connu)">
             ${m.img ? `<img src="${A(m.img)}" alt="" loading="lazy" onerror="this.remove()" />` : ""}
             ${badge}
             <span>${escapeHtml(m.nom)}</span>
@@ -135,7 +135,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
           </div>`;
       }
       const capt = meta.archis.includes(id);
-      return `<div class="archi-mon ${capt ? "capt" : "manquant"}" title="${escapeHtml(m.archiNom)} — Archimonstre de ${escapeHtml(m.nom)}${capt ? " (capturé)" : " (non capturé)"}">
+      return `<div class="archi-mon ${capt ? "capt" : "manquant"}" title="${escapeHtml(m.archiNom)}, archimonstre de ${escapeHtml(m.nom)}${capt ? " (capturé)" : " (non capturé)"}">
           ${m.img ? `<img src="${A(m.img)}" alt="" loading="lazy" onerror="this.remove()" />` : ""}
           ${capt ? `<img class="archi-mark" src="${A("/assets/divers/Archmonster.webp")}" alt="" onerror="this.remove()" />` : ""}
           ${badge}
@@ -183,14 +183,14 @@ export function showBestiaire(meta: Meta): Promise<void> {
         .map((t) => {
           const { fait, sur } = compteTranche(t);
           return `<button class="tranche-onglet${t.id === active?.id ? " actif" : ""}" data-tranche="${t.id}"
-            title="${escapeHtml(t.nom)} — niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
+            title="${escapeHtml(t.nom)}, niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
             ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
           </button>`;
         })
         .join("");
       const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") + errantsHtml(active) : "";
       ecran(`
-        <h1>Bestiaire — Archimonstres</h1>
+        <h1>Bestiaire des archimonstres</h1>
         <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
         <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : <b>palier ${ocre.tier}</b> (${ocreEffetTxt(ocre.paBonus, ocre.degats)})${prochain ? ` · prochain palier à ${prochain.seuil}` : " · max atteint"}</p>
         <div class="tranche-onglets">${onglets}</div>
@@ -255,7 +255,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
           const badgeNom = { boss: "Boss", elite: "Élite", elite_boss: "Élite/Boss" } as const;
           const badgeSource = { boss: "donjon", elite: "combat dur", elite_boss: "combat dur & donjon" } as const;
           const badgeHtml = badge ? `<span class="bestiaire-badge armu-badge-${badge}">${badgeNom[badge]}</span>` : "";
-          return `<div class="archi-mon armu-item ${palier ? "capt" : "manquant"}${aHalo ? ` rarete-${palier}` : ""}" title="${escapeHtml(it.nom)} — ${SLOT_NOM[it.slot]}${badge ? ` (exclusif ${badgeSource[badge]})` : ""} · ${rareteTxt}">
+          return `<div class="archi-mon armu-item ${palier ? "capt" : "manquant"}${aHalo ? ` rarete-${palier}` : ""}" title="${escapeHtml(it.nom)} : ${SLOT_NOM[it.slot]}${badge ? ` (exclusif ${badgeSource[badge]})` : ""} · ${rareteTxt}">
             <img src="${itemImg(id)}" alt="" loading="lazy" onerror="this.remove()" />
             ${badgeHtml}
             <span${aHalo ? ` class="inom-${palier}"` : ""}>${escapeHtml(it.nom)}</span>
@@ -279,7 +279,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
         .map((t) => {
           const { fait, sur } = compte(entreesTranche(t));
           return `<button class="tranche-onglet${t.id === active?.id ? " actif" : ""}" data-tranche="${t.id}"
-            title="${escapeHtml(t.nom)} — niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
+            title="${escapeHtml(t.nom)}, niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
             ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
           </button>`;
         })
@@ -287,7 +287,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
       const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") : "";
       ecran(`
         <h1>Armurerie</h1>
-        <p class="sous-titre">Chaque objet obtenu (butin ou Hôtel de vente) rejoint la collection pour toujours — le halo montre la meilleure rareté jamais obtenue.</p>
+        <p class="sous-titre">Chaque objet obtenu (butin ou Hôtel de vente) rejoint la collection pour toujours : le halo montre la meilleure rareté jamais obtenue.</p>
         <p class="archi-resume"><b>${global.fait}</b> / ${global.sur} objets collectionnés</p>
         <div class="tranche-onglets">${onglets}</div>
         ${active ? `<p class="muet tranche-niveaux">Niveaux ${active.niveaux[0]}–${active.niveaux[1]} · ${zonesDeTranche(active).length} zones</p>` : ""}

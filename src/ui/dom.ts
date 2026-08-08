@@ -39,9 +39,12 @@ export function setFond(url: string | null): void {
 }
 
 // --- Écrans ------------------------------------------------------------------
-export function ecran(html: string): void {
+/** Rend un écran plein cadre. `cls` ajoute une classe au conteneur `.ecran` pour
+ *  les écrans qui ont besoin d'une mise en page propre (l'accueil, qui doit tenir
+ *  dans la fenêtre sans ascenseur). */
+export function ecran(html: string, cls = ""): void {
   masquerTooltips(); // l'élément survolé disparaît sans mouseout : pas d'infobulle orpheline
-  root.innerHTML = `<div class="ecran">${html}</div>`;
+  root.innerHTML = `<div class="ecran${cls ? ` ${cls}` : ""}">${html}</div>`;
 }
 
 /** Échap ferme l'écran courant, en doublure de la barre collante.

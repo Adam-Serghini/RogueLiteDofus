@@ -10,7 +10,7 @@
     "initiative": 12,
     "nom": "Cra",
     "pa": 6,
-    "pvBase": 45,
+    "pvBase": 50,
     "sorts": [
       "fleche_punitive",
       "fleche_enflammee",
@@ -38,7 +38,7 @@
     "initiative": 10,
     "nom": "Ecaflip",
     "pa": 6,
-    "pvBase": 58,
+    "pvBase": 50,
     "sorts": [
       "pile_ou_face",
       "bluff",
@@ -66,7 +66,7 @@
     "initiative": 12,
     "nom": "Éliotrope",
     "pa": 6,
-    "pvBase": 45,
+    "pvBase": 50,
     "sorts": [
       "rayon_de_wakfu",
       "sarcasme",
@@ -123,7 +123,7 @@
     "initiative": 7,
     "nom": "Feca",
     "pa": 6,
-    "pvBase": 72,
+    "pvBase": 50,
     "sorts": [
       "vigie",
       "paturage",
@@ -179,7 +179,7 @@
     "initiative": 8,
     "nom": "Iop",
     "pa": 6,
-    "pvBase": 60,
+    "pvBase": 50,
     "sorts": [
       "zenith",
       "pugilat",
@@ -207,7 +207,7 @@
     "initiative": 9,
     "nom": "Ouginak",
     "pa": 6,
-    "pvBase": 62,
+    "pvBase": 50,
     "sorts": [
       "proie",
       "molosse",
@@ -235,7 +235,7 @@
     "initiative": 12,
     "nom": "Roublard",
     "pa": 6,
-    "pvBase": 47,
+    "pvBase": 50,
     "sorts": [
       "bombe_collante",
       "kaboom",
@@ -263,7 +263,7 @@
     "initiative": 9,
     "nom": "Sadida",
     "pa": 6,
-    "pvBase": 55,
+    "pvBase": 50,
     "sorts": [
       "crachat_de_seve",
       "deferlante",
@@ -292,7 +292,7 @@
     "initiative": 13,
     "nom": "Sram",
     "pa": 6,
-    "pvBase": 48,
+    "pvBase": 50,
     "sorts": [
       "attaque_mortelle",
       "sournoiserie",
@@ -320,7 +320,7 @@
     "initiative": 14,
     "nom": "Xélor",
     "pa": 6,
-    "pvBase": 44,
+    "pvBase": 50,
     "sorts": [
       "aiguille",
       "sablier_de_xelor",

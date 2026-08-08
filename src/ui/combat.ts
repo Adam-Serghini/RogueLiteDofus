@@ -29,7 +29,6 @@ import {
   ICON_SOIN,
   ICON_PUISS,
   ICON_PP,
-  ICON_REMB_PA,
 } from "./assets";
 import { root, escapeHtml, tipsFlottants, masquerTooltips, config } from "./dom";
 import {
@@ -38,7 +37,6 @@ import {
   pctDmgCrit,
   pctSoin,
   pctDgtsFinaux,
-  pctRembPA,
   sortTooltipHtml,
 } from "./composants";
 import type { Action, Camp, Combatant, Meta, Spell } from "../types";
@@ -308,7 +306,7 @@ export function playerController(
     resolver = res;
     // auto-passe : si aucune action possible et l'option est active, on termine seul
     if (config.autoFinTour && !aUneActionPossible(acteur, cs)) {
-      log(`${acteur.nom} n'a plus rien à jouer — tour passé.`);
+      log(`${acteur.nom} n'a plus rien à jouer, tour passé.`);
       render();
       setTimeout(() => finir(null), 350);
       return;
@@ -355,7 +353,7 @@ function archiIndicateur(c: Combatant): string {
   const capture = !!(c.monstreId && metaCombat?.archis.includes(c.monstreId));
   const titre = capture
     ? `Archimonstre (âme déjà capturée) : ${c.archiNom}`
-    : `Archimonstre — vaincs-le pour capturer son âme : ${c.archiNom}`;
+    : `Archimonstre : vaincs-le pour capturer son âme : ${c.archiNom}`;
   return `<img class="archi-badge capture" src="${A("/assets/divers/Archmonster.webp")}" alt="" title="${escapeHtml(titre)}" onerror="this.remove()" />`;
 }
 
@@ -500,8 +498,7 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
         <span class="ms" title="Dégâts critiques (Agilité)"><img src="${ICON_DMGCRIT}" alt="" onerror="this.remove()" />${pctDmgCrit(se)}%</span>
         <span class="ms" title="Soins (Soin + élément de frappe)"><img src="${ICON_SOIN}" alt="" onerror="this.remove()" />${pctSoin(se, statElement(se, elementDeFrappe(c)))}%</span>
         <span class="ms" title="Dégâts finaux (Intelligence)"><img src="${ICON_PUISS}" alt="" onerror="this.remove()" />${pctDgtsFinaux(se)}%</span>
-        ${(se.chance ?? 0) > 0 ? `<span class="ms" title="Chance de remboursement PA (Chance)"><img src="${ICON_REMB_PA}" alt="" onerror="this.remove()" />${pctRembPA(se)}%</span>` : ""}
-        ${(c.armure ?? 0) > 0 ? `<span class="ms" title="Armure — retranchée de CHAQUE frappe reçue">🪨 ${c.armure}</span>` : ""}
+        ${(c.armure ?? 0) > 0 ? `<span class="ms" title="Armure : retranchée de chaque frappe reçue">🪨 ${c.armure}</span>` : ""}
       </div>`;
       })()}
       ${c.camp === "joueur" && !c.estEgide ? `<div class="pp-row" title="Prospection"><img src="${ICON_PP}" alt="" onerror="this.remove()" /><b>${c.stats.prospection ?? 0}</b></div>` : ""}
@@ -566,7 +563,7 @@ function render(): void {
             <div id="cb-joueur" class="camp-host"></div>
           </div>
           <div class="colonne">
-            <h3>Ennemis <span class="hint">— seuls les 2 premiers (AVANT) sont à portée des sorts de ligne</span></h3>
+            <h3>Ennemis <span class="hint">(seuls les 2 premiers, en rangée avant, sont à portée des sorts de ligne)</span></h3>
             <div id="cb-ennemi" class="camp-host"></div>
           </div>
         </div>
@@ -655,12 +652,12 @@ function renderBarreSorts(): string {
   const cac = arme
     ? `<button class="sort ${selectedSpell?.id === arme.id ? "choisi" : ""}" data-arme="1" ${
         acteur.paActuels >= coutEffectif(arme, acteur) ? "" : "disabled"
-      } title="${escapeHtml(arme.nom)} — attaque d'arme">
+      } title="${escapeHtml(arme.nom)}, attaque d'arme">
         <span class="sort-touche">1</span>
         <span class="sort-pa-badge"><img src="${PA_ICON}" alt="" onerror="this.remove()" /><b>${coutEffectif(arme, acteur)}</b></span>
         <span class="sort-icon-wrap"><img class="sort-icon" src="${arme.img ? A(arme.img) : ""}" alt="" onerror="this.closest('.sort-icon-wrap')?.remove()" /></span>
       </button>`
-    : `<div class="sort sort-cac" title="Corps à corps — aucune arme équipée">
+    : `<div class="sort sort-cac" title="Corps à corps, aucune arme équipée">
         <span class="sort-touche">1</span>
         <span class="sort-icon-vide">🗡️</span>
       </div>`;
@@ -707,7 +704,7 @@ function renderBarreSorts(): string {
 
   const aide = selectedSpell
     ? `<div class="aide">Choisis une cible pour <b>${escapeHtml(selectedSpell.nom)}</b>.</div>`
-    : `<div class="aide">Tour de <b>${escapeHtml(acteur.nom)}</b> — choisis un sort.</div>`;
+    : `<div class="aide">Tour de <b>${escapeHtml(acteur.nom)}</b> : choisis un sort.</div>`;
 
   return `
     <div class="sorts-rangee">

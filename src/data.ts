@@ -325,14 +325,14 @@ export const ARCHI = {
  *
  *  `chance` est le SEUL bouton de réglage, délibérément sans levier : il ne dépend ni des
  *  philtres d'Otomai, ni de la Prospection, ni du palier d'Ascension — c'est le seul archi
- *  du jeu sur lequel le joueur n'a aucune prise, et c'est assumé. 1 % ≈ 0,7 Piou par run de
- *  t1 (~72 combats normaux), soit ~20 runs pour les six. Reconnu comme peu : la valeur est
- *  FAITE pour monter (1,5 % évoqué), et aucun test ne la code en dur — `errants.test.ts`
- *  la lit et vérifie un ordre de grandeur. */
+ *  du jeu sur lequel le joueur n'a aucune prise, et c'est assumé. 0,5 % ≈ 0,36 Piou par run
+ *  de t1 (~72 combats normaux), soit ~40 runs pour les six : la rencontre est voulue comme
+ *  exceptionnelle, pas comme un objectif de collection à court terme. Aucun test ne code la
+ *  valeur en dur — `errants.test.ts` la lit et vérifie un ordre de grandeur. */
 export const ERRANTS: Record<string, { especes: string[]; chance: number }> = {
   t1: {
     especes: ["piou_rouge", "piou_vert", "piou_bleu", "piou_jaune", "piou_rose", "piou_violet"],
-    chance: 0.01,
+    chance: 0.005,
   },
 };
 

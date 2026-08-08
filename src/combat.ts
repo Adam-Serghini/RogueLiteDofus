@@ -4,7 +4,7 @@
 //  Pilotable sans UI : voir test.ts (deux IA qui s'affrontent en console).
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
-import { multOffensif, multSoin, pctRembPA, statElement } from "./progression";
+import { multOffensif, multSoin, statElement } from "./progression";
 
 import type {
   BuffRangeeAlliee, Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
@@ -2370,23 +2370,8 @@ export function lancerSort(
   // Mâchoire du Coffre / Colère royale : buff appliqué au lanceur (ex. +résistances)
   if (sort.effetLanceur) appliquerEffet(lanceur, sort.effetLanceur);
 
-  // `rembPA` : chance (scale Chance) de rembourser le coût en PA du sort — le coût
-  // EFFECTIF, jamais `sort.coutPA` brut (même précaution que la boucle de tour : un
-  // sort à coût variable ne doit rembourser que ce qu'il a réellement coûté). SANS
-  // PORTEUR RÉEL aujourd'hui (l'ancienne Flèche magique du Cra, qui le portait, a
-  // disparu au rework de sa classe) : le chemin reste couvert par un sort SYNTHÉTIQUE
-  // (`combat.test.ts`, `syn_remb_pa`), même dormance délibérée que `Spell.dissipe`
-  // depuis le rework de l'Eniripsa — pas un oubli, un mécanisme gardé vivant sans
-  // classe pour le porter.
-  if (sort.rembPA && ctx.rng() < pctRembPA(statsEffectives(lanceur))) {
-    const remb = coutEffectif(sort, lanceur);
-    lanceur.paActuels += remb;
-    ctx.log(`${lanceur.nom} récupère ${remb} PA.`);
-  }
-
   // Pile ou Face : le CRITIQUE réduit le coût du PROCHAIN lancer de CE MÊME sort
-  // (cumulatif, plancher 1 PA géré par `coutEffectif`) — là où `rembPA` ci-dessus
-  // rembourse IMMÉDIATEMENT et est piloté par la Chance. Le journal n'annonce QUE
+  // (cumulatif, plancher 1 PA géré par `coutEffectif`). Le journal n'annonce QUE
   // la réduction RÉELLEMENT gagnée (avant/après `coutEffectif`) : au 3ᵉ critique
   // du même tour de Pile ou Face (`maxParTour: 4`), le coût est déjà clampé à 1 PA
   // par les 2 remises précédentes — annoncer « réduit de 1 PA » mentirait, puisque

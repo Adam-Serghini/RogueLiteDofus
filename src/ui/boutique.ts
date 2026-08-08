@@ -44,7 +44,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
             </button>`;
           })
           .join("")
-        : `<p class="muet">Rayons vides — reviens à un prochain Hôtel de vente.</p>`;
+        : `<p class="muet">Rayons vides, reviens à un prochain Hôtel de vente.</p>`;
       const vente = run.inventaire.length
         ? run.inventaire
           .map((inst, i) => `<button class="item-carte hdv-vente${rareteCls(inst)}" data-vente="${i}">
@@ -53,7 +53,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
               <span class="hdv-prix vente">${kamasHtml(prixVente(inst))}</span>
             </button>`)
           .join("")
-        : `<p class="muet">Rien à vendre — l'équipement non équipé de l'inventaire se revend ici.</p>`;
+        : `<p class="muet">Rien à vendre : l'équipement non équipé de l'inventaire se revend ici.</p>`;
       ecran(`
         <h1>Hôtel de vente</h1>
         <p class="sous-titre">Tout le catalogue de la zone (exclusifs boss/élite compris) : local en épique+, zone suivante dès le rare. Revente à 50 % du prix.</p>
@@ -109,7 +109,7 @@ export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
         ...run.persos.flatMap((p) =>
           Object.values(p.equipement)
             .filter((i): i is ItemInstance => !!i)
-            .map((inst) => ({ inst, ou: `Équipé — ${CLASSES[p.classeId].nom}` }))),
+            .map((inst) => ({ inst, ou: `Équipé : ${CLASSES[p.classeId].nom}` }))),
       ];
       const forgeables = entrees.filter((e) => rareteSuivante(e.inst));
       const cartes = forgeables.length
@@ -131,10 +131,10 @@ export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
             </div>`;
           })
           .join("")
-        : `<p class="muet">${equipesSeul ? "Rien à forger parmi les objets équipés." : "Rien à forger — tout ton équipement à rareté est déjà au maximum."}</p>`;
+        : `<p class="muet">${equipesSeul ? "Rien à forger parmi les objets équipés." : "Rien à forger : tout ton équipement à rareté est déjà au maximum."}</p>`;
       ecran(`
         <h1>Forgemagie</h1>
-        <p class="sous-titre">Le Forgemage monte un objet au palier de rareté supérieur — même équipé. Son apprenti téméraire fait moitié prix… mais rate ${Math.round(KAMAS.forgeTemeraire.pEchec * 100)} % de ses forges.</p>
+        <p class="sous-titre">Le Forgemage monte un objet au palier de rareté supérieur, même équipé. Son apprenti téméraire fait moitié prix… mais rate ${Math.round(KAMAS.forgeTemeraire.pEchec * 100)} % de ses forges.</p>
         <div class="hdv-solde">${kamasHtml(run.kamas)}</div>
         <div class="forge-filtres"><button id="forge-filtre" class="${equipesSeul ? "primaire" : "secondaire"}" title="${equipesSeul ? "Afficher aussi l'inventaire" : "N'afficher que les objets équipés par l'équipe"}">⚔️ Équipés seulement</button></div>
         ${message ? `<p class="forge-message">${message}</p>` : ""}

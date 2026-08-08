@@ -306,12 +306,11 @@ describe("socle — mécaniques génériques (ex-fixtures Iop)", () => {
 });
 
 // Le rework du Cra a retiré les 7 sorts qui portaient historiquement ces mécaniques
-// génériques du moteur (rembPA, ignoreBouclier, poison, vulnérabilité, rebond). Elles
+// génériques du moteur (ignoreBouclier, poison, vulnérabilité, rebond). Elles
 // restent utilisées par d'autres classes/contenus (poison, reductionDegats, rebond) ou
-// sont conservées comme socle réutilisable (rembPA) : on les teste ici via des sorts
+// sont conservées comme socle réutilisable : on les teste ici via des sorts
 // synthétiques plutôt que via un sort réel.
 describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
-  const rngK = (k: number): (() => number) => () => k;
   const mkEnnemi = (ref: string, over: Record<string, unknown> = {}) => {
     const [e] = fabriquerEnnemis("combat_1");
     e.ref = ref; e.position = 0; e.pvActuels = 500; e.pvMax = 500;
@@ -319,18 +318,6 @@ describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
     return Object.assign(e, over);
   };
 
-  it("rembPA : chance (Chance) de rembourser le coût en PA — mécanique sans sort réel, candidate à purge", () => {
-    const synRembPA: Spell = { id: "syn_remb_pa", nom: "Syn RembPA", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 9, baseMax: 13, scaling: 0.35, rembPA: true };
-    const [, cra] = fabriquerEquipe(); // chance 0 → base 5 %
-    cra.paActuels = 0;
-    const rate = mkEnnemi("rate");
-    lancerSort(cra, synRembPA, "rate", [cra, rate], ctx({ rng: rngK(0.9) })); // 0.9 ≥ 0.05
-    expect(cra.paActuels).toBe(0);
-    cra.paActuels = 0;
-    const proc = mkEnnemi("proc");
-    lancerSort(cra, synRembPA, "proc", [cra, proc], ctx({ rng: rngK(0.01) })); // 0.01 < 0.05
-    expect(cra.paActuels).toBe(3); // coût remboursé
-  });
 
   it("maitriseArc : buff des 2 éléments DÉCLARÉS du lanceur — mécanique sans sort réel, candidate à purge", () => {
     // `elementsForts` lit désormais la paire déclarée de la classe pour un héros

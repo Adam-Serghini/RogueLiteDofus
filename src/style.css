@@ -82,10 +82,16 @@ body.avec-fond .verre {
   backdrop-filter: blur(14px) saturate(1.15);
 }
 
+/* Les marges verticales sont ÉLASTIQUES : identiques aux anciennes valeurs fixes
+   dès ~1000 px de haut, elles se resserrent sur un écran court plutôt que de
+   pousser le contenu hors de la fenêtre. Déclarées ici en variables parce que
+   `.ecran-accueil` doit les soustraire pour calculer sa hauteur utile. */
 #app {
+  --app-pad-t: clamp(10px, 2.2vh, 22px);
+  --app-pad-b: clamp(16px, 5.6vh, 56px);
   max-width: 1060px;
   margin: 0 auto;
-  padding: 22px 16px 56px;
+  padding: var(--app-pad-t) 16px var(--app-pad-b);
 }
 
 h1,
@@ -171,9 +177,30 @@ button:focus-visible {
   /* source unique : la barre d'actions collante déborde de ce padding pour que son
      fond aille d'un bord à l'autre — les deux doivent rester d'accord */
   --ecran-pad-x: 34px;
-  --ecran-pad-y: 40px;
+  --ecran-pad-y: clamp(20px, 4vh, 40px);
+  --ecran-mt: clamp(14px, 4.4vh, 44px);
   padding: var(--ecran-pad-y) var(--ecran-pad-x);
-  margin-top: 44px;
+  margin-top: var(--ecran-mt);
+}
+
+/* --- Accueil : tenir dans la fenêtre ---------------------------------------
+   L'accueil n'a qu'une section, il n'a aucune raison de demander un ascenseur.
+   Le panneau occupe exactement la hauteur disponible (fenêtre moins les marges
+   ci-dessus), et la barre d'actions est poussée en bas par `margin-top: auto`
+   au lieu de suivre le contenu. `dvh` et non `vh` : sur mobile, `vh` ignore la
+   barre d'adresse rétractable et déborde toujours d'une centaine de pixels. */
+.ecran-accueil {
+  min-height: calc(100dvh - var(--app-pad-t) - var(--app-pad-b) - var(--ecran-mt));
+  display: flex;
+  flex-direction: column;
+}
+.ecran-accueil > .boutons-ecran {
+  margin-top: auto;
+}
+/* Seul enfant en `inline-block` de l'accueil : en contexte flex il s'étirerait
+   sur toute la largeur et cesserait d'être une pastille. */
+.ecran-accueil > .accueil-reprise {
+  align-self: center;
 }
 .sous-titre {
   color: var(--muet);
@@ -224,19 +251,6 @@ button:focus-visible {
   flex-direction: column;
   gap: 8px;
 }
-.depart-options { display: grid; gap: 10px; max-width: 520px; margin: 16px auto; }
-.depart-options button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 16px; }
-.depart-options small { font-weight: 700; opacity: 0.8; }
-.recap-archive { margin: 14px auto; max-width: 520px; }
-.recap-archive-alerte {
-  border: 1px solid #c9922b;
-  border-radius: 8px;
-  background: rgba(201, 146, 43, 0.12);
-  padding: 8px 12px;
-  margin: 0 0 10px;
-}
-.recap-archive-ok { font-weight: 800; }
-.recap-archive-choix { display: flex; gap: 10px; justify-content: center; }
 .recap-ligne {
   display: flex;
   align-items: center;
@@ -983,6 +997,12 @@ button.item-carte:disabled {
   margin: 4px auto 6px;
   width: min(360px, 62%);
   height: auto;
+  /* Poste vertical le plus lourd de l'accueil : plafonné en hauteur de fenêtre
+     pour qu'un écran court le réduise au lieu de repousser le reste dehors.
+     Inerte au-delà de ~900 px de haut, où la hauteur naturelle est déjà sous
+     le plafond. `contain` évite toute déformation quand le plafond mord. */
+  max-height: 22dvh;
+  object-fit: contain;
 }
 .accueil-dofus-compte {
   color: var(--muet);
@@ -1151,13 +1171,37 @@ kbd {
 }
 
 /* écran de choix d'équipe / recrutement */
+/* Choix des héros : grille de 6 colonnes, pensée pour 18 classes en 3 rangées
+   pleines. C'était un flex-wrap plafonné à 760px, qui repassait à la ligne tous
+   les 4 personnages. Les colonnes sont en `1fr` et non en largeur fixe : elles
+   se partagent la place disponible, donc la grille reste à 6 par rangée quelle
+   que soit la largeur du panneau, et ne tombe à 4, 3 puis 2 que sur un écran
+   trop étroit pour rester lisible. */
 .choix-grille {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
-  justify-content: center;
   margin: 16px auto;
-  max-width: 760px;
+}
+/* la grille décide de la largeur ; les 150px fixes de `.classe-carte` servent
+   encore ailleurs (taverne, recrutement), on ne les touche donc que d'ici */
+.choix-grille .classe-carte {
+  width: auto;
+}
+@media (max-width: 900px) {
+  .choix-grille {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .choix-grille {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 440px) {
+  .choix-grille {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .classe-carte {
   width: 150px;
@@ -3368,14 +3412,37 @@ body.avec-fond .map-zone {
   flex-wrap: nowrap; /* la règle d'origine (wrap) est ce qui mélangeait les rangées */
   min-width: 0;
 }
+/* Les colonnes de rangée SE PARTAGENT la largeur du camp au lieu de se coller à
+   la taille de leur contenu (`flex: 0 1 auto` par défaut). C'est ce qui laissait
+   la moitié gauche du panneau vide : les cartes n'avaient aucune place libre où
+   grandir, quel que soit leur plafond.
+   La rangée VIDE est exclue du partage, sinon elle accaparerait la moitié de la
+   place pour n'afficher qu'un tiret — cas fréquent, une équipe entière tient
+   souvent sur une seule rangée. */
 .ligne-col {
+  flex: 1 1 auto;
   min-width: 0; /* sans ça, la colonne refuse de se comprimer et rien ne rétrécit */
 }
+.ligne-col:has(.ligne-vide) {
+  flex: 0 0 auto;
+}
 .carte {
+  /* Les cartes se partagent la largeur de leur rangée : `flex-grow` absorbe
+     toute la place que la colonne leur offre désormais, `flex-shrink` les
+     comprime jusqu'au plancher de 120px quand elles sont trop nombreuses
+     (salle de boss à 8 ennemis, puis c'est `.plateau` qui défile).
+     Ce dimensionnement est VOLONTAIREMENT relatif : deux tentatives précédentes
+     calculaient la largeur cible à la main, l'une en `cqw` (qui retombait
+     silencieusement sur la fenêtre faute de conteneur déclaré, donnant des
+     cartes plus petites qu'avant), l'autre en `vw` en recopiant la chaîne des
+     paddings au-dessus. Les deux mentent dès qu'une marge change en amont ;
+     laisser flex mesurer la place réelle ne ment jamais.
+     Le plafond de 240px est le seul garde-fou : sans lui, un unique allié
+     survivant obtiendrait une carte large de toute la colonne. */
   flex: 1 1 172px;
   width: auto;
   min-width: 120px;
-  max-width: 172px;
+  max-width: 240px;
   container-type: inline-size; /* ouvre les unités cqw au contenu ci-dessous */
   padding: clamp(7px, 6.4cqw, 11px);
 }
@@ -3383,68 +3450,79 @@ body.avec-fond .map-zone {
   overflow-x: auto; /* dernier recours sous le plancher : on défile, on ne casse pas */
 }
 
-/* — contenu de la carte, proportionnel à sa largeur — */
+/* — contenu de la carte, proportionnel à sa largeur —
+   Les termes du milieu (en `cqw`) sont inchangés : c'est eux qui rendent le
+   contenu proportionnel, et ils étaient déjà justes. Seuls les PLAFONDS ont été
+   relevés, tous du même facteur 1,4 que le plafond de la carte (172 → 240px) :
+   sans ça, la carte grandissait mais son contenu restait figé à la taille
+   calculée pour 172px, ce qui l'aurait creusée de vide. Un facteur unique pour
+   toute la liste garantit qu'une grande carte est la MÊME carte en plus grand,
+   et pas une carte aux proportions différentes.
+   `.carte { padding }` n'est volontairement pas dans ce lot : un élément ne peut
+   pas se mesurer à lui-même en `cqw` (l'unité vise le conteneur au-dessus), donc
+   ce padding vaut déjà son plafond en permanence et le relever le figerait juste
+   un peu plus haut, y compris sur les petites cartes. */
 .carte .carte-nom {
-  font-size: clamp(0.68rem, 8.37cqw, 0.9rem);
+  font-size: clamp(0.68rem, 8.37cqw, 1.26rem);
 }
 .carte .rang {
-  font-size: clamp(0.46rem, 5.02cqw, 0.54rem);
+  font-size: clamp(0.46rem, 5.02cqw, 0.76rem);
 }
 .carte .portrait,
 .carte .portrait-wrap {
-  width: clamp(52px, 45.3cqw, 78px);
+  width: clamp(52px, 45.3cqw, 109px);
 }
 .carte .portrait {
-  height: clamp(52px, 45.3cqw, 78px);
+  height: clamp(52px, 45.3cqw, 109px);
 }
 .carte .portrait-wrap {
-  margin-bottom: clamp(15px, 12.8cqw, 22px);
+  margin-bottom: clamp(15px, 12.8cqw, 31px);
 }
 .carte .pv-gem {
-  width: clamp(32px, 26.7cqw, 46px);
-  height: clamp(32px, 26.7cqw, 46px);
-  bottom: calc(-1 * clamp(18px, 15.1cqw, 26px));
+  width: clamp(32px, 26.7cqw, 64px);
+  height: clamp(32px, 26.7cqw, 64px);
+  bottom: calc(-1 * clamp(18px, 15.1cqw, 36px));
 }
 .carte .pv-num {
-  font-size: clamp(0.6rem, 7.26cqw, 0.78rem);
+  font-size: clamp(0.6rem, 7.26cqw, 1.09rem);
 }
 .carte .pv-num span {
-  font-size: clamp(0.45rem, 5.1cqw, 0.55rem);
+  font-size: clamp(0.45rem, 5.1cqw, 0.77rem);
 }
 .carte .pv-bouclier {
-  min-width: clamp(17px, 13.4cqw, 23px);
-  font-size: clamp(0.58rem, 7.07cqw, 0.76rem);
+  min-width: clamp(17px, 13.4cqw, 32px);
+  font-size: clamp(0.58rem, 7.07cqw, 1.06rem);
 }
 .carte .pa-gem {
-  width: clamp(46px, 38.4cqw, 66px);
-  height: clamp(46px, 38.4cqw, 66px);
-  top: calc(-1 * clamp(18px, 15.1cqw, 26px));
-  left: calc(-1 * clamp(14px, 11.6cqw, 20px));
+  width: clamp(46px, 38.4cqw, 92px);
+  height: clamp(46px, 38.4cqw, 92px);
+  top: calc(-1 * clamp(18px, 15.1cqw, 36px));
+  left: calc(-1 * clamp(14px, 11.6cqw, 28px));
 }
 .carte .pa-gem b {
-  font-size: clamp(0.48rem, 5.4cqw, 0.58rem);
+  font-size: clamp(0.48rem, 5.4cqw, 0.81rem);
 }
 .carte .ms,
 .carte .pp-row {
-  font-size: clamp(0.52rem, 5.95cqw, 0.64rem);
+  font-size: clamp(0.52rem, 5.95cqw, 0.9rem);
 }
 .carte .ms img {
-  width: clamp(11px, 8.7cqw, 15px);
-  height: clamp(11px, 8.7cqw, 15px);
+  width: clamp(11px, 8.7cqw, 21px);
+  height: clamp(11px, 8.7cqw, 21px);
 }
 .carte .pp-row img {
-  width: clamp(10px, 7.6cqw, 13px);
-  height: clamp(10px, 7.6cqw, 13px);
+  width: clamp(10px, 7.6cqw, 18px);
+  height: clamp(10px, 7.6cqw, 18px);
 }
 .carte .res-chip {
-  font-size: clamp(0.5rem, 5.77cqw, 0.62rem);
+  font-size: clamp(0.5rem, 5.77cqw, 0.87rem);
 }
 .carte .res-chip img {
-  width: clamp(10px, 7.6cqw, 13px);
-  height: clamp(10px, 7.6cqw, 13px);
+  width: clamp(10px, 7.6cqw, 18px);
+  height: clamp(10px, 7.6cqw, 18px);
 }
 .carte .badge {
-  font-size: clamp(0.46rem, 5.2cqw, 0.56rem);
+  font-size: clamp(0.46rem, 5.2cqw, 0.78rem);
 }
 
 /* Paramètres — action destructive (réinitialisation des Dofus).
