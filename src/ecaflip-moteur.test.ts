@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import {
   lancerSort, degatsCible, elementsCandidats, estAvant, effetsDebutTour,
-  coutEffectif, reinitialiserLancersTour, controllerIA,
+  coutEffectif, reinitialiserLancersTour, controllerIA, runCombat,
   type CombatCtx,
 } from "./combat";
 import { SORTS } from "./data";
@@ -78,7 +78,12 @@ describe("reduitCoutSiCrit / coutEffectif", () => {
     expect(coutEffectif(spellB, lanceur)).toBe(spellB.coutPA); // B n'a rien gagné
   });
 
-  it("la remise tombe au changement de tour — même point de réinitialisation que lancersCeTour", () => {
+  it("MÉCANISME : le point de réinitialisation (reinitialiserLancersTour) efface la remise", () => {
+    // Prouve le BRANCHEMENT — la remise vit sur le même point d'entrée que
+    // `lancersCeTour` — par appel DIRECT à la fonction de réinitialisation. Ne
+    // prouve PAS qu'un vrai changement de tour de `runCombat` appelle ce point :
+    // voir le test d'intégration plus bas (« franchit un VRAI changement de tour »)
+    // pour cette preuve-là.
     const spell: Spell = { ...SORTS.morsure, id: "test_remise_tour", reduitCoutSiCrit: 1 };
     const lanceur = ecaflip();
     const cible = mannequin();
@@ -87,6 +92,57 @@ describe("reduitCoutSiCrit / coutEffectif", () => {
 
     reinitialiserLancersTour(lanceur); // point d'entrée réellement utilisé par la boucle de combat
     expect(coutEffectif(spell, lanceur)).toBe(spell.coutPA); // remise effacée
+  });
+
+  it("INTÉGRATION : la remise tombe en franchissant un VRAI changement de tour (runCombat, pas un appel direct)", async () => {
+    // Contrairement au test « MÉCANISME » ci-dessus, ici on ne touche jamais
+    // `reinitialiserLancersTour` : on fait vraiment tourner runCombat sur deux
+    // tours de l'Ecaflip séparés par un tour d'ennemi qui ne fait rien, et on lit
+    // la PA RÉELLEMENT débitée du deuxième cast pour prouver que la remise gagnée
+    // au premier tour n'a pas survécu au passage.
+    const eca = ecaflip();
+    eca.paMax = 100; eca.paActuels = 100; // large : isole le débit du coût de tout autre facteur
+    const cible = mannequin();
+    cible.pvMax = 1000; cible.pvActuels = 1000; // survit aux deux Pile ou Face
+    const FINISSEUR: Spell = {
+      id: "test_finisseur", nom: "Finisseur", type: "degats", cible: "ennemi_ligne",
+      coutPA: 1, baseMin: 5000, baseMax: 5000, scaling: 0, // achève la cible pour clore le combat
+    };
+    const cs = [eca, cible];
+
+    const actions: (null | { sort: Spell; cibleRef: string })[] = [
+      { sort: SORTS.pile_ou_face, cibleRef: cible.ref }, // tour 1 : crit forcé (rng=0) → gagne 1 PA de remise
+      null, // fin du tour 1
+      { sort: SORTS.pile_ou_face, cibleRef: cible.ref }, // tour 2 : le coût doit être NOMINAL (3), pas 2
+      { sort: FINISSEUR, cibleRef: cible.ref }, // achève la cible, clôt le combat
+    ];
+    let i = 0;
+
+    // Trace la PA de l'Ecaflip à chaque mise à jour, dédupliquée : ne garde que
+    // les valeurs qui CHANGENT (un débit), peu importe de quel tour vient l'appel.
+    const trace: number[] = [];
+    let dernier: number | null = null;
+    const onUpdate = () => {
+      if (eca.paActuels !== dernier) {
+        dernier = eca.paActuels;
+        trace.push(eca.paActuels);
+      }
+    };
+
+    const gagne = await runCombat(cs, {
+      controllers: {
+        joueur: () => (i < actions.length ? actions[i++] : null),
+        ennemi: () => null, // l'ennemi ne fait jamais rien : seul l'Ecaflip agit
+      },
+      rng: () => 0, // pas d'esquive, critique forcé sur chaque coup
+      onUpdate,
+    });
+
+    expect(gagne).toBe(true);
+    // 100 (départ) → 97 (tour1, coût nominal 3, gagne 1 PA de remise sur crit)
+    // → 100 (recharge de fin de tour 1) → 97 (tour2, coût 3 : la remise NE s'est
+    // PAS appliquée, sinon on lirait 98) → 96 (finisseur, coût 1).
+    expect(trace).toEqual([100, 97, 100, 97, 96]);
   });
 
   it("l'IA lit le coût EFFECTIF, pas le coût nominal (via coutEffectif, sur le VRAI Pile ou Face)", async () => {
@@ -101,6 +157,63 @@ describe("reduitCoutSiCrit / coutEffectif", () => {
     const cible = mannequin();
     const action = await controllerIA(acteur, [acteur, cible]);
     expect(action?.sort.id).toBe("pile_ou_face"); // choisi malgré paActuels(1) < coutPA nominal(3)
+  });
+
+  it("l'IA TRIE par coût EFFECTIF décroissant, pas par coût nominal — une remise fait redescendre un sort dans ses priorités", async () => {
+    // `iaAgressif` joue le sort de dégâts le plus CHER d'abord. Sans remise, A(5)
+    // passerait avant B(3). Avec une remise de 3 PA sur A (coût effectif 2 < 3),
+    // le tri par coût EFFECTIF doit inverser l'ordre et faire choisir B — ce
+    // chemin est réellement emprunté en jeu : l'équipe de référence du banc
+    // (npm run sim) pilote son Ecaflip par cette même IA.
+    const spellA: Spell = {
+      ...SORTS.morsure, id: "test_tri_a", coutPA: 5, cible: "ennemi_ligne",
+    };
+    const spellB: Spell = {
+      ...SORTS.morsure, id: "test_tri_b", coutPA: 3, cible: "ennemi_ligne",
+    };
+    const acteur = ecaflip();
+    acteur.sorts = [spellA.id, spellB.id];
+    acteur.remisesCout = { [spellA.id]: 3 }; // coût effectif de A = max(1, 5-3) = 2
+    acteur.paActuels = 5; // les deux sorts sont abordables, seul le TRI décide
+    (SORTS as Record<string, Spell>)[spellA.id] = spellA;
+    (SORTS as Record<string, Spell>)[spellB.id] = spellB;
+    try {
+      const cible = mannequin();
+      const action = await controllerIA(acteur, [acteur, cible]);
+      expect(action?.sort.id).toBe(spellB.id); // B (coût effectif 3) devant A (coût effectif 2)
+    } finally {
+      delete (SORTS as Record<string, Spell>)[spellA.id];
+      delete (SORTS as Record<string, Spell>)[spellB.id];
+    }
+  });
+});
+
+describe("PA avant paiement (bonusParPADispo) lit le coût EFFECTIF, pas sort.coutPA", () => {
+  it("un sort combinant reduitCoutSiCrit ET bonusParPADispo calcule ses dégâts sur le coût RÉELLEMENT payé", () => {
+    // Le piège documenté : la boucle de combat débite le coût EFFECTIF avant
+    // d'appeler lancerSort, donc « PA avant paiement » DOIT se reconstruire en
+    // rajoutant coutEffectif(sort, lanceur), jamais sort.coutPA — sinon ce calcul
+    // désynchronise de ce que la boucle a réellement débité dès qu'une remise est
+    // active, et bonusParPADispo (qui multiplie les dégâts par ce total) sous-estime
+    // la frappe. Roll et scaling neutralisés (baseMin=baseMax, scaling 0) pour que
+    // seul bonusParPADispo fasse varier le résultat.
+    const spell: Spell = {
+      id: "test_remise_padispo", nom: "Syn Remise+PADispo", type: "degats", cible: "ennemi_ligne",
+      coutPA: 5, baseMin: 10, baseMax: 10, scaling: 0, bonusParPADispo: 0.1, reduitCoutSiCrit: 2,
+    };
+    const lanceur = ecaflip();
+    lanceur.stats = { ...lanceur.stats, intelligence: 0 }; // multOffensif neutre (×1)
+    lanceur.paActuels = 10;
+    lanceur.remisesCout = { [spell.id]: 2 }; // remise DÉJÀ acquise sur CE sort : coût effectif = max(1, 5-2) = 3
+    const cible = mannequin();
+
+    // rng=0.5 : pas d'esquive (seuil 0), pas de critique (seuil 0.05) — isole le
+    // calcul de paAvant de tout effet du critique sur CE lancer.
+    lancerSort(lanceur, spell, cible.ref, [lanceur, cible], ctx({ rng: () => 0.5 }));
+
+    // paAvant CORRECT = paActuels(10) + coutEffectif(3) = 13 → dégâts = 10 × (1 + 0.1×13) = 23.
+    // paAvant FAUX (coutPA nominal 5) donnerait 10 + 5 = 15 → dégâts = 10 × (1 + 0.1×15) = 25.
+    expect(cible.pvActuels).toBe(500 - 23);
   });
 });
 

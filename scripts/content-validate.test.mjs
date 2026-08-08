@@ -72,6 +72,24 @@ describe("passe 1 — schéma", () => {
     const err = validerContenu(c, c); // passe 3 hors-jeu, cf. test précédent
     expect(err.some((e) => e.includes("[sorts: morsure]"))).toBe(false);
   });
+  it("refuse un reduitCoutSiCrit non entier ou négatif (remise de coût de Pile ou Face)", () => {
+    // `reduitCoutSiCrit` est un champ NEUF sur `morsure` dans ce test — passé en base
+    // ET en contenu (comme le test « accepte un sort à 0 PA » plus haut) pour que la
+    // passe 3 (lecture seule/numérique, garde du game designer) ne voie aucun diff et
+    // laisse la passe 1 (schéma) s'exprimer seule ; sinon la passe 3 signalerait TOUT
+    // ajout de champ comme non numérique, masquant la vraie garde testée ici.
+    const cZero = modif((c) => { c.sorts.morsure.reduitCoutSiCrit = 0; });
+    expect(validerContenu(cZero, cZero).some((e) => e.includes("[sorts: morsure]") && e.includes("reduitCoutSiCrit"))).toBe(true);
+    const cNegatif = modif((c) => { c.sorts.morsure.reduitCoutSiCrit = -1; });
+    expect(validerContenu(cNegatif, cNegatif).some((e) => e.includes("[sorts: morsure]") && e.includes("reduitCoutSiCrit"))).toBe(true);
+    const cDecimal = modif((c) => { c.sorts.morsure.reduitCoutSiCrit = 1.5; });
+    expect(validerContenu(cDecimal, cDecimal).some((e) => e.includes("[sorts: morsure]") && e.includes("reduitCoutSiCrit"))).toBe(true);
+  });
+  it("accepte un reduitCoutSiCrit entier ≥ 1", () => {
+    const c = modif((c) => { c.sorts.morsure.reduitCoutSiCrit = 1; });
+    expect(validerContenu(c, c).some((e) => e.includes("[sorts: morsure]"))).toBe(false);
+  });
+
   it("refuse un archétype de classe inconnu", () => {
     const err = validerContenu(modif((c) => { c.classes.iop.archetype = "soigneur"; }), base());
     expect(err.some((e) => e.includes("[classes: iop]") && e.includes("archetype"))).toBe(true);

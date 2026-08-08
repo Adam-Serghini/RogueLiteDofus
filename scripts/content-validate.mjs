@@ -95,6 +95,11 @@ export function validerContenu(contenu, base) {
     if (!estNombre(s.baseMin) || !estNombre(s.baseMax) || s.baseMin > s.baseMax)
       E("sorts", id, `baseMin doit être ≤ baseMax (reçu : ${s.baseMin}-${s.baseMax})`);
     if (!estNombre(s.scaling) || s.scaling < 0) E("sorts", id, "scaling doit être un nombre ≥ 0");
+    // reduitCoutSiCrit (Pile ou Face) : remise de PA sur le PROCHAIN lancer, gagnée
+    // sur critique et cumulative — un non-entier ou un négatif désynchroniserait
+    // silencieusement coutEffectif() de ce que la boucle de tour débite réellement.
+    if (s.reduitCoutSiCrit !== undefined && (!estEntier(s.reduitCoutSiCrit) || s.reduitCoutSiCrit < 1))
+      E("sorts", id, `reduitCoutSiCrit doit être un entier ≥ 1 (reçu : ${s.reduitCoutSiCrit})`);
   }
 
   for (const [id, c] of Object.entries(contenu.combats)) {

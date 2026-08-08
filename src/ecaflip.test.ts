@@ -104,7 +104,7 @@ describe("Pile ou Face", () => {
     expect(coutEffectif(SORTS.bluff, eca)).toBe(SORTS.bluff.coutPA);
   });
 
-  it("la BOUCLE DE COMBAT (runCombat) débite le coût EFFECTIF, pas le coût nominal — séquence 3 → 2 → 1 → 1", async () => {
+  it("la BOUCLE DE COMBAT (runCombat) débite le coût EFFECTIF, pas le coût nominal — les QUATRE débits 3 → 2 → 1 → 1", async () => {
     // 4 mannequins à 1 PV : chaque lancer de Pile ou Face (crit forcé, dégâts très
     // supérieurs à 1) en tue un, ce qui fait progresser le combat sans dépendre d'un
     // second tour — la remise se lit donc uniquement sur ce que la boucle a RÉELLEMENT
@@ -123,24 +123,34 @@ describe("Pile ou Face", () => {
     const cs = [eca, ...cibles];
 
     let i = 0;
-    const paAvantChaqueCast: number[] = [];
-    const controllerJoueur = (acteur: typeof eca) => {
-      if (i >= cibles.length) return null;
-      paAvantChaqueCast.push(acteur.paActuels);
-      return { sort: SORTS.pile_ou_face, cibleRef: cibles[i++].ref };
+    const controllerJoueur = () => (i < cibles.length ? { sort: SORTS.pile_ou_face, cibleRef: cibles[i++].ref } : null);
+
+    // Trace la PA de l'Ecaflip à chaque mise à jour moteur, DÉDUPLIQUÉE (ne garde
+    // que les valeurs qui changent) : le 4ᵉ cast tue le 4ᵉ mannequin et clôt le
+    // combat DANS le même appel — aucun 5ᵉ appel au contrôleur n'a jamais lieu pour
+    // le capturer avant coup, d'où l'observation APRÈS coup via `onUpdate`, seule
+    // façon de voir les 4 débits (le 4ᵉ, celui qui porte le plancher, ne serait
+    // sinon jamais mesuré).
+    const trace: number[] = [];
+    let dernier: number | null = null;
+    const onUpdate = () => {
+      if (eca.paActuels !== dernier) {
+        dernier = eca.paActuels;
+        trace.push(eca.paActuels);
+      }
     };
 
     const gagne = await runCombat(cs, {
       controllers: { joueur: controllerJoueur, ennemi: () => null },
       rng: () => 0, // pas d'esquive, critique forcé à chaque coup
+      onUpdate,
     });
 
     expect(gagne).toBe(true);
     expect(cibles.every((c) => c.pvActuels <= 0)).toBe(true);
-    // PA restant AVANT chaque cast, tel que RÉELLEMENT débité par la boucle de
-    // combat (pas par un appel direct à `lancerSort`, qui ne débite rien) :
-    // 10, puis 10-3=7, puis 7-2=5, puis 5-1=4 — la séquence 3 → 2 → 1 → 1.
-    expect(paAvantChaqueCast).toEqual([10, 7, 5, 4]);
+    // 10 → 7 (coût 3) → 5 (coût 2) → 4 (coût 1) → 3 (coût 1, la 2ᵉ fois au plancher) :
+    // les 4 débits de la séquence 3 → 2 → 1 → 1, plancher inclus.
+    expect(trace).toEqual([10, 7, 5, 4, 3]);
   });
 });
 

@@ -2370,22 +2370,35 @@ export function lancerSort(
   // Mâchoire du Coffre / Colère royale : buff appliqué au lanceur (ex. +résistances)
   if (sort.effetLanceur) appliquerEffet(lanceur, sort.effetLanceur);
 
-  // Flèche magique : chance (scale Chance) de rembourser le coût en PA du sort —
-  // le coût EFFECTIF, jamais `sort.coutPA` brut (même précaution que la boucle de
-  // tour : un sort à coût variable ne doit rembourser que ce qu'il a réellement coûté).
+  // `rembPA` : chance (scale Chance) de rembourser le coût en PA du sort — le coût
+  // EFFECTIF, jamais `sort.coutPA` brut (même précaution que la boucle de tour : un
+  // sort à coût variable ne doit rembourser que ce qu'il a réellement coûté). SANS
+  // PORTEUR RÉEL aujourd'hui (l'ancienne Flèche magique du Cra, qui le portait, a
+  // disparu au rework de sa classe) : le chemin reste couvert par un sort SYNTHÉTIQUE
+  // (`combat.test.ts`, `syn_remb_pa`), même dormance délibérée que `Spell.dissipe`
+  // depuis le rework de l'Eniripsa — pas un oubli, un mécanisme gardé vivant sans
+  // classe pour le porter.
   if (sort.rembPA && ctx.rng() < pctRembPA(statsEffectives(lanceur))) {
     const remb = coutEffectif(sort, lanceur);
     lanceur.paActuels += remb;
-    ctx.log(`${lanceur.nom} récupère ${remb} PA (Flèche magique).`);
+    ctx.log(`${lanceur.nom} récupère ${remb} PA.`);
   }
 
   // Pile ou Face : le CRITIQUE réduit le coût du PROCHAIN lancer de CE MÊME sort
-  // (cumulatif, plancher 1 PA géré par `coutEffectif`) — là où rembPA (Flèche
-  // magique) rembourse IMMÉDIATEMENT et est piloté par la Chance.
+  // (cumulatif, plancher 1 PA géré par `coutEffectif`) — là où `rembPA` ci-dessus
+  // rembourse IMMÉDIATEMENT et est piloté par la Chance. Le journal n'annonce QUE
+  // la réduction RÉELLEMENT gagnée (avant/après `coutEffectif`) : au 3ᵉ critique
+  // du même tour de Pile ou Face (`maxParTour: 4`), le coût est déjà clampé à 1 PA
+  // par les 2 remises précédentes — annoncer « réduit de 1 PA » mentirait, puisque
+  // le coût affiché ne bouge pas et que la remise gagnée ne sera jamais dépensée.
   if (sort.reduitCoutSiCrit && unCritique) {
     lanceur.remisesCout ??= {};
+    const avant = coutEffectif(sort, lanceur);
     lanceur.remisesCout[sort.id] = (lanceur.remisesCout[sort.id] ?? 0) + sort.reduitCoutSiCrit;
-    ctx.log(`${lanceur.nom} réduit le coût de son prochain ${sort.nom} de ${sort.reduitCoutSiCrit} PA.`);
+    const apres = coutEffectif(sort, lanceur);
+    if (apres < avant) {
+      ctx.log(`${lanceur.nom} réduit le coût de son prochain ${sort.nom} de ${avant - apres} PA.`);
+    }
   }
 
   // Rage (Ouginak) : la charge se gagne APRÈS la résolution (ne boost pas ce lancer)
