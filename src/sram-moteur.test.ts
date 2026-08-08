@@ -2,12 +2,13 @@
 //  sram-moteur.test.ts — Les primitives introduites par le rework du Sram, sur des
 //  sorts SYNTHÉTIQUES : ces tests doivent survivre à un rééquilibrage du kit réel.
 //  Tâche 1 : le piège — entité, pose, déclenchement, Chausse-Trappe.
+//  Tâche 2 : la fenêtre de Chakra (bonusPieges) et l'esquive partagée (Brume).
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { lancerSort, PIEGES_MAX, CHAUSSE_TRAPPE_MAX, type CombatCtx } from "./combat";
+import { lancerSort, runCombat, chanceEsquive, PIEGES_MAX, CHAUSSE_TRAPPE_MAX, type CombatCtx } from "./combat";
 import { SORTS } from "./data";
 import { fabriquerEquipe, fabriquerEnnemis, nouvelleRun, equipeCombattante, synchroniserPV } from "./run";
-import type { Combatant, Piege, Spell } from "./types";
+import type { Combatant, Piege, Spell, Action } from "./types";
 
 const rngMax: () => number = () => 0.99; // pas d'esquive, jet tiré au max, pas de crit
 const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
@@ -22,6 +23,17 @@ const heros = (): Combatant => {
  *  ou à un poseur + un allié qui déclenche. */
 const heros2 = (): Combatant => {
   const c = fabriquerEquipe()[1];
+  c.stats = { ...c.stats, agilite: 0 };
+  return c;
+};
+/** Un troisième et un quatrième héros distincts (rangée peuplée pour Brume). */
+const heros3 = (): Combatant => {
+  const c = fabriquerEquipe()[2];
+  c.stats = { ...c.stats, agilite: 0 };
+  return c;
+};
+const heros4 = (): Combatant => {
+  const c = fabriquerEquipe()[3];
   c.stats = { ...c.stats, agilite: 0 };
   return c;
 };
@@ -516,5 +528,349 @@ describe("plafond et Chausse-Trappe", () => {
     const poseur2 = equipe2.find((c) => c.ref === poseur1.ref)!;
 
     expect(poseur2.chausseTrappe ?? 0).toBe(0);
+  });
+});
+
+// =============================================================================
+//  Tâche 2 : Concentration de Chakra (bonusPieges) et Brume (esquive partagée).
+// =============================================================================
+
+/** Sort de soutien synthétique qui pose Chakra sur le LANCEUR (cible: "soi"). */
+const sortChakra = (id: string, valeur: number, duree: number): Spell => ({
+  ...SORTS.morsure, id, type: "buff", cible: "soi", coutPA: 1,
+  baseMin: 0, baseMax: 0, scaling: 0, bonusPieges: valeur, bonusPiegesDuree: duree,
+});
+
+/** Sort de soutien synthétique qui pose Brume (cible: "allie"). */
+const sortBrume = (id: string, duree: number): Spell => ({
+  ...SORTS.morsure, id, type: "buff", cible: "allie", coutPA: 1,
+  baseMin: 0, baseMax: 0, scaling: 0, esquivePartageeRangee: { duree },
+});
+
+describe("Concentration de Chakra : majoration temporaire des pièges", () => {
+  it("le sort de soutien pose bien l'effet bonusPieges sur le LANCEUR, avec sa durée", () => {
+    const lanceur = heros();
+    const cs = [lanceur];
+    const sort = sortChakra("test_chakra_pose", 0.5, 1);
+
+    lancerSort(lanceur, sort, lanceur.ref, cs, ctx());
+
+    expect(lanceur.effets).toContainEqual({ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 });
+  });
+
+  it("majore les dégâts d'un piège déclenché : multiplicateur 1 + valeur de l'effet", () => {
+    const sansChakra = heros();
+    const [victimeSans, ar1Sans] = ennemisProbes(2);
+    victimeSans.position = 0; ar1Sans.position = 4;
+    const csSans = [sansChakra, victimeSans, ar1Sans];
+    sansChakra.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    const avantSans = victimeSans.pvActuels;
+    lancerSort(sansChakra, sortDeplace("test_chakra_mult_sans", "arriere"), victimeSans.ref, csSans, ctx());
+    const reference = avantSans - victimeSans.pvActuels;
+
+    const avecChakra = heros();
+    avecChakra.effets.push({ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 }); // effet posé directement : isole le MULTIPLICATEUR de son mode d'application (déjà couvert ci-dessus)
+    const [victimeAvec, ar1Avec] = ennemisProbes(2);
+    victimeAvec.position = 0; ar1Avec.position = 4;
+    const csAvec = [avecChakra, victimeAvec, ar1Avec];
+    avecChakra.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    const avantAvec = victimeAvec.pvActuels;
+    lancerSort(avecChakra, sortDeplace("test_chakra_mult_avec", "arriere"), victimeAvec.ref, csAvec, ctx());
+    const majore = avantAvec - victimeAvec.pvActuels;
+
+    expect(reference).toBeGreaterThan(0);
+    expect(majore).toBe(Math.round(reference * 1.5));
+  });
+
+  it("bénéficie même quand c'est un ALLIÉ qui déclenche le piège (le bonus est celui du POSEUR)", () => {
+    const poseur = heros();
+    poseur.effets.push({ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 });
+    const allie = heros2();
+    const [victime, ar1] = ennemisProbes(2);
+    victime.position = 0; ar1.position = 4;
+    const cs = [poseur, allie, victime, ar1];
+    poseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+
+    // Référence : même scénario, mais l'allié déclenche un poseur SANS Chakra.
+    const poseurSans = heros();
+    const allieSans = heros2();
+    const [victimeSans, ar1Sans] = ennemisProbes(2);
+    victimeSans.position = 0; ar1Sans.position = 4;
+    const csSans = [poseurSans, allieSans, victimeSans, ar1Sans];
+    poseurSans.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+    const avantSans = victimeSans.pvActuels;
+    lancerSort(allieSans, sortDeplace("test_chakra_allie_sans", "arriere"), victimeSans.ref, csSans, ctx());
+    const reference = avantSans - victimeSans.pvActuels;
+
+    const avantAvec = victime.pvActuels;
+    lancerSort(allie, sortDeplace("test_chakra_allie_avec", "arriere"), victime.ref, cs, ctx());
+    const majore = avantAvec - victime.pvActuels;
+
+    expect(reference).toBeGreaterThan(0);
+    expect(majore).toBe(Math.round(reference * 1.5));
+    expect(allie.chausseTrappe ?? 0).toBe(0); // le cumul de Chausse-Trappe va au POSEUR, jamais à l'allié déclencheur
+    expect(poseur.chausseTrappe).toBe(1);
+  });
+
+  // Test central du plan : à faire tourner via runCombat, pas en lisant le champ. Les
+  // effets « bonusPieges » sont décomptés au DÉBUT du tour de leur porteur (comme
+  // paParTour/hot, voir EFFETS_TICK_DEBUT dans combat.ts) et non à la fin — sans cette
+  // particularité, un Chakra posé par le Sram serait décrémenté et retiré à la fin de
+  // SON PROPRE tour de pose, avant même le tour de l'allié suivant, et ne couvrirait
+  // jamais que le tour de pose lui-même.
+  describe("fenêtre réelle du buff, jouée via runCombat", () => {
+    it("couvre le tour de pose ET le tour allié qui suit", async () => {
+      const poseur = heros();
+      const allie = heros2();
+      poseur.position = 0; allie.position = 1;
+      poseur.paMax = 5; poseur.paActuels = 5; // 1 (Chakra) + 4 (Morsure, coût hérité) dans le même tour
+      allie.paMax = 4; allie.paActuels = 4;
+
+      const [victimeA, victimeB, ar1] = ennemisProbes(3);
+      victimeA.position = 0; victimeB.position = 1; ar1.position = 4; // rangée arrière : 1/4 prise, 3 libres
+
+      const chakraSort = sortChakra("test_fenetre_chakra", 0.5, 1);
+      const deplaceSort = sortDeplace("test_fenetre_deplace", "arriere");
+      poseur.pieges = [
+        { sortId: "morsure", camp: "ennemi", avant: false },
+        { sortId: "morsure", camp: "ennemi", avant: false },
+      ];
+
+      const cs: Combatant[] = [poseur, allie, victimeA, victimeB, ar1];
+      let toursPoseur = 0;
+      let poseurADeplace = false;
+      let allieADeplace = false;
+      const log = (m: string) => { if (m.includes(`Tour de ${poseur.nom}`)) toursPoseur++; };
+      const controllers = {
+        joueur: async (acteur: Combatant): Promise<Action | null> => {
+          if (acteur.ref === poseur.ref) {
+            if (toursPoseur === 1) {
+              if (!poseurADeplace && poseur.paActuels === 5) return { sort: chakraSort, cibleRef: poseur.ref };
+              if (!poseurADeplace) {
+                poseurADeplace = true;
+                return { sort: deplaceSort, cibleRef: victimeA.ref }; // déclenche DANS le tour du Sram
+              }
+            }
+            return null;
+          }
+          if (acteur.ref === allie.ref && !allieADeplace) {
+            allieADeplace = true;
+            return { sort: deplaceSort, cibleRef: victimeB.ref }; // déclenche au tour ALLIÉ qui suit
+          }
+          return null;
+        },
+        ennemi: async (): Promise<Action | null> => null,
+      };
+
+      const avantA = victimeA.pvActuels;
+      const avantB = victimeB.pvActuels;
+      await runCombat(cs, { rng: rngMax, log, controllers } as any);
+      const degatsMemeTour = avantA - victimeA.pvActuels;
+      const degatsTourAllie = avantB - victimeB.pvActuels;
+
+      // Référence non majorée : même déclenchement, sans Chakra du tout.
+      const refPoseur = heros();
+      const [refVictime, refAr1] = ennemisProbes(2);
+      refVictime.position = 0; refAr1.position = 4;
+      refPoseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+      const refAvant = refVictime.pvActuels;
+      lancerSort(refPoseur, deplaceSort, refVictime.ref, [refPoseur, refVictime, refAr1], ctx());
+      const reference = refAvant - refVictime.pvActuels;
+
+      expect(reference).toBeGreaterThan(0);
+      expect(degatsMemeTour).toBe(Math.round(reference * 1.5)); // couvre le tour de pose
+      expect(degatsTourAllie).toBe(Math.round(reference * 1.5)); // couvre le tour allié qui suit
+    });
+
+    it("retombe quand le Sram rejoue : un déclenchement à SON tour suivant n'est plus majoré", async () => {
+      const poseur = heros();
+      poseur.position = 0;
+      poseur.paMax = 1; poseur.paActuels = 1; // une seule action possible par tour : force deux tours distincts
+
+      const [victime] = ennemisProbes(1);
+      victime.position = 0; // avant ; sera togglée en arrière au 2e tour du Sram
+
+      const chakraSort = sortChakra("test_retombe_chakra", 0.5, 1);
+      const deplaceSort: Spell = { ...SORTS.morsure, id: "test_retombe_deplace", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: "toggle" };
+      poseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+
+      const cs: Combatant[] = [poseur, victime];
+      let toursPoseur = 0;
+      const log = (m: string) => { if (m.includes(`Tour de ${poseur.nom}`)) toursPoseur++; };
+      const controllers = {
+        joueur: async (): Promise<Action | null> => {
+          if (toursPoseur === 1) return { sort: chakraSort, cibleRef: poseur.ref }; // 1er tour : cast Chakra puis fin de tour (1 PA)
+          if (toursPoseur === 2) return { sort: deplaceSort, cibleRef: victime.ref }; // 2e tour du Sram : il « rejoue »
+          return null;
+        },
+        ennemi: async (): Promise<Action | null> => null,
+      };
+
+      const avant = victime.pvActuels;
+      await runCombat(cs, { rng: rngMax, log, controllers } as any);
+      const degats = avant - victime.pvActuels;
+
+      // Référence non majorée, même déclenchement.
+      const refPoseur = heros();
+      const [refVictime] = ennemisProbes(1);
+      refVictime.position = 0;
+      refPoseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
+      const refAvant = refVictime.pvActuels;
+      lancerSort(refPoseur, { ...deplaceSort, id: "test_retombe_ref" }, refVictime.ref, [refPoseur, refVictime], ctx());
+      const reference = refAvant - refVictime.pvActuels;
+
+      expect(reference).toBeGreaterThan(0);
+      expect(degats).toBe(reference); // PLUS de majoration : le Chakra est retombé
+      // Témoin que le scénario a bien vu le Sram rejouer (>= 2, pas ===2 : plus aucun
+      // combattant ne peut plus rien faire après le 2e tour — victime survit à 9999 PV,
+      // personne ne l'attaque plus — donc le combat tourne à vide jusqu'au garde-fou
+      // anti-boucle de `runCombat`, ce qui n'invalide pas la mesure : les PV de la
+      // victime sont figés dès le 2e tour, seul `toursPoseur` continue de grimper).
+      expect(toursPoseur).toBeGreaterThanOrEqual(2);
+    });
+  });
+});
+
+describe("Brume : esquive partagée", () => {
+  it("s'applique à la rangée de la CIBLE (lanceur compris s'il y est), pas à l'autre rangée", () => {
+    const lanceur = heros();
+    lanceur.stats = { ...lanceur.stats, agilite: 100 }; // brut attendu : 100 × 0,002 = 0,2
+    lanceur.position = 0; // avant
+    const allieAvant = heros2();
+    allieAvant.position = 1; // avant : même rangée que la cible
+    const allieArriere = heros3();
+    allieArriere.position = 4; // arrière : PAS la rangée de la cible
+    const cs = [lanceur, allieAvant, allieArriere];
+
+    lancerSort(lanceur, sortBrume("test_brume_rangee", 2), allieAvant.ref, cs, ctx());
+
+    const brumeSur = (c: Combatant) => c.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(brumeSur(lanceur)).toHaveLength(1);
+    expect(brumeSur(lanceur)[0]).toMatchObject({ valeur: 0.2, toursRestants: 2 });
+    expect(brumeSur(allieAvant)).toHaveLength(1);
+    expect(brumeSur(allieAvant)[0]).toMatchObject({ valeur: 0.2, toursRestants: 2 });
+    expect(brumeSur(allieArriere)).toHaveLength(0);
+  });
+
+  it("le lanceur n'est PAS inclus s'il est dans l'AUTRE rangée que la cible", () => {
+    const lanceur = heros();
+    lanceur.position = 4; // arrière
+    const cible = heros2();
+    cible.position = 0; // avant
+    const cs = [lanceur, cible];
+
+    lancerSort(lanceur, sortBrume("test_brume_lanceur_absent", 2), cible.ref, cs, ctx());
+
+    expect(lanceur.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(0);
+    expect(cible.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(1);
+  });
+
+  it("exclut les invocations de la rangée, même vivantes et de même camp/rangée", () => {
+    const lanceur = heros();
+    lanceur.position = 0;
+    const cible = heros2();
+    cible.position = 1;
+    const invocation: Combatant = { ...heros3(), ref: "test_invocation", position: 2, estInvocation: true };
+    const cs = [lanceur, cible, invocation];
+
+    lancerSort(lanceur, sortBrume("test_brume_invocation", 2), cible.ref, cs, ctx());
+
+    expect(invocation.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(0);
+    expect(cible.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(1);
+  });
+
+  it("valeur figée : agilité effective + effets `esquive` du lanceur, SANS esquiveArriere ni Brume déjà active", () => {
+    const lanceur = heros();
+    lanceur.stats = { ...lanceur.stats, agilite: 50 }; // 50 × 0,002 = 0,1
+    lanceur.position = 4; // arrière : esquiveArriere serait actif sur LUI s'il en portait
+    lanceur.esquiveArriere = 0.4; // équipement (Baguette Rikiki) : ne doit PAS entrer dans le calcul partagé
+    lanceur.effets.push({ stat: "esquive", valeur: 0.05, toursRestants: 3 }); // effet étranger (pas Brume) : DOIT compter
+    lanceur.effets.push({ stat: "esquive", valeur: 0.9, toursRestants: 1, viaBrume: true }); // Brume ANTÉRIEURE : ne doit PAS compter
+    const cible = heros2();
+    cible.position = 4; // même rangée que le lanceur (arrière), pour qu'il soit inclus
+    const cs = [lanceur, cible];
+
+    lancerSort(lanceur, sortBrume("test_brume_valeur", 2), cible.ref, cs, ctx());
+
+    const nouvelleEntree = cible.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(nouvelleEntree).toHaveLength(1);
+    // 0,1 (agilité) + 0,05 (effet étranger) = 0,15 — ni les 0,4 d'esquiveArriere, ni les
+    // 0,9 de la Brume antérieure du lanceur ne doivent apparaître dans ce total.
+    expect(nouvelleEntree[0].valeur).toBeCloseTo(0.15);
+  });
+
+  it("additive : deux lancers successifs cumulent (deux entrées), sans écraser la précédente", () => {
+    const lanceur = heros();
+    lanceur.stats = { ...lanceur.stats, agilite: 50 }; // brut = 0,1 à chaque lancer (cible hors rangée du lanceur)
+    lanceur.position = 4; // hors de la rangée ciblée : n'influence pas sa propre relance (cf. test suivant pour le cas contraire)
+    const cible = heros2();
+    cible.position = 0;
+    const cs = [lanceur, cible];
+
+    lancerSort(lanceur, sortBrume("test_brume_additive_1", 2), cible.ref, cs, ctx());
+    lancerSort(lanceur, sortBrume("test_brume_additive_2", 2), cible.ref, cs, ctx());
+
+    const entrees = cible.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(entrees).toHaveLength(2);
+    expect(entrees[0].valeur).toBeCloseTo(0.1);
+    expect(entrees[1].valeur).toBeCloseTo(0.1); // additive : la 2e ne remplace ni ne double la 1re
+  });
+
+  it("n'enfle PAS si le Sram est lui-même sous sa propre Brume (anti auto-alimentation)", () => {
+    const lanceur = heros();
+    lanceur.stats = { ...lanceur.stats, agilite: 100 }; // brut = 0,2, SI la Brume déjà active ne compte pas
+    lanceur.position = 0;
+    const cible = heros2();
+    cible.position = 1; // même rangée que le lanceur : il est inclus dans les DEUX lancers
+    const cs = [lanceur, cible];
+
+    lancerSort(lanceur, sortBrume("test_brume_autoalim_1", 2), cible.ref, cs, ctx());
+    const brumeSurLanceurApres1 = lanceur.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(brumeSurLanceurApres1).toHaveLength(1);
+    expect(brumeSurLanceurApres1[0].valeur).toBeCloseTo(0.2);
+
+    // Relance : le lanceur porte maintenant SA PROPRE Brume (posée par le lancer
+    // précédent). Un calcul naïf qui sommerait TOUS les effets `esquive` du lanceur
+    // (sans exclure `viaBrume`) obtiendrait 0,2 + 0,2 = 0,4 pour cette 2e relance.
+    lancerSort(lanceur, sortBrume("test_brume_autoalim_2", 2), cible.ref, cs, ctx());
+    const brumeSurLanceurApres2 = lanceur.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(brumeSurLanceurApres2).toHaveLength(2); // additif (cf. test précédent) : 2 entrées désormais
+    expect(brumeSurLanceurApres2[1].valeur).toBeCloseTo(0.2); // toujours 0,2, PAS 0,4
+
+    const brumeSurCible = cible.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(brumeSurCible).toHaveLength(2);
+    expect(brumeSurCible[1].valeur).toBeCloseTo(0.2); // la cible reçoit la même valeur non gonflée
+  });
+
+  it("le plafond de 50 % s'applique en AVAL, via chanceEsquive, pas au moment du partage", () => {
+    const lanceur = heros();
+    lanceur.stats = { ...lanceur.stats, agilite: 10000 }; // brut = 20, très largement au-delà de 0,5
+    lanceur.position = 0;
+    const cible = heros2();
+    cible.position = 1;
+    cible.stats = { ...cible.stats, agilite: 0 };
+    const cs = [lanceur, cible];
+
+    lancerSort(lanceur, sortBrume("test_brume_plafond", 2), cible.ref, cs, ctx());
+
+    const entree = cible.effets.filter((e) => e.stat === "esquive" && e.viaBrume);
+    expect(entree).toHaveLength(1);
+    expect(entree[0].valeur).toBeCloseTo(20); // stockée BRUTE, non plafonnée
+    expect(chanceEsquive(cible)).toBe(0.5); // mais le plafond s'applique bien en aval, à la lecture
+  });
+
+  it("une seule application par lancer, même sur une rangée peuplée (4 bénéficiaires)", () => {
+    const lanceur = heros();
+    lanceur.position = 0;
+    const a2 = heros2(); a2.position = 1;
+    const a3 = heros3(); a3.position = 2;
+    const a4 = heros4(); a4.position = 3;
+    const cs = [lanceur, a2, a3, a4];
+
+    lancerSort(lanceur, sortBrume("test_brume_une_fois", 2), a2.ref, cs, ctx());
+
+    for (const c of [lanceur, a2, a3, a4]) {
+      expect(c.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(1);
+    }
   });
 });

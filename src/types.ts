@@ -111,6 +111,7 @@ export type EffetStat =
   | "aiguille" // Xélor : chaque Téléfrag reçu par le porteur le reblesse (écho d'Aiguille)
   | "crit" // Tir Puissant : + crit plat temporaire (propagé dans statsEffectives → se.crit)
   | "degatsCritSubis" // Griffe joueuse — majore les dégâts des coups critiques SUBIS par le porteur
+  | "bonusPieges" // Concentration de Chakra (Sram) : majore les dégâts d'un piège au DÉCLENCHEMENT, lu sur le POSEUR
   // buffs/debuffs temporaires de caractéristique (sommés dans statsEffectives) :
   | "force"
   | "intelligence"
@@ -266,6 +267,22 @@ export interface Spell {
   posePiege?: boolean;
   bonusParChausseTrappe?: number; // Attaque Mortelle : +N par cumul de Chausse-Trappe du lanceur, cap CHAUSSE_TRAPPE_MAX
   consommeChausseTrappe?: boolean; // remet le compteur de Chausse-Trappe du lanceur à zéro APRÈS lecture, inconditionnellement
+  /** Concentration de Chakra : pose sur le LANCEUR un effet `EffetStat` "bonusPieges" de
+   *  cette valeur, pour `bonusPiegesDuree` tours (du lanceur — défaut 1 si absent). Lu au
+   *  DÉCLENCHEMENT d'un piège via `sommeEffet(poseur, "bonusPieges")`, donc un piège
+   *  déclenché par un allié en bénéficie quand même. Même patron valeur/durée que
+   *  `hotPct`/`hotDuree` : deux champs plats plutôt qu'un objet, pour rester cohérent
+   *  avec le reste du fichier. */
+  bonusPieges?: number;
+  bonusPiegesDuree?: number;
+  /** Brume : partage l'esquive du LANCEUR (agilité + effets `esquive`, SANS le bonus de
+   *  position `esquiveArriere` ni une Brume déjà active sur lui-même — sans quoi une
+   *  Brume active sur le lanceur gonflerait la valeur d'une Brume suivante) à TOUS les
+   *  alliés vivants de la rangée de la CIBLE, lanceur compris s'il s'y trouve, comme un
+   *  effet `esquive` de cette durée. Résolu UNE SEULE FOIS par lancer, jamais une fois
+   *  par bénéficiaire — la portée ne dépend pas de qui le sort a « touché » (un buff n'a
+   *  pas de notion de touché/esquivé). */
+  esquivePartageeRangee?: { duree: number };
 }
 
 /** Piège du Sram : posé sur une rangée d'un camp, déclenché quand un adversaire y
@@ -402,6 +419,12 @@ export interface EffetActif {
   // sa propre valeur — l'escalade 10 %→15 % à deux héros devant) écraserait aussi
   // un effet étranger de la même stat au lieu de coexister avec lui.
   viaBuffRangee?: boolean;
+  // Marqueur MOTEUR (jamais posé par le contenu) : distingue un effet `esquive` posé par
+  // Brume (Sram) de tout autre effet `esquive` (équipement, autre sort). Sert UNIQUEMENT
+  // à exclure ces entrées du calcul de la Brume SUIVANTE (voir `partagerEsquive`,
+  // combat.ts) — sans lui, une Brume déjà active sur le lanceur gonflerait la valeur
+  // qu'il partage à sa rangée à chaque relance, une auto-alimentation non voulue.
+  viaBrume?: boolean;
 }
 
 export interface Combatant {

@@ -134,6 +134,20 @@ const multSoinDe = (c: Combatant): number =>
 export const NB_COLONNES = 4;
 export const estAvant = (c: Combatant): boolean => c.position < NB_COLONNES;
 
+/** Probabilité d'esquive EFFECTIVEMENT tirée, plafond compris (50 %). SOURCE UNIQUE,
+ *  partagée par le pipeline de dégâts (`degatsAvec`), par la Brume du Sram et par un
+ *  futur affichage — recopier la formule ailleurs, c'est garantir qu'un des
+ *  consommateurs mentira un jour (précédent : l'infobulle d'escalade du Iop, rework
+ *  2026-08-07). Inclut l'Agilité effective, les effets `esquive` (dont ceux posés par
+ *  Brume — voir `partagerEsquive`) et le bonus d'équipement de ligne arrière
+ *  (`esquiveArriere`, Baguette Rikiki), actif seulement si le porteur n'est pas en
+ *  ligne avant. */
+export function chanceEsquive(c: Combatant): number {
+  const se = statsEffectives(c);
+  const esquiveEquip = !estAvant(c) ? (c.esquiveArriere ?? 0) : 0; // Baguette Rikiki
+  return Math.min(0.5, se.agilite * 0.002 + sommeEffet(c, "esquive") + esquiveEquip);
+}
+
 /** Combattants ciblables par un sort de ligne dans un camp : la ligne avant,
  *  ou (si elle est vide) toute la ligne arrière qui devient exposée. */
 function ligneFront(cibles: Combatant[]): Combatant[] {
@@ -566,13 +580,12 @@ function degatsAvec(
 ): ResultatDegats {
   const { ctx } = opts;
   const se = statsEffectives(lanceur);
-  const seCible = statsEffectives(cible);
 
   // esquive (Agilité de la cible + buffs + équipement « ligne arrière », plafonnée à 50 %)
-  // sansEsquiveNiCrit (second coup de Bluff) : le jet d'esquive est celui du PREMIER coup,
-  // il ne se rejoue pas — ce coup de retour en est la conséquence directe.
-  const esquiveEquip = !estAvant(cible) ? (cible.esquiveArriere ?? 0) : 0; // Baguette Rikiki
-  if (!base.sansEsquiveNiCrit && ctx.rng() < Math.min(0.5, seCible.agilite * 0.002 + sommeEffet(cible, "esquive") + esquiveEquip)) {
+  // — formule unique, voir `chanceEsquive`. sansEsquiveNiCrit (second coup de Bluff) :
+  // le jet d'esquive est celui du PREMIER coup, il ne se rejoue pas — ce coup de retour
+  // en est la conséquence directe.
+  if (!base.sansEsquiveNiCrit && ctx.rng() < chanceEsquive(cible)) {
     // `element` ici est AVEUGLE à la cible (dmg=0, jamais soumis à `elementsClasses`) :
     // n'a pas de sens réel sur ce chemin, et n'est actuellement consommé par aucun
     // journal — ne pas s'en servir pour un futur affichage sans le recalculer via la cible.
@@ -955,7 +968,7 @@ function retirerPA(cible: Combatant, n: number, ctx: CombatCtx): void {
  *  pas au décrément générique de fin de tour : un effet posé sur SOI-MÊME pendant son
  *  propre tour serait sinon décrémenté avant d'avoir jamais tické (le lanceur d'un
  *  Cadran perdait un tour de PA ; même chose pour un HoT auto-lancé). */
-const EFFETS_TICK_DEBUT: EffetStat[] = ["paParTour", "hot"];
+const EFFETS_TICK_DEBUT: EffetStat[] = ["paParTour", "hot", "bonusPieges"];
 
 export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatCtx): boolean {
   // delta de PA différé (Mot d'ivation, Prémonition, Coalition… / Tétanie en négatif)
@@ -997,6 +1010,13 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
       if (acteur.pvActuels > avant) ctx.log(`${acteur.nom} régénère ${acteur.pvActuels - avant} PV.`);
     }
     e.toursRestants -= 1; // durée au tick (cf. EFFETS_TICK_DEBUT)
+  }
+  // Concentration de Chakra (Sram) : aucun tick actif (ni PA ni soin), seulement une
+  // durée qui doit décroître au DÉBUT du tour du porteur — même raison que paParTour/hot
+  // dans EFFETS_TICK_DEBUT : posé pendant SON PROPRE tour, un décompte en fin de tour
+  // (decrementerEffets) l'aurait expiré avant même qu'un piège allié n'ait pu en profiter.
+  for (const e of acteur.effets.filter((x) => x.stat === "bonusPieges")) {
+    e.toursRestants -= 1;
   }
   acteur.effets = acteur.effets.filter((e) => !(EFFETS_TICK_DEBUT.includes(e.stat) && e.toursRestants <= 0));
   // Bouclier à DURÉE (Château de cartes) : décompte au début du tour du porteur, retire
@@ -1187,6 +1207,12 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.resquilleActive = sort.resquille;
     ctx.log(`${cible.nom} prépare une Resquille (−${sort.resquille} PA au prochain Kaboom).`);
   }
+  // Concentration de Chakra (Sram) : majore les pièges du porteur pour un nombre limité
+  // de SES PROPRES tours (voir declencherPiege, qui lit sommeEffet(poseur, "bonusPieges")).
+  if (sort.bonusPieges) {
+    appliquerEffet(cible, { stat: "bonusPieges", valeur: sort.bonusPieges, duree: sort.bonusPiegesDuree ?? 1 });
+    ctx.log(`${cible.nom} concentre son Chakra : pièges +${Math.round(sort.bonusPieges * 100)} % (${sort.bonusPiegesDuree ?? 1}t).`);
+  }
 }
 
 /** Deux héros hors invocation sur la rangée avant alliée ? (Pâturage, Fortification) */
@@ -1241,6 +1267,34 @@ function appliquerBuffRangee(lanceur: Combatant, buff: BuffRangeeAlliee, cs: Com
   ctx.log(
     `${lanceur.nom} renforce la rangée ${devant ? "avant" : "arrière"} : ${detail.join(", ")}` +
     `${deux && aSeuil ? " (renfort à deux)" : ""}.`,
+  );
+}
+
+/** Brume (Sram) : partage l'esquive PROPRE du lanceur (agilité effective + ses effets
+ *  `esquive` — hors ceux posés par une Brume ANTÉRIEURE, `viaBrume`, sans quoi une
+ *  Brume déjà active sur le lanceur gonflerait la valeur qu'il partage à la prochaine
+ *  relance) à TOUS les alliés vivants de la rangée de la CIBLE, lanceur compris s'il
+ *  s'y trouve (`allies()` exclut déjà Lance/invocations). Volontairement SANS le bonus
+ *  de position `esquiveArriere` : il dépend de la case du PORTEUR de l'objet, pas de
+ *  celle du lanceur, et n'a donc pas de sens à partager. Volontairement SANS plafond
+ *  ici : le plafond de 50 % s'applique en AVAL, dans `chanceEsquive`, au moment où le
+ *  bénéficiaire encaisse un coup — poser la valeur brute comme un effet `esquive`
+ *  normal laisse `sommeEffet` faire le cumul, exactement comme n'importe quel autre
+ *  effet `esquive`. Appelée UNE SEULE FOIS par lancer (jamais une fois par membre de la
+ *  rangée) : la portée ne dépend pas de qui le sort a « touché », un buff n'a pas cette
+ *  notion — même raisonnement que `appliquerBuffRangee`/`appliquerBouclierPortee`. */
+function partagerEsquive(lanceur: Combatant, cible: Combatant, duree: number, cs: Combatant[], ctx: CombatCtx): void {
+  const se = statsEffectives(lanceur);
+  const brut = se.agilite * 0.002 + lanceur.effets
+    .filter((e) => e.stat === "esquive" && !e.viaBrume)
+    .reduce((s, e) => s + e.valeur, 0);
+  const rangee = allies(lanceur, cs).filter((c) => estAvant(c) === estAvant(cible));
+  for (const m of rangee) {
+    m.effets.push({ stat: "esquive", valeur: brut, toursRestants: duree, viaBrume: true });
+  }
+  ctx.log(
+    `${lanceur.nom} enveloppe la rangée ${estAvant(cible) ? "avant" : "arrière"} d'une Brume ` +
+    `(+${Math.round(brut * 100)} % d'esquive, ${duree}t).`,
   );
 }
 
@@ -1552,7 +1606,10 @@ function declencherPiege(cible: Combatant, cs: Combatant[], ctx: CombatCtx): voi
   // multiplicateurs dans son propre calcul, sans quoi un piège déclenché ignorerait
   // silencieusement les portails ET la marque de Conjuration qu'un lancer DIRECT du
   // même sort aurait reçus.
-  let multLigne = multPortails(poseur, cs) * multConjuration(poseur, cible, cs);
+  // Concentration de Chakra (Sram) : majore les dégâts d'un piège au DÉCLENCHEMENT, lu
+  // sur le POSEUR — donc un piège déclenché par un ALLIÉ bénéficie quand même du Chakra
+  // du Sram (c'est le poseur qui porte l'effet, pas celui qui a provoqué le déplacement).
+  let multLigne = multPortails(poseur, cs) * multConjuration(poseur, cible, cs) * (1 + sommeEffet(poseur, "bonusPieges"));
   if (sort.bonusParEnnemiLigneCible) {
     multLigne *= 1 + sort.bonusParEnnemiLigneCible *
       adverses(poseur, cs).filter((e) => e.ref !== cible.ref && !e.estLance && estAvant(e) === estAvant(cible)).length;
@@ -1975,6 +2032,11 @@ export function lancerSort(
     if (sort.bouclierPortee) {
       const { portee, pct, tours } = sort.bouclierPortee;
       appliquerBouclierPortee(lanceur, cs, portee, pct, tours, ctx);
+    }
+    // Brume (Sram) : esquive partagée sur la rangée de la CIBLE, UNE SEULE FOIS par
+    // lancement — même raisonnement que `effetRangeeAlliee`/`bouclierPortee` ci-dessus.
+    if (sort.esquivePartageeRangee && cible) {
+      partagerEsquive(lanceur, cible, sort.esquivePartageeRangee.duree, cs, ctx);
     }
     return;
   }
