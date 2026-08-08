@@ -1172,7 +1172,6 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     ctx.log(`${cible.nom} prépare un sort renforcé (+${Math.round(sort.bonusProchainSortPct * 100)} %).`);
   }
   if (sort.effet) appliquerEffet(cible, sort.effet);
-  if (sort.effets) for (const e of sort.effets) appliquerEffet(cible, e);
   if (sort.maitriseArc) {
     const [princ, sec] = elementsForts(cible); // buffe les 2 éléments de frappe du lanceur
     appliquerEffet(cible, { stat: ELEMENT_STAT[princ], valeur: sort.maitriseArc.principal, duree: sort.maitriseArc.duree });

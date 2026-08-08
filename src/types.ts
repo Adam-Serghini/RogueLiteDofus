@@ -165,7 +165,6 @@ export interface Spell {
   vampirismeRatio?: number; // Pattounes : soigne le lanceur d'une fraction des dégâts
   dissipePositifs?: boolean; // désenvoûtement : retire boucliers + effets bénéfiques
   mixte?: { surAllie: SurAllie }; // sort lançable sur ennemi (dégâts) ou allié (soutien)
-  effets?: EffetSpec[]; // plusieurs effets cumulés (ex. Maître des ombres)
   // --- signatures de boss (invocations côté monstres) ---
   invoqueMonstre?: { pool: string[]; max: number }; // invoque un monstre (id tiré dans pool) ; max = invocations vivantes simultanées
   ressuscite?: { pvPct: number }; // réinvoque un allié monstre vaincu (Boostache) à pvPct de ses PV max
