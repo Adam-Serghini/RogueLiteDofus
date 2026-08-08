@@ -163,17 +163,12 @@ export interface Spell {
   // --- mécaniques des nouvelles classes (Sram / Feca / Ecaflip) ---
   bouclierRatioDegats?: number; // Attaque céleste : bouclier = pct des dégâts infligés
   vampirismeRatio?: number; // Pattounes : soigne le lanceur d'une fraction des dégâts
-  executeSeulement?: boolean; // Mise à mort : échoue si la cible survivrait au coup
-  coups?: Coup[]; // Coup double : plusieurs frappes sur la cible primaire
-  projectiles?: Projectiles; // Déluge de lames : N frappes sur cibles aléatoires
   dissipePositifs?: boolean; // désenvoûtement : retire boucliers + effets bénéfiques
   mixte?: { surAllie: SurAllie }; // sort lançable sur ennemi (dégâts) ou allié (soutien)
   effets?: EffetSpec[]; // plusieurs effets cumulés (ex. Maître des ombres)
   // --- signatures de boss (invocations côté monstres) ---
   invoqueMonstre?: { pool: string[]; max: number }; // invoque un monstre (id tiré dans pool) ; max = invocations vivantes simultanées
   ressuscite?: { pvPct: number }; // réinvoque un allié monstre vaincu (Boostache) à pvPct de ses PV max
-  effetParNiveau?: { stat: EffetStat; base: number; parNiveau: number; duree: number }; // valeur = base + parNiveau×niveau
-  poisonAmpli?: number; // Arsenic : active le doublement des poisons pour N tours
   procAleatoire?: ProcAleatoire[]; // 1 effet tiré au hasard sur la cible (sorts de monstres)
   changeLigne?: boolean; // « Changer de ligne » (Dagues Eurfolles) : déplace le lanceur dans la rangée opposée
   perceResistances?: number; // fraction des résistances ignorée par ce sort (attaque d'arme)
@@ -327,24 +322,6 @@ export interface ProcAleatoire {
   dissipePositifs?: boolean;
 }
 
-/** Une frappe d'un sort multi-coups (Coup double). */
-export interface Coup {
-  baseMin: number;
-  baseMax: number;
-  scaling: number;
-  proc?: { p: number; poison?: { degats: number; duree: number }; friction?: number };
-}
-
-/** Salve de projectiles sur cibles aléatoires (Déluge de lames). */
-export interface Projectiles {
-  nb: number;
-  baseMin: number;
-  baseMax: number;
-  scaling: number;
-  pProc?: number; // probabilité d'effet par projectile
-  poison?: { degats: number; duree: number };
-}
-
 /** Effet appliqué quand un sort `mixte` est lancé sur un allié. */
 export interface SurAllie {
   effet?: EffetSpec;
@@ -475,7 +452,6 @@ export interface Combatant {
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente
-  poisonAmpliTours: number; // Arsenic : poisons appliqués ×2 tant que > 0
   dofusLache?: string; // pour le boss
   // --- invocation (Poupée de garde) ---
   estInvocation?: boolean; // ne joue pas de tour

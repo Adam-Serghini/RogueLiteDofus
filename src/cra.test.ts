@@ -149,6 +149,16 @@ describe("Flèche de recul", () => {
     lancerSort(c, SORTS.fleche_de_recul, cible.ref, cs, ctx());
     expect(ciblesValides(c, SORTS.fleche_de_recul, cs)).toEqual([]);
   });
+
+  it("ne porte PAS `deplaceCible` : son handler dédié pousse déjà la cible en dur", () => {
+    // Décision de la tâche 4 du rework du Sram : le contenu affichait `deplaceCible:
+    // "arriere"`, mais `lancerFlecheDeRecul` (combat.ts) appelle deplacerCible(cible,
+    // "arriere", ...) littéralement et sort AVANT d'atteindre la résolution générique
+    // de `sort.deplaceCible` — le champ ne pilotait donc jamais rien pour ce sort.
+    // Retiré du contenu plutôt que branché en double : le comportement (prouvé par les
+    // 4 cas ci-dessus) est inchangé, seul le champ mensonger disparaît.
+    expect(SORTS.fleche_de_recul.deplaceCible).toBeUndefined();
+  });
 });
 
 describe("Œil de Taupe", () => {

@@ -605,7 +605,6 @@
     "cible": "ennemi_ligne",
     "coutPA": 2,
     "degatsPoussee": true,
-    "deplaceCible": "arriere",
     "desc": "Repousse la cible en rangée arrière ; dégâts de poussée (ignorent les résistances) si ça bouscule.",
     "id": "fleche_de_recul",
     "maxParTour": 1,

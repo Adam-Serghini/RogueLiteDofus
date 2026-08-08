@@ -20,8 +20,7 @@ export function setFondTranche(trancheId: string | null): void {
  * Contenu du tooltip d'un sort : fourchette de dégâts/soin **calculée pour le
  * lanceur courant** (jet + élément × scaling × puissance, hors crit/résistance),
  * ou jets de BASE si `acteur` est null (encyclopédie, hors combat) ; puis effet
- * et cible. Pour les sorts spéciaux (multi-coups, dé, projectiles), on s'appuie
- * sur la description.
+ * et cible.
  */
 export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
   let principal = "";
@@ -34,12 +33,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
         const m = multSoin(se, statElement(se, elementDeFrappe(acteur)));
         principal = `<span class="tip-val soin">♥ ${Math.round(s.baseMin * m)} – ${Math.round(s.baseMax * m)}</span><span class="tip-unite">PV rendus</span>`;
       }
-    } else if (
-      s.type === "degats" &&
-      s.baseMax > 0 &&
-      !s.coups &&
-      !s.projectiles
-    ) {
+    } else if (s.type === "degats" && s.baseMax > 0) {
       // Le nombre est exact (la stat est identique dans les 2 éléments déclarés, cf.
       // meilleurElement/combat.ts) ; l'ÉLÉMENT réel, lui, dépend de la cible frappée —
       // absente ici — donc on ne l'affiche plus : nommer un élément qu'un autre coup
@@ -50,7 +44,7 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       const max = Math.round((s.baseMax + stat * s.scaling) * mult);
       principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el">selon la cible</span>`;
     }
-  } else if (s.baseMax > 0 && !s.coups && !s.projectiles) {
+  } else if (s.baseMax > 0) {
     // hors combat (encyclopédie) : jets de base, sans cible non plus — même choix
     principal = s.type === "soin"
       ? `<span class="tip-val soin">♥ ${s.baseMin} – ${s.baseMax}</span><span class="tip-unite">PV rendus (base)</span>`

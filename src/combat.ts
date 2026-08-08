@@ -350,7 +350,7 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
  *  d'état s'ajoute ici, pas dans chacune des quatre fabriques. */
 export function etatCombatInitial(): Pick<Combatant,
   "effets" | "maxRollCharges" | "bouclier" | "paBonusNextTurn" |
-  "cooldowns" | "bonusOffensifProchain" | "poisonAmpliTours"> {
+  "cooldowns" | "bonusOffensifProchain"> {
   return {
     effets: [],
     maxRollCharges: 0,
@@ -358,7 +358,6 @@ export function etatCombatInitial(): Pick<Combatant,
     paBonusNextTurn: 0,
     cooldowns: {},
     bonusOffensifProchain: 0,
-    poisonAmpliTours: 0,
   };
 }
 
@@ -690,14 +689,12 @@ const aFriction = (c: Combatant): boolean => sommeEffet(c, "friction") > 0;
 const etirer = <T extends { duree: number }>(e: T, x: boolean): T =>
   x ? { ...e, duree: e.duree * 2 } : e;
 
-/** Applique un poison, doublé si le lanceur est sous Arsenic. */
+/** Applique un poison. */
 function appliquerPoison(
   cible: Combatant,
-  lanceur: Combatant,
   p: { degats: number; duree: number; transmet?: boolean },
 ): void {
-  const degats = lanceur.poisonAmpliTours > 0 ? p.degats * 2 : p.degats;
-  appliquerEffet(cible, { stat: "poison", valeur: degats, duree: p.duree, transmet: p.transmet });
+  appliquerEffet(cible, { stat: "poison", valeur: p.degats, duree: p.duree, transmet: p.transmet });
 }
 
 /** Retire les boucliers et les effets bénéfiques d'une cible (désenvoûtement). */
@@ -1045,8 +1042,6 @@ function decrementerEffets(acteur: Combatant): void {
   acteur.effets = acteur.effets.filter((e) => e.toursRestants > 0);
   if (toucheVitalite) recomputePvMax(acteur);
 
-  // compteurs temporisés (Arsenic)
-  if (acteur.poisonAmpliTours > 0) acteur.poisonAmpliTours -= 1;
   acteur.resquilleActive = undefined; // Resquille (Roublard) : ne dure que le tour où elle est posée
 
   // redirection (Étreinte) : décompte sur le porteur, retirée à 0 — même garde
@@ -1178,14 +1173,6 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
   }
   if (sort.effet) appliquerEffet(cible, sort.effet);
   if (sort.effets) for (const e of sort.effets) appliquerEffet(cible, e);
-  if (sort.effetParNiveau) {
-    const ep = sort.effetParNiveau;
-    appliquerEffet(cible, { stat: ep.stat, valeur: ep.base + ep.parNiveau * lanceur.niveau, duree: ep.duree });
-  }
-  if (sort.poisonAmpli) {
-    cible.poisonAmpliTours = sort.poisonAmpli;
-    ctx.log(`${cible.nom} empoisonne ses lames (Arsenic).`);
-  }
   if (sort.maitriseArc) {
     const [princ, sec] = elementsForts(cible); // buffe les 2 éléments de frappe du lanceur
     appliquerEffet(cible, { stat: ELEMENT_STAT[princ], valeur: sort.maitriseArc.principal, duree: sort.maitriseArc.duree });
@@ -1533,17 +1520,6 @@ function ressusciter(lanceur: Combatant, spec: { pvPct: number }, cs: Combatant[
 }
 
 // --- Helpers des nouvelles mécaniques ----------------------------------------
-/** n tirages aléatoires (avec remise, en ignorant les morts) parmi un camp. */
-function ciblesAleatoires(pool: Combatant[], n: number, rng: Rng): Combatant[] {
-  const res: Combatant[] = [];
-  for (let i = 0; i < n; i++) {
-    const vivantsPool = pool.filter((c) => c.pvActuels > 0);
-    if (!vivantsPool.length) break;
-    res.push(vivantsPool[Math.floor(rng() * vivantsPool.length)]);
-  }
-  return res;
-}
-
 /** Applique une frappe de dégâts ; renvoie les dégâts infligés (0 si esquive). */
 function frappe(
   lanceur: Combatant,
@@ -2123,52 +2099,6 @@ export function lancerSort(
     return;
   }
 
-  // Mise à mort : échoue si la cible survivrait au coup (projection au max roll)
-  if (sort.executeSeulement) {
-    const se = statsEffectives(lanceur);
-    let proj = sort.baseMax + statElement(se, elementDeFrappe(lanceur)) * sort.scaling;
-    proj *= (1 + sommeEffet(lanceur, "degatsInfliges")) * multOffensif(se);
-    if (lanceur.camp === "joueur") proj *= ctx.playerDamageBonus;
-    if (proj < cible.pvActuels + cible.bouclier) {
-      ctx.log(`${sort.nom} échoue : ${cible.nom} aurait survécu.`);
-      return;
-    }
-  }
-
-  // Déluge de lames : N projectiles sur cibles ennemies aléatoires
-  if (sort.projectiles) {
-    const p = sort.projectiles;
-    for (const t of ciblesAleatoires(adverses(lanceur, cs), p.nb, ctx.rng)) {
-      const dmg = frappe(lanceur, { baseMin: p.baseMin, baseMax: p.baseMax, scaling: p.scaling }, t, { useMax: false, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
-      totalDmg += dmg;
-      if (dmg > 0 && t.pvActuels > 0 && p.poison && p.pProc && ctx.rng() < p.pProc) {
-        appliquerPoison(t, lanceur, p.poison);
-      }
-    }
-    return;
-  }
-
-  // Coup double : plusieurs frappes sur la cible primaire
-  if (sort.coups) {
-    for (const coup of sort.coups) {
-      if (cible.pvActuels <= 0) break;
-      const dmg = frappe(lanceur, coup, cible, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx }, sort.nom);
-      if (!cible.estLance) totalDmg += dmg; // durabilité de lance ≠ dégâts réels : pas de soin/bouclier fantômes
-      if (dmg > 0 && cible.pvActuels > 0 && coup.proc && ctx.rng() < coup.proc.p) {
-        if (coup.proc.poison) appliquerPoison(cible, lanceur, coup.proc.poison);
-        if (coup.proc.friction) appliquerEffet(cible, { stat: "friction", valeur: 1, duree: coup.proc.friction });
-      }
-    }
-    if (sort.bouclierRatioDegats && totalDmg > 0) {
-      const b = Math.round(totalDmg * sort.bouclierRatioDegats);
-      lanceur.bouclier += b;
-      ctx.log(`${lanceur.nom} gagne un bouclier de ${b}.`);
-    }
-    if (sort.vampirismeRatio && totalDmg > 0) soigner(lanceur, Math.round(totalDmg * sort.vampirismeRatio * multSoinDe(lanceur)), ctx);
-    poseCooldown(cible);
-    return;
-  }
-
   // Les deux escalades sont des multiplicateurs DU LANCER : elles valent pour toutes
   // les cibles touchées, éclaboussure comprise (décision d'Adam sur Pugilat).
   // `multEscalade` a été calculé plus haut, AVANT l'incrémentation des compteurs —
@@ -2212,10 +2142,10 @@ export function lancerSort(
         );
       }
       if (t.pvActuels > 0) {
-        if (sort.poison) appliquerPoison(t, lanceur, etirer(sort.poison, doubleDuree));
+        if (sort.poison) appliquerPoison(t, etirer(sort.poison, doubleDuree));
         // Parasite (Éliotrope) : poison = jet (dégâts réellement infligés) × ratio, si portails ≥ seuil
         if (sort.poisonSiPortails && (lanceur.portails ?? 0) >= sort.poisonSiPortails.seuil) {
-          appliquerPoison(t, lanceur, etirer(
+          appliquerPoison(t, etirer(
             { degats: Math.round(r.dmg * sort.poisonSiPortails.ratio), duree: sort.poisonSiPortails.duree },
             doubleDuree,
           ));
@@ -2284,11 +2214,10 @@ export function lancerSort(
 
   // Endurance (Iop) : sort de DÉGÂTS qui boucliere aussi son lanceur — une seule fois
   // par lancement, indépendamment du nombre de cibles touchées. Ce point de résolution
-  // est situé APRÈS les branches à retour anticipé (executeSeulement, projectiles,
-  // coups, soinLigneAvantRatio) : un futur sort de l'une de ces familles qui porterait
-  // aussi `bouclierPortee` ne le verrait jamais résolu, en silence. Aucun porteur
-  // aujourd'hui — même situation que `retraitPAProchainTour` (Tétanie, Féca), qui ne
-  // couvre lui aussi que le chemin de dégâts « normal ».
+  // est situé APRÈS la branche à retour anticipé (soinLigneAvantRatio) : un futur sort
+  // de cette famille qui porterait aussi `bouclierPortee` ne le verrait jamais résolu,
+  // en silence. Aucun porteur aujourd'hui — même situation que `retraitPAProchainTour`
+  // (Tétanie, Féca), qui ne couvre lui aussi que le chemin de dégâts « normal ».
   if (sort.bouclierPortee) {
     const { portee, pct, tours } = sort.bouclierPortee;
     appliquerBouclierPortee(lanceur, cs, portee, pct, tours, ctx);
