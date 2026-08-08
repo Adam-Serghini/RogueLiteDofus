@@ -558,6 +558,26 @@ describe("Concentration de Chakra : majoration temporaire des pièges", () => {
     expect(lanceur.effets).toContainEqual({ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 });
   });
 
+  it("un sort du même champ visant un ALLIÉ (pas soi) majore quand même les pièges du LANCEUR, jamais ceux de l'allié visé", () => {
+    // Contre-épreuve du test précédent, qui ne pouvait pas discriminer : `cible: "soi"`
+    // fait toujours coïncider lanceur et bénéficiaire, donc poser l'effet sur l'un ou
+    // l'autre donnait le même résultat. Ici la cible du sort de soutien est un AUTRE
+    // combattant — seul un sort posant vraiment l'effet sur le LANCEUR (et non sur le
+    // paramètre `cible` d'`appliquerSoutien`, qui vaut ici l'allié) passe ce test.
+    const lanceur = heros();
+    const allieCible = heros2();
+    const cs = [lanceur, allieCible];
+    const sort: Spell = {
+      ...SORTS.morsure, id: "test_chakra_pas_soi", type: "buff", cible: "allie", coutPA: 1,
+      baseMin: 0, baseMax: 0, scaling: 0, bonusPieges: 0.5, bonusPiegesDuree: 1,
+    };
+
+    lancerSort(lanceur, sort, allieCible.ref, cs, ctx());
+
+    expect(lanceur.effets).toContainEqual({ stat: "bonusPieges", valeur: 0.5, toursRestants: 1 });
+    expect(allieCible.effets.filter((e) => e.stat === "bonusPieges")).toHaveLength(0);
+  });
+
   it("majore les dégâts d'un piège déclenché : multiplicateur 1 + valeur de l'effet", () => {
     const sansChakra = heros();
     const [victimeSans, ar1Sans] = ennemisProbes(2);
@@ -696,11 +716,23 @@ describe("Concentration de Chakra : majoration temporaire des pièges", () => {
 
       const cs: Combatant[] = [poseur, victime];
       let toursPoseur = 0;
+      // Témoin RESSERRÉ : capturé au moment exact où l'action de déclenchement est
+      // ENVOYÉE, pas relu après coup sur un compteur qui continue de grimper tant que
+      // `runCombat` tourne (personne ne peut plus rien faire après le 2e tour — victime
+      // survit à 9999 PV, plus aucun attaquant — donc la boucle continue jusqu'à SON
+      // propre garde-fou anti-boucle, qui n'a rien à voir avec la fenêtre de Chakra
+      // testée ici). Un snapshot pris au bon instant ne dépend plus de ce garde-fou.
+      let toursPoseurAuDeclenchement = -1;
+      let declenche = false;
       const log = (m: string) => { if (m.includes(`Tour de ${poseur.nom}`)) toursPoseur++; };
       const controllers = {
         joueur: async (): Promise<Action | null> => {
           if (toursPoseur === 1) return { sort: chakraSort, cibleRef: poseur.ref }; // 1er tour : cast Chakra puis fin de tour (1 PA)
-          if (toursPoseur === 2) return { sort: deplaceSort, cibleRef: victime.ref }; // 2e tour du Sram : il « rejoue »
+          if (toursPoseur === 2 && !declenche) {
+            declenche = true;
+            toursPoseurAuDeclenchement = toursPoseur;
+            return { sort: deplaceSort, cibleRef: victime.ref }; // 2e tour du Sram : il « rejoue »
+          }
           return null;
         },
         ennemi: async (): Promise<Action | null> => null,
@@ -721,12 +753,8 @@ describe("Concentration de Chakra : majoration temporaire des pièges", () => {
 
       expect(reference).toBeGreaterThan(0);
       expect(degats).toBe(reference); // PLUS de majoration : le Chakra est retombé
-      // Témoin que le scénario a bien vu le Sram rejouer (>= 2, pas ===2 : plus aucun
-      // combattant ne peut plus rien faire après le 2e tour — victime survit à 9999 PV,
-      // personne ne l'attaque plus — donc le combat tourne à vide jusqu'au garde-fou
-      // anti-boucle de `runCombat`, ce qui n'invalide pas la mesure : les PV de la
-      // victime sont figés dès le 2e tour, seul `toursPoseur` continue de grimper).
-      expect(toursPoseur).toBeGreaterThanOrEqual(2);
+      expect(declenche).toBe(true); // témoin que le déclenchement a bien eu lieu
+      expect(toursPoseurAuDeclenchement).toBe(2); // et précisément au 2e tour du Sram, pas avant
     });
   });
 });
@@ -868,6 +896,40 @@ describe("Brume : esquive partagée", () => {
     const cs = [lanceur, a2, a3, a4];
 
     lancerSort(lanceur, sortBrume("test_brume_une_fois", 2), a2.ref, cs, ctx());
+
+    for (const c of [lanceur, a2, a3, a4]) {
+      expect(c.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(1);
+    }
+  });
+
+  it("une seule application par lancer, VRAIMENT prouvé : sort allie_tous sans cible unique résolvable", () => {
+    // Le test précédent ne prouve PAS « une fois par lancer » : Brume cible "allie"
+    // (une cible unique), donc `cibles.length` vaut toujours 1 dans `lancerSort` —
+    // « une fois par lancer » et « une fois par cible » y sont indiscernables. Un
+    // relecteur peut déplacer l'appel de `partagerEsquive` À L'INTÉRIEUR de la boucle
+    // sur `cibles` sans qu'aucun test ne tombe. Ce test utilise un sort synthétique
+    // `cible: "allie_tous"` sur QUATRE bénéficiaires (`cibles.length === 4`) : si
+    // l'appel était fait une fois par cible, chacun des 4 recevrait 4 entrées au lieu
+    // d'une seule.
+    //
+    // Il exerce EN MÊME TEMPS la garde `&& cible` : `cibleRef` est délibérément
+    // introuvable dans `cs`, donc `cible` (la cible SINGULIÈRE résolue par `lancerSort`)
+    // vaut `undefined` — exactement le cas « sort sans cible unique » qui, avant
+    // correction, faisait sauter la résolution en silence (aucun journal, aucune
+    // erreur, aucun bénéficiaire). Le champ doit se résoudre quand même, en repli sur
+    // la rangée du LANCEUR.
+    const lanceur = heros();
+    lanceur.position = 0;
+    const a2 = heros2(); a2.position = 1;
+    const a3 = heros3(); a3.position = 2;
+    const a4 = heros4(); a4.position = 3;
+    const cs = [lanceur, a2, a3, a4];
+    const sortTous: Spell = {
+      ...SORTS.morsure, id: "test_brume_tous", type: "buff", cible: "allie_tous", coutPA: 1,
+      baseMin: 0, baseMax: 0, scaling: 0, esquivePartageeRangee: { duree: 2 },
+    };
+
+    lancerSort(lanceur, sortTous, "ref_introuvable_dans_cs", cs, ctx());
 
     for (const c of [lanceur, a2, a3, a4]) {
       expect(c.effets.filter((e) => e.stat === "esquive" && e.viaBrume)).toHaveLength(1);

@@ -1207,11 +1207,16 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     cible.resquilleActive = sort.resquille;
     ctx.log(`${cible.nom} prépare une Resquille (−${sort.resquille} PA au prochain Kaboom).`);
   }
-  // Concentration de Chakra (Sram) : majore les pièges du porteur pour un nombre limité
+  // Concentration de Chakra (Sram) : majore les pièges du LANCEUR pour un nombre limité
   // de SES PROPRES tours (voir declencherPiege, qui lit sommeEffet(poseur, "bonusPieges")).
+  // Posé explicitement sur `lanceur`, PAS sur `cible` (le paramètre de cette fonction,
+  // c'est-à-dire le BÉNÉFICIAIRE du sort) : aujourd'hui les deux coïncident puisque le
+  // seul porteur du champ vise "soi", mais un futur sort du même champ visant un allié
+  // (`cible: "allie"`) doit continuer à majorer les pièges DU SRAM, jamais ceux de
+  // l'allié visé — l'inverse serait un sort qui buffe la mauvaise personne.
   if (sort.bonusPieges) {
-    appliquerEffet(cible, { stat: "bonusPieges", valeur: sort.bonusPieges, duree: sort.bonusPiegesDuree ?? 1 });
-    ctx.log(`${cible.nom} concentre son Chakra : pièges +${Math.round(sort.bonusPieges * 100)} % (${sort.bonusPiegesDuree ?? 1}t).`);
+    appliquerEffet(lanceur, { stat: "bonusPieges", valeur: sort.bonusPieges, duree: sort.bonusPiegesDuree ?? 1 });
+    ctx.log(`${lanceur.nom} concentre son Chakra : pièges +${Math.round(sort.bonusPieges * 100)} % (${sort.bonusPiegesDuree ?? 1}t).`);
   }
 }
 
@@ -1289,6 +1294,10 @@ function partagerEsquive(lanceur: Combatant, cible: Combatant, duree: number, cs
     .filter((e) => e.stat === "esquive" && !e.viaBrume)
     .reduce((s, e) => s + e.valeur, 0);
   const rangee = allies(lanceur, cs).filter((c) => estAvant(c) === estAvant(cible));
+  // Push direct plutôt que `appliquerEffet` : c'est le seul poseur du fichier à
+  // contourner cet helper, et c'est délibéré — `EffetSpec` (le type qu'attend
+  // `appliquerEffet`) ne porte pas `viaBrume`, le marqueur anti-auto-alimentation
+  // ci-dessus. Passer par l'helper perdrait ce marqueur en silence.
   for (const m of rangee) {
     m.effets.push({ stat: "esquive", valeur: brut, toursRestants: duree, viaBrume: true });
   }
@@ -2034,9 +2043,15 @@ export function lancerSort(
       appliquerBouclierPortee(lanceur, cs, portee, pct, tours, ctx);
     }
     // Brume (Sram) : esquive partagée sur la rangée de la CIBLE, UNE SEULE FOIS par
-    // lancement — même raisonnement que `effetRangeeAlliee`/`bouclierPortee` ci-dessus.
-    if (sort.esquivePartageeRangee && cible) {
-      partagerEsquive(lanceur, cible, sort.esquivePartageeRangee.duree, cs, ctx);
+    // lancement — même raisonnement que `effetRangeeAlliee`/`bouclierPortee` ci-dessus,
+    // qui se résolvent tous deux SANS dépendre d'une cible unique résolue. `cible` est
+    // `undefined` pour un sort `allie_tous` dont le `cibleRef` ne désignerait aucun
+    // combattant valide (ou tout futur appelant qui ne fournirait pas de cible réelle) —
+    // sans repli, ce champ ne partagerait RIEN, en silence, sur un sort qui n'a pourtant
+    // pas besoin d'une cible unique pour désigner UNE rangée : on retombe alors sur la
+    // rangée du LANCEUR lui-même, comme le fait `bouclierPortee: { portee: "rangee_lanceur" }`.
+    if (sort.esquivePartageeRangee) {
+      partagerEsquive(lanceur, cible ?? lanceur, sort.esquivePartageeRangee.duree, cs, ctx);
     }
     return;
   }
