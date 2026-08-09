@@ -32,6 +32,9 @@ const embarquer = (categorie, id) => {
 for (const id of Object.keys(contenu.monstres)) embarquer("monstres", id);
 for (const id of Object.keys(contenu.items)) embarquer("items", id);
 for (const id of Object.keys(contenu.classes)) embarquer("classes", id);
+// Icônes de sorts, pour le Banc d'essai : une par (classe, sort) déclaré.
+for (const cl of Object.values(contenu.classes))
+  for (const sId of cl.sorts) embarquer(`spells/${cl.id}`, sId);
 
 // Moteur du jeu compilé en IIFE et inliné : le banc d'essai lance le VRAI
 // moteur, jamais une copie de ses formules (une seconde implémentation
