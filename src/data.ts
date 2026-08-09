@@ -387,3 +387,40 @@ export function monstresDeZone(zone: ZoneDef): string[] {
   }
   return [...ids];
 }
+
+/** Contenu que l'éditeur peut injecter dans le moteur (banc d'essai). */
+export interface ContenuEditable {
+  sorts?: Record<string, Spell>;
+  classes?: Record<string, Classe>;
+  monstres?: Record<string, Monstre>;
+  items?: Record<string, Item>;
+}
+
+/** Remplace le contenu des tables du moteur par celui en cours d'édition.
+ *
+ *  Les tables sont mutées EN PLACE, jamais réaffectées : `combat.ts` et `run.ts`
+ *  les ont importées, et remplacer la liaison ne changerait rien pour eux. C'est
+ *  ce qui permet à `SORTS[piege.sortId]` (déclenchement d'un piège) et à
+ *  `SORTS.aiguille` (Écho d'Aiguille) de lire les valeurs éditées, alors que ces
+ *  deux lectures ne passent par aucun argument.
+ *
+ *  Chaque table est VIDÉE avant réassignation : un simple `Object.assign`
+ *  laisserait survivre une entrée supprimée dans l'éditeur, qui continuerait
+ *  d'exister pour le moteur seul. */
+export function appliquerContenuEdite(contenu: ContenuEditable): void {
+  const remplacer = <T>(table: Record<string, T>, source?: Record<string, T>): void => {
+    if (!source) return; // table absente de l'objet : on n'y touche pas
+    // `source` peut être LE MÊME objet que `table` (ex. un test qui restaure la
+    // table depuis le JSON livré, importé sous le même chemin — les modules JSON
+    // sont mis en cache par chemin résolu, donc les deux références coïncident) :
+    // il faut donc capturer ses entrées avant de vider `table`, sous peine de
+    // vider `source` en même temps et de ne plus rien avoir à réassigner.
+    const entrees = Object.entries(source);
+    for (const cle of Object.keys(table)) delete table[cle];
+    for (const [cle, valeur] of entrees) table[cle] = valeur;
+  };
+  remplacer(SORTS as Record<string, Spell>, contenu.sorts);
+  remplacer(CLASSES as Record<string, Classe>, contenu.classes);
+  remplacer(MONSTRES as Record<string, Monstre>, contenu.monstres);
+  remplacer(ITEMS as Record<string, Item>, contenu.items);
+}
