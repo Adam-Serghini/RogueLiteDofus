@@ -5,7 +5,12 @@
 //  qu'appeler ces fonctions et afficher leurs résultats.
 // =============================================================================
 import { CLASSES, ITEMS, SORTS, butinToile, localiserZone, offsetToile, ZONES } from "./data";
-import { ciblesValides, coutEffectif, etatCombatInitial, lancerSort, reinitialiserLancersTour, type CombatCtx } from "./combat";
+import {
+  BOMBES_MAX, CHAUSSE_TRAPPE_MAX, PORTAILS_MAX, RAGE_MAX, TELEFRAGS_MAX,
+  ciblesValides, coutEffectif, estAvant, etatCombatInitial, invoquerLance,
+  lancerSort, reinitialiserLancersTour, type CombatCtx,
+} from "./combat";
+import { mulberry32 } from "./rng";
 import { combattantDepuisPerso, instanceDuTier, meilleurItemToile, persoAuNiveau, type PersoState } from "./run";
 import { STAT_PAR_ELEMENT } from "./progression";
 import type { Combatant, Element, EquipSlot, ItemInstance, Rarete, Spell } from "./types";
@@ -47,7 +52,21 @@ function zoneDeToile(toile: number): string | null {
   return null;
 }
 
-export function construireHeros(o: OptionsHeros): Combatant {
+/** Héros du banc, ET ce qu'il porte RÉELLEMENT.
+ *
+ *  `slotsEquipes` n'est pas une redite de `OptionsHeros.equipement` : une toile
+ *  sans aucun objet (les douze toiles de la Tranche 2 sont dans ce cas) rend un
+ *  héros NU alors que le réglage annonce « Set complet ». Sans ce compte remonté
+ *  depuis le moteur, l'écran afficherait trois colonnes NU/MI/SET identiques
+ *  sans que rien ne le dise. */
+export interface HerosConstruit {
+  heros: Combatant;
+  /** Emplacements effectivement pourvus (état pré-réglé + surcharges). */
+  slotsEquipes: EquipSlot[];
+}
+
+/** Variante détaillée de `construireHeros` : rend aussi ce qui a pu être équipé. */
+export function construireHerosDetaille(o: OptionsHeros): HerosConstruit {
   const perso: PersoState = persoAuNiveau(o.classeId, o.niveau, 0);
   const zone = zoneDeToile(o.toile);
   const pool = zone ? butinToile(zone)?.normales ?? [] : [];
@@ -74,7 +93,17 @@ export function construireHeros(o: OptionsHeros): Combatant {
   // (`run.ts`), puis écrase `bouclier` avec le bonus de départ du Bonnet
   // Spairance (`bouclierDebut`) — le refaire ici effacerait ce bouclier.
   c.pvActuels = c.pvMax;
-  return c;
+  // on RELIT `perso.equipement` plutôt que de compter les tours de boucle : c'est
+  // le seul état qui dit ce qui a vraiment été posé, repli de rareté et pool de
+  // toile vide compris.
+  const slotsEquipes = Object.keys(perso.equipement).filter(
+    (s) => perso.equipement[s as EquipSlot],
+  ) as EquipSlot[];
+  return { heros: c, slotsEquipes };
+}
+
+export function construireHeros(o: OptionsHeros): Combatant {
+  return construireHerosDetaille(o).heros;
 }
 
 export interface SpecMannequin {
@@ -113,12 +142,10 @@ export function construireMannequins(specs: SpecMannequin[]): Combatant[] {
  *  latence pendant qu'on déplace le curseur de niveau. */
 export const REPETITIONS = 500;
 
-/** Générateur à graine (LCG) : la MÊME graine sert à tous les sorts, sinon on
- *  comparerait de la chance et non de la puissance. */
-function rngGraine(graine: number): () => number {
-  let g = graine >>> 0;
-  return () => ((g = (g * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
-}
+/** La MÊME graine sert à tous les sorts, sinon on comparerait de la chance et
+ *  non de la puissance. Le générateur vit dans `./rng`, partagé avec `npm run
+ *  sim` : deux générateurs, ce serait deux qualités de tirage pour deux chiffres
+ *  censés se comparer. */
 const GRAINE = 123456789;
 
 export interface Conditionnels {
@@ -127,16 +154,43 @@ export interface Conditionnels {
   portails?: number;
   bombes?: number;
   rage?: number;
+  /** PA disponibles AVANT paiement (Zénith, Flèche Punitive : `bonusParPADispo`).
+   *  Absent ou 0 = barre pleine, c'est-à-dire le MAXIMUM de ces sorts — d'où le
+   *  réglage : sans lui le banc les lit toujours à leur plus haut, en silence. */
+  paDispo?: number;
+  /** Lance du Forgelance plantée dans cette rangée ennemie. Sans elle, Muspel /
+   *  Hydra / Jormun sont mesurés sans leur signature (`zoneLance`) : Jormun rend
+   *  alors exactement le chiffre d'Hydra. */
+  lance?: "avant" | "arriere";
 }
 
+/** Plafonds du MOTEUR pour chaque compteur conditionnel. Exposés pour que
+ *  l'interface borne ses champs de saisie sur la vérité du jeu au lieu de
+ *  recopier des nombres : `multPortails` et `bonusParTelefrag` ne plafonnent
+ *  qu'à la POSE, pas à la lecture, donc un compteur saisi à 50 produirait un
+ *  chiffre inatteignable en partie — exactement le genre de mensonge qu'un
+ *  outil de décision d'équilibrage ne doit pas afficher. */
+export const MAX_COMPTEURS = {
+  chausseTrappe: CHAUSSE_TRAPPE_MAX,
+  telefrags: TELEFRAGS_MAX,
+  portails: PORTAILS_MAX,
+  bombes: BOMBES_MAX,
+  rage: RAGE_MAX,
+} as const;
+
+const borne = (v: number | undefined, max: number): number => Math.max(0, Math.min(max, v ?? 0));
+
 export function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c: Conditionnels): void {
-  if (c.chausseTrappe) heros.chausseTrappe = c.chausseTrappe;
-  if (c.portails) heros.portails = c.portails;
-  if (c.rage) heros.rage = c.rage;
+  // chaque compteur est BORNÉ au plafond du moteur : au-delà, on mesurerait un
+  // état que le jeu ne peut pas produire.
+  heros.chausseTrappe = borne(c.chausseTrappe, MAX_COMPTEURS.chausseTrappe);
+  heros.portails = borne(c.portails, MAX_COMPTEURS.portails);
+  heros.rage = borne(c.rage, MAX_COMPTEURS.rage);
+  if (c.paDispo) heros.paActuels = c.paDispo;
   // Téléfrags et bombes vivent sur la CIBLE, pas sur le lanceur
   for (const cible of cibles) {
-    if (c.telefrags) cible.telefrags = c.telefrags;
-    if (c.bombes) cible.bombes = c.bombes;
+    cible.telefrags = borne(c.telefrags, MAX_COMPTEURS.telefrags);
+    cible.bombes = borne(c.bombes, MAX_COMPTEURS.bombes);
   }
 }
 
@@ -202,16 +256,77 @@ function reinitialiser(heros: Combatant, cibles: Combatant[], cond: Conditionnel
   appliquerConditionnels(heros, cibles, cond);
 }
 
+/** Tableau de combattants d'UNE répétition : le héros, les mannequins, et — si le
+ *  réglage le demande — une Lance du Forgelance plantée dans la rangée voulue.
+ *  La Lance est invoquée par le VRAI `invoquerLance`, jamais fabriquée à la main :
+ *  c'est lui qui choisit sa case et refuse une rangée pleine. */
+function preparerCombat(heros: Combatant, cibles: Combatant[], cond: Conditionnels, ctx: CombatCtx): Combatant[] {
+  const cs = [heros, ...cibles];
+  if (cond.lance) {
+    const avant = cond.lance === "avant";
+    const ancre = cibles.find((c) => estAvant(c) === avant);
+    if (ancre) invoquerLance(heros, ancre, cs, ctx);
+  }
+  return cs;
+}
+
+/** Une Lance est-elle plantée pour ce héros dans ce combat ? */
+const lancePlantee = (heros: Combatant, cs: Combatant[]): boolean =>
+  cs.some((c) => c.estLance && c.lanceurRef === heros.ref && c.pvActuels > 0);
+
+/** Cible retenue parmi celles que `ciblesValides` accepte : la PREMIÈRE, sauf
+ *  pour un sort `zoneLance` (Muspel / Hydra / Jormun), où c'est la Lance —
+ *  `ciblesValides` la range en fin de liste, or c'est le seul point de visée qui
+ *  déclenche la signature de ces sorts (Jormun ne frappe TOUT le monde que s'il
+ *  est lancé sur une Lance en rangée arrière). Viser un mannequin plutôt que la
+ *  Lance qu'on vient délibérément de planter mesurerait le sort amputé de ce qui
+ *  fait son intérêt. */
+function choisirCible(sort: Spell, valides: Combatant[]): Combatant {
+  if (sort.zoneLance) return valides.find((c) => c.estLance) ?? valides[0];
+  return valides[0];
+}
+
 /** Contexte de combat minimal : on ne garde que les dégâts, via `onDegats` —
  *  le seul point du moteur traversé par CHAQUE coup, éclaboussures, zones et
- *  pièges compris, sans que le banc ait à connaître la forme du sort. */
-function ctxMesure(rng: () => number, surDegats: (dmg: number) => void): CombatCtx {
+ *  pièges compris, sans que le banc ait à connaître la forme du sort.
+ *
+ *  Seuls les dégâts DU HÉROS sont comptés (`attaquantRef`) : sans ce filtre,
+ *  une riposte ou un sort d'un autre combattant entrerait dans la « production
+ *  du sort mesuré ». Aucun mannequin ne riposte aujourd'hui — c'est une ligne de
+ *  durcissement, pas une correction d'un chiffre faux. */
+function ctxMesure(rng: () => number, refHeros: string, surDegats: (dmg: number) => void): CombatCtx {
   return {
     rng,
     log: () => {},
     playerDamageBonus: 1,
-    onDegats: (_ref, dmg) => surDegats(dmg),
+    onDegats: (attaquantRef, dmg) => { if (attaquantRef === refHeros) surDegats(dmg); },
   };
+}
+
+/** Pourquoi le chiffre affiché ne dit pas tout ce que le sort produit.
+ *  Généralisé au-delà du poison : trois familles de sorts rendent 0 (ou leur
+ *  plancher) au lancer sans que rien ne le signale, et un game designer qui lit
+ *  « les pièges du Sram font 0 » les gonflerait. */
+export type RaisonIncomplete =
+  /** poison : le tick retire les PV hors de `infligerDegats`, `onDegats` ne le voit jamais */
+  | "poison"
+  /** piège (Sram) : jet et riders sont lus au DÉCLENCHEMENT, jamais à la pose */
+  | "piege"
+  /** bombe collante (Roublard) : la pose ne frappe pas, les dégâts partent au Kaboom */
+  | "bombe"
+  /** Muspel / Hydra / Jormun mesurés SANS Lance plantée : leur signature `zoneLance` est muette */
+  | "lance_absente";
+
+/** Toutes les raisons pour lesquelles la mesure de ce sort est incomplète, dans
+ *  cet état de réglage. Un tableau et non une valeur unique : rien n'interdit à
+ *  un sort de cumuler deux causes. */
+function raisonsIncompletes(s: Spell, aLance: boolean): RaisonIncomplete[] {
+  const r: RaisonIncomplete[] = [];
+  if (s.poison || s.poisonSiPortails) r.push("poison");
+  if (s.posePiege) r.push("piege");
+  if (s.poseBombe) r.push("bombe");
+  if (s.zoneLance && !aLance) r.push("lance_absente");
+  return r;
 }
 
 export interface MesureLancer {
@@ -219,37 +334,40 @@ export interface MesureLancer {
   moyenne: number;
   min: number;
   max: number;
-  /** Une part des dégâts du sort échappe à la mesure : le poison retire les PV
-   *  hors de `infligerDegats`, donc `onDegats` ne le voit jamais. */
-  horsPoison: boolean;
+  /** Coût RÉELLEMENT débité (`coutEffectif`), remises comprises — c'est lui qui
+   *  doit servir de diviseur au « par PA », jamais `sort.coutPA` : une seconde
+   *  source de vérité finirait par diverger, et diviserait par zéro le jour où
+   *  un sort de dégâts à 0 PA existera (le Iop en a déjà un, hors dégâts). */
+  cout: number;
+  /** Vide quand le chiffre est complet ; voir `RaisonIncomplete`. */
+  raisons: RaisonIncomplete[];
 }
-
-const poseDuPoison = (s: Spell): boolean => Boolean(s.poison || s.poisonSiPortails);
 
 export function mesurerLancer(
   heros: Combatant, sortId: string, cibles: Combatant[], cond: Conditionnels = {},
 ): MesureLancer {
   const sort = SORTS[sortId];
-  const rng = rngGraine(GRAINE);
+  const rng = mulberry32(GRAINE);
   let total = 0, min = Infinity, max = 0, lancesReussis = 0;
+  let aLance = false;
+  let cout = 0;
   for (let i = 0; i < REPETITIONS; i++) {
     reinitialiser(heros, cibles, cond);
-    const cs = [heros, ...cibles];
+    let coup = 0;
+    const ctx = ctxMesure(rng, heros.ref, (d) => { coup += d; });
+    const cs = preparerCombat(heros, cibles, cond, ctx);
+    aLance = lancePlantee(heros, cs);
     const valides = ciblesValides(heros, sort, cs);
     if (!valides.length) continue;
-    let coup = 0;
-    heros.paActuels -= coutEffectif(sort, heros); // la boucle de tour débite AVANT
-    lancerSort(heros, sort, valides[0].ref, cs, ctxMesure(rng, (d) => { coup += d; }));
+    cout = coutEffectif(sort, heros);
+    heros.paActuels -= cout; // la boucle de tour débite AVANT
+    lancerSort(heros, sort, choisirCible(sort, valides).ref, cs, ctx);
     total += coup; min = Math.min(min, coup); max = Math.max(max, coup);
     lancesReussis++;
   }
-  if (!lancesReussis) return { lancable: false, moyenne: 0, min: 0, max: 0, horsPoison: poseDuPoison(sort) };
-  return {
-    lancable: true,
-    moyenne: Math.round(total / lancesReussis),
-    min, max,
-    horsPoison: poseDuPoison(sort),
-  };
+  const raisons = raisonsIncompletes(sort, aLance);
+  if (!lancesReussis) return { lancable: false, moyenne: 0, min: 0, max: 0, cout: coutEffectif(sort, heros), raisons };
+  return { lancable: true, moyenne: Math.round(total / lancesReussis), min, max, cout, raisons };
 }
 
 export interface MesureTour { total: number; lancers: number }
@@ -261,11 +379,12 @@ export function mesurerTour(
   heros: Combatant, sortId: string, cibles: Combatant[], cond: Conditionnels = {},
 ): MesureTour {
   const sort = SORTS[sortId];
-  const rng = rngGraine(GRAINE);
+  const rng = mulberry32(GRAINE);
   let cumul = 0, cumulLancers = 0;
   for (let i = 0; i < REPETITIONS; i++) {
     reinitialiser(heros, cibles, cond);
-    const cs = [heros, ...cibles];
+    const ctx = ctxMesure(rng, heros.ref, (d) => { cumul += d; });
+    const cs = preparerCombat(heros, cibles, cond, ctx);
     let lancers = 0;
     for (;;) {
       const cout = coutEffectif(sort, heros);
@@ -273,7 +392,7 @@ export function mesurerTour(
       const valides = ciblesValides(heros, sort, cs);
       if (!valides.length) break; // maxParTour atteint, ou plus de cible
       heros.paActuels -= cout;
-      lancerSort(heros, sort, valides[0].ref, cs, ctxMesure(rng, (d) => { cumul += d; }));
+      lancerSort(heros, sort, choisirCible(sort, valides).ref, cs, ctx);
       lancers++;
       if (lancers > 20) break; // garde-fou : aucun sort ne part 20 fois dans 6 PA
     }

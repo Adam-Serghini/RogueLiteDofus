@@ -27,6 +27,7 @@ import {
   effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone, meilleurItemToile,
   type RunState,
 } from "./run";
+import { mulberry32 } from "./rng";
 import type { ItemInstance, Rarete } from "./types";
 
 // Tranches mesurées par le banc, dans l'ordre d'affichage du rapport. T1 doit
@@ -70,15 +71,9 @@ const ELITES_PAR_ZONE = 1;
 const ASCENSION = 0;
 const EFF_ASCENSION = effetsAscension(ASCENSION);
 
-// --- PRNG reproductible (mulberry32, pur, sans dépendance) -------------------
-function mulberry32(a: number): () => number {
-  return function () {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// --- PRNG reproductible : `mulberry32` vit dans `./rng`, partagé avec le banc
+// d'essai de l'éditeur — deux générateurs différents, ce serait deux qualités de
+// tirage pour deux chiffres censés se comparer.
 
 // --- Construction de l'équipe de référence -----------------------------------
 const estSoutien = (classeId: string): boolean =>
