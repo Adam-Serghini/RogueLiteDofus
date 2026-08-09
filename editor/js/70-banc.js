@@ -5,7 +5,9 @@ const BANC = {
   classeId: null, niveau: 50, toile: 1, equipement: "set", rarete: "commun",
   mannequins: [{ position: 0 }, { position: 1 }, { position: 4 }],
   resistances: {},
-  cond: { chausseTrappe: 0, telefrags: 0, portails: 0, bombes: 0, rage: 0 },
+  // `paDispo: 0` = barre pleine (le maximum des sorts qui lisent les PA
+  // disponibles) ; `lance: ""` = aucune Lance plantée.
+  cond: { chausseTrappe: 0, telefrags: 0, portails: 0, bombes: 0, rage: 0, paDispo: 0, lance: "" },
   // Surcharge d'équipement : { slot -> id d'objet }, PAS un ItemInstance figé —
   // sinon un objet choisi une fois garderait des stats périmées si le designer
   // les modifie ensuite dans l'onglet « Items ». L'ItemInstance réel est
@@ -13,13 +15,21 @@ const BANC = {
   surcharges: {},
 };
 
-/** Reconstruit les ItemInstance de surcharge à partir de `BANC.surcharges`
- *  (de simples ids) et de `C.items` TEL QU'IL EST MAINTENANT — jamais mis en
- *  cache, pour que le banc suive une modification faite dans l'onglet « Items ».
+/** Reconstruit les ItemInstance de surcharge à partir de `BANC.surcharges` (de
+ *  simples ids d'objets).
+ *
+ *  L'exemplaire est fabriqué par `instanceDuTier` — la fabrique du JEU, exposée
+ *  par la façade — et jamais assemblé champ par champ ici : une seconde façon de
+ *  bâtir un objet équipé divergerait de la vraie. `instanceDuTier` lit la table
+ *  `ITEMS` du moteur, que `mesurerKit` vient de remplacer par `C.items` ; comme
+ *  rien n'est mis en cache, une modification faite dans l'onglet « Items » est
+ *  prise en compte dès la mesure suivante.
+ *
  *  Repli sur le palier « commun » si l'objet n'a pas de palier pour la rareté
- *  couramment choisie (`BANC.rarete`) : mieux qu'un ItemInstance aux stats
- *  `undefined`, qui fausserait silencieusement la mesure — même repli que
- *  `construireHeros` (src/banc.ts) pour l'équipement pré-réglé. */
+ *  couramment choisie (`BANC.rarete`) : `instanceDuTier` rend `null` dans ce cas,
+ *  et mesurer sans l'objet serait plus trompeur que le mesurer un cran plus bas —
+ *  même repli que `construireHerosDetaille` (src/banc.ts) pour l'équipement
+ *  pré-réglé. */
 function construireSurcharges() {
   const M = window.MoteurBanc;
   const surcharges = {};
@@ -31,29 +41,60 @@ function construireSurcharges() {
   return surcharges;
 }
 
+/** Réglages conditionnels passés au moteur : les compteurs, plus les deux
+ *  réglages qui ne sont pas des compteurs (`paDispo`, `lance`). Un `0` ou une
+ *  chaîne vide signifie « pas de réglage » et n'est pas transmis, pour que le
+ *  moteur applique son défaut documenté (barre pleine, aucune Lance). */
+function conditionnels() {
+  const c = { ...BANC.cond };
+  if (!c.paDispo) delete c.paDispo;
+  if (!c.lance) delete c.lance;
+  return c;
+}
+
 /** Pousse le contenu édité dans le moteur, puis mesure les sorts de dégâts. */
 function mesurerKit() {
   const M = window.MoteurBanc;
   M.appliquerContenuEdite({
     sorts: C.sorts, classes: C.classes, monstres: C.monstres, items: C.items,
+    // `butin_toiles` fait partie du contenu ÉDITABLE : l'onglet « Items »
+    // permet de déplacer un objet d'une toile à l'autre, et c'est cette table
+    // que `construireHerosDetaille` consulte pour équiper le héros. Sans elle,
+    // le banc équiperait le butin LIVRÉ et mesurerait donc l'objet que le
+    // designer vient précisément de ranger ailleurs.
+    butin_toiles: C.butin_toiles,
   });
   const classeId = BANC.classeId ?? Object.keys(C.classes)[0];
-  const heros = M.construireHeros({
+  const { heros, slotsEquipes } = M.construireHerosDetaille({
     classeId, niveau: BANC.niveau, toile: BANC.toile,
     equipement: BANC.equipement, rarete: BANC.rarete,
     surcharges: construireSurcharges(),
   });
   const specs = BANC.mannequins.map((m) => ({ ...m, resistances: BANC.resistances }));
-  return C.classes[classeId].sorts
+  const cond = conditionnels();
+  const lignes = C.classes[classeId].sorts
     .map((id) => C.sorts[id])
     .filter((s) => s && s.type === "degats")
     .map((s) => {
       const cibles = M.construireMannequins(specs);
-      const lancer = M.mesurerLancer(heros, s.id, cibles, BANC.cond);
-      const tour = M.mesurerTour(heros, s.id, M.construireMannequins(specs), BANC.cond);
-      return { sort: s, lancer, tour, parPA: lancer.lancable ? lancer.moyenne / s.coutPA : 0 };
+      const lancer = M.mesurerLancer(heros, s.id, cibles, cond);
+      const tour = M.mesurerTour(heros, s.id, M.construireMannequins(specs), cond);
+      // le diviseur du « par PA » est le coût EFFECTIF remonté par le moteur,
+      // jamais `s.coutPA` : une seconde source de vérité finirait par diverger
+      // (et diviserait par zéro pour un sort de dégâts à 0 PA).
+      return { sort: s, lancer, tour, parPA: lancer.lancable && lancer.cout > 0 ? lancer.moyenne / lancer.cout : null };
     });
+  return { lignes, slotsEquipes };
 }
+
+/** Libellé de ce qui manque au chiffre affiché — il dit POURQUOI, jamais juste
+ *  « incomplet » : un designer qui lit « les pièges du Sram font 0 » les gonfle. */
+const RAISONS = {
+  poison: "poison non compté (dégâts différés)",
+  piege: "0 à la pose : le piège ne frappe qu'au déclenchement",
+  bombe: "0 à la pose : la bombe ne frappe qu'au Kaboom",
+  lance_absente: "sans Lance plantée : la zone de Lance n'est pas mesurée",
+};
 
 /** Menu déroulant d'un réglage du BANC.
  *  N'UTILISE PAS `champSelect` : celui-ci appelle `sauverBrouillon()`, qui lève
@@ -78,15 +119,26 @@ enregistrerCategorie("banc", "Banc d'essai", {
     if (!BANC.mannequins.length)
       return [el("h2", {}, "Banc d'essai"), el("p", { class: "note" }, "Place au moins un mannequin pour mesurer.")];
 
-    const lignes = mesurerKit().map(({ sort, lancer, tour, parPA }) =>
+    const { lignes: mesures, slotsEquipes } = mesurerKit();
+    const lignes = mesures.map(({ sort, lancer, tour, parPA }) =>
       el("tr", {},
         el("td", {}, vignetteAsset(`spells/${BANC.classeId}/${sort.id}.png`) ?? el("span", {}, "")),
         el("td", {}, `${sort.nom} (${sort.coutPA} PA)`),
         el("td", {}, lancer.lancable ? `${lancer.moyenne}` : "non lançable"),
         el("td", {}, lancer.lancable ? `${lancer.min}–${lancer.max}` : "—"),
-        el("td", {}, lancer.lancable ? parPA.toFixed(1) : "—"),
+        el("td", {}, parPA === null ? "—" : parPA.toFixed(1)),
         el("td", {}, `${tour.total} (×${tour.lancers})`),
-        el("td", { class: "note" }, lancer.horsPoison ? "poison non compté" : "")));
+        el("td", { class: "note" }, lancer.raisons.map((r) => RAISONS[r] ?? r).join(" · "))));
+
+    // I3 — ce que le héros PORTE vraiment : une toile sans objets (les douze de
+    // la Tranche 2) rend un héros nu alors que le réglage annonce « Set complet »,
+    // et les colonnes NU/MI/SET y sont identiques sans que rien ne le dise.
+    const attendu = { nu: 0, mi: 2, set: 4 }[BANC.equipement];
+    const equipementNote = slotsEquipes.length === attendu
+      ? `${slotsEquipes.length} pièce(s) équipée(s)${slotsEquipes.length ? " : " + slotsEquipes.join(", ") : ""}`
+      : slotsEquipes.length === 0
+        ? `⚠ aucun objet à la toile ${BANC.toile} : le héros est NU malgré le réglage`
+        : `⚠ ${slotsEquipes.length} pièce(s) sur ${attendu} à la toile ${BANC.toile} (${slotsEquipes.join(", ")})`;
 
     const curseur = (cle, libelle, min, max) => el("div", { class: "champ" },
       el("label", {}, libelle),
@@ -94,10 +146,27 @@ enregistrerCategorie("banc", "Banc d'essai", {
         oninput: (ev) => { BANC[cle] = Number(ev.target.value); rendre(); } }),
       el("span", { class: "badge" }, String(BANC[cle])));
 
-    const compteur = (cle, libelle) => el("div", { class: "champ" },
-      el("label", {}, libelle),
-      el("input", { type: "number", min: 0, value: BANC.cond[cle],
-        oninput: (ev) => { BANC.cond[cle] = Number(ev.target.value || 0); rendre(); } }));
+    // Les compteurs sont BORNÉS aux plafonds du moteur (`MAX_COMPTEURS`, servis
+    // par la façade — jamais des nombres recopiés ici) : `multPortails` et
+    // `bonusParTelefrag` ne plafonnent qu'à la POSE, pas à la lecture, donc une
+    // saisie libre à 50 afficherait un chiffre inatteignable en partie. La
+    // valeur STOCKÉE est écrêtée, pas seulement l'attribut `max` : sinon le
+    // champ montrerait 50 pendant que la mesure, elle, s'arrête au plafond.
+    const compteur = (cle, libelle) => {
+      const max = window.MoteurBanc.MAX_COMPTEURS[cle];
+      return el("div", { class: "champ" },
+        el("label", {}, `${libelle} (max ${max})`),
+        el("input", { type: "number", min: 0, max, value: BANC.cond[cle],
+          oninput: (ev) => {
+            BANC.cond[cle] = Math.max(0, Math.min(max, Number(ev.target.value || 0)));
+            rendre();
+          } }));
+    };
+
+    const menuCond = (cle, libelle, options) =>
+      el("div", { class: "champ" }, el("label", {}, libelle),
+        el("select", { onchange: (ev) => { BANC.cond[cle] = ev.target.value; rendre(); } },
+          ...options.map(([v, lib]) => el("option", { value: v, selected: BANC.cond[cle] === v }, lib))));
 
     return [
       el("h2", {}, `Banc d'essai — ${C.classes[BANC.classeId].nom}`),
@@ -145,9 +214,19 @@ enregistrerCategorie("banc", "Banc d'essai", {
       compteur("portails", "Portails"),
       compteur("bombes", "Bombes sur la cible"),
       compteur("rage", "Rage"),
+      // pas un compteur plafonné : c'est la barre de PA du tour. 0 = pleine,
+      // c'est-à-dire le MAXIMUM de Zénith et de la Flèche Punitive — sans ce
+      // réglage, ces deux sorts étaient toujours lus à leur plus haut.
+      el("div", { class: "champ" },
+        el("label", {}, "PA disponibles (0 = barre pleine)"),
+        el("input", { type: "number", min: 0, max: 20, value: BANC.cond.paDispo,
+          oninput: (ev) => { BANC.cond.paDispo = Math.max(0, Number(ev.target.value || 0)); rendre(); } })),
+      menuCond("lance", "Lance plantée (Forgelance)",
+        [["", "aucune"], ["avant", "rangée avant"], ["arriere", "rangée arrière"]]),
       el("div", { class: "section" }, "Mesure"),
+      el("p", { class: "note" }, equipementNote),
       el("table", { class: "raretes" },
-        el("tr", {}, ...["", "Sort", "Un lancer", "Min–max", "Par PA", "Sur un tour", ""].map((t) => el("th", {}, t))),
+        el("tr", {}, ...["", "Sort", "Un lancer", "Min–max", "Par PA", "Sur un tour", "Ce que le chiffre ne dit pas"].map((t) => el("th", {}, t))),
         ...lignes),
     ];
   },

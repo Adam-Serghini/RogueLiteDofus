@@ -81,6 +81,30 @@ function creerEntite(collection, nomDefaut, fabrique) {
 let derniereCategorie = null;
 let derniereSelection = null;
 
+/** Contenu de la fiche, à l'abri d'une exception.
+ *
+ *  `rendre()` évalue `cat.fiche()` APRÈS avoir vidé `#app` et AVANT de le
+ *  regarnir : une exception laissait donc l'éditeur sur un ÉCRAN BLANC, tout le
+ *  travail non exporté hors de portée. Le risque est concret depuis le Banc
+ *  d'essai, seul onglet qui exécute le moteur du jeu sur des données à moitié
+ *  saisies (un sort sans jet, une classe sans élément…). On affiche l'erreur au
+ *  lieu de la fiche : les autres onglets restent accessibles, et le message dit
+ *  quoi corriger. */
+function contenuFiche(cat) {
+  try {
+    if (E.selection == null && !cat.sansSelection)
+      return [el("p", { class: "note" }, "Sélectionner une entrée à gauche, ou en créer une nouvelle.")];
+    return cat.fiche(E.selection);
+  } catch (err) {
+    console.error(err);
+    return [
+      el("h2", {}, "Cet onglet n'a pas pu s'afficher"),
+      el("p", { class: "note" }, "Les autres onglets restent utilisables et rien n'est perdu. Corrige la donnée en cause, puis reviens ici."),
+      el("pre", {}, String(err?.stack ?? err)),
+    ];
+  }
+}
+
 function rendre() {
   const app = document.getElementById("app");
   // La recherche perd le focus à chaque frappe car rendre() détruit tout le DOM :
@@ -113,7 +137,7 @@ function rendre() {
       oninput: (ev) => { E.recherche = ev.target.value; rendre(); } }),
     ...cat.liste());
   // --- fiche ---
-  const fiche = el("div", { id: "fiche" }, ...(E.selection != null || cat.sansSelection ? cat.fiche(E.selection) : [el("p", { class: "note" }, "Sélectionner une entrée à gauche, ou en créer une nouvelle.")]));
+  const fiche = el("div", { id: "fiche" }, ...contenuFiche(cat));
   app.append(nav, liste, fiche);
   // après l'insertion : les deux conteneurs ont enfin une hauteur, donc un
   // défilement possible (une valeur trop grande est bornée d'elle-même)
