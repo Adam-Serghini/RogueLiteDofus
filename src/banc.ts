@@ -4,11 +4,11 @@
 //  sorts en lançant RÉELLEMENT le moteur. L'interface de l'éditeur ne fait
 //  qu'appeler ces fonctions et afficher leurs résultats.
 // =============================================================================
-import { CLASSES, ITEMS, butinToile, localiserZone, offsetToile, ZONES } from "./data";
-import { etatCombatInitial } from "./combat";
+import { CLASSES, ITEMS, SORTS, butinToile, localiserZone, offsetToile, ZONES } from "./data";
+import { ciblesValides, coutEffectif, etatCombatInitial, lancerSort, reinitialiserLancersTour, type CombatCtx } from "./combat";
 import { combattantDepuisPerso, instanceDuTier, meilleurItemToile, persoAuNiveau, type PersoState } from "./run";
 import { STAT_PAR_ELEMENT } from "./progression";
-import type { Combatant, Element, EquipSlot, ItemInstance, Rarete } from "./types";
+import type { Combatant, Element, EquipSlot, ItemInstance, Rarete, Spell } from "./types";
 
 /** PV des mannequins : assez grands pour qu'aucune mesure ne les tue. Un
  *  mannequin mort sortirait de `ciblesValides` et les répétitions suivantes
@@ -102,4 +102,146 @@ export function construireMannequins(specs: SpecMannequin[]): Combatant[] {
     niveau: 1,
     ...etatCombatInitial(),
   }));
+}
+
+// =============================================================================
+//  Mesure d'un lancer / d'un tour — les deux boucles du banc d'essai.
+// =============================================================================
+
+/** Répétitions par mesure : assez pour que la moyenne soit stable malgré
+ *  l'esquive et le critique, assez peu pour que le tableau se recalcule sans
+ *  latence pendant qu'on déplace le curseur de niveau. */
+export const REPETITIONS = 500;
+
+/** Générateur à graine (LCG) : la MÊME graine sert à tous les sorts, sinon on
+ *  comparerait de la chance et non de la puissance. */
+function rngGraine(graine: number): () => number {
+  let g = graine >>> 0;
+  return () => ((g = (g * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+}
+const GRAINE = 123456789;
+
+export interface Conditionnels {
+  chausseTrappe?: number;
+  telefrags?: number;
+  portails?: number;
+  bombes?: number;
+  rage?: number;
+}
+
+export function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c: Conditionnels): void {
+  if (c.chausseTrappe) heros.chausseTrappe = c.chausseTrappe;
+  if (c.portails) heros.portails = c.portails;
+  if (c.rage) heros.rage = c.rage;
+  // Téléfrags et bombes vivent sur la CIBLE, pas sur le lanceur
+  for (const cible of cibles) {
+    if (c.telefrags) cible.telefrags = c.telefrags;
+    if (c.bombes) cible.bombes = c.bombes;
+  }
+}
+
+/** Remet le combattant dans l'état d'un début de tour neuf. */
+function reinitialiser(heros: Combatant, cibles: Combatant[], cond: Conditionnels): void {
+  reinitialiserLancersTour(heros);
+  heros.cooldowns = {};
+  heros.lancersCombat = {};
+  heros.paActuels = heros.paMax;
+  heros.pvActuels = heros.pvMax;
+  heros.bouclier = 0;
+  heros.effets = [];
+  for (const c of cibles) {
+    c.pvActuels = c.pvMax;
+    c.effets = [];
+    c.bouclier = 0;
+    c.telefrags = 0;
+    c.bombes = 0;
+  }
+  heros.pieges = [];
+  heros.chausseTrappe = 0;
+  heros.portails = 0;
+  heros.rage = 0;
+  appliquerConditionnels(heros, cibles, cond);
+}
+
+/** Contexte de combat minimal : on ne garde que les dégâts, via `onDegats` —
+ *  le seul point du moteur traversé par CHAQUE coup, éclaboussures, zones et
+ *  pièges compris, sans que le banc ait à connaître la forme du sort. */
+function ctxMesure(rng: () => number, surDegats: (dmg: number) => void): CombatCtx {
+  return {
+    rng,
+    log: () => {},
+    playerDamageBonus: 1,
+    onDegats: (_ref, dmg) => surDegats(dmg),
+  };
+}
+
+export interface MesureLancer {
+  lancable: boolean;
+  moyenne: number;
+  min: number;
+  max: number;
+  /** Une part des dégâts du sort échappe à la mesure : le poison retire les PV
+   *  hors de `infligerDegats`, donc `onDegats` ne le voit jamais. */
+  horsPoison: boolean;
+}
+
+const poseDuPoison = (s: Spell): boolean => Boolean(s.poison || s.poisonSiPortails);
+
+export function mesurerLancer(
+  heros: Combatant, sortId: string, cibles: Combatant[], cond: Conditionnels = {},
+): MesureLancer {
+  const sort = SORTS[sortId];
+  const rng = rngGraine(GRAINE);
+  let total = 0, min = Infinity, max = 0, lancesReussis = 0;
+  for (let i = 0; i < REPETITIONS; i++) {
+    reinitialiser(heros, cibles, cond);
+    const cs = [heros, ...cibles];
+    const valides = ciblesValides(heros, sort, cs);
+    if (!valides.length) continue;
+    let coup = 0;
+    heros.paActuels -= coutEffectif(sort, heros); // la boucle de tour débite AVANT
+    lancerSort(heros, sort, valides[0].ref, cs, ctxMesure(rng, (d) => { coup += d; }));
+    total += coup; min = Math.min(min, coup); max = Math.max(max, coup);
+    lancesReussis++;
+  }
+  if (!lancesReussis) return { lancable: false, moyenne: 0, min: 0, max: 0, horsPoison: poseDuPoison(sort) };
+  return {
+    lancable: true,
+    moyenne: Math.round(total / lancesReussis),
+    min, max,
+    horsPoison: poseDuPoison(sort),
+  };
+}
+
+export interface MesureTour { total: number; lancers: number }
+
+/** Total produit par un sort dans UN tour : on laisse `lancersCeTour`, les
+ *  recharges et les compteurs d'escalade courir d'un lancer à l'autre — c'est
+ *  exactement ce qu'une mesure isolée ne peut pas voir (Pugilat, Colère de Iop). */
+export function mesurerTour(
+  heros: Combatant, sortId: string, cibles: Combatant[], cond: Conditionnels = {},
+): MesureTour {
+  const sort = SORTS[sortId];
+  const rng = rngGraine(GRAINE);
+  let cumul = 0, cumulLancers = 0;
+  for (let i = 0; i < REPETITIONS; i++) {
+    reinitialiser(heros, cibles, cond);
+    const cs = [heros, ...cibles];
+    let lancers = 0;
+    for (;;) {
+      const cout = coutEffectif(sort, heros);
+      if (heros.paActuels < cout) break;
+      const valides = ciblesValides(heros, sort, cs);
+      if (!valides.length) break; // maxParTour atteint, ou plus de cible
+      heros.paActuels -= cout;
+      lancerSort(heros, sort, valides[0].ref, cs, ctxMesure(rng, (d) => { cumul += d; }));
+      lancers++;
+      if (lancers > 20) break; // garde-fou : aucun sort ne part 20 fois dans 6 PA
+    }
+    cumulLancers += lancers;
+  }
+  return {
+    total: Math.round(cumul / REPETITIONS),
+    lancers: Math.round(cumulLancers / REPETITIONS),
+  };
 }

@@ -3,7 +3,10 @@
 //  héros et des mannequins, compteurs conditionnels, boucles de mesure.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { construireHeros, construireMannequins, PV_MANNEQUIN } from "./banc";
+import {
+  construireHeros, construireMannequins, mesurerLancer, mesurerTour,
+  PV_MANNEQUIN, REPETITIONS,
+} from "./banc";
 import { CLASSES } from "./data";
 import { statsFinales } from "./progression";
 import { instanceDuTier } from "./run";
@@ -76,5 +79,111 @@ describe("construireMannequins", () => {
   it("ne peut pas esquiver : l'esquive brouillerait la mesure", () => {
     const [m] = construireMannequins([{ position: 0 }]);
     expect(m.stats.agilite).toBe(0);
+  });
+});
+
+const heros = (classeId: string, niveau = 50) =>
+  construireHeros({ classeId, niveau, toile: 1, equipement: "nu", rarete: "commun" });
+
+describe("REPETITIONS", () => {
+  it("est une valeur unique, exportée, jamais recopiée dans les mesures", () => {
+    expect(REPETITIONS).toBe(500);
+  });
+});
+
+describe("mesurerLancer", () => {
+  it("mesure des dégâts non nuls et cohérents (min ≤ moyenne ≤ max)", () => {
+    const m = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    expect(m.lancable).toBe(true);
+    expect(m.moyenne).toBeGreaterThan(0);
+    expect(m.min).toBeLessThanOrEqual(m.moyenne);
+    expect(m.moyenne).toBeLessThanOrEqual(m.max);
+  });
+
+  it("est DÉTERMINISTE : deux appels identiques rendent le même chiffre", () => {
+    const a = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    const b = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    expect(a.moyenne).toBe(b.moyenne);
+  });
+
+  it("compte l'ÉCLABOUSSURE : Zénith frappe plus fort sur 3 mannequins que sur 1", () => {
+    const un = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    const trois = mesurerLancer(heros("iop"), "zenith",
+      construireMannequins([{ position: 0 }, { position: 1 }, { position: 2 }]));
+    expect(trois.moyenne).toBeGreaterThan(un.moyenne);
+  });
+
+  it("les résistances de la cible font baisser les dégâts", () => {
+    const nu = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    const dur = mesurerLancer(heros("iop"), "zenith",
+      construireMannequins([{ position: 0, resistances: { air: 0.5, eau: 0.5 } }]));
+    expect(dur.moyenne).toBeLessThan(nu.moyenne);
+  });
+
+  it("ne remet PAS en cause l'état du héros entre deux mesures (compteurs remis à zéro)", () => {
+    const h = heros("iop");
+    const m1 = mesurerLancer(h, "pugilat", construireMannequins([{ position: 0 }]));
+    const m2 = mesurerLancer(h, "pugilat", construireMannequins([{ position: 0 }]));
+    // l'escalade de Pugilat ne doit PAS fuiter d'une mesure à l'autre
+    expect(m2.moyenne).toBe(m1.moyenne);
+  });
+
+  it("signale un sort non lançable dans l'état courant plutôt que d'afficher 0", () => {
+    // Kaboom exige au moins une bombe posée sur un ennemi
+    const m = mesurerLancer(heros("roublard"), "kaboom", construireMannequins([{ position: 0 }]));
+    expect(m.lancable).toBe(false);
+    expect(m.moyenne).toBe(0);
+  });
+
+  it("marque les sorts dont une part des dégâts échappe à la mesure (poison)", () => {
+    const m = mesurerLancer(heros("eliotrope"), "parasite", construireMannequins([{ position: 0 }]));
+    expect(m.horsPoison).toBe(true); // Parasite poisonne à 3+ portails
+  });
+});
+
+describe("appliquerConditionnels", () => {
+  it("les bombes rendent Kaboom lançable", () => {
+    const h = heros("roublard");
+    const cibles = construireMannequins([{ position: 0 }]);
+    const m = mesurerLancer(h, "kaboom", cibles, { bombes: 3 });
+    expect(m.lancable).toBe(true);
+    expect(m.moyenne).toBeGreaterThan(0);
+  });
+
+  it("les Chausse-Trappes augmentent Attaque Mortelle", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const sans = mesurerLancer(heros("sram"), "attaque_mortelle", cibles());
+    const avec = mesurerLancer(heros("sram"), "attaque_mortelle", cibles(), { chausseTrappe: 5 });
+    expect(avec.moyenne).toBeGreaterThan(sans.moyenne);
+  });
+
+  it("les Téléfrags augmentent Rayon Obscur", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const sans = mesurerLancer(heros("xelor"), "rayon_obscur", cibles());
+    const avec = mesurerLancer(heros("xelor"), "rayon_obscur", cibles(), { telefrags: 4 });
+    expect(avec.moyenne).toBeGreaterThan(sans.moyenne);
+  });
+});
+
+describe("mesurerTour", () => {
+  it("rejoue le sort tant qu'il reste des PA, et compte les lancers", () => {
+    // Pile ou Face : 3 PA, maxParTour 4 → 2 lancers dans 6 PA
+    const t = mesurerTour(heros("ecaflip"), "pile_ou_face", construireMannequins([{ position: 0 }]));
+    expect(t.lancers).toBe(2);
+    expect(t.total).toBeGreaterThan(0);
+  });
+
+  it("respecte maxParTour", () => {
+    // Bluff : 4 PA, maxParTour 1 → un seul lancer même si les PA le permettaient
+    const t = mesurerTour(heros("ecaflip"), "bluff", construireMannequins([{ position: 0 }]));
+    expect(t.lancers).toBe(1);
+  });
+
+  it("laisse l'escalade courir : le total d'un tour de Pugilat dépasse 3 lancers isolés", () => {
+    const cibles = () => construireMannequins([{ position: 0 }, { position: 1 }, { position: 2 }]);
+    const isole = mesurerLancer(heros("iop"), "pugilat", cibles());
+    const tour = mesurerTour(heros("iop"), "pugilat", cibles());
+    expect(tour.lancers).toBeGreaterThan(1);
+    expect(tour.total).toBeGreaterThan(isole.moyenne * tour.lancers);
   });
 });
