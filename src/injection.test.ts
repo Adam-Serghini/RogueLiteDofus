@@ -3,14 +3,18 @@
 //  par le contenu en cours d'édition (banc d'essai de l'éditeur).
 // =============================================================================
 import { describe, it, expect, afterEach } from "vitest";
-import { SORTS, MONSTRES, appliquerContenuEdite } from "./data";
+import { SORTS, MONSTRES, BUTIN_TOILES, butinToile, appliquerContenuEdite } from "./data";
 import sortsLivres from "./content/sorts.json";
 import monstresLivres from "./content/monstres.json";
+import butinLivre from "./content/butin_toiles.json";
 
 // chaque test remet les tables dans leur état livré : elles sont partagées par
 // TOUTE la suite, une fuite ferait échouer des tests sans rapport avec cette tâche
 afterEach(() => {
-  appliquerContenuEdite({ sorts: sortsLivres as never, monstres: monstresLivres as never });
+  appliquerContenuEdite({
+    sorts: sortsLivres as never, monstres: monstresLivres as never,
+    butin_toiles: butinLivre as never,
+  });
 });
 
 describe("appliquerContenuEdite", () => {
@@ -37,6 +41,21 @@ describe("appliquerContenuEdite", () => {
     const avant = MONSTRES.bouftou.pv;
     appliquerContenuEdite({ sorts: sortsLivres as never });
     expect(MONSTRES.bouftou.pv).toBe(avant);
+  });
+
+  // l'éditeur permet de DÉPLACER un objet d'une toile à l'autre : sans cette
+  // table injectable, le banc d'essai équiperait toujours l'ancien butin, en
+  // silence — un designer mesurerait l'arme qu'il vient justement de ranger ailleurs
+  it("remplace aussi les pools de butin par toile", () => {
+    const avant = butinToile("incarnam")!.normales;
+    expect(avant).not.toContain("arc_des_rivages");
+    appliquerContenuEdite({
+      butin_toiles: {
+        ...butinLivre,
+        "1": { ...BUTIN_TOILES["1"], normales: [...avant, "arc_des_rivages"] },
+      } as never,
+    });
+    expect(butinToile("incarnam")!.normales).toContain("arc_des_rivages");
   });
 
   it("conserve l'IDENTITÉ des tables (les modules qui les ont importées voient la mise à jour)", () => {

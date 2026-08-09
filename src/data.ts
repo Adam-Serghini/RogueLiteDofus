@@ -394,6 +394,12 @@ export interface ContenuEditable {
   classes?: Record<string, Classe>;
   monstres?: Record<string, Monstre>;
   items?: Record<string, Item>;
+  /** Pools de butin par toile. Injectable comme les autres : l'éditeur permet de
+   *  DÉPLACER un objet d'une toile à l'autre (`editor/js/20-items.js`), et le
+   *  banc d'essai choisit l'équipement du héros via `butinToile()`. Sans cette
+   *  table, un objet qu'on vient de ranger en toile 5 serait mesuré à son
+   *  ancienne place, en silence. */
+  butin_toiles?: Record<string, PoolsToile>;
 }
 
 /** Remplace le contenu des tables du moteur par celui en cours d'édition.
@@ -423,4 +429,5 @@ export function appliquerContenuEdite(contenu: ContenuEditable): void {
   remplacer(CLASSES as Record<string, Classe>, contenu.classes);
   remplacer(MONSTRES as Record<string, Monstre>, contenu.monstres);
   remplacer(ITEMS as Record<string, Item>, contenu.items);
+  remplacer(BUTIN_TOILES as Record<string, PoolsToile>, contenu.butin_toiles);
 }
