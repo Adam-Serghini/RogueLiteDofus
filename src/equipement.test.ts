@@ -4,9 +4,9 @@
 import { describe, it, expect } from "vitest";
 import {
   nouvelleRun, combattantDepuisPerso, bonusEquipement,
-  equiper, desequiper, tenterButin, rollItem, tirerRarete,
+  equiper, desequiper, tenterButin, rollItem, tirerRarete, meilleurItemToile,
 } from "./run";
-import { butinToile, ITEMS } from "./data";
+import { butinToile, itemsDeToile, ITEMS } from "./data";
 import type { Meta } from "./types";
 
 const MIN = () => 0;     // jet au minimum de la fourchette (déterministe)
@@ -506,5 +506,39 @@ describe("toiles 10-12 : mécaniques spéciales", () => {
     iop.pvActuels = 5;
     lancerSort(ennemi, SORTS.morsure, iop.ref, [iop, ennemi], ctx);
     expect(iop.pvActuels).toBe(0); // une seule renaissance par combat
+  });
+});
+
+describe("meilleurItemToile", () => {
+  // Le pool est SYNTHÉTIQUE et les objets sont volontairement contrastés : le test
+  // affirme un RÉSULTAT attendu (« la coiffe de force gagne »), il ne recalcule
+  // jamais la formule de score. Un test qui recopie la formule qu'il vérifie
+  // change à l'identique quand elle change, et n'échoue donc jamais.
+  const POOL = ["chapeau_de_l_aventurier", "cape_de_l_aventurier"];
+
+  it("choisit un objet du slot demandé", () => {
+    const choisi = meilleurItemToile(POOL, "coiffe", "force");
+    expect(choisi).not.toBeNull();
+    expect(ITEMS[choisi!].slot).toBe("coiffe");
+  });
+
+  it("préfère l'objet qui porte le plus la stat visée", () => {
+    // deux coiffes réelles de la même toile (Tainéla, toile 3) : la coiffe du
+    // trophée de boss (boufcoiffe_royale) est nettement plus chargée en
+    // adaptatif que la coiffe normale du pack (coiffe_bouftou) — c'est le choix
+    // qu'un joueur ferait. `butinToile(...).normales` seul n'a qu'une coiffe par
+    // toile (une seule panoplie par zone) : impossible d'y trouver un pool de
+    // plusieurs coiffes réelles, d'où `itemsDeToile` qui inclut aussi le boss.
+    const pool = itemsDeToile(butinToile("tainela")).filter((id) => ITEMS[id].slot === "coiffe" && ITEMS[id].tiers?.commun);
+    expect(pool.length, "l'assertion suivante n'a de sens qu'avec plusieurs coiffes").toBeGreaterThan(1);
+    const choisi = meilleurItemToile(pool, "coiffe", "force")!;
+    const statDe = (id: string) => (ITEMS[id].tiers!.commun!.stats.force ?? 0) + (ITEMS[id].tiers!.commun!.adaptatif ?? 0);
+    for (const id of pool)
+      if (id !== choisi) expect(statDe(choisi), `${choisi} vs ${id}`).toBeGreaterThanOrEqual(statDe(id));
+  });
+
+  it("rend null quand le pool n'a aucun objet du slot demandé", () => {
+    expect(meilleurItemToile([], "arme", "force")).toBeNull();
+    expect(meilleurItemToile(["chapeau_de_l_aventurier"], "arme", "force")).toBeNull();
   });
 });

@@ -24,10 +24,10 @@ import { runCombat, controllerIA } from "./combat";
 import { progressionInitiale, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateursElite, instanceDuTier,
-  effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
+  effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone, meilleurItemToile,
   type RunState,
 } from "./run";
-import type { ItemInstance, Rarete, Stats } from "./types";
+import type { ItemInstance, Rarete } from "./types";
 
 // Tranches mesurées par le banc, dans l'ordre d'affichage du rapport. T1 doit
 // TOUJOURS rester mesurée en premier et à l'identique (garde-fou anti-régression :
@@ -91,19 +91,6 @@ function itemPalier(id: string, rarete: "commun" | "rare"): ItemInstance {
   const tiers = ITEMS[id].tiers!;
   const r = tiers[rarete] ? rarete : (Object.keys(tiers)[0] as Rarete);
   return instanceDuTier(id, r)!;
-}
-
-/** Meilleur objet du pool de toile pour un slot et une stat (celui qui maximise
- *  la stat investie du membre, vitalité en départage) — ce qu'un joueur garderait. */
-function meilleurItemToile(pool: string[], slot: string, stat: keyof Stats): string | null {
-  const candidats = pool.filter((id) => ITEMS[id].slot === slot && ITEMS[id].tiers?.commun);
-  if (!candidats.length) return null;
-  const score = (id: string) => {
-    const t = ITEMS[id].tiers!.commun!;
-    // la vitalité pèse : un vrai joueur prend la coiffe tank face aux boss burst
-    return ((t.stats[stat] ?? 0) + (t.adaptatif ?? 0)) * 10 + (t.stats.vitalite ?? 0) * 4;
-  };
-  return candidats.sort((a, b) => score(b) - score(a))[0];
 }
 
 /** Niveaux attendus par zone d'une tranche donnée : à l'ENTRÉE (normales/élites)

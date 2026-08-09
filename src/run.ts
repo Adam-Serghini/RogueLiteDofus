@@ -371,6 +371,21 @@ export function instanceDuTier(itemId: string, rarete: Rarete): ItemInstance | n
   return { id: itemId, rarete, stats: { ...tier.stats }, adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
 }
 
+/** Meilleur objet du pool de toile pour un slot et une stat (celui qui maximise
+ *  la stat visée du membre, vitalité en départage) — ce qu'un joueur garderait.
+ *  Vit ici et non dans `sim.ts` : le banc d'essai de l'éditeur s'en sert aussi,
+ *  et deux implémentations du choix d'équipement finiraient par diverger. */
+export function meilleurItemToile(pool: string[], slot: string, stat: keyof Stats): string | null {
+  const candidats = pool.filter((id) => ITEMS[id].slot === slot && ITEMS[id].tiers?.commun);
+  if (!candidats.length) return null;
+  const score = (id: string) => {
+    const t = ITEMS[id].tiers!.commun!;
+    // la vitalité pèse : un vrai joueur prend la coiffe tank face aux boss burst
+    return ((t.stats[stat] ?? 0) + (t.adaptatif ?? 0)) * 10 + (t.stats.vitalite ?? 0) * 4;
+  };
+  return candidats.sort((a, b) => score(b) - score(a))[0];
+}
+
 /** Exemplaire d'un objet à rareté, tirage restreint aux paliers `autorisees`
  *  (∩ paliers réellement définis sur l'objet). null si aucun palier ne convient. */
 export function rollItemRarete(itemId: string, rng: () => number, autorisees: readonly Rarete[] = RARETES): ItemInstance | null {
