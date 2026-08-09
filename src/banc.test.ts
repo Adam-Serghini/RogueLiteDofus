@@ -139,6 +139,20 @@ describe("mesurerLancer", () => {
     const m = mesurerLancer(heros("eliotrope"), "parasite", construireMannequins([{ position: 0 }]));
     expect(m.horsPoison).toBe(true); // Parasite poisonne à 3+ portails
   });
+
+  it("ne fait PAS fuiter les boucliers à durée d'une répétition à l'autre (boucliersTemporaires vidé)", () => {
+    // Endurance (Iop) est un sort de DÉGÂTS qui pose en plus un bouclier à
+    // durée sur le lanceur (`bouclierPortee`, cumulable si relancé dans le
+    // même tour) — sa décrémentation vit dans `decrementerEffets`, jamais
+    // appelé par `mesurerLancer`. Sans remise à zéro de `boucliersTemporaires`
+    // au début de CHAQUE répétition, les 500 répétitions empileraient chacune
+    // une entrée sur le MÊME objet `heros`, sans borne.
+    const h = heros("iop");
+    mesurerLancer(h, "endurance", construireMannequins([{ position: 0 }]));
+    // la dernière répétition en pose au plus une (le sort n'est lancé qu'une
+    // fois par répétition dans mesurerLancer) — jamais REPETITIONS.
+    expect((h.boucliersTemporaires ?? []).length).toBeLessThanOrEqual(1);
+  });
 });
 
 describe("appliquerConditionnels", () => {

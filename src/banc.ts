@@ -140,19 +140,58 @@ export function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c:
   }
 }
 
+/** Remet à zéro l'état transitoire de combat d'UN combattant (héros ou cible) —
+ *  tout ce que `runCombat` décompte normalement à la fin d'un tour ou au début
+ *  du suivant (`decrementerEffets`/`effetsDebutTour`), et que la boucle du banc
+ *  ne rejoue jamais puisqu'elle ne fait tourner que `lancerSort`. Sans ce
+ *  nettoyage, un champ posé par le sort mesuré (bouclier à durée, marque,
+ *  redirection…) ne serait jamais consommé et s'accumulerait, RÉPÉTITION APRÈS
+ *  RÉPÉTITION, sur le MÊME objet `Combatant` réutilisé par `mesurerLancer` —
+ *  et l'onglet de l'éditeur réutilisant lui-même le même héros à chaque
+ *  mouvement de curseur, la fuite ne serait bornée par rien.
+ *
+ *  Volontairement PAS touché ici (config permanente venant de la classe ou de
+ *  l'équipement, jamais un compteur de combat) : `paGamble`, `elementLibre`,
+ *  `renaissance` (la fraction, pas `renaissancesRestantes` — sans mort possible
+ *  en mesure, ce compteur ne varie jamais ici), `riposteAvant`, `armure`
+ *  (native), `nullifieParTour` (allocation, distincte de son compteur
+ *  `coupsAnnulesRestants`, réinitialisé plus bas), `esquiveArriere`,
+ *  `soinDegatsRecus`, `bonusParAllieLigne`, `elements`, `armeSort`,
+ *  `dofusLache`, `mueElementaire`, `enrage`/`enrageCumul` (posés par `run.ts`
+ *  pour l'Ascension, jamais par un sort). Également laissés intacts :
+ *  `estInvocation`/`joueTour`/`provoque`/`estLance`/`estEgide`/`lanceurRef`/
+ *  `toursRestantsInvocation` — vérifié dans `combat.ts` : ces champs ne sont
+ *  posés QUE sur un pseudo-combattant tout neuf (Poupée/Lance/Égide) poussé
+ *  dans le tableau `cs` local à chaque répétition, jamais mutés sur le héros
+ *  ou la cible existants ; `cs` étant reconstruit à chaque répétition, cette
+ *  invocation ne survit de toute façon pas à la répétition suivante. */
+function reinitialiserEtatTransitoire(c: Combatant): void {
+  c.effets = [];
+  c.bouclier = 0;
+  c.boucliersTemporaires = [];
+  c.maxRollCharges = 0;
+  c.paBonusNextTurn = 0;
+  c.bonusOffensifProchain = 0;
+  c.doubleEffetProchain = false;
+  c.nullifieProchainCoup = false;
+  c.resquilleActive = undefined;
+  c.conjuration = undefined;
+  c.redirection = undefined;
+  c.redirectionPoseCeTour = false;
+  c.coupsAnnulesRestants = 0;
+}
+
 /** Remet le combattant dans l'état d'un début de tour neuf. */
 function reinitialiser(heros: Combatant, cibles: Combatant[], cond: Conditionnels): void {
   reinitialiserLancersTour(heros);
+  reinitialiserEtatTransitoire(heros);
   heros.cooldowns = {};
   heros.lancersCombat = {};
   heros.paActuels = heros.paMax;
   heros.pvActuels = heros.pvMax;
-  heros.bouclier = 0;
-  heros.effets = [];
   for (const c of cibles) {
+    reinitialiserEtatTransitoire(c);
     c.pvActuels = c.pvMax;
-    c.effets = [];
-    c.bouclier = 0;
     c.telefrags = 0;
     c.bombes = 0;
   }
