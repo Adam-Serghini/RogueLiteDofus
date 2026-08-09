@@ -64,8 +64,15 @@ export function construireHeros(o: OptionsHeros): Combatant {
     if (inst) perso.equipement[slot as EquipSlot] = inst;
 
   const c = combattantDepuisPerso(perso);
-  Object.assign(c, etatCombatInitial());
-  c.paActuels = c.paMax;
+  // `perso.pvActuels` a été fixé par `persoAuNiveau` AVANT que l'équipement ne
+  // soit ajouté ci-dessus (PV de base, sans le bonus de vitalité du stuff) ;
+  // `combattantDepuisPerso` fait `pvActuels: Math.min(state.pvActuels, pvMax)`
+  // et retiendrait donc cette valeur périmée, plus basse que le vrai pvMax
+  // équipé, pour n'importe quel stuff qui donne de la vitalité — un héros du
+  // banc démarrerait sous son PV max. `etatCombatInitial()` n'est PAS
+  // ré-appliqué ici : `combattantDepuisPerso` l'applique déjà en interne
+  // (`run.ts`), puis écrase `bouclier` avec le bonus de départ du Bonnet
+  // Spairance (`bouclierDebut`) — le refaire ici effacerait ce bouclier.
   c.pvActuels = c.pvMax;
   return c;
 }

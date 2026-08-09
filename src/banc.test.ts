@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { construireHeros, construireMannequins, PV_MANNEQUIN } from "./banc";
 import { CLASSES } from "./data";
 import { statsFinales } from "./progression";
+import { instanceDuTier } from "./run";
 
 describe("construireHeros", () => {
   it("rend un combattant du bon niveau, aux caractéristiques de sa classe", () => {
@@ -36,6 +37,16 @@ describe("construireHeros", () => {
     expect(h.paMax).toBeGreaterThanOrEqual(6);
     expect(h.effets).toEqual([]);
     expect(h.cooldowns).toEqual({});
+  });
+
+  it("porte le bouclier de départ du Bonnet Spairance (non-régression : combattantDepuisPerso l'écrase, il ne doit jamais être remis à 0 après)", () => {
+    const bonnet = instanceDuTier("bonnet_spairance", "legendaire");
+    expect(bonnet).not.toBeNull(); // sinon le test ne prouve rien
+    const h = construireHeros({
+      classeId: "iop", niveau: 50, toile: 10, equipement: "nu", rarete: "commun",
+      surcharges: { coiffe: bonnet! },
+    });
+    expect(h.bouclier).toBeGreaterThan(0);
   });
 });
 
