@@ -7,5 +7,6 @@
 export { appliquerContenuEdite } from "./data";
 export { instanceDuTier } from "./run";
 export {
-  construireHeros, construireMannequins, mesurerLancer, mesurerTour, REPETITIONS,
+  construireHeros, construireHerosDetaille, construireMannequins,
+  mesurerLancer, mesurerTour, MAX_COMPTEURS, REPETITIONS,
 } from "./banc";

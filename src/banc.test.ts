@@ -4,10 +4,11 @@
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  construireHeros, construireMannequins, mesurerLancer, mesurerTour,
-  PV_MANNEQUIN, REPETITIONS,
+  construireHeros, construireHerosDetaille, construireMannequins, mesurerLancer,
+  mesurerTour, MAX_COMPTEURS, PV_MANNEQUIN, REPETITIONS,
 } from "./banc";
-import { CLASSES } from "./data";
+import { SORTS } from "./data";
+import { CLASSES, butinToile } from "./data";
 import { statsFinales } from "./progression";
 import { instanceDuTier } from "./run";
 
@@ -50,6 +51,32 @@ describe("construireHeros", () => {
       surcharges: { coiffe: bonnet! },
     });
     expect(h.bouclier).toBeGreaterThan(0);
+  });
+});
+
+// --- I3 : une toile sans butin rend un héros NU tout en affichant « Set complet »
+describe("construireHerosDetaille", () => {
+  it("dit combien de pièces ont RÉELLEMENT été équipées", () => {
+    const d = construireHerosDetaille({ classeId: "iop", niveau: 50, toile: 1, equipement: "set", rarete: "commun" });
+    expect(d.slotsEquipes.length).toBeGreaterThan(0);
+    expect(d.heros.pvMax).toBeGreaterThan(0);
+  });
+
+  it("rend une liste VIDE sur une toile sans aucun objet, même en « Set complet »", () => {
+    // la toile 13 (Clos des Blops) n'a aucun objet : les colonnes NU/MI/SET y
+    // sont identiques par construction, et c'est ce que l'écran doit pouvoir dire
+    expect(butinToile("clos_des_blops"), "l'assertion suivante suppose une toile sans butin").toBeNull();
+    const d = construireHerosDetaille({ classeId: "iop", niveau: 50, toile: 13, equipement: "set", rarete: "commun" });
+    expect(d.slotsEquipes).toEqual([]);
+  });
+
+  it("compte aussi les surcharges manuelles", () => {
+    const arme = instanceDuTier("baguette_du_tofu", "commun")!;
+    const d = construireHerosDetaille({
+      classeId: "iop", niveau: 50, toile: 13, equipement: "nu", rarete: "commun",
+      surcharges: { arme },
+    });
+    expect(d.slotsEquipes).toEqual(["arme"]);
   });
 });
 
@@ -137,7 +164,95 @@ describe("mesurerLancer", () => {
 
   it("marque les sorts dont une part des dégâts échappe à la mesure (poison)", () => {
     const m = mesurerLancer(heros("eliotrope"), "parasite", construireMannequins([{ position: 0 }]));
-    expect(m.horsPoison).toBe(true); // Parasite poisonne à 3+ portails
+    expect(m.raisons).toContain("poison"); // Parasite poisonne à 3+ portails
+  });
+
+  it("remonte le coût EFFECTIF, pour que le « par PA » ne soit pas divisé par une seconde vérité", () => {
+    const m = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    expect(m.cout).toBe(SORTS.zenith.coutPA);
+    // même sur un sort refusé, le diviseur reste utilisable (jamais 0/undefined)
+    const refuse = mesurerLancer(heros("roublard"), "kaboom", construireMannequins([{ position: 0 }]));
+    expect(refuse.lancable).toBe(false);
+    expect(refuse.cout).toBeGreaterThan(0);
+  });
+
+  // --- I1 : les sorts à dégâts DIFFÉRÉS ne doivent pas passer pour des sorts faibles
+  it("signale un PIÈGE du Sram : son jet n'est lu qu'au déclenchement, jamais à la pose", () => {
+    for (const id of ["piege_funeste", "piege_a_fragmentation"]) {
+      const m = mesurerLancer(heros("sram"), id, construireMannequins([{ position: 0 }]));
+      expect(m.moyenne, id).toBe(0); // constat : la pose ne frappe pas
+      expect(m.raisons, id).toContain("piege"); // …et le banc le DIT
+    }
+  });
+
+  it("signale la Bombe collante : elle ne frappe qu'au Kaboom", () => {
+    const m = mesurerLancer(heros("roublard"), "bombe_collante", construireMannequins([{ position: 0 }]));
+    expect(m.moyenne).toBe(0);
+    expect(m.raisons).toContain("bombe");
+  });
+
+  it("signale un sort de Lance mesuré SANS Lance plantée", () => {
+    const m = mesurerLancer(heros("forgelance"), "jormun", construireMannequins([{ position: 0 }]));
+    expect(m.raisons).toContain("lance_absente");
+  });
+
+  it("une Lance plantée en rangée ARRIÈRE rend sa signature à Jormun (qui frappe alors tout le monde)", () => {
+    const cibles = () => construireMannequins([{ position: 0 }, { position: 1 }, { position: 5 }]);
+    const sans = mesurerLancer(heros("forgelance"), "jormun", cibles());
+    const avec = mesurerLancer(heros("forgelance"), "jormun", cibles(), { lance: "arriere" });
+    expect(avec.raisons).not.toContain("lance_absente");
+    // sans Lance, Jormun se résout comme une simple rangée ; avec une Lance en
+    // rangée arrière (`tousSiLanceArriere`), il touche TOUS les ennemis
+    expect(avec.moyenne).toBeGreaterThan(sans.moyenne);
+  });
+
+  it("ne signale rien pour un sort dont la mesure est complète", () => {
+    const m = mesurerLancer(heros("iop"), "zenith", construireMannequins([{ position: 0 }]));
+    expect(m.raisons).toEqual([]);
+  });
+
+  // --- M1 : les deux compteurs conditionnels qui n'avaient aucun test
+  it("les portails majorent un sort de dégâts de l'Éliotrope", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const sans = mesurerLancer(heros("eliotrope"), "parasite", cibles());
+    const avec = mesurerLancer(heros("eliotrope"), "parasite", cibles(), { portails: 4 });
+    expect(avec.moyenne).toBeGreaterThan(sans.moyenne);
+  });
+
+  it("la Rage majore un sort de dégâts de l'Ouginak", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const sans = mesurerLancer(heros("ouginak"), "depouille", cibles());
+    const avec = mesurerLancer(heros("ouginak"), "depouille", cibles(), { rage: 3 });
+    expect(avec.moyenne).toBeGreaterThan(sans.moyenne);
+  });
+
+  // --- M4 : un compteur saisi au-delà du plafond du moteur mesurerait un état
+  // que le jeu ne peut pas produire
+  it("borne les compteurs conditionnels aux plafonds du moteur", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const auCap = mesurerLancer(heros("eliotrope"), "parasite", cibles(), { portails: MAX_COMPTEURS.portails });
+    const absurde = mesurerLancer(heros("eliotrope"), "parasite", cibles(), { portails: 50 });
+    expect(absurde.moyenne).toBe(auCap.moyenne);
+
+    const telefragCap = mesurerLancer(heros("xelor"), "rayon_obscur", cibles(), { telefrags: MAX_COMPTEURS.telefrags });
+    const telefragAbsurde = mesurerLancer(heros("xelor"), "rayon_obscur", cibles(), { telefrags: 50 });
+    expect(telefragAbsurde.moyenne).toBe(telefragCap.moyenne);
+  });
+
+  // --- M8 : sans réglage, Zénith et Flèche Punitive sont lus barre pleine,
+  // c'est-à-dire à leur MAXIMUM, sans que rien ne le dise
+  it("le réglage « PA disponibles » fait varier les sorts qui en dépendent", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const maigre = mesurerLancer(heros("iop"), "zenith", cibles(), { paDispo: 4 });
+    const pleine = mesurerLancer(heros("iop"), "zenith", cibles());
+    expect(maigre.moyenne).toBeLessThan(pleine.moyenne);
+  });
+
+  it("« PA disponibles » n'affecte PAS un sort qui ne les lit pas", () => {
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const a = mesurerLancer(heros("iop"), "colere_de_iop", cibles(), { paDispo: 5 });
+    const b = mesurerLancer(heros("iop"), "colere_de_iop", cibles());
+    expect(a.moyenne).toBe(b.moyenne);
   });
 
   it("ne fait PAS fuiter les boucliers à durée d'une répétition à l'autre (boucliersTemporaires vidé)", () => {
