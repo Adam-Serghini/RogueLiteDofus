@@ -5,6 +5,7 @@
 // =============================================================================
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
+import { build } from "vite";
 import { stringifyCanonique, hashContenu } from "./canonical.mjs";
 import { NOMS_FICHIERS, SCHEMA_VERSION } from "./content-validate.mjs";
 
@@ -32,6 +33,20 @@ for (const id of Object.keys(contenu.monstres)) embarquer("monstres", id);
 for (const id of Object.keys(contenu.items)) embarquer("items", id);
 for (const id of Object.keys(contenu.classes)) embarquer("classes", id);
 
+// Moteur du jeu compilé en IIFE et inliné : le banc d'essai lance le VRAI
+// moteur, jamais une copie de ses formules (une seconde implémentation
+// divergerait du jeu en quelques semaines). `write: false` garde le bundle en
+// mémoire — rien n'est écrit sur le disque à côté d'editeur.html.
+const sortie = await build({
+  configFile: false,
+  logLevel: "warn",
+  build: {
+    write: false,
+    lib: { entry: path.join(RACINE, "src/banc-moteur.ts"), name: "MoteurBanc", formats: ["iife"] },
+  },
+});
+const moteur = sortie[0].output[0].code;
+
 const styles = lire("editor/styles.css");
 // </script> dans les données casserait le parseur HTML :
 const donneesJson = stringifyCanonique(donnees).replaceAll("</", "<\\/");
@@ -49,7 +64,8 @@ const html = lire("editor/template.html")
   .replace("/*STYLES*/", () => styles)
   .replace("/*DONNEES*/", () => donneesJson)
   .replace("/*ASSETS*/", () => assetsJson)
+  .replace("/*MOTEUR*/", () => moteur.replace(/<\/script/gi, "<\\/script"))
   .replace("/*APP*/", () => js);
 
 writeFileSync(path.join(RACINE, "editeur.html"), html, "utf-8");
-console.log(`✓ editeur.html (${(html.length / 1024 / 1024).toFixed(1)} Mo dont ${(poidsAssets / 1024 / 1024).toFixed(1)} Mo d'images ×${Object.keys(assets).length}, hash ${donnees.baseHash.slice(0, 12)}…)`);
+console.log(`✓ editeur.html (${(html.length / 1024 / 1024).toFixed(1)} Mo dont ${(poidsAssets / 1024 / 1024).toFixed(1)} Mo d'images ×${Object.keys(assets).length} et ${(moteur.length / 1024).toFixed(0)} ko de moteur, hash ${donnees.baseHash.slice(0, 12)}…)`);
