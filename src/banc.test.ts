@@ -248,6 +248,21 @@ describe("mesurerLancer", () => {
     expect(maigre.moyenne).toBeLessThan(pleine.moyenne);
   });
 
+  it("écrête « PA disponibles » à la barre du héros : une valeur absurde ne gonfle rien", () => {
+    // `bonusParPADispo` (Zénith) n'a AUCUN plafond de lecture : sans écrêtage,
+    // 999 PA saisis rendaient Zénith ×48, un chiffre inatteignable en partie.
+    // La valeur doit être ABSURDE, pas simplement basse : un test à 4 PA (sous
+    // `paMax`) ne pouvait rien voir.
+    const cibles = () => construireMannequins([{ position: 0 }]);
+    const h = heros("iop");
+    const pleine = mesurerLancer(h, "zenith", cibles());
+    const absurde = mesurerLancer(h, "zenith", cibles(), { paDispo: 999 });
+    expect(absurde.moyenne).toBe(pleine.moyenne);
+    // et le cas limite exact : demander pile la barre max ≡ ne rien demander
+    const auMax = mesurerLancer(h, "zenith", cibles(), { paDispo: h.paMax });
+    expect(auMax.moyenne).toBe(pleine.moyenne);
+  });
+
   it("« PA disponibles » n'affecte PAS un sort qui ne les lit pas", () => {
     const cibles = () => construireMannequins([{ position: 0 }]);
     const a = mesurerLancer(heros("iop"), "colere_de_iop", cibles(), { paDispo: 5 });

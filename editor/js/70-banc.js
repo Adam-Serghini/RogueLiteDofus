@@ -84,7 +84,10 @@ function mesurerKit() {
       // (et diviserait par zéro pour un sort de dégâts à 0 PA).
       return { sort: s, lancer, tour, parPA: lancer.lancable && lancer.cout > 0 ? lancer.moyenne / lancer.cout : null };
     });
-  return { lignes, slotsEquipes };
+  // `paMax` remonte avec la mesure : c'est la borne du champ « PA disponibles »,
+  // et contrairement aux cinq compteurs elle n'est PAS une constante du moteur —
+  // elle dépend du héros courant (classe, niveau, équipement).
+  return { lignes, slotsEquipes, paMax: heros.paMax };
 }
 
 /** Libellé de ce qui manque au chiffre affiché — il dit POURQUOI, jamais juste
@@ -119,7 +122,7 @@ enregistrerCategorie("banc", "Banc d'essai", {
     if (!BANC.mannequins.length)
       return [el("h2", {}, "Banc d'essai"), el("p", { class: "note" }, "Place au moins un mannequin pour mesurer.")];
 
-    const { lignes: mesures, slotsEquipes } = mesurerKit();
+    const { lignes: mesures, slotsEquipes, paMax } = mesurerKit();
     const lignes = mesures.map(({ sort, lancer, tour, parPA }) =>
       el("tr", {},
         el("td", {}, vignetteAsset(`spells/${BANC.classeId}/${sort.id}.png`) ?? el("span", {}, "")),
@@ -214,13 +217,19 @@ enregistrerCategorie("banc", "Banc d'essai", {
       compteur("portails", "Portails"),
       compteur("bombes", "Bombes sur la cible"),
       compteur("rage", "Rage"),
-      // pas un compteur plafonné : c'est la barre de PA du tour. 0 = pleine,
-      // c'est-à-dire le MAXIMUM de Zénith et de la Flèche Punitive — sans ce
-      // réglage, ces deux sorts étaient toujours lus à leur plus haut.
+      // La barre de PA du tour. 0 = pleine, c'est-à-dire le MAXIMUM de Zénith et
+      // de la Flèche Punitive — sans ce réglage, ces deux sorts étaient toujours
+      // lus à leur plus haut. Écrêtée à `paMax` comme les cinq compteurs le sont
+      // à leur plafond, et pour la même raison : `bonusParPADispo` n'a aucun
+      // plafond de LECTURE, une saisie libre rendrait un chiffre inatteignable.
+      // La borne n'est pas une constante du moteur, elle dépend du héros courant.
       el("div", { class: "champ" },
-        el("label", {}, "PA disponibles (0 = barre pleine)"),
-        el("input", { type: "number", min: 0, max: 20, value: BANC.cond.paDispo,
-          oninput: (ev) => { BANC.cond.paDispo = Math.max(0, Number(ev.target.value || 0)); rendre(); } })),
+        el("label", {}, `PA disponibles (0 = barre pleine, max ${paMax})`),
+        el("input", { type: "number", min: 0, max: paMax, value: BANC.cond.paDispo,
+          oninput: (ev) => {
+            BANC.cond.paDispo = Math.max(0, Math.min(paMax, Number(ev.target.value || 0)));
+            rendre();
+          } })),
       menuCond("lance", "Lance plantée (Forgelance)",
         [["", "aucune"], ["avant", "rangée avant"], ["arriere", "rangée arrière"]]),
       el("div", { class: "section" }, "Mesure"),

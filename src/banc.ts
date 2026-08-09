@@ -186,7 +186,11 @@ export function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c:
   heros.chausseTrappe = borne(c.chausseTrappe, MAX_COMPTEURS.chausseTrappe);
   heros.portails = borne(c.portails, MAX_COMPTEURS.portails);
   heros.rage = borne(c.rage, MAX_COMPTEURS.rage);
-  if (c.paDispo) heros.paActuels = c.paDispo;
+  // `paDispo` est écrêté à `paMax` comme les cinq compteurs voisins le sont à
+  // leur plafond : la barre de PA d'un tour ne peut pas dépasser le maximum du
+  // héros, et `bonusParPADispo` (Zénith, Flèche Punitive) n'a AUCUN plafond de
+  // lecture — une saisie à 999 rendait Zénith ×48, un chiffre inatteignable.
+  if (c.paDispo) heros.paActuels = Math.min(c.paDispo, heros.paMax);
   // Téléfrags et bombes vivent sur la CIBLE, pas sur le lanceur
   for (const cible of cibles) {
     cible.telefrags = borne(c.telefrags, MAX_COMPTEURS.telefrags);
