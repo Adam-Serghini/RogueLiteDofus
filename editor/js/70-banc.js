@@ -21,15 +21,12 @@ const BANC = {
  *  `undefined`, qui fausserait silencieusement la mesure — même repli que
  *  `construireHeros` (src/banc.ts) pour l'équipement pré-réglé. */
 function construireSurcharges() {
+  const M = window.MoteurBanc;
   const surcharges = {};
   for (const [slot, id] of Object.entries(BANC.surcharges)) {
-    const item = C.items[id];
-    if (!item) continue;
-    const rarete = item.tiers?.[BANC.rarete] ? BANC.rarete : "commun";
-    const tier = item.tiers?.[rarete];
-    if (!tier) continue;
-    surcharges[slot] = { id, rarete, stats: { ...tier.stats },
-      adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
+    if (!C.items[id]) continue;
+    const inst = M.instanceDuTier(id, BANC.rarete) ?? M.instanceDuTier(id, "commun");
+    if (inst) surcharges[slot] = inst;
   }
   return surcharges;
 }

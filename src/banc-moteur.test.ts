@@ -10,7 +10,7 @@ describe("façade du banc d'essai", () => {
   it("expose exactement l'API que l'éditeur consomme", () => {
     expect(Object.keys(facade).sort()).toEqual([
       "REPETITIONS", "appliquerContenuEdite", "construireHeros",
-      "construireMannequins", "mesurerLancer", "mesurerTour",
+      "construireMannequins", "instanceDuTier", "mesurerLancer", "mesurerTour",
     ]);
   });
 

@@ -5,6 +5,7 @@
 //  du fichier chez le game designer.
 // =============================================================================
 export { appliquerContenuEdite } from "./data";
+export { instanceDuTier } from "./run";
 export {
   construireHeros, construireMannequins, mesurerLancer, mesurerTour, REPETITIONS,
 } from "./banc";
