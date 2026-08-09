@@ -6,7 +6,33 @@ const BANC = {
   mannequins: [{ position: 0 }, { position: 1 }, { position: 4 }],
   resistances: {},
   cond: { chausseTrappe: 0, telefrags: 0, portails: 0, bombes: 0, rage: 0 },
+  // Surcharge d'équipement : { slot -> id d'objet }, PAS un ItemInstance figé —
+  // sinon un objet choisi une fois garderait des stats périmées si le designer
+  // les modifie ensuite dans l'onglet « Items ». L'ItemInstance réel est
+  // reconstruit à CHAQUE mesure (voir `construireSurcharges`) en relisant `C.items`.
+  surcharges: {},
 };
+
+/** Reconstruit les ItemInstance de surcharge à partir de `BANC.surcharges`
+ *  (de simples ids) et de `C.items` TEL QU'IL EST MAINTENANT — jamais mis en
+ *  cache, pour que le banc suive une modification faite dans l'onglet « Items ».
+ *  Repli sur le palier « commun » si l'objet n'a pas de palier pour la rareté
+ *  couramment choisie (`BANC.rarete`) : mieux qu'un ItemInstance aux stats
+ *  `undefined`, qui fausserait silencieusement la mesure — même repli que
+ *  `construireHeros` (src/banc.ts) pour l'équipement pré-réglé. */
+function construireSurcharges() {
+  const surcharges = {};
+  for (const [slot, id] of Object.entries(BANC.surcharges)) {
+    const item = C.items[id];
+    if (!item) continue;
+    const rarete = item.tiers?.[BANC.rarete] ? BANC.rarete : "commun";
+    const tier = item.tiers?.[rarete];
+    if (!tier) continue;
+    surcharges[slot] = { id, rarete, stats: { ...tier.stats },
+      adaptatif: tier.adaptatif, resistances: tier.resistances, pa: tier.pa };
+  }
+  return surcharges;
+}
 
 /** Pousse le contenu édité dans le moteur, puis mesure les sorts de dégâts. */
 function mesurerKit() {
@@ -18,6 +44,7 @@ function mesurerKit() {
   const heros = M.construireHeros({
     classeId, niveau: BANC.niveau, toile: BANC.toile,
     equipement: BANC.equipement, rarete: BANC.rarete,
+    surcharges: construireSurcharges(),
   });
   const specs = BANC.mannequins.map((m) => ({ ...m, resistances: BANC.resistances }));
   return C.classes[classeId].sorts
@@ -102,6 +129,19 @@ enregistrerCategorie("banc", "Banc d'essai", {
           el("input", { type: "number", step: "0.05", min: -1, max: 1,
             value: BANC.resistances[elem] ?? 0,
             oninput: (ev) => { BANC.resistances[elem] = Number(ev.target.value || 0); rendre(); } }))),
+      el("div", { class: "section" }, "Surcharge d'équipement (facultatif)"),
+      ...["arme", "coiffe", "cape", "anneau"].map((slot) => {
+        const options = [["", "— état pré-réglé —"]].concat(
+          Object.values(C.items).filter((it) => it.slot === slot).map((it) => [it.id, it.nom]));
+        return el("div", { class: "champ" }, el("label", {}, slot),
+          el("select", { onchange: (ev) => {
+            const id = ev.target.value;
+            if (!id) delete BANC.surcharges[slot];
+            else BANC.surcharges[slot] = id;
+            rendre();
+          } }, ...options.map(([v, lib]) =>
+            el("option", { value: v, selected: (BANC.surcharges[slot] ?? "") === v }, lib))));
+      }),
       el("div", { class: "section" }, "Compteurs conditionnels"),
       compteur("chausseTrappe", "Chausse-Trappes"),
       compteur("telefrags", "Téléfrags sur la cible"),
