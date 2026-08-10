@@ -4,7 +4,7 @@
 import "./style.css";
 import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, xpEffective, zonesDeTranche, trancheDe, DROP, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
-import { genererCarte } from "./carte";
+import { genererCarte, tirerTypeZaap } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   appliquerModificateursElite, effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
@@ -213,8 +213,10 @@ async function resoudreType(
 }
 
 /** Un Zaap se résout en un type aléatoire à l'entrée (pioché dans la zone). */
-async function deZaap(pools: ZonePools): Promise<{ type: NodeType; combatId?: string; xp: number }> {
-  const type = pick<NodeType>(["combat", "combat_dur", "taverne"]);
+async function deZaap(
+  pools: ZonePools, exclus: NodeType[],
+): Promise<{ type: NodeType; combatId?: string; xp: number }> {
+  const type = tirerTypeZaap(Math.random, exclus);
   await ui.showZaap(LABEL_FR[type]);
   if (type === "combat") return { type, combatId: pick(pools.normales), xp: XP_PAR_TYPE.combat };
   if (type === "combat_dur") return { type, combatId: pick(pools.elite), xp: XP_PAR_TYPE.combat_dur };
@@ -239,7 +241,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniere
     let { type } = node;
     let combatId = node.combatId;
     let xp = node.xp ?? 0;
-    if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools));
+    if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools, (zone.sansNoeuds ?? []) as NodeType[]));
 
     const issue = await resoudreType(run, type, combatId, xp, zone, derniereZone, node.eliteModifs);
 

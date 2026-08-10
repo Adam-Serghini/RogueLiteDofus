@@ -113,6 +113,27 @@ export function genererCarte(
   return { noeuds, courant: null, depart: lignes[0].map((n) => n.id) };
 }
 
+// --- Roue du Zaap --------------------------------------------------------------
+/** Types qu'un Zaap peut recracher : ceux du plateau, moins le donjon (unique et
+ *  final), moins le zaap lui-même, moins les exclusions de la zone. */
+export function typesZaapPossibles(exclus: NodeType[]): NodeType[] {
+  return (Object.keys(GEN_CARTE.poids) as NodeType[])
+    .filter((t) => t !== "zaap" && t !== "donjon" && !exclus.includes(t));
+}
+
+/** Tire un type de Zaap AUX POIDS DU PLATEAU : un tirage uniforme ferait du Zaap
+ *  la meilleure façon de farmer le nœud le plus rare. */
+export function tirerTypeZaap(rng: Rng, exclus: NodeType[]): NodeType {
+  const types = typesZaapPossibles(exclus);
+  const total = types.reduce((s, t) => s + (GEN_CARTE.poids[t] ?? 0), 0);
+  let seuil = rng() * total;
+  for (const t of types) {
+    seuil -= GEN_CARTE.poids[t] ?? 0;
+    if (seuil <= 0) return t;
+  }
+  return types[types.length - 1];
+}
+
 // --- Navigation --------------------------------------------------------------
 export const noeud = (carte: GameMap, id: string): MapNode | undefined =>
   carte.noeuds.find((n) => n.id === id);

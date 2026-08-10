@@ -2,20 +2,9 @@
 //  carte.test.ts — Invariants de génération & navigation du plateau.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { genererCarte, noeud, atteignables } from "./carte";
+import { genererCarte, noeud, atteignables, typesZaapPossibles, tirerTypeZaap } from "./carte";
+import { mulberry32 } from "./rng";
 import type { GameMap } from "./types";
-
-// PRNG déterministe (mulberry32) pour des cartes reproductibles.
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 // BFS depuis les départs : l'ensemble des nœuds accessibles.
 function accessibles(carte: GameMap): Set<string> {
@@ -116,5 +105,35 @@ describe("sansNoeuds", () => {
       const c = genererCarte(mulberry32(seed), POOLS, ["otomai"]);
       for (const n of c.noeuds) expect(n.type).not.toBe("otomai");
     }
+  });
+});
+
+describe("roue du Zaap", () => {
+  it("propose les nœuds hors combat, jamais le donjon ni un second zaap", () => {
+    const types = typesZaapPossibles([]);
+    expect(types).toEqual(expect.arrayContaining(
+      ["combat", "combat_dur", "taverne", "hdv", "forgemagie", "otomai"]));
+    expect(types).not.toContain("donjon");
+    expect(types).not.toContain("zaap");
+  });
+
+  it("respecte les exclusions de la zone (Incarnam : ni Otomai ni Forgemage)", () => {
+    const types = typesZaapPossibles(["otomai", "forgemagie"]);
+    expect(types).not.toContain("otomai");
+    expect(types).not.toContain("forgemagie");
+    expect(types).toContain("combat");
+  });
+
+  it("tire aux poids du plateau, pas uniformément", () => {
+    // `combat` pèse 60 contre 6 pour `forgemagie` : sur 1000 tirages à graine, le
+    // combat doit dominer largement. Un pick uniforme ferait du Zaap la meilleure
+    // façon de farmer le nœud le plus rare.
+    const rng = mulberry32(42);
+    const comptes: Record<string, number> = {};
+    for (let i = 0; i < 1000; i++) {
+      const t = tirerTypeZaap(rng, []);
+      comptes[t] = (comptes[t] ?? 0) + 1;
+    }
+    expect(comptes.combat).toBeGreaterThan(comptes.forgemagie * 3);
   });
 });
