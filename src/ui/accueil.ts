@@ -64,7 +64,7 @@ export function showStart(
           </button>`);
         }
         if (max < ASCENSION_MAX) {
-          rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats ${ASCENSION[max].nom} pour la débloquer">🔒 ${escapeHtml(ASCENSION[max + 1].nom)}</button>`);
+          rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats ${escapeHtml(ASCENSION[max].nom)} pour la débloquer">🔒 ${escapeHtml(ASCENSION[max + 1].nom)}</button>`);
         }
         // les effets du cran SÉLECTIONNÉ (la table est absolue : chaque cran porte
         // déjà tout ce que les précédents portaient)
