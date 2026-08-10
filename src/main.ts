@@ -51,19 +51,21 @@ async function resoudreCombat(
   let titre = COMBATS[combatId]?.nom ?? "Combat";
   const equipe = equipeCombattante(run);
   const ennemis = fabriquerEnnemis(combatId);
+  // palier d'Ascension : renfort en ligne avant + PV des monstres (les dégâts
+  // passent par `enemyDamageBonus`, plus bas). AVANT le modificateur d'élite,
+  // sinon le renfort rejoint une meute déjà modifiée et n'en reçoit rien —
+  // une salle « Blindé » afficherait un 5ᵉ monstre qui ne l'est pas.
+  appliquerAscensionEnnemis(ennemis, effetsAscension(run.ascension), {
+    type: opts.type,
+    especesZone: opts.zone ? especesNormalesDeZone(opts.zone) : undefined,
+    rng: Math.random,
+  });
   if (opts.elite) {
     // combat dur : le modificateur vient du nœud (affiché au survol sur la carte) ;
     // absent (zaap, vieille save) → tirage aléatoire
     const modifs = appliquerModificateursElite(ennemis, Math.random, opts.eliteModifs);
     titre = `${titre} · ${modifs.map((m) => `${m.nom} (${m.desc})`).join(" · ")}`;
   }
-  // palier d'Ascension : renfort en ligne avant + PV des monstres (les dégâts
-  // passent par `enemyDamageBonus`, plus bas)
-  appliquerAscensionEnnemis(ennemis, effetsAscension(run.ascension), {
-    type: opts.type,
-    especesZone: opts.zone ? especesNormalesDeZone(opts.zone) : undefined,
-    rng: Math.random,
-  });
   appliquerArchimonstres(ennemis, Math.random, chanceArchi(run)); // taux de base + philtres d'Otomai
   // archimonstre errant (Piou) : APRÈS le tirage d'archi, sinon il subirait un second
   // doublement. Annoncé dans le titre, comme les modificateurs d'élite — un ennemi
@@ -162,7 +164,8 @@ async function resoudreType(
       const pct = tavernePctAscension(run.ascension);
       const propos = propositionsRecrutement(run, Math.random);
       const choix = await ui.showTaverne(run.persos, propos, pct,
-        !!effetsAscension(run.ascension).mortDefinitive);
+        !!effetsAscension(run.ascension).mortDefinitive,
+        !!effetsAscension(run.ascension).tavernesCoupeesAPlein);
       if (choix.type === "soin") {
         soignerEquipe(run, pct);
         await ui.showTransition("🍺 Taverne", `L'équipe récupère ${Math.round(pct * 100)} % de ses PV max.`);

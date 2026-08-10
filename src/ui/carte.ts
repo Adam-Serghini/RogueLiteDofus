@@ -166,8 +166,13 @@ export function showCarte(
           ]
             .filter(Boolean)
             .join(" ");
-          const modifs = n.type === "combat_dur"
-            ? (n.eliteModifs ?? []).map((id) => MODIFICATEURS_ELITE.find((m) => m.id === id)).filter((m): m is NonNullable<typeof m> => !!m)
+          // `appliquerModificateursElite` n'en retient qu'UN (le premier id valide de la
+          // liste) depuis la suppression des élites doubles — une vieille sauvegarde peut
+          // encore porter plusieurs ids dans `eliteModifs` ; l'infobulle ne doit promettre
+          // que celui qui sera réellement appliqué, sous peine de mentir sur la salle.
+          const modifId = (n.eliteModifs ?? []).find((id) => MODIFICATEURS_ELITE.some((m) => m.id === id));
+          const modifs = n.type === "combat_dur" && modifId
+            ? [MODIFICATEURS_ELITE.find((m) => m.id === modifId)!]
             : [];
           const tip = modifs.length ? ` data-tip="${escapeHtml(`Combat dur : ${modifs.map((m) => m.nom).join(" · ")}
 ${modifs.map((m) => m.desc).join(" · ")}

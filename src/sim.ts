@@ -160,13 +160,15 @@ async function simuler(run: RunState, combatId: string, seed0: number, opts: Opt
     run.persos.forEach((p, j) => { if (estSoutien(p.classeId)) equipe[j].ia = "soutien"; });
     const rng = mulberry32((seed0 + i * 0x9e3779b9) >>> 0);
     const ennemis = fabriquerEnnemis(combatId);
+    // comme en jeu : le renfort d'Ascension rejoint la meute AVANT le
+    // modificateur d'élite, sinon il y échapperait
+    appliquerAscensionEnnemis(ennemis, EFF_ASCENSION, {
+      type: opts.type, especesZone: opts.especesZone, rng,
+    });
     if (opts.type === "combat_dur") {
       // comme en jeu : la meute élite est modifiée
       appliquerModificateursElite(ennemis, rng, undefined);
     }
-    appliquerAscensionEnnemis(ennemis, EFF_ASCENSION, {
-      type: opts.type, especesZone: opts.especesZone, rng,
-    });
     const cs = [...equipe, ...ennemis];
     let turns = 0;
     const win = await runCombat(cs, {

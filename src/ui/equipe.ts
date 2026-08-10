@@ -22,6 +22,7 @@ import {
   bonusEquipement,
   bonusEquipe,
   pvMaxPerso,
+  TAILLE_MAX_EQUIPE,
   type PersoState,
 } from "../run";
 import type { Archetype, Meta, Stats } from "../types";
@@ -46,10 +47,15 @@ export function showTaverne(
   propositions: string[],
   soinPct: number,
   mortDefinitive = false,
+  coupureALaPleine = false,
 ): Promise<ActionTaverne> {
   return new Promise((res) => {
     let recrueEnCours: string | null = null; // classe choisie, en attente du remplacement
-    const pleine = persos.length >= 4;
+    const pleine = persos.length >= TAILLE_MAX_EQUIPE;
+    // à Ultime, recruter le dernier membre manquant coupe les tavernes (et donc
+    // tout soin hors combat) pour le reste de la run — le joueur doit le savoir
+    // AVANT de cliquer une carte de recrue, pas le découvrir plus tard.
+    const surLePointDeCouper = coupureALaPleine && !pleine && persos.length === TAILLE_MAX_EQUIPE - 1;
 
     const draw = () => {
       if (recrueEnCours) {
@@ -91,10 +97,14 @@ export function showTaverne(
       const avertissement = mortDefinitive && morts > 0
         ? `<p class="asc-avertissement">☠ ${morts === 1 ? "Un héros tombé ne se relèvera pas" : `${morts} héros tombés ne se relèveront pas`}. Il faut le${morts > 1 ? "s" : ""} remplacer.</p>`
         : "";
+      const avertissementCoupure = surLePointDeCouper && propositions.length
+        ? `<p class="asc-avertissement">⚠ Recruter maintenant complète l'équipe : les tavernes (et tout soin hors combat) disparaissent du reste de la run.</p>`
+        : "";
       ecran(`
         <h1>Taverne</h1>
         <p class="sous-titre">Soigne ton équipe, ou recrute un nouveau membre.</p>
         ${avertissement}
+        ${avertissementCoupure}
         <div class="boutons-ecran">
           <button id="tav-soin" class="primaire">Soigner (+${Math.round(soinPct * 100)} % PV)</button>
         </div>

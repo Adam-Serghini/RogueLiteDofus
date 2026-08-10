@@ -225,6 +225,34 @@ describe("boucle de combat (IA vs IA)", () => {
     const ennemisVivants = cs.filter((c) => c.camp === "ennemi" && c.pvActuels > 0).length;
     expect(joueursVivants === 0 || ennemisVivants === 0).toBe(true);
   });
+
+  // Personne ne teste le maillon qui recopie `hooks.enemyDamageBonus` dans le
+  // contexte (`runCombat`, ctx.enemyDamageBonus = hooks.enemyDamageBonus ?? 1) :
+  // les autres tests du malus d'Ascension appellent `degatsCible` directement
+  // avec un `ctx` construit à la main, sans jamais passer par `runCombat`. Le
+  // champ est optionnel et retombe sur `?? 1` — supprimer la ligne de recopie
+  // laisserait ce test-ci comme les autres verts, mais désactiverait le seul
+  // malus de dégâts de toute la refonte, en jeu comme au banc.
+  it("enemyDamageBonus transite bien de runCombat au pipeline de dégâts", async () => {
+    const rejoue = async (enemyDamageBonus: number) => {
+      const equipe = fabriquerEquipe();
+      const ennemis = fabriquerEnnemis("combat_1");
+      const cs = [...equipe, ...ennemis];
+      await runCombat(cs, {
+        controllers: { joueur: controllerIA, ennemi: controllerIA },
+        rng: rngMax, // déterministe : même déroulé à chaque appel, seul le bonus change
+        enemyDamageBonus,
+      });
+      const pvRestants = cs
+        .filter((c) => c.camp === "joueur")
+        .reduce((s, c) => s + Math.max(0, c.pvActuels), 0);
+      return pvRestants;
+    };
+    const pvNu = await rejoue(1);
+    const pvBoosté = await rejoue(3); // bonus largement supérieur au nominal (×1,3 max en jeu)
+    // un malus de dégâts ennemi plus fort laisse l'équipe joueuse avec moins de PV
+    expect(pvBoosté).toBeLessThan(pvNu);
+  });
 });
 
 // Le rework du Iop a retiré les sorts qui portaient historiquement ces mécaniques

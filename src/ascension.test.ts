@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE, DOFUS, TRANCHES } from "./data";
 import {
   effetsAscension, fabriquerEnnemis, fabriquerEquipe, appliquerAscensionEnnemis,
-  especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe,
+  especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe, appliquerModificateursElite,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   chargerRunEnCours, sauverRunEnCours, verifierSucces,
   sansNoeudsDeZone, chargerMeta, SUCCES, bonusEquipe, tranchesEnCauchemar, verifierDofusCauchemar,
@@ -148,6 +148,35 @@ describe("Ascension — renfort en ligne avant", () => {
     expect(renfort.pvMax).toBeGreaterThan(nu!.pvMax);
   });
 
+  it("en salle élite, le renfort reçoit AUSSI le modificateur d'élite — l'ordre d'appel " +
+    "(renfort d'abord, modificateur ensuite) doit rester celui de main.ts/sim.ts", () => {
+    // sans renfort (A0) pour connaître les PV nus de la meute d'origine, hors modif
+    const refPvMax = fabriquerEnnemis("combat_1")[0].pvMax;
+
+    // ordre correct : renfort AVANT le modificateur d'élite (comme resoudreCombat)
+    const ennemis = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(ennemis, effetsAscension(1), {
+      type: "combat_dur", especesZone: especes, rng: () => 0,
+    });
+    const modifs = appliquerModificateursElite(ennemis, () => 0, ["cuirasse"]); // +20% PV
+    expect(modifs[0].id).toBe("cuirasse");
+    const renfort = renforts(ennemis)[0];
+    expect(renfort).toBeDefined();
+
+    // le renfort nu (même tirage, même espèce, sans le modificateur) sert de référence
+    const sansModif = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(sansModif, effetsAscension(1), {
+      type: "combat_dur", especesZone: especes, rng: () => 0,
+    });
+    const renfortNu = renforts(sansModif)[0];
+    expect(renfortNu).toBeDefined();
+
+    // le renfort a bien subi le +20% de PV du modificateur d'élite, pas seulement
+    // le pvMult du cran d'Ascension
+    expect(renfort.pvMax).toBe(Math.round(renfortNu.pvMax * 1.2));
+    expect(refPvMax).toBeGreaterThan(0); // garde-fou : la fixture n'est pas vide
+  });
+
   it("le renfort encaisse aussi enemyDamageBonus — le multiplicateur vit dans le contexte de combat, pas sur chaque combattant", async () => {
     const { degatsCible } = await import("./combat");
     const { SORTS } = await import("./data");
@@ -181,9 +210,12 @@ describe("plomberie de run", () => {
     expect(tavernePctAscension(1)).toBe(TAVERNE_PCT);
     expect(tavernePctAscension(2)).toBeCloseTo(0.3);
   });
-  it("taux de Dofus : +1 % par palier", () => {
+  it("taux de Dofus : +1 % par palier, écrêté au dernier cran réel", () => {
     expect(tauxDofusAscension(0)).toBeCloseTo(DOFUS_DROP_RATE);
-    expect(tauxDofusAscension(8)).toBeCloseTo(DOFUS_DROP_RATE + 0.08);
+    expect(tauxDofusAscension(ASCENSION_MAX)).toBeCloseTo(DOFUS_DROP_RATE + 0.01 * ASCENSION_MAX);
+    // hors bornes (ancienne échelle 0-8, ou négatif) : écrêté, jamais extrapolé
+    expect(tauxDofusAscension(8)).toBeCloseTo(DOFUS_DROP_RATE + 0.01 * ASCENSION_MAX);
+    expect(tauxDofusAscension(-3)).toBeCloseTo(DOFUS_DROP_RATE);
   });
   it("record : absent avant toute victoire, max(record, palier), ne baisse jamais", () => {
     const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0 };

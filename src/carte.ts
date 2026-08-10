@@ -125,6 +125,7 @@ export function typesZaapPossibles(exclus: NodeType[]): NodeType[] {
  *  la meilleure façon de farmer le nœud le plus rare. */
 export function tirerTypeZaap(rng: Rng, exclus: NodeType[]): NodeType {
   const types = typesZaapPossibles(exclus);
+  if (!types.length) throw new Error("tirerTypeZaap : aucun type de nœud disponible (tout est exclu)");
   const total = types.reduce((s, t) => s + (GEN_CARTE.poids[t] ?? 0), 0);
   let seuil = rng() * total;
   for (const t of types) {

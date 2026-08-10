@@ -798,7 +798,7 @@ export const SUCCES: Succes[] = [
   { id: "asc_cauchemar", nom: "Cauchemar", desc: "Vaincre la tranche en Cauchemar (★★★★).",
     cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 3 },
   { id: "asc_ultime", nom: "Ultime", desc: "Vaincre la tranche en Ultime (★★★★★) — le sommet.",
-    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 4 },
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= ASCENSION_MAX },
 ];
 
 /** Évalue les succès non débloqués ; persiste et renvoie les nouveaux. */
@@ -1044,9 +1044,12 @@ export function enregistrerRun(meta: Meta, reussie: boolean): void {
 export function tavernePctAscension(palier: number): number {
   return effetsAscension(palier).tavernePct ?? TAVERNE_PCT;
 }
-/** Chance de drop de Dofus par boss au palier donné (+1 %/palier). */
+/** Chance de drop de Dofus par boss au palier donné (+1 %/palier). Écrêté comme
+ *  `effetsAscension` : une sauvegarde de l'ancienne échelle (0-8) ne doit jamais
+ *  produire un taux au-delà de celui du dernier cran réel. */
 export function tauxDofusAscension(palier: number): number {
-  return DOFUS_DROP_RATE + 0.01 * palier;
+  const i = Math.max(0, Math.min(Math.trunc(palier) || 0, ASCENSION_MAX));
+  return DOFUS_DROP_RATE + 0.01 * i;
 }
 /** Record d'Ascension d'une tranche (undefined = jamais vaincue). */
 export function recordAscension(meta: Meta, trancheId: string): number | undefined {
