@@ -279,6 +279,12 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   // Apaisement (Ouginak) : ne se lance qu'avec au moins 1 état de Rage
   if (sort.consommeRage && !(acteur.rage ?? 0)) return [];
 
+  // Précipitation (Iop) : rien avant d'avoir joué un tour. `toursJoues` vaut 1
+  // PENDANT le premier tour de son porteur, d'où le `<= 1`. Le compteur est propre
+  // au combattant, pas au combat : une invocation qui entre au tour 3 a elle aussi
+  // son « premier tour » à ce moment-là.
+  if (sort.pasPremierTour && (acteur.toursJoues ?? 0) <= 1) return [];
+
   // Portail (Éliotrope) : injouable une fois le plafond atteint. `poserPortail`
   // se contentait de sortir en silence, donc le sort partait, coûtait son PA et
   // n'ouvrait rien — même standard que Fortification ci-dessus : un sort qui ne
@@ -2546,6 +2552,10 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       aJoue.add(acteur.ref);
 
       reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer ET des remises de coût par tour
+      // Compteur de tours du combattant : vaut 1 PENDANT son premier tour, d'où la
+      // comparaison `<= 1` de `pasPremierTour` dans `ciblesValides`. Incrémenté ici
+      // et nulle part ailleurs — un sort ne doit jamais pouvoir avancer ce compteur.
+      acteur.toursJoues = (acteur.toursJoues ?? 0) + 1;
       if (acteur.nullifieParTour) acteur.coupsAnnulesRestants = acteur.nullifieParTour; // Meulou
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)

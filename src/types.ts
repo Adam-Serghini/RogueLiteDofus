@@ -178,6 +178,7 @@ export interface Spell {
   consommeRage?: boolean; // Apaisement : consomme TOUTE la Rage, soigne baseMin-baseMax PAR charge
   bonusParEnnemiLigneCible?: number; // Dépouille : +% de dégâts par AUTRE ennemi sur la ligne de la cible
   maxParTour?: number; // nombre maximum de lancers de ce sort par tour (toutes cibles confondues)
+  pasPremierTour?: boolean; // indisponible pendant le PREMIER tour de son lanceur (Précipitation)
   maxParCibleParTour?: number; // nombre maximum de lancers de ce sort SUR UNE MÊME cible par tour
   // --- socle Roublard / Xélor / rework Cra ---
   deplaceCible?: "toggle" | "arriere"; // déplace la CIBLE dans la rangée opposée ("toggle") ou vers l'arrière seulement ("arriere") ; échec silencieux si la rangée est pleine
@@ -465,6 +466,9 @@ export interface Combatant {
    *  en cours de combat, contrairement à `lancersCeTour`. Alimenté uniquement pour les
    *  sorts qui déclarent `bonusParLancerCombat`. */
   lancersCombat?: Record<string, number>;
+  /** Nombre de tours que ce combattant a COMMENCÉS (1 pendant son premier tour).
+   *  Lu par `pasPremierTour` ; incrémenté par `runCombat`, jamais par un sort. */
+  toursJoues?: number;
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
   bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
   telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX

@@ -25,6 +25,11 @@ function iop(): Combatant {
   const c = equipeCombattante(nouvelleRun(["iop"]))[0];
   c.stats = { ...c.stats, agilite: 0, chance: 0 };
   c.pvMax = 500; c.pvActuels = 500;
+  // Ces tests mesurent un tour ORDINAIRE, pas l'ouverture du combat : sans ça,
+  // Précipitation (`pasPremierTour`) sortirait de `ciblesValides` partout. La
+  // restriction du premier tour a son propre test, plus bas, qui pose `toursJoues`
+  // à la main — c'est le seul endroit où elle est vérifiée.
+  c.toursJoues = 2;
   return c;
 }
 
@@ -95,8 +100,8 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
     expect(SORTS.zenith).toEqual({
       id: "zenith", nom: "Zénith", type: "degats", cible: "ennemi_ligne",
       coutPA: 4, baseMin: 7, baseMax: 11, scaling: 0.32,
-      zoneLigne: true, bonusParPADispo: 0.07,
-      desc: "Dégâts de zone sur toute la rangée ciblée ; +7 % de dégâts par PA disponible avant le lancer.",
+      zoneLigne: true, bonusParPADispo: 0.07, maxParTour: 1,
+      desc: "Dégâts de zone sur toute la rangée ciblée ; +7 % de dégâts par PA disponible avant le lancer. Un seul lancer par tour.",
     });
   });
 
@@ -112,7 +117,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Endurance", () => {
     expect(SORTS.endurance).toEqual({
       id: "endurance", nom: "Endurance", type: "degats", cible: "ennemi_ligne",
-      coutPA: 2, baseMin: 6, baseMax: 9, scaling: 0.25,
+      coutPA: 2, baseMin: 6, baseMax: 9, scaling: 0.18,
       maxParTour: 2, bouclierPortee: { portee: "soi", pct: 0.08, tours: 1 },
       desc: "Dégâts modérés ; bouclier de 8 % des PV max du Iop pour 1 tour, cumulable si relancé dans le même tour.",
     });
@@ -130,9 +135,9 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Précipitation", () => {
     expect(SORTS.precipitation).toEqual({
       id: "precipitation", nom: "Précipitation", type: "buff", cible: "soi",
-      coutPA: 0, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 3,
-      maxParTour: 1, paImmediat: 3,
-      desc: "Crédite immédiatement 3 PA pour ce tour-ci ; ils sont perdus s'ils ne sont pas dépensés.",
+      coutPA: 3, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 3,
+      maxParTour: 1, paImmediat: 5, pasPremierTour: true,
+      desc: "Crédite immédiatement 5 PA pour ce tour-ci ; ils sont perdus s'ils ne sont pas dépensés. Indisponible au premier tour.",
     });
   });
 
@@ -171,7 +176,7 @@ describe("Zénith", () => {
     expect(500 - e.pvActuels).toBe(Math.round(11 * (1 + 0.07 * 6)));
   });
 
-  it("le COMBO Précipitation → Zénith : Zénith compte 9 PA (6 de départ + 3 crédités − 0 payés par Précipitation)", () => {
+  it("le COMBO Précipitation → Zénith : Zénith compte 8 PA (6 de départ − 3 payés + 5 crédités)", () => {
     // C'est le test qui prouve l'intention du kit : Précipitation gonfle la barre de
     // PA d'un tour pour que Zénith la vide entièrement au meilleur taux.
     const c = iop();
@@ -179,15 +184,16 @@ describe("Zénith", () => {
     c.paActuels = c.paMax;
     const e = mannequin();
 
-    // Précipitation coûte 0 PA : la boucle de combat ne débite rien avant l'appel.
+    // Précipitation coûte 3 PA : la boucle de combat les débite avant l'appel (6 → 3).
+    c.paActuels -= SORTS.precipitation.coutPA;
     lancerSort(c, SORTS.precipitation, c.ref, [c, e], ctx());
-    expect(c.paActuels).toBe(9); // 6 + 3 crédités immédiatement
+    expect(c.paActuels).toBe(8); // 3 + 5 crédités immédiatement, soit +2 nets
 
-    // Zénith coûte 4 PA : la boucle de combat les aurait débités avant l'appel (9 → 5).
+    // Zénith coûte 4 PA : la boucle de combat les aurait débités avant l'appel (8 → 4).
     c.paActuels -= SORTS.zenith.coutPA;
     lancerSort(c, SORTS.zenith, e.ref, [c, e], ctx());
-    // jet max = 11, +7 % par PA dispo AVANT paiement = 9 → 11 * (1 + 0,07*9)
-    expect(500 - e.pvActuels).toBe(Math.round(11 * (1 + 0.07 * 9)));
+    // jet max = 11, +7 % par PA dispo AVANT paiement = 8 → 11 * (1 + 0,07*8)
+    expect(500 - e.pvActuels).toBe(Math.round(11 * (1 + 0.07 * 8)));
   });
 });
 
@@ -257,18 +263,27 @@ describe("Colère de Iop", () => {
 });
 
 describe("Précipitation", () => {
-  it("crédite 3 PA immédiatement, sur paActuels, et coûte 0 PA", () => {
+  it("crédite 5 PA immédiatement sur paActuels ; à 3 PA de coût, le gain NET est de +2", () => {
     const c = iop();
     c.paActuels = 6;
+    c.paActuels -= SORTS.precipitation.coutPA; // débit fait par la boucle de combat
     lancerSort(c, SORTS.precipitation, c.ref, [c], ctx());
-    expect(c.paActuels).toBe(9);
+    expect(c.paActuels).toBe(8); // 6 − 3 + 5
+  });
+
+  it("est INDISPONIBLE au premier tour de son porteur, et disponible ensuite", () => {
+    const c = iop();
+    c.toursJoues = 1; // `runCombat` pose 1 au DÉBUT du premier tour
+    expect(ciblesValides(c, SORTS.precipitation, [c])).toEqual([]);
+    c.toursJoues = 2;
+    expect(ciblesValides(c, SORTS.precipitation, [c])).toEqual([c]);
   });
 
   it("ne bloque pas la fin de tour automatique : plus aucune cible valide après un lancer", () => {
     // `aUneActionPossible` (ui/combat.ts) ne fait que ceci pour chaque sort :
-    // `paActuels >= s.coutPA && ciblesValides(...).length > 0`. Précipitation coûte
-    // 0 PA, donc la condition de PA est TOUJOURS vraie — c'est `ciblesValides` seule
-    // qui doit devenir vide pour que la fin de tour automatique redevienne possible.
+    // `paActuels >= s.coutPA && ciblesValides(...).length > 0`. On donne ici assez de
+    // PA pour que la condition de PA reste vraie : c'est `ciblesValides` seule qu'on
+    // veut voir devenir vide, pour que la fin de tour automatique redevienne possible.
     // Précipitation porte DEUX limites indépendantes (`maxParTour: 1` ET
     // `cooldownTours: 3`), chacune suffisant À ELLE SEULE à vider `ciblesValides` :
     // retirer l'une des deux laisse ce test vert grâce à l'autre — la propriété prouvée

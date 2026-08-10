@@ -244,6 +244,10 @@ function reinitialiser(heros: Combatant, cibles: Combatant[], cond: Conditionnel
   reinitialiserEtatTransitoire(heros);
   heros.cooldowns = {};
   heros.lancersCombat = {};
+  // Une mesure représente un tour ORDINAIRE, pas l'ouverture du combat : à 0 (ou 1),
+  // tout sort marqué `pasPremierTour` sortirait de `ciblesValides` et se mesurerait
+  // à zéro sans un mot, ce qui se lirait comme un sort cassé plutôt qu'un sort tardif.
+  heros.toursJoues = 2;
   heros.paActuels = heros.paMax;
   heros.pvActuels = heros.pvMax;
   for (const c of cibles) {
