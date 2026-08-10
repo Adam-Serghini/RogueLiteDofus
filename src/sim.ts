@@ -151,7 +151,6 @@ interface Bilan { win: number; turns: number; hpWin: number; maxTurns: number; }
 interface OptsRencontre {
   type: "combat" | "combat_dur" | "donjon";
   especesZone?: string[];
-  derniereZone?: boolean;
 }
 
 async function simuler(run: RunState, combatId: string, seed0: number, opts: OptsRencontre): Promise<Bilan> {
@@ -162,8 +161,8 @@ async function simuler(run: RunState, combatId: string, seed0: number, opts: Opt
     const rng = mulberry32((seed0 + i * 0x9e3779b9) >>> 0);
     const ennemis = fabriquerEnnemis(combatId);
     if (opts.type === "combat_dur") {
-      // comme en jeu : la meute élite est modifiée (A5 : 2 modificateurs distincts)
-      appliquerModificateursElite(ennemis, rng, undefined, EFF_ASCENSION.elitesDoubles ? 2 : 1);
+      // comme en jeu : la meute élite est modifiée
+      appliquerModificateursElite(ennemis, rng, undefined);
     }
     appliquerAscensionEnnemis(ennemis, EFF_ASCENSION, {
       type: opts.type, especesZone: opts.especesZone, rng,
@@ -239,14 +238,13 @@ describe("équilibrage — simulation par rencontre", () => {
       const runMiBoss = equipeReference(niveauxFin[z], zone.id, 2);
       const runSetBoss = equipeReference(niveauxFin[z], zone.id);
       const especesZone = especesNormalesDeZone(zone);
-      const derniereZone = z === ZONES_SIM.length - 1;
       for (const { id, type } of lignes) {
         const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
         const boss = type === "boss";
         const elite = type === "élite";
         const opts: OptsRencontre = {
           type: boss ? "donjon" : elite ? "combat_dur" : "combat",
-          especesZone, derniereZone,
+          especesZone,
         };
         const nu = await simuler(boss ? runNuBoss : runNu, id, seed, opts);
         const mi = await simuler(boss ? runMiBoss : runMi, id, seed, opts);

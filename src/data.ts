@@ -359,15 +359,6 @@ export interface EffetsAscension {
   tavernePct?: number; // remplace TAVERNE_PCT
   mortDefinitive?: boolean; // un héros à 0 PV n'est plus relevé hors combat
   tavernesCoupeesAPlein?: boolean; // équipe au complet → plus aucune taverne
-
-  // --- champs en sursis : plus aucun cran ne les pose. Retirés avec leurs
-  // consommateurs à la tâche 10 du chantier (jurisprudence du champ sans porteur).
-  packPlus1?: boolean;
-  bossEnrage?: number;
-  elitesDoubles?: boolean;
-  statMultOffensif?: number;
-  pvDepartPct?: number;
-  bossFinalPaBonus?: number;
 }
 export interface PalierAscension { id: string; nom: string; desc: string; effets: EffetsAscension }
 export const ASCENSION: PalierAscension[] = [

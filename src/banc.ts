@@ -215,8 +215,7 @@ export function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c:
  *  (native), `nullifieParTour` (allocation, distincte de son compteur
  *  `coupsAnnulesRestants`, réinitialisé plus bas), `esquiveArriere`,
  *  `soinDegatsRecus`, `bonusParAllieLigne`, `elements`, `armeSort`,
- *  `dofusLache`, `mueElementaire`, `enrage`/`enrageCumul` (posés par `run.ts`
- *  pour l'Ascension, jamais par un sort). Également laissés intacts :
+ *  `dofusLache`, `mueElementaire`. Également laissés intacts :
  *  `estInvocation`/`joueTour`/`provoque`/`estLance`/`estEgide`/`lanceurRef`/
  *  `toursRestantsInvocation` — vérifié dans `combat.ts` : ces champs ne sont
  *  posés QUE sur un pseudo-combattant tout neuf (Poupée/Lance/Égide) poussé

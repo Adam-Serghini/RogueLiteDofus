@@ -7,7 +7,7 @@ import {
   effetsAscension, fabriquerEnnemis, fabriquerEquipe, appliquerAscensionEnnemis,
   especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
-  appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
+  chargerRunEnCours, sauverRunEnCours, verifierSucces,
   sansNoeudsDeZone, chargerMeta, SUCCES, bonusEquipe, tranchesEnCauchemar, verifierDofusCauchemar,
 } from "./run";
 import { genererCarte, typesZaapPossibles } from "./carte";
@@ -197,46 +197,7 @@ describe("plomberie de run", () => {
   });
 });
 
-describe("enrage (moteur)", () => {
-  it("le compteur monte à chaque appel et augmente les dégâts", async () => {
-    const { appliquerEnrage, degatsCible } = await import("./combat");
-    const { SORTS } = await import("./data");
-    const pack = fabriquerEnnemis("combat_1");
-    const boss = pack[0];
-    boss.enrage = 0.1;
-    boss.stats = { ...boss.stats, agilite: 0 };
-    const cible = { ...fabriquerEnnemis("combat_1")[1], resistances: {}, stats: { ...pack[1].stats, agilite: 0 } };
-    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
-    const base = degatsCible(boss, SORTS.morsure, cible, { useMax: true, mult: 1, ctx: ctx as never }).dmg;
-    appliquerEnrage(boss, ctx as never);
-    appliquerEnrage(boss, ctx as never); // 2 tours → +20 %
-    const enragee = degatsCible(boss, SORTS.morsure, cible, { useMax: true, mult: 1, ctx: ctx as never }).dmg;
-    // valeurs figées plutôt que « base × 1,2 » en tolérance absolue : base et enragee
-    // sont chacun arrondis indépendamment (Math.round appliqué une seule fois, en fin de
-    // pipeline), donc `base × 1,2` (39,6) et `enragee` (39) peuvent différer de plus de
-    // 0,5 sans que la règle « +20 % de dégâts cumulés » soit en cause — recalculé après
-    // le rework des 4 éléments (multOffensif change les dégâts de base).
-    expect(base).toBe(33);
-    expect(enragee).toBe(39);
-  });
-});
-
-describe("élites doubles (A5)", () => {
-  it("applique N modificateurs DISTINCTS", () => {
-    const pack = fabriquerEnnemis("combat_1");
-    const mods = appliquerModificateursElite(pack, () => 0, undefined, 2);
-    expect(mods.length).toBe(2);
-    expect(new Set(mods.map((m) => m.id)).size).toBe(2);
-  });
-  it("genererCarte pose 2 ids distincts sur les combats durs quand nbModifsElite=2", () => {
-    const rng = (() => { let s = 42; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
-    const carte = genererCarte(rng, ZONES[0].pools, [], 2);
-    const durs = carte.noeuds.filter((n) => n.type === "combat_dur");
-    for (const n of durs) {
-      expect(n.eliteModifs?.length).toBe(2);
-      expect(new Set(n.eliteModifs).size).toBe(2);
-    }
-  });
+describe("eliteModifs (format)", () => {
   it("vieille save : eliteModif scalaire migré en tableau", () => {
     const run = nouvelleRun(["iop"]);
     run.carte = genererCarte(() => 0.5, ZONES[0].pools, []);

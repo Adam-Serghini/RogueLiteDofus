@@ -433,8 +433,6 @@ export interface Combatant {
   paGamble?: { pPlus: number; plus: number; moins: number }; // Chance d'Ecaflip portée
   rage?: number; // états de Rage (Ouginak) : +RAGE_BONUS de dégâts par charge, consommés par Apaisement
   elementLibre?: boolean; // Kwakwaffe portée : l'élément choisi n'est plus limité au top 2
-  enrage?: number; // Ascension A3 : +X de dégâts infligés par tour (posé par run.ts sur le boss)
-  enrageCumul?: number; // accumulé par le moteur au début de chaque tour de l'enragé
   renaissance?: number; // Kwakwanneau : fraction de PV de la renaissance (une par combat)
   renaissancesRestantes?: number; // compteur de renaissances disponibles ce combat
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant

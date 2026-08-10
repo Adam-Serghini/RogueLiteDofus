@@ -114,7 +114,6 @@ export function insererSelonOrdre(persos: PersoState[], recrue: PersoState, ordr
 
 export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, trancheId = "t1"): RunState {
   const cells = cellulesPour(choix);
-  const eff = effetsAscension(ascension);
   const niveauDepart = trancheDe(trancheId).niveaux[0];
   const persos: PersoState[] = choix.map((classeId) => {
     const perso = persoAuNiveau(classeId, niveauDepart, cells[classeId]);
@@ -122,7 +121,6 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
     // mais `pvMaxPerso` inclut aussi les bonus de Vitalité de l'équipement) : on
     // resynchronise sur le vrai maximum pour rester correct si ça change.
     perso.pvActuels = pvMaxPerso(perso);
-    if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
     return perso;
   });
   return { persos: trierParOrdre(persos, chargerConfig().ordre), carte: null, inventaire: [], stats: statsRunVides(), kamas: 0, choixDepart: [...choix], ascension, philtres: 0, trancheId };
@@ -189,20 +187,12 @@ export function recruter(run: RunState, classeId: string, remplaceClasseId?: str
       // d'appel à `insererSelonOrdre` ici : elle joue à l'emplacement qu'occupait
       // le partant en formation comme dans l'ordre de jeu.
       run.persos[idx] = nouveauPerso(run, classeId, run.persos[idx].position);
-      appliquerPvDepartAscension(run, run.persos[idx]);
       return;
     }
   }
   const pris = new Set(run.persos.map((p) => p.position));
   const recrue = nouveauPerso(run, classeId, caseLibrePreferee(classeId, pris));
   insererSelonOrdre(run.persos, recrue, chargerConfig().ordre);
-  appliquerPvDepartAscension(run, recrue);
-}
-
-/** Applique le PV de départ réduit d'Ascension (le même que `nouvelleRun`) à une recrue. */
-function appliquerPvDepartAscension(run: RunState, perso: PersoState): void {
-  const eff = effetsAscension(run.ascension);
-  if (eff.pvDepartPct !== undefined) perso.pvActuels = Math.round(pvMaxPerso(perso) * eff.pvDepartPct);
 }
 
 // --- Équipement --------------------------------------------------------------
@@ -585,17 +575,17 @@ export function appliquerModificateurElite(enemies: Combatant[], rng: () => numb
   return m;
 }
 
-/** Applique `nombre` modificateurs d'élite DISTINCTS (ids imposés d'abord, complétés au tirage). */
+/** Applique le modificateur d'élite (id imposé si fourni, sinon tiré). */
 export function appliquerModificateursElite(
-  enemies: Combatant[], rng: () => number, modifIds?: string[], nombre = 1,
+  enemies: Combatant[], rng: () => number, modifIds?: string[],
 ): ModificateurElite[] {
   const restants = [...MODIFICATEURS_ELITE];
   const choisis: ModificateurElite[] = [];
   for (const id of modifIds ?? []) {
     const i = restants.findIndex((m) => m.id === id);
-    if (i >= 0 && choisis.length < nombre) choisis.push(restants.splice(i, 1)[0]);
+    if (i >= 0 && !choisis.length) choisis.push(restants.splice(i, 1)[0]);
   }
-  while (choisis.length < nombre && restants.length) choisis.push(restants.splice(Math.floor(rng() * restants.length), 1)[0]);
+  if (!choisis.length && restants.length) choisis.push(restants.splice(Math.floor(rng() * restants.length), 1)[0]);
   for (const m of choisis) appliquerModificateurElite(enemies, rng, m.id);
   return choisis;
 }
@@ -696,7 +686,7 @@ export function appliquerErrants(
   if (rng() >= def.chance) return undefined; // tirage d'apparition D'ABORD, choix ensuite
   const occupees = new Set(ennemis.map((e) => e.position));
   const cell = [0, 1, 2, 3, 4, 5, 6, 7].find((c) => !occupees.has(c));
-  if (cell === undefined) return undefined; // grille pleine : il n'apparaît pas, comme packPlus1
+  if (cell === undefined) return undefined; // grille pleine : il n'apparaît pas
   const espece = def.especes[Math.floor(rng() * def.especes.length)];
   const piou = depuisMonstre(MONSTRES[espece], `err_${espece}`, cell);
   muterEnArchi(piou);

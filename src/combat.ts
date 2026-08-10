@@ -661,9 +661,6 @@ function degatsAvec(
   // Rage (Ouginak) : +RAGE_BONUS par charge accumulée
   if (lanceur.rage) dmg *= 1 + RAGE_BONUS * Math.min(lanceur.rage, RAGE_MAX);
 
-  // Ascension « Boss enragés » : dégâts cumulés tour après tour
-  if (lanceur.enrageCumul) dmg *= 1 + lanceur.enrageCumul;
-
   // Flèche Punitive : +X % par PA disponible avant le lancer
   if (base.bonusParPADispo && opts.paAvant !== undefined) dmg *= 1 + base.bonusParPADispo * opts.paAvant;
   // Rayon Obscur : +X % par Téléfrag de la cible
@@ -2399,14 +2396,6 @@ export function lancerSort(
 }
 
 // --- Signatures de boss --------------------------------------------------------
-/** Ascension « Boss enragés » : au début de chaque tour de l'enragé, ses dégâts
- *  infligés montent de `enrage` (cumulatif, sans cap). */
-export function appliquerEnrage(acteur: Combatant, ctx: CombatCtx): void {
-  if (!acteur.enrage) return;
-  acteur.enrageCumul = (acteur.enrageCumul ?? 0) + acteur.enrage;
-  ctx.log(`🔥 ${acteur.nom} s'enrage : +${Math.round(acteur.enrageCumul * 100)} % de dégâts.`);
-}
-
 /** Mue élémentaire (Kwakwa) : au début de son tour, le porteur devient très
  *  résistant partout SAUF dans un élément tiré au hasard (résistance 0) —
  *  force le joueur à changer d'élément de frappe à chaque tour du boss. */
@@ -2553,7 +2542,6 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer ET des remises de coût par tour
       if (acteur.nullifieParTour) acteur.coupsAnnulesRestants = acteur.nullifieParTour; // Meulou
       appliquerMueElementaire(acteur, ctx); // signature du Kwakwa
-      appliquerEnrage(acteur, ctx); // Ascension : boss enragés
       appliquerChanceEcaflip(acteur, ctx); // pari de PA (anneau Chance d'Ecaflip)
       // Égide (Féca) : minuteur décompté au DÉBUT du tour de son invocateur, comme la
       // marque de Conjuration de l'Éliotrope (mais l'Égide ne joue pas de tour à elle,

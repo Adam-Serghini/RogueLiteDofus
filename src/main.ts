@@ -43,7 +43,6 @@ interface OptsCombat {
   eliteModifs?: string[];
   type: "combat" | "combat_dur" | "donjon";
   zone?: ZoneDef;
-  derniereZone?: boolean;
 }
 
 async function resoudreCombat(
@@ -53,10 +52,9 @@ async function resoudreCombat(
   const equipe = equipeCombattante(run);
   const ennemis = fabriquerEnnemis(combatId);
   if (opts.elite) {
-    // combat dur : le(s) modificateur(s) vien(nen)t du nœud (affichés au survol sur la carte) ;
+    // combat dur : le modificateur vient du nœud (affiché au survol sur la carte) ;
     // absent (zaap, vieille save) → tirage aléatoire
-    const nombre = effetsAscension(run.ascension).elitesDoubles ? 2 : 1;
-    const modifs = appliquerModificateursElite(ennemis, Math.random, opts.eliteModifs, nombre);
+    const modifs = appliquerModificateursElite(ennemis, Math.random, opts.eliteModifs);
     titre = `${titre} · ${modifs.map((m) => `${m.nom} (${m.desc})`).join(" · ")}`;
   }
   // palier d'Ascension : renfort en ligne avant + PV des monstres (les dégâts
@@ -144,7 +142,7 @@ const LABEL_FR: Record<NodeType, string> = {
 
 async function resoudreType(
   run: RunState, type: NodeType, combatId: string | undefined, xp: number,
-  zone?: ZoneDef, derniereZone?: boolean, eliteModifs?: string[],
+  zone?: ZoneDef, eliteModifs?: string[],
 ): Promise<Issue> {
   const zoneId = zone?.id;
   switch (type) {
@@ -191,7 +189,7 @@ async function resoudreType(
       return "continue";
     }
     case "donjon": {
-      const { gagne, combatants } = await resoudreCombat(run, combatId!, { type: "donjon", zone, derniereZone });
+      const { gagne, combatants } = await resoudreCombat(run, combatId!, { type: "donjon", zone });
       if (!gagne) return "wipe";
       await recompenserButin(run, zoneId, type);
       const boss = combatants.find((c) => c.camp === "ennemi" && c.dofusLache);
@@ -228,15 +226,14 @@ async function deZaap(
 /** Parcourt le plateau d'une zone jusqu'au donjon.
  *  Sauvegarde la run après chaque nœud résolu (reprise possible à tout moment ;
  *  un combat en cours n'est pas sauvegardé → nœud à refaire). */
-async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniereZone: boolean): Promise<"wipe" | "clear" | "accueil" | "recommencer-memes" | "recommencer-choix"> {
+async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise<"wipe" | "clear" | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   if (!run.carte) {
     // pas de carte sauvegardée (nouvelle zone) — sinon on reprend celle en cours.
     // Les exclusions sont calculées ICI, donc une fois par zone : recruter son 4ᵉ
     // héros en milieu de zone laisse les tavernes déjà posées sur ce plateau, la
     // coupure prend effet à la zone suivante. On ne réécrit pas un plateau sous
     // les pieds du joueur.
-    const nbModifsElite = effetsAscension(run.ascension).elitesDoubles ? 2 : 1;
-    run.carte = genererCarte(Math.random, zone.pools, sansNoeudsDeZone(run, zone), nbModifsElite);
+    run.carte = genererCarte(Math.random, zone.pools, sansNoeudsDeZone(run, zone));
     sauverRunEnCours(zoneIdx, run);
   }
   for (;;) {
@@ -250,7 +247,7 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniere
     // Le Zaap est résolu à l'entrée du nœud : avec l'effectif du moment (recrutement possible entretemps).
     if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools, sansNoeudsDeZone(run, zone)));
 
-    const issue = await resoudreType(run, type, combatId, xp, zone, derniereZone, node.eliteModifs);
+    const issue = await resoudreType(run, type, combatId, xp, zone, node.eliteModifs);
 
     node.visite = true;
     run.carte!.courant = node.id;
@@ -299,7 +296,7 @@ async function jouerRun(
   try {
     for (let z = depart; z < zones.length; z++) {
       const zone = zones[z];
-      const issue = await jouerZone(run, zone, z, z === zones.length - 1);
+      const issue = await jouerZone(run, zone, z);
       if (issue === "accueil") return null; // run sauvegardée, retour au lobby
       if (issue === "recommencer-memes" || issue === "recommencer-choix") {
         effacerRunEnCours();
