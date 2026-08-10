@@ -1068,13 +1068,26 @@ export function enregistrerAscension(meta: Meta, trancheId: string, palier: numb
   sauverMeta(meta);
 }
 
-/** Palier « Cauchemar » = index 3 dans `ASCENSION`. Nommé plutôt que codé en dur
- *  à chaque lecture : le jour où un cran s'insère, la constante suit. */
+/** Palier « Cauchemar » = index dans `ASCENSION`. Nommé plutôt que codé en dur à
+ *  chaque lecture : le jour où un cran s'insère, la constante suit. `findIndex`
+ *  renvoie -1 si l'id disparaît de la table — on refuse de laisser ce -1 vivre
+ *  comme un palier valide : sans ce garde, il collisionnerait avec le -1 utilisé
+ *  ailleurs comme sentinelle « jamais vaincue » et rendrait la condition triviale. */
 export const PALIER_CAUCHEMAR = ASCENSION.findIndex((p) => p.id === "cauchemar");
+if (PALIER_CAUCHEMAR < 0) {
+  throw new Error('PALIER_CAUCHEMAR : aucun palier "cauchemar" dans ASCENSION — table incohérente.');
+}
 
-/** Nombre de tranches dont le record atteint au moins Cauchemar. */
+/** Nombre de tranches dont le record atteint au moins Cauchemar. Compare
+ *  explicitement à `undefined` (jamais vaincue) plutôt que de replier sur -1 :
+ *  un repli numérique collisionnerait avec un `PALIER_CAUCHEMAR` qui vaudrait
+ *  lui-même -1 si l'id venait à manquer, rendant la condition vraie pour toute
+ *  tranche jamais jouée. */
 export function tranchesEnCauchemar(meta: Meta): number {
-  return TRANCHES.filter((t) => (recordAscension(meta, t.id) ?? -1) >= PALIER_CAUCHEMAR).length;
+  return TRANCHES.filter((t) => {
+    const record = recordAscension(meta, t.id);
+    return record !== undefined && record >= PALIER_CAUCHEMAR;
+  }).length;
 }
 
 /** Accorde le Dofus du Cauchemar si LES CINQ tranches déclarées sont clean en

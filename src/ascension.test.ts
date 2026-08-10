@@ -422,6 +422,20 @@ describe("Dofus du Cauchemar", () => {
     expect(tranchesEnCauchemar(meta)).toBe(2); // t3 est en Extrême : ne compte pas
   });
 
+  // Round de correction 1 : sans record d'Ascension, `recordAscension` renvoie
+  // `undefined`. Une implémentation qui replierait ce `undefined` sur -1 pour le
+  // comparer à `PALIER_CAUCHEMAR` collisionnerait avec le -1 que `findIndex`
+  // renverrait si l'id "cauchemar" disparaissait de la table : -1 >= -1 est vrai,
+  // donc TOUTE tranche jamais jouée compterait. Ce test échoue si cette
+  // comparaison par sentinelle numérique revient.
+  it("une Meta neuve, sans aucun record, ne compte et n'accorde rien", () => {
+    const meta = metaVide();
+    expect(meta.ascension).toBeUndefined();
+    expect(tranchesEnCauchemar(meta)).toBe(0);
+    expect(verifierDofusCauchemar(meta)).toBe(false);
+    expect(meta.dofus).not.toContain("dofus_du_cauchemar");
+  });
+
   it("exige LES CINQ tranches déclarées, pas seulement les jouables", () => {
     const meta = metaVide();
     meta.ascension = { t1: 4 };
