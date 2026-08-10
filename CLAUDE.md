@@ -24,7 +24,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm run dev` — Vite dev server (hot reload) sur http://localhost:5173
 - `npm run preview` — sert le bundle de `dist/`
-- `npm test` — suite Vitest en une passe ; `npm run test:watch` pour le mode watch
+- `npm test` — suite Vitest en une passe ; `npm run test:watch` pour le mode watch. Le glob couvre
+  **aussi** `scripts/*.test.mjs` (`canonical`, `content-validate`), et `vite.config.ts` exclut
+  `**/.claude/**` : les worktrees git vivent **dans** le dépôt et multipliaient le total annoncé.
 - Un seul test : `npx vitest run src/combat.test.ts -t "règle de ligne"` (`-t` matche le nom du
   `describe`/`it`)
 - `npm run typecheck` — `tsc --noEmit`, strict
@@ -47,12 +49,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `scripts/extract-content.mjs` — bootstrap historique data.ts → JSON, **ne pas le relancer**
 
 **Il n'y a ni linter ni formatter** dans le projet : `typecheck` + `test` sont les seules portes.
-
-**Caveat du banc** : son `controllerIA` soigne optimalement, ne joue que les sorts `type: "degats"` (le
-plus cher d'abord) et ne se trompe jamais → c'est un **plancher de difficulté**, pas le ressenti réel.
-Plusieurs rencontres sont structurellement **sous-lues** par lui et ne doivent pas être nerfées pour
-lui plaire : la mue du Kwakwa, les annulations par tour du Meulou, la toile du Domaine Ancestral, et
-tout kit dont la force passe par des buffs ou une séquence de PA.
 
 ## What the game is
 
@@ -97,6 +93,8 @@ suivante**. Tout se juge à une question — *est-ce que le combat est amusant ?
   `propositionsRecrutement`), fabriques de combattants (`combattantDepuisPerso`, `equipeCombattante`,
   `synchroniserPV`), bonus d'équipement (`bonusEquipement`, `pvMaxPerso`), persistance `Meta`, Ascension
   (`effetsAscension`, `appliquerAscensionEnnemis`), succès, héritage entre tranches.
+- `src/rng.ts` — `mulberry32`, **source unique** du tirage pseudo-aléatoire des deux outils de mesure
+  (voir *Outils de mesure*). Pur, sans dépendance.
 - `src/config.ts` — réglages joueur (`Settings`) : touche de fin de tour, `autoFinTour`, `formation` par
   classe, `ordre` (préférence durable de rang dans la file alliée), validés au chargement.
 - `src/ui/` — rendu DOM + contrôleur joueur, un fichier par écran derrière un barrel (`index.ts`).
@@ -108,7 +106,8 @@ suivante**. Tout se juge à une question — *est-ce que le combat est amusant ?
 - `src/main.ts` — orchestration : accueil → pour la tranche choisie, `jouerZone` génère le plateau de
   chaque zone et le parcourt jusqu'au donjon battu → zone suivante ; un wipe termine la run. PV et
   niveaux persistent entre zones, seul `Meta` survit à la mort.
-- `editor/` — sources de l'éditeur de contenu standalone, inlinées par `scripts/editor-build.mjs`.
+- `src/sim.ts`, `src/banc.ts`, `src/banc-moteur.ts`, `editor/` — les trois outils **hors jeu**, décrits
+  ensemble dans *Outils de mesure* ci-dessous.
 
 **Deux coutures qui gardent tout testable :**
 
@@ -117,6 +116,44 @@ suivante**. Tout se juge à une question — *est-ce que le combat est amusant ?
    Les PV persistent via `PersoState.pvActuels` (réécrit par `synchroniserPV`), pas en gardant l'objet.
 2. **Le contrôleur asynchrone** : `runCombat` `await` le contrôleur du camp actif, donc la même boucle
    tourne headless (IA vs IA en test) ou interactive (promesse résolue par un clic), sans branche.
+
+## Outils de mesure
+
+Trois outils tournent **à côté** du jeu et partagent une règle unique : **ils appellent le vrai moteur et
+les vraies fabriques, jamais une copie d'une formule**. Une seconde implémentation diverge du jeu en
+quelques semaines, et un chiffre faux est pire que pas de chiffre.
+
+### Banc d'équilibrage — `npm run sim` (`src/sim.ts`)
+
+**Caveat** : son `controllerIA` soigne optimalement, ne joue que les sorts `type: "degats"` (le plus cher
+d'abord) et ne se trompe jamais → c'est un **plancher de difficulté**, pas le ressenti réel. Plusieurs
+rencontres sont structurellement **sous-lues** par lui et ne doivent pas être nerfées pour lui plaire : la
+mue du Kwakwa, les annulations par tour du Meulou, la toile du Domaine Ancestral, et tout kit dont la force
+passe par des buffs ou une séquence de PA.
+
+### Banc d'essai de l'éditeur — `src/banc.ts` + `editor/js/70-banc.js`
+
+Mesure les sorts d'une classe sur des mannequins, avec le contenu **en cours d'édition** chez le game
+designer.
+
+- **`src/banc.ts` est PUR** (aucun DOM, aucun `localStorage`) et mesure en lançant **réellement**
+  `lancerSort`. `PV_MANNEQUIN` est énorme à dessein : un mannequin mort sortirait de `ciblesValides` et les
+  répétitions suivantes tomberaient à zéro **sans prévenir**.
+- **`src/banc-moteur.ts` est une façade explicite** — le seul point d'entrée compilé en IIFE et inliné dans
+  `editeur.html`. `banc-moteur.test.ts` la fige : un renommage en amont casse au `npm test`, pas à
+  l'ouverture du fichier chez le designer.
+- **Rien ne s'assemble champ par champ** : héros et exemplaires passent par les fabriques du jeu
+  (`persoAuNiveau`, `combattantDepuisPerso`, `instanceDuTier`). Les surcharges d'équipement sont stockées
+  comme de **simples ids** et l'`ItemInstance` est reconstruit à **chaque** mesure — sinon une pièce
+  choisie une fois garderait des stats périmées après une édition dans l'onglet « Items ».
+
+### Éditeur standalone — `npm run editor:build`
+
+Génère `editeur.html` à la racine (gitignoré) : fichier **unique et auto-suffisant** — template + styles +
+contenu courant + assets en data URI (`monstres`, `items`, `classes`, `spells/<classe>/<sort>`) + moteur
+compilé. Le JS vient de `editor/js/`, **concaténé par ordre alphabétique de nom de fichier** (`00-etat.js`
+… `70-banc.js`) : pas d'imports, donc le préfixe numérique EST l'ordre de chargement. `editor/js/` affiche,
+il ne calcule pas. Mode d'emploi côté designer : `editor/README.md`.
 
 ## Pipeline de contenu
 
@@ -342,6 +379,11 @@ de porteur** (celui-là doit tomber le jour où une classe reprend une purge).
   sous le même nom. Toute borne qui lisait la constante est restée juste par coïncidence de
   changement simultané. Quand le sens d'un nombre bouge, chercher ses lecteurs au grep — le
   compilateur ne le fera pas.
+- **Un outil de mesure n'a pas droit à son propre RNG.** Le banc d'essai portait un LCG recopié dont la
+  multiplication (`g * 1103515245`) dépassait 2^53 et perdait ses bits de poids faible en flottant : cycle
+  réel de 10466 tirages, si bien qu'une mesure à 500 répétitions rejouait les mêmes tirages passé la
+  ~300ᵉ, avec un biais d'environ 0,5 %. `src/rng.ts` (`mulberry32`) est désormais la source unique — deux
+  générateurs, c'est deux qualités de tirage pour deux chiffres censés se comparer.
 - **Un contre documenté mais jamais atteignable n'est pas un contre** : `ignoreLigne` face à `tetanise`
   était décrit ici pendant des mois sans exister dans le moteur, faute d'un seul porteur des deux côtés.
   Seul un test qui l'exerce le révèle.
