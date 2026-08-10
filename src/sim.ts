@@ -63,11 +63,13 @@ const N = 200; // combats par (rencontre × scénario de stuff)
 const NORMAUX_PAR_ZONE = 6; // path moyen supposé pour la courbe d'XP (plateau Pokelike ~10 nœuds)
 const ELITES_PAR_ZONE = 1;
 // Palier d'Ascension mesuré par le sim (0 = jeu de base). Le sim ne rejoue que des
-// RENCONTRES ISOLÉES, pas des runs entières : la taverne réduite (tavernePct) et les
-// PV de départ amputés (pvDepartPct) d'Ascension ne s'appliquent qu'entre/au début des
-// runs réelles et restent donc HORS scope de cette mesure — seuls les effets qui
-// modifient directement les ennemis (meute, PV/stats, enrage boss, PA final, élites
-// doubles) sont appliqués ici via `appliquerAscensionEnnemis`/`appliquerModificateursElite`.
+// RENCONTRES ISOLÉES, pas des runs entières : la taverne réduite (tavernePct) et la
+// mort définitive, ainsi que les tavernes coupées à l'équipe complète, ne s'appliquent
+// qu'entre/au début des runs réelles et restent donc HORS scope de cette mesure —
+// seuls les effets qui modifient directement les ennemis (renfort de meute, PV,
+// multiplicateur de dégâts) sont appliqués ici via
+// `appliquerAscensionEnnemis`/`appliquerModificateursElite` et le `enemyDamageBonus`
+// passé à `runCombat`.
 const ASCENSION = 0;
 const EFF_ASCENSION = effetsAscension(ASCENSION);
 
@@ -172,6 +174,7 @@ async function simuler(run: RunState, combatId: string, seed0: number, opts: Opt
       controllers: { joueur: controllerIA, ennemi: controllerIA },
       rng,
       log: (m) => { if (m.charCodeAt(0) === 0x25b6) turns++; }, // « ▶ Tour de … »
+      enemyDamageBonus: EFF_ASCENSION.degatsMult ?? 1,
     });
     turnsTot += turns;
     if (turns > maxTurns) maxTurns = turns;

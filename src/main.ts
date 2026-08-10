@@ -93,6 +93,7 @@ async function resoudreCombat(
       await sleep(60);
     },
     playerDamageBonus: damageMult,
+    enemyDamageBonus: effetsAscension(run.ascension).degatsMult ?? 1,
   });
   synchroniserPV(run, combatants); // PV conservés d'un nœud à l'autre
   if (gagne) {

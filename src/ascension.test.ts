@@ -4,7 +4,8 @@
 import { describe, it, expect } from "vitest";
 import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE } from "./data";
 import {
-  effetsAscension, fabriquerEnnemis, appliquerAscensionEnnemis, especesNormalesDeZone, nouvelleRun,
+  effetsAscension, fabriquerEnnemis, fabriquerEquipe, appliquerAscensionEnnemis,
+  especesNormalesDeZone, nouvelleRun,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
 } from "./run";
@@ -184,6 +185,32 @@ describe("élites doubles (A5)", () => {
       expect(Array.isArray(n.eliteModifs)).toBe(true);
       expect(n.eliteModifs!.length).toBe(1);
     }
+  });
+});
+
+describe("Ascension — dégâts du camp ennemi", () => {
+  const sansHasard = { rng: () => 0.99, log: () => {} }; // 0.99 > plafond de crit : pas de crit
+
+  it("un coup ennemi encaisse le multiplicateur, un coup joueur non", async () => {
+    const { degatsCible } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const [heros] = fabriquerEquipe();
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    const sort = SORTS[heros.sorts[0]];
+
+    const opts = (ctx: object) => ({ useMax: true, mult: 1, ctx });
+    const nu = degatsCible(ennemi, sort, heros, opts({ ...sansHasard, playerDamageBonus: 1 }) as never);
+    const boosté = degatsCible(ennemi, sort, heros,
+      opts({ ...sansHasard, playerDamageBonus: 1, enemyDamageBonus: 1.3 }) as never);
+    expect(boosté.dmg).toBeGreaterThan(nu.dmg);
+
+    const cotéJoueur = degatsCible(heros, sort, ennemi,
+      opts({ ...sansHasard, playerDamageBonus: 1, enemyDamageBonus: 1.3 }) as never);
+    const cotéJoueurNu = degatsCible(heros, sort, ennemi,
+      opts({ ...sansHasard, playerDamageBonus: 1 }) as never);
+    expect(cotéJoueur.dmg).toBe(cotéJoueurNu.dmg);
   });
 });
 

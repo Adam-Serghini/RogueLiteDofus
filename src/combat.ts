@@ -30,6 +30,9 @@ export interface CombatCtx {
    *  jamais une couleur — et l'interface n'a rien à deviner par expression régulière. */
   log: (msg: string, meta?: { element: Element; portion: string }) => void;
   playerDamageBonus: number; // multiplicateur Dofus appliqué au camp joueur
+  /** Multiplicateur de dégâts du camp ENNEMI (palier d'Ascension). Optionnel —
+   *  défaut 1 — pour ne pas invalider les littéraux de contexte des tests. */
+  enemyDamageBonus?: number;
   fx?: (ev: FxEvent) => void; // effets visuels (optionnel)
   onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (optionnel)
   combatants?: Combatant[]; // référence vivante de la liste en cours (posée par lancerSort) — lookup Lance/redirection
@@ -46,6 +49,7 @@ export interface CombatHooks {
   onUpdate?: () => Promise<void> | void; // re-render entre deux actions
   rng?: Rng;
   playerDamageBonus?: number;
+  enemyDamageBonus?: number;
   fx?: (ev: FxEvent) => void; // effets visuels (crit, esquive…)
   onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (récap de fin)
 }
@@ -679,8 +683,10 @@ function degatsAvec(
   // réduction de dégâts subis (Bâton du berger), plafonnée à 80 %
   dmg *= 1 - Math.min(0.8, sommeEffet(cible, "reductionDegats"));
 
-  // bonus permanent d'équipe (Dofus), côté joueur uniquement
-  if (lanceur.camp === "joueur") dmg *= ctx.playerDamageBonus;
+  // multiplicateur de CAMP : bonus permanent d'équipe (Dofus) côté joueur, palier
+  // d'Ascension côté ennemi. Un seul point d'application, donc aucun coup oublié —
+  // y compris pour un ennemi apparu en cours de combat (renfort, invocation).
+  dmg *= lanceur.camp === "joueur" ? ctx.playerDamageBonus : (ctx.enemyDamageBonus ?? 1);
 
   // puissance offensive (Intelligence) — s'applique à tout lanceur
   dmg *= multOffensif(se);
@@ -2525,6 +2531,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
     rng: hooks.rng ?? Math.random,
     log: hooks.log ?? (() => {}),
     playerDamageBonus: hooks.playerDamageBonus ?? 1,
+    enemyDamageBonus: hooks.enemyDamageBonus ?? 1,
     fx: hooks.fx,
     onDegats: hooks.onDegats,
   };
