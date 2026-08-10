@@ -15,7 +15,7 @@ import {
   MENU_DOFUS,
   BTN_RETOUR,
 } from "./assets";
-import { renderDofusRack, carteClasse } from "./composants";
+import { renderDofusRack, carteClasse, etoiles } from "./composants";
 import { classesDisponibles, SUCCES, recordAscension, trancheDeverrouillee, trancheJouable } from "../run";
 import { showSettings } from "./inventaire";
 import { showBestiaire, showArmurerie, showEncyclopedie } from "./collections";
@@ -59,16 +59,20 @@ export function showStart(
         const max = Math.min(record + 1, ASCENSION_MAX);
         const rangs: string[] = [];
         for (let n = 0; n <= max; n++) {
-          rangs.push(`<button class="asc-btn ${n === sel ? "asc-sel" : ""}" data-asc="${n}">A${n}</button>`);
+          rangs.push(`<button class="asc-btn ${n === sel ? "asc-sel" : ""}" data-asc="${n}" title="${escapeHtml(ASCENSION[n].desc)}">
+            <span class="asc-etoiles">${etoiles(n)}</span> ${escapeHtml(ASCENSION[n].nom)}
+          </button>`);
         }
-        if (max < ASCENSION_MAX) rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats A${max} pour la débloquer">🔒 A${max + 1}</button>`);
-        const malus = sel > 0
-          ? `<ul class="asc-malus">${ASCENSION.slice(0, sel).map((p) => `<li>• ${escapeHtml(p.nom)} : ${escapeHtml(p.desc)}</li>`).join("")}</ul>`
-          : "";
+        if (max < ASCENSION_MAX) {
+          rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats ${ASCENSION[max].nom} pour la débloquer">🔒 ${escapeHtml(ASCENSION[max + 1].nom)}</button>`);
+        }
+        // les effets du cran SÉLECTIONNÉ (la table est absolue : chaque cran porte
+        // déjà tout ce que les précédents portaient)
+        const malus = sel > 0 ? `<ul class="asc-malus"><li>• ${escapeHtml(ASCENSION[sel].desc)}</li></ul>` : "";
         return `<div class="asc-section">
           <div class="asc-rangee">${rangs.join("")}</div>
           ${malus}
-          ${record >= 1 ? `<p class="asc-record">Record : A${record} ✓</p>` : ""}
+          ${record >= 1 ? `<p class="asc-record">Record : ${etoiles(record)} ${escapeHtml(ASCENSION[record].nom)} ✓</p>` : ""}
         </div>`;
       })() : "";
 
@@ -85,7 +89,7 @@ export function showStart(
         <p class="sous-titre">Choisis 2 héros, recrute aux tavernes (4 max), traverse le plateau jusqu'au boss. Les PV se conservent ; seuls les Dofus survivent à la mort.</p>
         <p class="accueil-dofus-compte">Dofus collectés : <b>${nbUniques}/${total}</b></p>
         <p class="accueil-runs-compte">Runs : <b>${meta.runs}</b> · Réussies : <b>${meta.victoires}</b></p>
-        ${reprise ? `<p class="accueil-reprise">⚔ Run en cours : <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b>${reprise.ascension >= 1 ? ` <span class="asc-badge" title="Palier d'Ascension de cette run">A${reprise.ascension}</span>` : ""}</p>` : ""}
+        ${reprise ? `<p class="accueil-reprise">⚔ Run en cours : <b>Zone ${reprise.zoneNum}/${reprise.nbZones} : ${escapeHtml(reprise.zoneNom)}</b>${reprise.ascension >= 1 ? ` <span class="asc-badge" title="${escapeHtml(ASCENSION[reprise.ascension].desc)}">${etoiles(reprise.ascension)}</span>` : ""}</p>` : ""}
         <div class="tranches-rack">
           ${TRANCHES.map((t) => {
             const ouverte = trancheDeverrouillee(meta, t.id);

@@ -1,10 +1,10 @@
 // =============================================================================
 //  ui/fin.ts — écrans de fin de run : récapitulatif et défaite (wipe).
 // =============================================================================
-import { CLASSES } from "../data";
+import { CLASSES, ASCENSION } from "../data";
 import { escapeHtml, ecran } from "./dom";
 import { BTN_RETOUR } from "./assets";
-import { classSymbol, kamasHtml } from "./composants";
+import { classSymbol, kamasHtml, etoiles } from "./composants";
 import type { RunState, Succes } from "../run";
 
 /** Récap de fin de run (victoire ou wipe) : dégâts par héros, MVP, compteurs. */
@@ -28,7 +28,7 @@ export function showRecap(
       .join("");
     ecran(`
       <h1 class="${victoire ? "" : "defaite"}">${victoire ? "🏆 Krosmoz traversé !" : "Équipe anéantie"}</h1>
-      ${run.ascension >= 1 ? `<p class="asc-record">Ascension <span class="asc-badge">A${run.ascension}</span></p>` : ""}
+      ${run.ascension >= 1 ? `<p class="asc-record">${escapeHtml(ASCENSION[run.ascension].nom)} <span class="asc-badge">${etoiles(run.ascension)}</span></p>` : ""}
       <p class="sous-titre">${victoire ? "Toutes les zones de la tranche sont vaincues." : "La run s'arrête ici. Tes Dofus et tes captures, eux, sont conservés."}</p>
       <div class="recap-compteurs">
         <span class="recap-chip">🗺️ ${st.zones} zone${st.zones > 1 ? "s" : ""}</span>

@@ -163,7 +163,8 @@ async function resoudreType(
     case "taverne": {
       const pct = tavernePctAscension(run.ascension);
       const propos = propositionsRecrutement(run, Math.random);
-      const choix = await ui.showTaverne(run.persos, propos, pct);
+      const choix = await ui.showTaverne(run.persos, propos, pct,
+        !!effetsAscension(run.ascension).mortDefinitive);
       if (choix.type === "soin") {
         soignerEquipe(run, pct);
         await ui.showTransition("🍺 Taverne", `L'équipe récupère ${Math.round(pct * 100)} % de ses PV max.`);

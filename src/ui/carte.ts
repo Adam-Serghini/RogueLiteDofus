@@ -19,7 +19,7 @@ import {
   CASE_DEPART,
   COEUR_PLEIN,
 } from "./assets";
-import { classSymbol, pastillesElements, kamasHtml } from "./composants";
+import { classSymbol, pastillesElements, kamasHtml, etoiles } from "./composants";
 import { pvMaxPerso, type PersoState } from "../run";
 import { showStatPanel, showFormation } from "./equipe";
 import { showInventaire } from "./inventaire";
@@ -209,7 +209,7 @@ Butin au taux donjon.`)}"` : "";
       root.innerHTML = `
         <div class="carte-ecran map-layout">
           <header class="map-topbar">
-            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="Ascension : ${ASCENSION.slice(0, ascension).map((p) => p.nom).join(" · ")}">A${ascension}</span>` : ""}${philtres >= 1 ? `<span class="asc-badge" title="Philtres d'Otomai bus : les archimonstres apparaissent plus souvent">🧪 ×${philtres}</span>` : ""}</h2>
+            <h2 class="zone-titre">${escapeHtml(zoneNom)}${ascension >= 1 ? `<span class="asc-badge" title="${escapeHtml(ASCENSION[ascension].desc)}">${etoiles(ascension)}</span>` : ""}${philtres >= 1 ? `<span class="asc-badge" title="Philtres d'Otomai bus : les archimonstres apparaissent plus souvent">🧪 ×${philtres}</span>` : ""}</h2>
             <div class="topbar-actions">
               <button id="carte-persos" class="aside-icone" title="Caractéristiques"><img src="${MENU_PERSOS}" alt="Caractéristiques" onerror="this.remove()" /></button>
               <button id="carte-formation" class="aside-icone" title="Formation"><img src="${MENU_FORMATION}" alt="Formation" onerror="this.remove()" /></button>

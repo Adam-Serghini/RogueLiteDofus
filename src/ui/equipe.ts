@@ -45,6 +45,7 @@ export function showTaverne(
   persos: PersoState[],
   propositions: string[],
   soinPct: number,
+  mortDefinitive = false,
 ): Promise<ActionTaverne> {
   return new Promise((res) => {
     let recrueEnCours: string | null = null; // classe choisie, en attente du remplacement
@@ -86,9 +87,14 @@ export function showTaverne(
         ? `<h3>Recruter (2 candidats)</h3>
            <div class="choix-grille">${propositions.map((id) => carteClasse(id, false, "data-recrue")).join("")}</div>`
         : `<p class="muet">Aucune classe à recruter (toutes déjà dans l'équipe).</p>`;
+      const morts = persos.filter((p) => p.pvActuels <= 0).length;
+      const avertissement = mortDefinitive && morts > 0
+        ? `<p class="asc-avertissement">☠ ${morts === 1 ? "Un héros tombé ne se relèvera pas" : `${morts} héros tombés ne se relèveront pas`}. Il faut le${morts > 1 ? "s" : ""} remplacer.</p>`
+        : "";
       ecran(`
         <h1>Taverne</h1>
         <p class="sous-titre">Soigne ton équipe, ou recrute un nouveau membre.</p>
+        ${avertissement}
         <div class="boutons-ecran">
           <button id="tav-soin" class="primaire">Soigner (+${Math.round(soinPct * 100)} % PV)</button>
         </div>

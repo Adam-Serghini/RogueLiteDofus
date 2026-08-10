@@ -3,13 +3,20 @@
 //  formatage %, pastilles d'élément, cartes de classe, chips de stats d'objet…).
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
-import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO } from "../data";
+import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO, ASCENSION, ASCENSION_MAX } from "../data";
 import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort, coutEffectif } from "../combat";
 import { statElement, multSoin, multOffensif, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, archetypeAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
 import { escapeHtml, tipsFlottants, setFond } from "./dom";
+
+/** Rendu d'un cran d'Ascension en étoiles (★1 = jeu de base). Source UNIQUE :
+ *  accueil, carte et récap de fin lisent la même formule. */
+export function etoiles(palier: number): string {
+  const n = Math.max(0, Math.min(Math.trunc(palier) || 0, ASCENSION_MAX)) + 1;
+  return "★".repeat(n) + "☆".repeat(ASCENSION.length - n);
+}
 
 /** Fond d'écran de la tranche en cours (null = retour au fond de l'accueil). */
 export function setFondTranche(trancheId: string | null): void {

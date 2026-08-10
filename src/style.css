@@ -615,6 +615,8 @@ button.item-carte:disabled {
   font-size: 0.85em;
   margin: 6px 0 0;
 }
+.asc-etoiles { letter-spacing: 0.08em; }
+.asc-avertissement { color: var(--danger, #d05); font-weight: 600; }
 /* Badge de palier (carte, recap) */
 .asc-badge {
   display: inline-block;
