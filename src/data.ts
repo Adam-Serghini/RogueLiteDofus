@@ -346,29 +346,49 @@ export const OCRE_PALIERS: OcrePalier[] = [
   { seuil: 250, paBonus: 3, degats: 0.3 },
 ];
 
-// --- Ascension (échelle de difficulté opt-in — jouer A(n) cumule A1..A(n)) -------
+// --- Ascension (difficulté opt-in — 5 crans, affichés en étoiles) ---------------
+// Le palier est l'INDEX du cran (0..ASCENSION_MAX), pas un nombre de paliers
+// appliqués : `effetsAscension` lit la ligne, elle ne fusionne plus rien. Chaque
+// cran redéclare TOUT son tableau, en absolu — les chiffres voulus (+20/+30/+50 %
+// de PV) ne sont pas une composition propre de deltas, et les écrire en facteurs
+// composés coupleraient les crans entre eux.
 export interface EffetsAscension {
-  packPlus1?: boolean; // +1 monstre dans les combats NORMAUX (si case libre)
-  tavernePct?: number; // remplace TAVERNE_PCT
-  bossEnrage?: number; // le boss gagne +X de dégâts infligés à chacun de ses tours (cumulatif)
+  degatsMult?: number; // multiplicateur des dégâts infligés par le camp ennemi
   pvMult?: number; // PV des monstres
-  elitesDoubles?: boolean; // les combats durs tirent DEUX modificateurs élite
-  statMultOffensif?: number; // stats offensives des monstres
-  pvDepartPct?: number; // fraction des PV au départ de la run (et des recrues)
-  bossFinalPaBonus?: number; // PA bonus du boss de la DERNIÈRE zone
+  renfortAvant?: boolean; // +1 monstre en LIGNE AVANT (combats normaux et durs)
+  tavernePct?: number; // remplace TAVERNE_PCT
+  mortDefinitive?: boolean; // un héros à 0 PV n'est plus relevé hors combat
+  tavernesCoupeesAPlein?: boolean; // équipe au complet → plus aucune taverne
+
+  // --- champs en sursis : plus aucun cran ne les pose. Retirés avec leurs
+  // consommateurs à la tâche 10 du chantier (jurisprudence du champ sans porteur).
+  packPlus1?: boolean;
+  bossEnrage?: number;
+  elitesDoubles?: boolean;
+  statMultOffensif?: number;
+  pvDepartPct?: number;
+  bossFinalPaBonus?: number;
 }
 export interface PalierAscension { id: string; nom: string; desc: string; effets: EffetsAscension }
 export const ASCENSION: PalierAscension[] = [
-  { id: "meute", nom: "Meute élargie", desc: "+1 monstre dans les combats normaux", effets: { packPlus1: true } },
-  { id: "tavernes", nom: "Tavernes avares", desc: "Les tavernes ne soignent plus que 30 % des PV", effets: { tavernePct: 0.3 } },
-  { id: "enrage", nom: "Boss enragés", desc: "Les boss gagnent +10 % de dégâts à chacun de leurs tours", effets: { bossEnrage: 0.1 } },
-  { id: "vigueur", nom: "Monstres vigoureux", desc: "PV des monstres +20 %", effets: { pvMult: 1.2 } },
-  { id: "elites", nom: "Élites doubles", desc: "Les combats durs cumulent deux modificateurs", effets: { elitesDoubles: true } },
-  { id: "frappe", nom: "Frappe chirurgicale", desc: "Caractéristiques offensives des monstres +15 %", effets: { statMultOffensif: 1.15 } },
-  { id: "frugal", nom: "Départ frugal", desc: "L'équipe commence la run à 75 % de ses PV", effets: { pvDepartPct: 0.75 } },
-  { id: "rempart", nom: "Le dernier rempart", desc: "Le boss final gagne +2 PA", effets: { bossFinalPaBonus: 2 } },
+  { id: "normal", nom: "Normal", desc: "Le jeu de base.", effets: {} },
+  { id: "difficile", nom: "Difficile",
+    desc: "Monstres : +10 % de dégâts, +20 % de PV. Un monstre de plus en ligne avant.",
+    effets: { degatsMult: 1.1, pvMult: 1.2, renfortAvant: true } },
+  { id: "extreme", nom: "Extrême",
+    desc: "Monstres : +15 % de dégâts, +30 % de PV. Un monstre de plus en ligne avant. Les tavernes ne soignent que 30 %.",
+    effets: { degatsMult: 1.15, pvMult: 1.3, renfortAvant: true, tavernePct: 0.3 } },
+  { id: "cauchemar", nom: "Cauchemar",
+    desc: "Monstres : +30 % de dégâts, +50 % de PV. Un monstre de plus en ligne avant. Tavernes à 30 %. Un héros mort ne se relève plus : il faut le remplacer.",
+    effets: { degatsMult: 1.3, pvMult: 1.5, renfortAvant: true, tavernePct: 0.3, mortDefinitive: true } },
+  { id: "ultime", nom: "Ultime",
+    desc: "Tout Cauchemar, et plus aucune taverne une fois l'équipe au complet.",
+    effets: { degatsMult: 1.3, pvMult: 1.5, renfortAvant: true, tavernePct: 0.3, mortDefinitive: true, tavernesCoupeesAPlein: true } },
 ];
-export const ASCENSION_MAX = ASCENSION.length;
+/** Palier maximum = INDEX du dernier cran (et NON le nombre de crans : la table
+ *  compte 5 entrées, le palier va de 0 à 4). Toute borne du type
+ *  `Math.min(record + 1, ASCENSION_MAX)` dépend de cette définition. */
+export const ASCENSION_MAX = ASCENSION.length - 1;
 
 /** Sous-dossier d'icône de chaque sort (rangé par classe propriétaire ; sorts de mobs → « monstres »). */
 export const SORT_DOSSIER: Record<string, string> = (() => {

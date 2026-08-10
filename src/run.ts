@@ -622,22 +622,12 @@ export function appliquerAscensionEnnemis(
 }
 
 // --- Ascension -----------------------------------------------------------------
-/** Effets cumulés des paliers A1..A(palier). Booléens OR, pourcentages « dernier
- *  gagne », multiplicateurs composés, bonus additionnés. */
+/** Effets du cran `palier` — lecture DIRECTE de la table, aucune fusion : chaque
+ *  cran porte déjà tout son tableau (voir `ASCENSION`). L'index est écrêté pour
+ *  qu'une sauvegarde abîmée ne renvoie jamais `undefined`. */
 export function effetsAscension(palier: number): EffetsAscension {
-  const eff: EffetsAscension = {};
-  for (const p of ASCENSION.slice(0, Math.max(0, Math.min(palier, ASCENSION.length)))) {
-    const e = p.effets;
-    if (e.packPlus1) eff.packPlus1 = true;
-    if (e.tavernePct !== undefined) eff.tavernePct = e.tavernePct;
-    if (e.bossEnrage) eff.bossEnrage = (eff.bossEnrage ?? 0) + e.bossEnrage;
-    if (e.pvMult) eff.pvMult = (eff.pvMult ?? 1) * e.pvMult;
-    if (e.elitesDoubles) eff.elitesDoubles = true;
-    if (e.statMultOffensif) eff.statMultOffensif = (eff.statMultOffensif ?? 1) * e.statMultOffensif;
-    if (e.pvDepartPct !== undefined) eff.pvDepartPct = e.pvDepartPct;
-    if (e.bossFinalPaBonus) eff.bossFinalPaBonus = (eff.bossFinalPaBonus ?? 0) + e.bossFinalPaBonus;
-  }
-  return eff;
+  const i = Math.max(0, Math.min(Math.trunc(palier) || 0, ASCENSION.length - 1));
+  return ASCENSION[i].effets;
 }
 
 /** Taux d'apparition d'archimonstre effectif : base + ARCHI.philtre par philtre

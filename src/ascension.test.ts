@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE } from "./data";
 import {
-  effetsAscension, fabriquerEnnemis, appliquerAscensionEnnemis, especesNormalesDeZone, nouvelleRun, recruter,
+  effetsAscension, fabriquerEnnemis, appliquerAscensionEnnemis, especesNormalesDeZone, nouvelleRun,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
 } from "./run";
@@ -19,36 +19,44 @@ const store = new Map<string, string>();
   removeItem: (k: string) => void store.delete(k),
 };
 
-describe("catalogue ASCENSION", () => {
-  it("8 paliers, ids uniques, chaque palier a nom + desc + au moins un effet", () => {
-    expect(ASCENSION_MAX).toBe(8);
-    expect(new Set(ASCENSION.map((p) => p.id)).size).toBe(8);
-    for (const p of ASCENSION) {
-      expect(p.nom.length).toBeGreaterThan(0);
-      expect(p.desc.length).toBeGreaterThan(0);
-      expect(Object.keys(p.effets).length).toBeGreaterThan(0);
+describe("Ascension — table des cinq crans", () => {
+  it("cinq crans, le premier vide (jeu de base)", () => {
+    expect(ASCENSION).toHaveLength(5);
+    expect(effetsAscension(0)).toEqual({});
+    expect(ASCENSION_MAX).toBe(4); // INDEX du dernier cran, pas le nombre de crans
+  });
+
+  it("chaque cran redéclare tout son tableau, en absolu", () => {
+    expect(effetsAscension(1)).toEqual({ degatsMult: 1.1, pvMult: 1.2, renfortAvant: true });
+    expect(effetsAscension(2)).toEqual({
+      degatsMult: 1.15, pvMult: 1.3, renfortAvant: true, tavernePct: 0.3,
+    });
+    expect(effetsAscension(3)).toEqual({
+      degatsMult: 1.3, pvMult: 1.5, renfortAvant: true, tavernePct: 0.3, mortDefinitive: true,
+    });
+    expect(effetsAscension(4)).toEqual({
+      degatsMult: 1.3, pvMult: 1.5, renfortAvant: true, tavernePct: 0.3, mortDefinitive: true,
+      tavernesCoupeesAPlein: true,
+    });
+  });
+
+  it("un index hors bornes est écrêté, jamais undefined", () => {
+    expect(effetsAscension(-3)).toEqual(effetsAscension(0));
+    expect(effetsAscension(99)).toEqual(effetsAscension(4));
+  });
+
+  it("les crans ne redescendent jamais en dégâts ni en PV", () => {
+    for (let n = 2; n <= ASCENSION_MAX; n++) {
+      expect(effetsAscension(n).degatsMult!).toBeGreaterThanOrEqual(effetsAscension(n - 1).degatsMult ?? 1);
+      expect(effetsAscension(n).pvMult!).toBeGreaterThanOrEqual(effetsAscension(n - 1).pvMult ?? 1);
     }
   });
-});
 
-describe("effetsAscension (fusion cumulée)", () => {
-  it("A0 : aucun effet (jeu de base inchangé)", () => {
-    expect(effetsAscension(0)).toEqual({});
-    expect(effetsAscension(-1)).toEqual({});
-  });
-  it("A1 : seulement la meute élargie", () => {
-    expect(effetsAscension(1)).toEqual({ packPlus1: true });
-  });
-  it("A3 cumule A1+A2+A3", () => {
-    expect(effetsAscension(3)).toEqual({ packPlus1: true, tavernePct: 0.3, bossEnrage: 0.1 });
-  });
-  it("A8 cumule tout (clampé au-delà)", () => {
-    const a8 = effetsAscension(8);
-    expect(a8).toEqual({
-      packPlus1: true, tavernePct: 0.3, bossEnrage: 0.1, pvMult: 1.2,
-      elitesDoubles: true, statMultOffensif: 1.15, pvDepartPct: 0.75, bossFinalPaBonus: 2,
-    });
-    expect(effetsAscension(99)).toEqual(a8);
+  it("le % de taverne suit le cran", () => {
+    expect(tavernePctAscension(0)).toBe(TAVERNE_PCT);
+    expect(tavernePctAscension(1)).toBe(TAVERNE_PCT);
+    expect(tavernePctAscension(2)).toBe(0.3);
+    expect(tavernePctAscension(4)).toBe(0.3);
   });
 });
 
@@ -96,16 +104,10 @@ describe("appliquerAscensionEnnemis", () => {
 });
 
 describe("plomberie de run", () => {
-  it("nouvelleRun porte le palier ; A7 démarre à 75 % des PV (départ ET recrue)", () => {
+  it("nouvelleRun porte le palier", () => {
     const a0 = nouvelleRun(["iop"]);
     expect(a0.ascension).toBe(0);
     expect(a0.persos[0].pvActuels).toBe(pvMaxPerso(a0.persos[0]));
-    const a7 = nouvelleRun(["iop"], 7);
-    expect(a7.ascension).toBe(7);
-    expect(a7.persos[0].pvActuels).toBe(Math.round(pvMaxPerso(a7.persos[0]) * 0.75));
-    recruter(a7, "cra");
-    const cra = a7.persos.find((p) => p.classeId === "cra")!;
-    expect(cra.pvActuels).toBe(Math.round(pvMaxPerso(cra) * 0.75));
   });
   it("taverne : 50 % en A0/A1, 30 % dès A2", () => {
     expect(tavernePctAscension(0)).toBe(TAVERNE_PCT);
