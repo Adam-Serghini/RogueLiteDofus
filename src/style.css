@@ -586,15 +586,23 @@ button.item-carte:disabled {
 /* Une étoile = un cran. Bouton dénudé : c'est la gemme de PA (assets/divers/etoile.png)
    qui porte tout, la même qu'en combat. Éteinte, elle est en niveaux de gris ; allumée,
    elle retrouve sa couleur et son ombre portée. */
+/* Le bouton doit DISPARAÎTRE : la règle globale `button` pose un dégradé, un rayon,
+   un padding et deux ombres, et son `:hover` ajoute un liseré cyan. Il faut tout
+   annuler ici, sinon chaque étoile est posée sur une plaquette beige. */
 .asc-etoile {
   background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
   padding: 0;
   line-height: 0;
   font-size: 1.7em; /* sert au repli textuel si l'image manque */
   color: var(--muet);
   cursor: pointer;
   transition: transform 0.1s ease;
+}
+.asc-etoile:disabled {
+  opacity: 1; /* l'étoile verrouillée gère elle-même son estompe, sur l'image */
 }
 .asc-etoile img {
   width: 40px;
@@ -612,7 +620,8 @@ button.item-carte:disabled {
   opacity: 1;
 }
 .asc-etoile:not(:disabled):hover {
-  transform: scale(1.12);
+  transform: scale(1.12); /* et non le translateY global */
+  box-shadow: none; /* et non le liseré cyan global */
 }
 /* Verrouillée : grisée à fond, avec son cadenas en pastille */
 .asc-etoile.verrou {
