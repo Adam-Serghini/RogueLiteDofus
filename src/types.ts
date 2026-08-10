@@ -452,6 +452,9 @@ export interface Combatant {
   bouclier: number; // points d'absorption (encaissés avant les PV)
   paBonusNextTurn: number; // delta de PA appliqué à la prochaine recharge, positif ou négatif (Mot Ivation, Tétanie)
   cooldowns: Record<string, number>; // `${sortId}:${cibleRef}` -> tours restants
+  /** Clés de `cooldowns` posées PENDANT le tour en cours : la passe de fin de tour
+   *  les saute une fois, sinon un cooldown perdrait un tour avant d'avoir commencé. */
+  cooldownsPosesCeTour?: Set<string>;
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente

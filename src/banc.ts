@@ -243,6 +243,7 @@ function reinitialiser(heros: Combatant, cibles: Combatant[], cond: Conditionnel
   reinitialiserLancersTour(heros);
   reinitialiserEtatTransitoire(heros);
   heros.cooldowns = {};
+  heros.cooldownsPosesCeTour = undefined; // sinon une marque survit d'une mesure à l'autre
   heros.lancersCombat = {};
   // Une mesure représente un tour ORDINAIRE, pas l'ouverture du combat : à 0 (ou 1),
   // tout sort marqué `pasPremierTour` sortirait de `ciblesValides` et se mesurerait

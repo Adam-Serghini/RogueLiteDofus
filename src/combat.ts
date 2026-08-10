@@ -1111,6 +1111,14 @@ function decrementerEffets(acteur: Combatant): void {
 
   // cooldowns par cible
   for (const k of Object.keys(acteur.cooldowns)) {
+    // Un cooldown posé PENDANT ce tour n'est pas décompté par la passe de fin de ce
+    // même tour : il perdrait un tour avant d'avoir commencé, et un `cooldownTours: 1`
+    // ne faisait alors sauter AUCUN tour. Même garde que `redirectionPoseCeTour`
+    // ci-dessus, et pour exactement la même raison.
+    if (acteur.cooldownsPosesCeTour?.has(k)) {
+      acteur.cooldownsPosesCeTour.delete(k);
+      continue;
+    }
     acteur.cooldowns[k] -= 1;
     if (acteur.cooldowns[k] <= 0) delete acteur.cooldowns[k];
   }
@@ -1823,8 +1831,15 @@ export function lancerSort(
     lc[sort.id] = (lc[sort.id] ?? 0) + 1;
   }
   const poseCooldown = (t: Combatant) => {
-    if (sort.cooldown) lanceur.cooldowns[`${sort.id}:${t.ref}`] = sort.cooldown;
-    if (sort.cooldownTours) lanceur.cooldowns[sort.id] = sort.cooldownTours;
+    // La clé est marquée « posée ce tour » pour que la passe de fin de tour la saute
+    // une fois (voir `decrementerEffets`) : sans ça, le tour du lancer compte comme
+    // un tour de recharge et la durée subie est amputée de 1.
+    const marquer = (cle: string, tours: number): void => {
+      lanceur.cooldowns[cle] = tours;
+      (lanceur.cooldownsPosesCeTour ??= new Set()).add(cle);
+    };
+    if (sort.cooldown) marquer(`${sort.id}:${t.ref}`, sort.cooldown);
+    if (sort.cooldownTours) marquer(sort.id, sort.cooldownTours);
   };
 
   // --- ÉCHEC CRITIQUE : le sort peut rater (PA déjà consommés) ---

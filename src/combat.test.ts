@@ -905,3 +905,55 @@ describe("la Lance (Forgelance) et la redirection — moteur", () => {
     expect(cra.pvActuels).toBeLessThan(200);
   });
 });
+
+describe("cooldownTours — durée réellement subie", () => {
+  /** Rejoue un combat en notant, au DÉBUT de chaque tour du héros, si `sort` est
+   *  disponible. Le héros le lance à son premier tour puis passe. Renvoie la
+   *  disponibilité tour par tour, sur `nbTours` tours. */
+  async function disponibiliteParTour(sortId: string, nbTours: number): Promise<boolean[]> {
+    const [heros] = equipeCombattante(nouvelleRun(["iop"]));
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.pvMax = 1_000_000; ennemi.pvActuels = 1_000_000; // le combat doit durer
+    const cs = [heros, ennemi];
+    const sort = SORTS[sortId as keyof typeof SORTS] as Spell;
+    const dispo: boolean[] = [];
+    let dernierTour = 0;
+    let lance = false;
+    await runCombat(cs, {
+      rng: rngMax,
+      controllers: {
+        joueur: (acteur, combatants) => {
+          if (acteur.toursJoues === dernierTour) return null; // déjà noté ce tour : on passe
+          dernierTour = acteur.toursJoues!;
+          dispo.push(ciblesValides(acteur, sort, combatants).length > 0);
+          if (dispo.length >= nbTours) ennemi.pvActuels = 0; // met fin au combat
+          if (!lance) { lance = true; return { sort, cibleRef: acteur.ref }; }
+          return null;
+        },
+        ennemi: () => null, // le mannequin passe son tour
+      },
+    });
+    return dispo;
+  }
+
+  it("un cooldown de 3 tours interdit le sort pendant 3 tours COMPLETS", async () => {
+    // Vertu (Iop) : cooldownTours = 3. Lancée au tour 1, elle doit redevenir
+    // disponible au tour 5 — les tours 2, 3 et 4 sont les trois tours de recharge.
+    expect(SORTS.vertu.cooldownTours).toBe(3);
+    expect(await disponibiliteParTour("vertu", 5)).toEqual([true, false, false, false, true]);
+  });
+
+  it("un cooldown de 1 tour fait sauter EXACTEMENT un tour", async () => {
+    // Conjuration (Éliotrope) : cooldownTours = 1, mais elle vit sur l'Éliotrope ;
+    // on prend ici un sort du Iop pour rester sur le même héros — Précipitation
+    // porte cooldownTours = 3, donc on vérifie la règle générale sur Vertu ci-dessus
+    // et la borne basse sur un sort synthétique.
+    const sort: Spell = { ...SORTS.vertu, id: "cd_un_tour", cooldownTours: 1 };
+    (SORTS as Record<string, Spell>).cd_un_tour = sort;
+    try {
+      expect(await disponibiliteParTour("cd_un_tour", 4)).toEqual([true, false, true, true]);
+    } finally {
+      delete (SORTS as Record<string, Spell>).cd_un_tour;
+    }
+  });
+});
