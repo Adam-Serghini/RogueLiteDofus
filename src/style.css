@@ -580,7 +580,7 @@ button.item-carte:disabled {
 }
 .asc-rangee {
   display: flex;
-  gap: 4px;
+  gap: 0; /* le PNG porte déjà sa marge transparente : un gap doublerait l'écart */
   justify-content: center;
 }
 /* Une étoile = un cran. Bouton dénudé : c'est la gemme de PA (assets/divers/etoile.png)
@@ -605,8 +605,8 @@ button.item-carte:disabled {
   opacity: 1; /* l'étoile verrouillée gère elle-même son estompe, sur l'image */
 }
 .asc-etoile img {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   filter: grayscale(1) brightness(0.75);
   opacity: 0.45;
@@ -638,7 +638,7 @@ button.item-carte:disabled {
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 0.5em;
+  font-size: 0.6em; /* suit la taille de l'étoile, réglée juste au-dessus */
   line-height: 1;
   filter: saturate(0);
 }
