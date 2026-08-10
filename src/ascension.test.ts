@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE } from "./data";
 import {
   effetsAscension, fabriquerEnnemis, fabriquerEquipe, appliquerAscensionEnnemis,
-  especesNormalesDeZone, nouvelleRun,
+  especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
 } from "./run";
@@ -275,6 +275,46 @@ describe("Ascension — dégâts du camp ennemi", () => {
     const cotéJoueurNu = degatsCible(heros, sort, ennemi,
       opts({ ...sansHasard, playerDamageBonus: 1 }) as never);
     expect(cotéJoueur.dmg).toBe(cotéJoueurNu.dmg);
+  });
+});
+
+describe("Ascension — mort définitive", () => {
+  const runAu = (palier: number) => {
+    const run = nouvelleRun(["iop", "cra"], palier, "t1");
+    run.persos[0].pvActuels = 0; // mort au combat précédent
+    run.persos[1].pvActuels = 1;
+    return run;
+  };
+
+  it("à Extrême, la taverne relève encore le mort", () => {
+    const run = runAu(2);
+    soignerEquipe(run, tavernePctAscension(2));
+    expect(run.persos[0].pvActuels).toBeGreaterThan(0);
+  });
+
+  it("à Cauchemar, ni la taverne ni la fin de zone ne le relèvent", () => {
+    const run = runAu(3);
+    soignerEquipe(run, tavernePctAscension(3)); // taverne
+    expect(run.persos[0].pvActuels).toBe(0);
+    soignerEquipe(run, 1); // boss de zone vaincu : soin à 100 %
+    expect(run.persos[0].pvActuels).toBe(0);
+    expect(run.persos[1].pvActuels).toBe(pvMaxPerso(run.persos[1])); // le vivant, lui, est soigné
+  });
+
+  it("à Ultime aussi", () => {
+    const run = runAu(4);
+    soignerEquipe(run, 1);
+    expect(run.persos[0].pvActuels).toBe(0);
+  });
+
+  it("le remplacement en taverne libère la case du mort", () => {
+    const run = runAu(3);
+    const casePrise = run.persos[0].position;
+    recruter(run, "eniripsa", "iop");
+    expect(run.persos.some((p) => p.classeId === "iop")).toBe(false);
+    const recrue = run.persos.find((p) => p.classeId === "eniripsa")!;
+    expect(recrue.position).toBe(casePrise);
+    expect(recrue.pvActuels).toBeGreaterThan(0);
   });
 });
 

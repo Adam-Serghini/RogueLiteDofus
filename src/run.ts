@@ -342,9 +342,17 @@ export function synchroniserPV(run: RunState, combatants: Combatant[]): void {
   }
 }
 
-/** Taverne : rend une fraction des PV max à toute l'équipe. */
+/** Taverne : rend une fraction des PV max à toute l'équipe.
+ *
+ *  À partir de Cauchemar (`mortDefinitive`), un héros à 0 PV n'est PAS relevé. La
+ *  règle vit ici et non chez les appelants parce qu'il y a deux résurrections à
+ *  couvrir : la taverne, et le soin à 100 % automatique après chaque boss de zone.
+ *  La seule exception du jeu reste le Kwakwanneau (`renaissance`), qui agit en
+ *  combat et ne passe pas par cette fonction. */
 export function soignerEquipe(run: RunState, pct: number): void {
+  const mortDefinitive = !!effetsAscension(run.ascension).mortDefinitive;
   for (const s of run.persos) {
+    if (mortDefinitive && s.pvActuels <= 0) continue;
     const pvMax = pvMaxPerso(s);
     s.pvActuels = Math.min(pvMax, s.pvActuels + Math.round(pvMax * pct));
   }
