@@ -14,6 +14,7 @@ import {
   MENU_ACCUEIL,
   MENU_DOFUS,
   BTN_RETOUR,
+  PA_ICON,
 } from "./assets";
 import { renderDofusRack, carteClasse, etoiles } from "./composants";
 import { classesDisponibles, SUCCES, recordAscension, trancheDeverrouillee, trancheJouable } from "../run";
@@ -66,7 +67,12 @@ export function showStart(
           const verrou = n > max;
           const cls = ["asc-etoile", n <= sel ? "pleine" : "", verrou ? "verrou" : ""].filter(Boolean).join(" ");
           const titre = verrou ? `Bats ${ASCENSION[max].nom} pour débloquer ${cran.nom}` : cran.nom;
-          return `<button class="${cls}" ${verrou ? "disabled" : `data-asc="${n}"`} title="${escapeHtml(titre)}" aria-label="${escapeHtml(cran.nom)}">${verrou ? "🔒" : n <= sel ? "★" : "☆"}</button>`;
+          // la gemme de PA du combat sert d'étoile : même image, donc le cran de
+          // difficulté est du même métal que le reste du jeu. Repli textuel si le
+          // fichier manque, comme partout ailleurs (`asset` + `onerror`).
+          return `<button class="${cls}" ${verrou ? "disabled" : `data-asc="${n}"`} title="${escapeHtml(titre)}" aria-label="${escapeHtml(cran.nom)}">
+            <img src="${PA_ICON}" alt="" onerror="this.parentElement.textContent='★'" />
+          </button>`;
         }).join("");
         return `<div class="asc-section">
           <p class="asc-titre">Difficulté</p>
@@ -162,7 +168,6 @@ export function showStart(
         etoilesBtns.forEach((btn, i) => {
           if (btn.disabled) return; // une étoile verrouillée garde son cadenas
           btn.classList.toggle("pleine", i <= n);
-          btn.textContent = i <= n ? "★" : "☆";
         });
         if (nomEl) nomEl.textContent = ASCENSION[n].nom;
         if (descEl) descEl.textContent = ASCENSION[n].desc;

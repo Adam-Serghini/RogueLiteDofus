@@ -583,28 +583,55 @@ button.item-carte:disabled {
   gap: 4px;
   justify-content: center;
 }
-/* Une étoile = un cran. Bouton dénudé : c'est le glyphe qui porte tout. */
+/* Une étoile = un cran. Bouton dénudé : c'est la gemme de PA (assets/divers/etoile.png)
+   qui porte tout, la même qu'en combat. Éteinte, elle est en niveaux de gris ; allumée,
+   elle retrouve sa couleur et son ombre portée. */
 .asc-etoile {
   background: none;
   border: none;
-  padding: 0 2px;
-  font-size: 1.7em;
-  line-height: 1;
+  padding: 0;
+  line-height: 0;
+  font-size: 1.7em; /* sert au repli textuel si l'image manque */
   color: var(--muet);
   cursor: pointer;
-  transition: transform 0.08s ease, color 0.08s ease;
+  transition: transform 0.1s ease;
+}
+.asc-etoile img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: grayscale(1) brightness(0.75);
+  opacity: 0.45;
+  transition: filter 0.12s ease, opacity 0.12s ease;
 }
 .asc-etoile.pleine {
   color: var(--or);
 }
-.asc-etoile:not(:disabled):hover {
-  transform: scale(1.15);
+.asc-etoile.pleine img {
+  filter: drop-shadow(0 1px 3px #0008);
+  opacity: 1;
 }
+.asc-etoile:not(:disabled):hover {
+  transform: scale(1.12);
+}
+/* Verrouillée : grisée à fond, avec son cadenas en pastille */
 .asc-etoile.verrou {
-  font-size: 1.1em;
-  opacity: 0.45;
+  position: relative;
   cursor: not-allowed;
-  align-self: center;
+}
+.asc-etoile.verrou img {
+  filter: grayscale(1) brightness(0.5);
+  opacity: 0.3;
+}
+.asc-etoile.verrou::after {
+  content: "🔒";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.5em;
+  line-height: 1;
+  filter: saturate(0);
 }
 .asc-nom {
   font-weight: 800;
