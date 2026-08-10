@@ -516,6 +516,9 @@ export interface Meta {
   succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
   collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue
   ascension?: Record<string, number>; // record par tranche : plus haut palier VAINCU (absent = tranche jamais finie)
+  /** Version du schéma. Absente ou < META_VERSION = sauvegarde d'avant la refonte de
+   *  l'Ascension : ses records sont remis à zéro au chargement, une seule fois. */
+  version?: number;
 }
 
 // --- Plateau (carte de nœuds) ------------------------------------------------

@@ -9,6 +9,7 @@ import {
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   chargerRunEnCours, sauverRunEnCours, verifierSucces,
   sansNoeudsDeZone, chargerMeta, SUCCES, bonusEquipe, tranchesEnCauchemar, verifierDofusCauchemar,
+  trancheDeverrouillee,
 } from "./run";
 import { genererCarte, typesZaapPossibles } from "./carte";
 import { mulberry32 } from "./rng";
@@ -362,33 +363,47 @@ describe("succès d'Ascension", () => {
 });
 
 describe("Ascension — rétro-compatibilité", () => {
-  it("un record de l'ancienne échelle (0-8) est écrêté au dernier cran", () => {
+  it("une sauvegarde d'avant la refonte voit TOUS ses records remis à zéro", () => {
     localStorage.setItem("rld_meta_v0", JSON.stringify({
       dofus: [], archis: [], runs: 3, victoires: 1, ascension: { t1: 8, t2: 6 },
-    }));
+    })); // pas de `version` : sauvegarde d'avant la refonte
     const meta = chargerMeta();
-    expect(meta.ascension!.t1).toBe(ASCENSION_MAX);
-    expect(meta.ascension!.t2).toBe(ASCENSION_MAX);
+    expect(meta.ascension!.t1).toBe(0);
+    expect(meta.ascension!.t2).toBe(0);
   });
 
-  it("un record à la borne haute reste intact, un record juste au-dessus est écrêté", () => {
-    // valeurs limites plutôt qu'un 2 arbitraire : à ASCENSION_MAX, le test passerait même
-    // sans écrêtage (rien à écrêter) — ASCENSION_MAX + 1 le distingue vraiment, et une
-    // implémentation trop agressive (qui écrêterait sous ASCENSION_MAX) ferait échouer t1.
+  it("la clé de tranche SURVIT à la remise à zéro : le clear reste prouvé", () => {
+    // `trancheDeverrouillee` ne teste que la PRÉSENCE de la clé. La supprimer au lieu de
+    // la remettre à 0 reverrouillerait t2 chez un joueur qui a réellement fini t1.
     localStorage.setItem("rld_meta_v0", JSON.stringify({
-      dofus: [], archis: [], runs: 1, victoires: 1,
-      ascension: { t1: ASCENSION_MAX, t2: ASCENSION_MAX + 1 },
+      dofus: [], archis: [], runs: 3, victoires: 1, ascension: { t1: 8 },
     }));
     const meta = chargerMeta();
-    expect(meta.ascension!.t1).toBe(ASCENSION_MAX);
-    expect(meta.ascension!.t2).toBe(ASCENSION_MAX);
+    expect(Object.keys(meta.ascension!)).toEqual(["t1"]);
+    expect(recordAscension(meta, "t1")).toBe(0); // défini, donc clear prouvé
+    expect(trancheDeverrouillee(meta, "t2")).toBe(true);
   });
 
-  it("une run sauvée sur l'ancienne échelle reprend dans les bornes", () => {
-    const run = nouvelleRun(["iop", "cra"], 0, "t1");
-    run.ascension = 7; // sauvegarde d'avant la refonte
+  it("la remise à zéro ne passe QU'UNE FOIS : un record gagné depuis survit au rechargement", () => {
+    // Sans le garde de version, chaque chargement effacerait la session précédente.
+    const meta = chargerMeta(); // migre et porte désormais la version courante
+    enregistrerAscension(meta, "t1", 3); // le joueur gagne Cauchemar APRÈS la mise à jour
+    expect(chargerMeta().ascension!.t1).toBe(3);
+  });
+
+  it("une run sauvée AVANT la refonte reprend en Normal, pas au cran écrêté", () => {
+    // Écrêter un 7 à 4 ferait basculer le joueur en pleine partie sous les règles
+    // d'Ultime (mort définitive, tavernes coupées) sans qu'il les ait choisies.
+    localStorage.setItem("rld_run_v0", JSON.stringify({
+      version: 1, zoneIdx: 0, run: { ...nouvelleRun(["iop", "cra"], 0, "t1"), ascension: 7 },
+    }));
+    expect(chargerRunEnCours()!.run.ascension).toBe(0);
+  });
+
+  it("une run sauvée APRÈS la refonte garde son cran", () => {
+    const run = nouvelleRun(["iop", "cra"], 3, "t1");
     sauverRunEnCours(0, run);
-    expect(chargerRunEnCours()!.run.ascension).toBe(ASCENSION_MAX);
+    expect(chargerRunEnCours()!.run.ascension).toBe(3);
   });
 
   it("les succès portent sur les crans nommés", () => {

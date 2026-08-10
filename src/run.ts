@@ -700,15 +700,21 @@ export function appliquerErrants(
 // refaire à la reprise). Effacée au wipe, à la victoire ou à l'abandon.
 const RUN_KEY = "rld_run_v0";
 
+/** Version du schéma de `Meta`. 2 = après la refonte de l'Ascension : une sauvegarde
+ *  d'une version antérieure voit ses records d'Ascension remis à zéro, une seule fois. */
+export const META_VERSION = 2;
+/** Version du schéma de la run sauvegardée. 2 = après la refonte de l'Ascension. */
+export const RUN_VERSION = 2;
+
 export interface RunSauvee {
-  version: 1;
+  version: number;
   zoneIdx: number; // index dans les zones de la tranche active
   run: RunState;
 }
 
 export function sauverRunEnCours(zoneIdx: number, run: RunState): void {
   try {
-    localStorage.setItem(RUN_KEY, JSON.stringify({ version: 1, zoneIdx, run } satisfies RunSauvee));
+    localStorage.setItem(RUN_KEY, JSON.stringify({ version: RUN_VERSION, zoneIdx, run } satisfies RunSauvee));
   } catch {
     /* localStorage indisponible : pas de reprise possible */
   }
@@ -719,8 +725,11 @@ export function chargerRunEnCours(): RunSauvee | null {
     const raw = localStorage.getItem(RUN_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as Partial<RunSauvee>;
-    // validation légère : version connue, persos existants dans CLASSES, zoneIdx sain
-    if (s.version !== 1 || typeof s.zoneIdx !== "number" || !s.run?.persos?.length) return null;
+    // validation légère : version connue, persos existants dans CLASSES, zoneIdx sain.
+    // Les versions 1 (avant la refonte de l'Ascension) et 2 sont toutes deux acceptées —
+    // n'accepter que la dernière jetterait la run en cours de tous les joueurs.
+    if (typeof s.version !== "number" || s.version < 1 || s.version > RUN_VERSION ||
+        typeof s.zoneIdx !== "number" || !s.run?.persos?.length) return null;
     if (!s.run.persos.every((p) => CLASSES[p.classeId])) return null;
     // refontes d'items : purger les exemplaires dont l'espèce n'existe plus
     s.run.inventaire = (s.run.inventaire ?? []).filter((inst) => ITEMS[inst.id]);
@@ -731,9 +740,14 @@ export function chargerRunEnCours(): RunSauvee | null {
     }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
-    // idem `chargerMeta` : une run sauvée sur l'ancienne échelle ne doit pas
-    // indexer hors table (`effetsAscension` écrête aussi, ceinture et bretelles)
-    s.run.ascension = Math.max(0, Math.min(s.run.ascension ?? 0, ASCENSION_MAX));
+    // Refonte de l'Ascension : une run sauvée AVANT (version 1) porte un palier de
+    // l'ancienne échelle 0-8. On la ramène à Normal au lieu de la convertir — un 7
+    // écrêté à 4 ferait basculer le joueur, en pleine partie, sous des règles qu'il n'a
+    // jamais choisies (mort définitive, tavernes coupées). Les runs sauvées depuis sont
+    // laissées telles quelles, simplement bornées.
+    s.run.ascension = s.version < RUN_VERSION
+      ? 0
+      : Math.max(0, Math.min(s.run.ascension ?? 0, ASCENSION_MAX));
     s.run.philtres = s.run.philtres ?? 0; // rétro-compat : saves d'avant les philtres
     s.run.trancheId = s.run.trancheId ?? "t1"; // rétro-compat : saves d'avant le multi-tranches
     // rétro-compat : ancien champ scalaire eliteModif → tableau eliteModifs
@@ -1000,19 +1014,27 @@ export function chargerMeta(): Meta {
       // qui a remporté la T1 AVANT cette fonctionnalité ne porte que `victoires`.
       // On lui crédite donc un clear de t1 en A0 — seule tranche qui existait.
       const ascension = m.ascension ?? ((m.victoires ?? 0) > 0 ? { t1: 0 } : undefined);
-      // L'échelle est passée de 9 valeurs (nombre de paliers appliqués, 0-8) à 5
-      // crans (index, 0-4) : on ÉCRÊTE. Ce n'est pas une conversion fidèle — un
-      // A8 devient Ultime — mais c'est le seul choix qui ne perd pas le clear,
-      // lequel sert aussi de preuve de déverrouillage pour la tranche suivante.
-      const ascensionBornee = ascension && Object.fromEntries(
-        Object.entries(ascension).map(([t, n]) => [t, Math.max(0, Math.min(n, ASCENSION_MAX))]),
-      );
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: ascensionBornee };
+      // Refonte de l'Ascension : l'échelle est passée de 9 valeurs (nombre de paliers
+      // appliqués, 0-8) à 5 crans (index, 0-4). On ne convertit pas — TOUT LE MONDE
+      // REPART À ZÉRO et refait l'échelle sur la nouvelle grille.
+      //
+      // La clé de tranche est conservée, remise à 0, JAMAIS supprimée : c'est elle qui
+      // prouve le clear d'une tranche et déverrouille la suivante (`trancheDeverrouillee`
+      // teste seulement qu'elle est définie). L'effacer reverrouillerait T2 chez quelqu'un
+      // qui a bel et bien fini T1.
+      //
+      // Passage UNIQUE, gardé par `version` : sans ce garde, chaque chargement effacerait
+      // la progression de la session précédente, indéfiniment.
+      const aMigrer = (m.version ?? 0) < META_VERSION;
+      const ascensionFinale = ascension && (aMigrer
+        ? Object.fromEntries(Object.keys(ascension).map((t) => [t, 0]))
+        : ascension);
+      return { version: META_VERSION, dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: ascensionFinale };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
   }
-  return { dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
+  return { version: META_VERSION, dofus: [], archis: [], runs: 0, victoires: 0, succes: [], collection: {} };
 }
 
 export function sauverMeta(meta: Meta): void {

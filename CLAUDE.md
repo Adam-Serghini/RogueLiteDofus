@@ -483,7 +483,13 @@ par la roue du Zaap).
 
 Record par tranche dans `Meta.ascension` (`recordAscension`/`enregistrerAscension`, **ne décroît
 jamais**) — il sert aussi de **preuve de clear** pour le déverrouillage de la tranche suivante.
-Les records de l'ancienne échelle (0-8) sont **écrêtés** au chargement.
+Les records de l'ancienne échelle (0-8) sont **remis à zéro** au chargement — tout le monde
+refait l'échelle sur la nouvelle grille. La clé de tranche est **conservée à 0, jamais
+supprimée** : c'est elle qui prouve le clear et déverrouille la tranche suivante. La migration
+est à **passage unique**, gardée par `Meta.version` (`META_VERSION`) — sans ce garde, chaque
+chargement effacerait la session précédente. Même logique pour la run en cours, gardée par
+`RunSauvee.version` (`RUN_VERSION`) : une run d'avant la refonte reprend en **Normal**, pour ne
+pas basculer le joueur en pleine partie sous des règles qu'il n'a pas choisies.
 
 Le **Dofus du Cauchemar** s'obtient en cleanant Cauchemar sur **les cinq tranches déclarées** (pas
 seulement les jouables) : il est donc hors de portée tant que T2-T5 ne le sont pas. **Son effet est
