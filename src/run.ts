@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, ASCENSION_MAX, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
@@ -741,7 +741,9 @@ export function chargerRunEnCours(): RunSauvee | null {
     }
     s.run.stats = s.run.stats ?? statsRunVides(); // rétro-compat : anciennes saves sans stats
     s.run.kamas = s.run.kamas ?? 0; // rétro-compat : anciennes saves sans kamas
-    s.run.ascension = s.run.ascension ?? 0;
+    // idem `chargerMeta` : une run sauvée sur l'ancienne échelle ne doit pas
+    // indexer hors table (`effetsAscension` écrête aussi, ceinture et bretelles)
+    s.run.ascension = Math.max(0, Math.min(s.run.ascension ?? 0, ASCENSION_MAX));
     s.run.philtres = s.run.philtres ?? 0; // rétro-compat : saves d'avant les philtres
     s.run.trancheId = s.run.trancheId ?? "t1"; // rétro-compat : saves d'avant le multi-tranches
     // rétro-compat : ancien champ scalaire eliteModif → tableau eliteModifs
@@ -799,14 +801,14 @@ export const SUCCES: Succes[] = [
   { id: "quatre_par_quatre", nom: "Quatre par quatre", desc: "Finir une run avec 4 héros entièrement équipés.",
     cond: (c) => !!c.run && c.run.persos.length === 4 &&
       c.run.persos.every((p) => (["arme", "coiffe", "cape", "anneau"] as const).every((s) => p.equipement[s])) },
-  { id: "ascension_1", nom: "Ascension I", desc: "Vaincre la tranche en Ascension 1.",
+  { id: "asc_difficile", nom: "Difficile", desc: "Vaincre la tranche en Difficile (★★).",
     cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 1 },
-  { id: "ascension_3", nom: "Ascension III", desc: "Vaincre la tranche en Ascension 3.",
+  { id: "asc_extreme", nom: "Extrême", desc: "Vaincre la tranche en Extrême (★★★).",
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 2 },
+  { id: "asc_cauchemar", nom: "Cauchemar", desc: "Vaincre la tranche en Cauchemar (★★★★).",
     cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 3 },
-  { id: "ascension_5", nom: "Ascension V", desc: "Vaincre la tranche en Ascension 5.",
-    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 5 },
-  { id: "ascension_8", nom: "Ascension VIII", desc: "Vaincre la tranche en Ascension 8 — le sommet.",
-    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 8 },
+  { id: "asc_ultime", nom: "Ultime", desc: "Vaincre la tranche en Ultime (★★★★★) — le sommet.",
+    cond: (c) => c.victoire === true && (c.run?.ascension ?? 0) >= 4 },
 ];
 
 /** Évalue les succès non débloqués ; persiste et renvoie les nouveaux. */
@@ -1008,7 +1010,14 @@ export function chargerMeta(): Meta {
       // qui a remporté la T1 AVANT cette fonctionnalité ne porte que `victoires`.
       // On lui crédite donc un clear de t1 en A0 — seule tranche qui existait.
       const ascension = m.ascension ?? ((m.victoires ?? 0) > 0 ? { t1: 0 } : undefined);
-      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension };
+      // L'échelle est passée de 9 valeurs (nombre de paliers appliqués, 0-8) à 5
+      // crans (index, 0-4) : on ÉCRÊTE. Ce n'est pas une conversion fidèle — un
+      // A8 devient Ultime — mais c'est le seul choix qui ne perd pas le clear,
+      // lequel sert aussi de preuve de déverrouillage pour la tranche suivante.
+      const ascensionBornee = ascension && Object.fromEntries(
+        Object.entries(ascension).map(([t, n]) => [t, Math.max(0, Math.min(n, ASCENSION_MAX))]),
+      );
+      return { dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: ascensionBornee };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */

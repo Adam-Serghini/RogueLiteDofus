@@ -8,7 +8,7 @@ import {
   especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
-  sansNoeudsDeZone,
+  sansNoeudsDeZone, chargerMeta, SUCCES,
 } from "./run";
 import { genererCarte, typesZaapPossibles } from "./carte";
 import { mulberry32 } from "./rng";
@@ -356,14 +356,53 @@ describe("Ascension — tavernes coupées à l'équipe complète", () => {
 });
 
 describe("succès d'Ascension", () => {
-  it("victoire en A3 débloque Ascension I et III, pas V", () => {
+  it("victoire en Cauchemar (3) débloque Difficile/Extrême/Cauchemar, pas Ultime", () => {
     const meta: Meta = { dofus: [], archis: [], runs: 1, victoires: 1, succes: [] };
     const run = nouvelleRun(["iop"], 3);
     const noms = verifierSucces(meta, run, true).map((s) => s.id);
-    expect(noms).toContain("ascension_1");
-    expect(noms).toContain("ascension_3");
-    expect(noms).not.toContain("ascension_5");
-    const defaite = verifierSucces({ ...meta, succes: [] }, nouvelleRun(["iop"], 8), false).map((s) => s.id);
-    expect(defaite).not.toContain("ascension_1");
+    expect(noms).toContain("asc_difficile");
+    expect(noms).toContain("asc_cauchemar");
+    expect(noms).not.toContain("asc_ultime");
+    const defaite = verifierSucces({ ...meta, succes: [] }, nouvelleRun(["iop"], ASCENSION_MAX), false).map((s) => s.id);
+    expect(defaite).not.toContain("asc_difficile");
+  });
+});
+
+describe("Ascension — rétro-compatibilité", () => {
+  it("un record de l'ancienne échelle (0-8) est écrêté au dernier cran", () => {
+    localStorage.setItem("rld_meta_v0", JSON.stringify({
+      dofus: [], archis: [], runs: 3, victoires: 1, ascension: { t1: 8, t2: 6 },
+    }));
+    const meta = chargerMeta();
+    expect(meta.ascension!.t1).toBe(ASCENSION_MAX);
+    expect(meta.ascension!.t2).toBe(ASCENSION_MAX);
+  });
+
+  it("un record déjà dans les bornes est intact", () => {
+    localStorage.setItem("rld_meta_v0", JSON.stringify({
+      dofus: [], archis: [], runs: 1, victoires: 1, ascension: { t1: 2 },
+    }));
+    expect(chargerMeta().ascension!.t1).toBe(2);
+  });
+
+  it("une run sauvée sur l'ancienne échelle reprend dans les bornes", () => {
+    const run = nouvelleRun(["iop", "cra"], 0, "t1");
+    run.ascension = 7; // sauvegarde d'avant la refonte
+    sauverRunEnCours(0, run);
+    expect(chargerRunEnCours()!.run.ascension).toBe(ASCENSION_MAX);
+  });
+
+  it("les succès portent sur les crans nommés", () => {
+    const ids = SUCCES.map((s) => s.id);
+    expect(ids).toEqual(expect.arrayContaining(
+      ["asc_difficile", "asc_extreme", "asc_cauchemar", "asc_ultime"]));
+    expect(ids).not.toContain("ascension_8");
+  });
+
+  it("le succès Cauchemar ne tombe qu'à une victoire au cran 3 ou plus", () => {
+    const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0 };
+    const run = nouvelleRun(["iop", "cra"], 3, "t1");
+    expect(verifierSucces(meta, run, false).map((s) => s.id)).not.toContain("asc_cauchemar");
+    expect(verifierSucces(meta, run, true).map((s) => s.id)).toContain("asc_cauchemar");
   });
 });
