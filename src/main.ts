@@ -58,11 +58,11 @@ async function resoudreCombat(
     const modifs = appliquerModificateursElite(ennemis, Math.random, opts.eliteModifs, nombre);
     titre = `${titre} · ${modifs.map((m) => `${m.nom} (${m.desc})`).join(" · ")}`;
   }
-  // paliers d'Ascension : renfort de meute / PV / stats offensives / rage de boss
+  // palier d'Ascension : renfort en ligne avant + PV des monstres (les dégâts
+  // passent par `enemyDamageBonus`, plus bas)
   appliquerAscensionEnnemis(ennemis, effetsAscension(run.ascension), {
     type: opts.type,
     especesZone: opts.zone ? especesNormalesDeZone(opts.zone) : undefined,
-    derniereZone: opts.derniereZone,
     rng: Math.random,
   });
   appliquerArchimonstres(ennemis, Math.random, chanceArchi(run)); // taux de base + philtres d'Otomai

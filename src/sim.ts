@@ -166,7 +166,7 @@ async function simuler(run: RunState, combatId: string, seed0: number, opts: Opt
       appliquerModificateursElite(ennemis, rng, undefined, EFF_ASCENSION.elitesDoubles ? 2 : 1);
     }
     appliquerAscensionEnnemis(ennemis, EFF_ASCENSION, {
-      type: opts.type, especesZone: opts.especesZone, derniereZone: opts.derniereZone, rng,
+      type: opts.type, especesZone: opts.especesZone, rng,
     });
     const cs = [...equipe, ...ennemis];
     let turns = 0;

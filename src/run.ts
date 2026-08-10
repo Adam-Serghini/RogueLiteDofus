@@ -586,37 +586,26 @@ export function especesNormalesDeZone(zone: ZoneDef): string[] {
 /** Applique les malus d'Ascension à une meute (voir EffetsAscension). */
 export function appliquerAscensionEnnemis(
   ennemis: Combatant[], eff: EffetsAscension,
-  opts: { type: "combat" | "combat_dur" | "donjon"; especesZone?: string[]; derniereZone?: boolean; rng: () => number },
+  opts: { type: "combat" | "combat_dur" | "donjon"; especesZone?: string[]; rng: () => number },
 ): void {
-  // A1 : renfort dans les combats normaux (avant les mults : il les subit aussi)
-  if (eff.packPlus1 && opts.type === "combat" && opts.especesZone?.length) {
+  // Renfort : une espèce ordinaire de la zone vient grossir le pack, en LIGNE
+  // AVANT uniquement (0-3). Si la ligne avant est pleine, pas de renfort — un
+  // repli sur l'arrière ferait mentir le libellé du cran. Posé AVANT les
+  // multiplicateurs pour qu'il les subisse comme les autres.
+  const renforçable = opts.type === "combat" || opts.type === "combat_dur";
+  if (eff.renfortAvant && renforçable && opts.especesZone?.length) {
     const occupees = new Set(ennemis.map((e) => e.position));
-    const cell = [0, 1, 2, 3, 4, 5, 6, 7].find((c) => !occupees.has(c));
+    const cell = [0, 1, 2, 3].find((c) => !occupees.has(c));
     if (cell !== undefined) {
       const espece = opts.especesZone[Math.floor(opts.rng() * opts.especesZone.length)];
       ennemis.push(depuisMonstre(MONSTRES[espece], `asc_${espece}`, cell));
     }
   }
   for (const e of ennemis) {
-    if (eff.statMultOffensif) {
-      const st = e.stats;
-      e.stats = {
-        ...st,
-        force: Math.round(st.force * eff.statMultOffensif),
-        intelligence: Math.round(st.intelligence * eff.statMultOffensif),
-        agilite: Math.round(st.agilite * eff.statMultOffensif),
-        chance: Math.round((st.chance ?? 0) * eff.statMultOffensif),
-      };
-    }
     if (eff.pvMult) {
       e.pvMax = Math.round(e.pvMax * eff.pvMult);
       e.pvBase = e.pvMax;
       e.pvActuels = e.pvMax;
-    }
-    const estBoss = !!(e.monstreId && MONSTRES[e.monstreId]?.boss);
-    if (estBoss && opts.type === "donjon") {
-      if (eff.bossEnrage) e.enrage = eff.bossEnrage;
-      if (eff.bossFinalPaBonus && opts.derniereZone) { e.paMax += eff.bossFinalPaBonus; e.paActuels = e.paMax; }
     }
   }
 }

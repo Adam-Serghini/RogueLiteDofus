@@ -70,37 +70,101 @@ describe("appliquerAscensionEnnemis", () => {
     expect(apres[0].pvMax).toBe(avant[0].pvMax);
     expect(apres[0].stats.force).toBe(avant[0].stats.force);
   });
-  it("pvMult et statMultOffensif s'appliquent à toute la meute (vitalité intacte)", () => {
+  it("pvMult s'applique à toute la meute", () => {
     const avant = monte(); const pack = monte();
-    appliquerAscensionEnnemis(pack, { pvMult: 1.2, statMultOffensif: 1.15 }, { type: "combat", rng: () => 0 });
+    appliquerAscensionEnnemis(pack, { pvMult: 1.2 }, { type: "combat", rng: () => 0 });
     expect(pack[0].pvMax).toBe(Math.round(avant[0].pvMax * 1.2));
     expect(pack[0].pvActuels).toBe(pack[0].pvMax);
-    expect(pack[0].stats.force).toBe(Math.round(avant[0].stats.force * 1.15));
-    expect(pack[0].stats.vitalite).toBe(avant[0].stats.vitalite);
   });
-  it("packPlus1 ajoute 1 monstre de la zone en combat NORMAL, jamais en donjon", () => {
-    const especes = especesNormalesDeZone(ZONES[0]);
-    expect(especes.length).toBeGreaterThan(0);
-    const pack = monte();
-    appliquerAscensionEnnemis(pack, { packPlus1: true }, { type: "combat", especesZone: especes, rng: () => 0 });
-    expect(pack.length).toBe(monte().length + 1);
-    const renfort = pack[pack.length - 1];
-    expect(especes).toContain(renfort.monstreId);
-    expect(pack.filter((e) => e.position === renfort.position).length).toBe(1); // case libre
-    const donjon = monte();
-    appliquerAscensionEnnemis(donjon, { packPlus1: true }, { type: "donjon", especesZone: especes, rng: () => 0 });
-    expect(donjon.length).toBe(monte().length);
+});
+
+describe("Ascension — renfort en ligne avant", () => {
+  const zone = ZONES[0];
+  const especes = especesNormalesDeZone(zone);
+  const renforts = (cs: Combatant[]) => cs.filter((e) => e.ref.startsWith("asc_"));
+
+  it("tombe en LIGNE AVANT (position 0-3)", () => {
+    const ennemis = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(ennemis, effetsAscension(1), {
+      type: "combat", especesZone: especes, rng: () => 0,
+    });
+    expect(renforts(ennemis)).toHaveLength(1);
+    expect(renforts(ennemis)[0].position).toBeLessThan(4);
   });
-  it("bossEnrage marque le boss (donjon), bossFinalPaBonus seulement en dernière zone", () => {
-    const donjon = fabriquerEnnemis(ZONES[0].pools.boss[0]);
-    appliquerAscensionEnnemis(donjon, { bossEnrage: 0.1, bossFinalPaBonus: 2 }, { type: "donjon", derniereZone: false, rng: () => 0 });
-    const boss = donjon.find((e) => MONSTRES[e.monstreId!]?.boss)!;
-    const paAvant = boss.paMax;
-    expect(boss.enrage).toBeCloseTo(0.1);
-    const donjon2 = fabriquerEnnemis(ZONES[0].pools.boss[0]);
-    appliquerAscensionEnnemis(donjon2, { bossFinalPaBonus: 2 }, { type: "donjon", derniereZone: true, rng: () => 0 });
-    const boss2 = donjon2.find((e) => MONSTRES[e.monstreId!]?.boss)!;
-    expect(boss2.paMax).toBe(paAvant + 2);
+
+  it("tombe aussi dans les combats DURS", () => {
+    const ennemis = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(ennemis, effetsAscension(1), {
+      type: "combat_dur", especesZone: especes, rng: () => 0,
+    });
+    expect(renforts(ennemis)).toHaveLength(1);
+  });
+
+  it("ne tombe JAMAIS en donjon (le boss et son escorte sont un tableau)", () => {
+    const ennemis = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(ennemis, effetsAscension(4), {
+      type: "donjon", especesZone: especes, rng: () => 0,
+    });
+    expect(renforts(ennemis)).toHaveLength(0);
+  });
+
+  it("pas de renfort si la ligne avant est pleine — jamais de repli sur l'arrière", () => {
+    const ennemis = fabriquerEnnemis("combat_1");
+    ennemis.forEach((e, i) => { e.position = i; });
+    while (ennemis.length < 4) {
+      const clone = { ...ennemis[0], ref: `bouchon_${ennemis.length}`, position: ennemis.length };
+      ennemis.push(clone);
+    }
+    const avant = ennemis.length;
+    appliquerAscensionEnnemis(ennemis, effetsAscension(1), {
+      type: "combat", especesZone: especes, rng: () => 0,
+    });
+    expect(ennemis).toHaveLength(avant);
+  });
+
+  it("le renfort subit lui aussi le multiplicateur de PV du cran", () => {
+    // Comparaison à espèce égale : `fabriquerEnnemis("combat_1")` ne contient PAS
+    // les espèces d'incarnam (tournesol_sauvage/pissenlit_diabolique vs les
+    // chafers d'`especesNormalesDeZone`) — chercher le renfort dans ce pack par
+    // `monstreId` échouerait TOUJOURS, silencieusement si mal écrit (voir la
+    // jurisprudence « un test dont le sujet est introuvable doit échouer »). On
+    // rejoue donc le même tirage de renfort SANS `pvMult` pour obtenir la version
+    // nue de la même espèce, à comparer à la version soumise au cran 1.
+    const avecMult = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(avecMult, effetsAscension(1), {
+      type: "combat", especesZone: especes, rng: () => 0,
+    });
+    const renfort = renforts(avecMult)[0];
+
+    const sansMult = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(sansMult, { renfortAvant: true }, {
+      type: "combat", especesZone: especes, rng: () => 0,
+    });
+    const nu = renforts(sansMult)[0];
+
+    expect(nu).toBeDefined();
+    expect(renfort.pvMax).toBeGreaterThan(nu!.pvMax);
+  });
+
+  it("le renfort encaisse aussi enemyDamageBonus — le multiplicateur vit dans le contexte de combat, pas sur chaque combattant", async () => {
+    const { degatsCible } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const ennemis = fabriquerEnnemis("combat_1");
+    appliquerAscensionEnnemis(ennemis, effetsAscension(1), {
+      type: "combat", especesZone: especes, rng: () => 0,
+    });
+    const renfort = renforts(ennemis)[0];
+    const monstre = MONSTRES[renfort.monstreId!];
+    const sortId = monstre.sorts.find((s) => SORTS[s]?.type === "degats") ?? monstre.sorts[0];
+    const sort = SORTS[sortId];
+    const cible = fabriquerEquipe()[0];
+    renfort.stats = { ...renfort.stats, agilite: 0 };
+    cible.stats = { ...cible.stats, agilite: 0 };
+    const sansHasard = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    const opts = (ctx: object) => ({ useMax: true, mult: 1, ctx });
+    const nu = degatsCible(renfort, sort, cible, opts(sansHasard) as never);
+    const boosté = degatsCible(renfort, sort, cible, opts({ ...sansHasard, enemyDamageBonus: 1.1 }) as never);
+    expect(boosté.dmg).toBeGreaterThan(nu.dmg);
   });
 });
 
