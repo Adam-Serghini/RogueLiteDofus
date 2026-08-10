@@ -8,8 +8,10 @@ import {
   especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
+  sansNoeudsDeZone,
 } from "./run";
-import { genererCarte } from "./carte";
+import { genererCarte, typesZaapPossibles } from "./carte";
+import { mulberry32 } from "./rng";
 import type { Combatant, Meta } from "./types";
 
 // mock localStorage (l'environnement de test n'en a pas)
@@ -315,6 +317,41 @@ describe("Ascension — mort définitive", () => {
     const recrue = run.persos.find((p) => p.classeId === "eniripsa")!;
     expect(recrue.position).toBe(casePrise);
     expect(recrue.pvActuels).toBeGreaterThan(0);
+  });
+});
+
+describe("Ascension — tavernes coupées à l'équipe complète", () => {
+  const runDe = (palier: number, classes: string[]) => nouvelleRun(classes, palier, "t1");
+  const QUATRE = ["iop", "cra", "eniripsa", "ecaflip"];
+
+  it("à Ultime avec 4 membres, la taverne quitte le plateau ET la roue du Zaap", () => {
+    const run = runDe(4, QUATRE);
+    const exclus = sansNoeudsDeZone(run, ZONES[0]);
+    expect(exclus).toContain("taverne");
+    const carte = genererCarte(mulberry32(7), ZONES[0].pools, exclus);
+    expect(carte.noeuds.some((n) => n.type === "taverne")).toBe(false);
+    expect(typesZaapPossibles(exclus)).not.toContain("taverne");
+  });
+
+  it("à Ultime avec 3 membres, les tavernes restent", () => {
+    const run = runDe(4, ["iop", "cra", "eniripsa"]);
+    expect(sansNoeudsDeZone(run, ZONES[0])).not.toContain("taverne");
+  });
+
+  it("un héros MORT compte dans les 4 : la taverne ne rouvre pas", () => {
+    const run = runDe(4, QUATRE);
+    run.persos[0].pvActuels = 0;
+    expect(sansNoeudsDeZone(run, ZONES[0])).toContain("taverne");
+  });
+
+  it("à Cauchemar, les tavernes restent même à 4", () => {
+    expect(sansNoeudsDeZone(runDe(3, QUATRE), ZONES[0])).not.toContain("taverne");
+  });
+
+  it("les exclusions propres à la zone sont conservées", () => {
+    const incarnam = ZONES.find((z) => z.id === "incarnam")!;
+    const exclus = sansNoeudsDeZone(runDe(0, QUATRE), incarnam);
+    expect(exclus).toEqual(expect.arrayContaining(["otomai", "forgemagie"]));
   });
 });
 

@@ -7,7 +7,7 @@ import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PA
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
-import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, Progression, Rarete, Spell, Stats } from "./types";
+import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, NodeType, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -130,6 +130,23 @@ export function nouvelleRun(choix: string[] = EQUIPE_DEPART, ascension = 0, tran
 
 // --- Recrutement (Taverne) ---------------------------------------------------
 export const equipePleine = (run: RunState): boolean => run.persos.length >= TAILLE_MAX_EQUIPE;
+
+/** Types de nœuds exclus du plateau d'une zone : ceux que la zone refuse, plus
+ *  ceux que le palier d'Ascension coupe.
+ *
+ *  Source UNIQUE, consommée par la génération de carte ET par la roue du Zaap :
+ *  sans elle, un Zaap recracherait la taverne qu'on vient d'interdire.
+ *
+ *  Le compte des membres inclut les MORTS (`run.persos.length`) : à Ultime, un
+ *  héros mort après le 4ᵉ recrutement occupe sa case pour le reste de la run. */
+export function sansNoeudsDeZone(run: RunState, zone: ZoneDef): NodeType[] {
+  const exclus = [...((zone.sansNoeuds ?? []) as NodeType[])];
+  const eff = effetsAscension(run.ascension);
+  if (eff.tavernesCoupeesAPlein && run.persos.length >= TAILLE_MAX_EQUIPE && !exclus.includes("taverne")) {
+    exclus.push("taverne");
+  }
+  return exclus;
+}
 
 /** Niveau moyen (arrondi, ≥ 1) de l'équipe — niveau d'arrivée d'une recrue. */
 function niveauMoyen(run: RunState): number {

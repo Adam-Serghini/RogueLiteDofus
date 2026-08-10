@@ -14,6 +14,7 @@ import {
   appliquerArchimonstres, appliquerErrants, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
+  sansNoeudsDeZone,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -228,9 +229,13 @@ async function deZaap(
  *  un combat en cours n'est pas sauvegardé → nœud à refaire). */
 async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniereZone: boolean): Promise<"wipe" | "clear" | "accueil" | "recommencer-memes" | "recommencer-choix"> {
   if (!run.carte) {
-    // pas de carte sauvegardée (nouvelle zone) — sinon on reprend celle en cours
+    // pas de carte sauvegardée (nouvelle zone) — sinon on reprend celle en cours.
+    // Les exclusions sont calculées ICI, donc une fois par zone : recruter son 4ᵉ
+    // héros en milieu de zone laisse les tavernes déjà posées sur ce plateau, la
+    // coupure prend effet à la zone suivante. On ne réécrit pas un plateau sous
+    // les pieds du joueur.
     const nbModifsElite = effetsAscension(run.ascension).elitesDoubles ? 2 : 1;
-    run.carte = genererCarte(Math.random, zone.pools, (zone.sansNoeuds ?? []) as NodeType[], nbModifsElite);
+    run.carte = genererCarte(Math.random, zone.pools, sansNoeudsDeZone(run, zone), nbModifsElite);
     sauverRunEnCours(zoneIdx, run);
   }
   for (;;) {
@@ -241,7 +246,8 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number, derniere
     let { type } = node;
     let combatId = node.combatId;
     let xp = node.xp ?? 0;
-    if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools, (zone.sansNoeuds ?? []) as NodeType[]));
+    // Le Zaap est résolu à l'entrée du nœud : avec l'effectif du moment (recrutement possible entretemps).
+    if (type === "zaap") ({ type, combatId, xp } = await deZaap(zone.pools, sansNoeudsDeZone(run, zone)));
 
     const issue = await resoudreType(run, type, combatId, xp, zone, derniereZone, node.eliteModifs);
 
