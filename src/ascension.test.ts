@@ -2,13 +2,13 @@
 //  ascension.test.ts — Mode Ascension : catalogue, fusion des effets, application.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE } from "./data";
+import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE, DOFUS, TRANCHES } from "./data";
 import {
   effetsAscension, fabriquerEnnemis, fabriquerEquipe, appliquerAscensionEnnemis,
   especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe,
   pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
   appliquerModificateursElite, chargerRunEnCours, sauverRunEnCours, verifierSucces,
-  sansNoeudsDeZone, chargerMeta, SUCCES,
+  sansNoeudsDeZone, chargerMeta, SUCCES, bonusEquipe, tranchesEnCauchemar, verifierDofusCauchemar,
 } from "./run";
 import { genererCarte, typesZaapPossibles } from "./carte";
 import { mulberry32 } from "./rng";
@@ -410,5 +410,45 @@ describe("Ascension — rétro-compatibilité", () => {
     const run = nouvelleRun(["iop", "cra"], 3, "t1");
     expect(verifierSucces(meta, run, false).map((s) => s.id)).not.toContain("asc_cauchemar");
     expect(verifierSucces(meta, run, true).map((s) => s.id)).toContain("asc_cauchemar");
+  });
+});
+
+describe("Dofus du Cauchemar", () => {
+  const metaVide = (): Meta => ({ dofus: [], archis: [], runs: 0, victoires: 0 });
+
+  it("compte les tranches clean au moins en Cauchemar", () => {
+    const meta = metaVide();
+    meta.ascension = { t1: 4, t2: 3, t3: 2 };
+    expect(tranchesEnCauchemar(meta)).toBe(2); // t3 est en Extrême : ne compte pas
+  });
+
+  it("exige LES CINQ tranches déclarées, pas seulement les jouables", () => {
+    const meta = metaVide();
+    meta.ascension = { t1: 4 };
+    expect(verifierDofusCauchemar(meta)).toBe(false);
+    expect(meta.dofus).not.toContain("dofus_du_cauchemar");
+
+    meta.ascension = Object.fromEntries(TRANCHES.map((t) => [t.id, 3]));
+    expect(verifierDofusCauchemar(meta)).toBe(true);
+    expect(meta.dofus).toContain("dofus_du_cauchemar");
+  });
+
+  it("ne l'accorde pas deux fois", () => {
+    const meta = metaVide();
+    meta.ascension = Object.fromEntries(TRANCHES.map((t) => [t.id, 4]));
+    expect(verifierDofusCauchemar(meta)).toBe(true);
+    expect(verifierDofusCauchemar(meta)).toBe(false);
+    expect(meta.dofus.filter((d) => d === "dofus_du_cauchemar")).toHaveLength(1);
+  });
+
+  // DORMANCE : ce test tombera le jour où on donne un effet à la relique. C'est
+  // voulu — il force à rouvrir le spec plutôt qu'à découvrir la relique morte des
+  // mois plus tard, comme le Dofus Turquoise. Même dispositif que `dissipe`.
+  it("n'a AUCUN effet pour l'instant (dormance assumée)", () => {
+    const meta = metaVide();
+    const nu = bonusEquipe(meta);
+    meta.dofus.push("dofus_du_cauchemar");
+    expect(bonusEquipe(meta)).toEqual(nu);
+    expect(DOFUS.dofus_du_cauchemar.desc).toBe("Relique légendaire — effet à venir.");
   });
 });

@@ -1068,6 +1068,28 @@ export function enregistrerAscension(meta: Meta, trancheId: string, palier: numb
   sauverMeta(meta);
 }
 
+/** Palier « Cauchemar » = index 3 dans `ASCENSION`. Nommé plutôt que codé en dur
+ *  à chaque lecture : le jour où un cran s'insère, la constante suit. */
+export const PALIER_CAUCHEMAR = ASCENSION.findIndex((p) => p.id === "cauchemar");
+
+/** Nombre de tranches dont le record atteint au moins Cauchemar. */
+export function tranchesEnCauchemar(meta: Meta): number {
+  return TRANCHES.filter((t) => (recordAscension(meta, t.id) ?? -1) >= PALIER_CAUCHEMAR).length;
+}
+
+/** Accorde le Dofus du Cauchemar si LES CINQ tranches déclarées sont clean en
+ *  Cauchemar. Évalué sur `TRANCHES` et non sur les tranches jouables : sur les
+ *  seules jouables, la relique tomberait dès le premier Cauchemar de t1 et
+ *  l'intention « toutes les tranches » serait perdue pour de bon.
+ *
+ *  Renvoie true UNIQUEMENT au moment où elle est accordée (pour l'annonce). */
+export function verifierDofusCauchemar(meta: Meta): boolean {
+  if (meta.dofus.includes("dofus_du_cauchemar")) return false;
+  if (tranchesEnCauchemar(meta) < TRANCHES.length) return false;
+  ajouterDofus(meta, "dofus_du_cauchemar"); // persiste la Meta
+  return true;
+}
+
 /** Une tranche est déverrouillée si la PRÉCÉDENTE a été vaincue au moins une fois
  *  (Meta.ascension[id] n'est renseigné qu'à la victoire). t1 est toujours ouverte. */
 export function trancheDeverrouillee(meta: Meta, trancheId: string): boolean {

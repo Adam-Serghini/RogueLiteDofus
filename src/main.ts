@@ -14,7 +14,7 @@ import {
   appliquerArchimonstres, appliquerErrants, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
   sauverRunEnCours, chargerRunEnCours, effacerRunEnCours, type RunSauvee,
-  sansNoeudsDeZone,
+  sansNoeudsDeZone, verifierDofusCauchemar,
 } from "./run";
 import * as ui from "./ui";
 import type { Combatant, NodeType } from "./types";
@@ -326,6 +326,9 @@ async function jouerRun(
     effacerRunEnCours();
     enregistrerRun(meta, true); // run terminée : toutes les zones vaincues
     enregistrerAscension(meta, tranche.id, run.ascension); // record d'Ascension de la tranche
+    if (verifierDofusCauchemar(meta)) {
+      await ui.showTransition("🥚 Dofus du Cauchemar", "Les cinq tranches sont tombées en Cauchemar.");
+    }
     await ui.showRecap(run, true, verifierSucces(meta, run, true));
     return null;
   } finally {
