@@ -69,7 +69,7 @@ describe("Apaisement", () => {
 });
 
 describe("Proie", () => {
-  it("marque UNIQUE : le recast déplace la marque ; l'équipe vole 10 % des dégâts", () => {
+  it("marque UNIQUE : le recast déplace la marque ; l'équipe vole sa part des dégâts", () => {
     const oug = ouginak();
     const [e1, e2] = ennemis();
     const cs = [oug, e1, e2];
@@ -78,13 +78,16 @@ describe("Proie", () => {
     lancerSort(oug, SORTS.proie, e2.ref, cs, ctx()); // recast → la marque bouge
     expect(e1.effets.some((x) => x.stat === "proie")).toBe(false);
     expect(e2.effets.some((x) => x.stat === "proie")).toBe(true);
-    // n'importe quel allié frappant la proie vole 10 % des dégâts infligés
+    // n'importe quel allié frappant la proie vole sa part des dégâts infligés.
+    // Le ratio est LU sur le sort et jamais recopié ici : il se règle au playtest,
+    // et un test qui le fige en dur casse à chaque ajustement sans rien prouver.
+    const ratio = SORTS.proie.marqueProie!;
     oug.pvActuels = 100;
     const avant = e2.pvActuels;
     lancerSort(oug, SORTS.molosse, e2.ref, cs, ctx());
     const dmg = avant - e2.pvActuels;
     expect(dmg).toBeGreaterThan(0);
-    expect(oug.pvActuels).toBe(100 + Math.round(dmg * 0.1));
+    expect(oug.pvActuels).toBe(100 + Math.round(dmg * ratio));
   });
 });
 

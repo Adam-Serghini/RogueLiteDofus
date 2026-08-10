@@ -38,7 +38,7 @@ function ennemiA(position: number): Combatant {
 describe("classe Cra", () => {
   it("est recrutable, avec son kit de 6 sorts", () => {
     expect(CLASSES.cra.sorts).toEqual([
-      "fleche_punitive", "fleche_enflammee", "fleche_de_recul", "oeil_de_taupe", "tir_puissant", "acuite_absolue",
+      "fleche_punitive", "fleche_enflammee", "oeil_de_taupe", "fleche_de_recul", "tir_puissant", "acuite_absolue",
     ]);
     expect(CLASSES.cra.sorts.length).toBe(6);
     for (const id of CLASSES.cra.sorts) expect(SORTS[id], id).toBeDefined();
