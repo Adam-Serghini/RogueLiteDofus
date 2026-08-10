@@ -71,11 +71,20 @@ describe("Portail", () => {
     expect(ciblesValides(e, SORTS.portail, cs)).toEqual([]);
   });
 
-  it("plafonne à 4 portails", () => {
+  it("plafonne à 4 portails, et le sort devient INJOUABLE au plafond", () => {
     const e = eliotrope();
     e.portails = PORTAILS_MAX;
-    lancerSort(e, SORTS.portail, e.ref, [e], ctx());
+    // grisé plutôt que lancé pour rien : le sort partait, coûtait son PA et
+    // n'ouvrait aucun portail (retour de playtest d'Adam)
+    expect(ciblesValides(e, SORTS.portail, [e])).toEqual([]);
+    lancerSort(e, SORTS.portail, e.ref, [e], ctx()); // filet : le moteur cape aussi
     expect(e.portails).toBe(PORTAILS_MAX);
+  });
+
+  it("reste jouable à 3 portails", () => {
+    const e = eliotrope();
+    e.portails = PORTAILS_MAX - 1;
+    expect(ciblesValides(e, SORTS.portail, [e])).toEqual([e]);
   });
 });
 

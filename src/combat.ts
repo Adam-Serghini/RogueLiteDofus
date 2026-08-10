@@ -279,6 +279,12 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
   // Apaisement (Ouginak) : ne se lance qu'avec au moins 1 état de Rage
   if (sort.consommeRage && !(acteur.rage ?? 0)) return [];
 
+  // Portail (Éliotrope) : injouable une fois le plafond atteint. `poserPortail`
+  // se contentait de sortir en silence, donc le sort partait, coûtait son PA et
+  // n'ouvrait rien — même standard que Fortification ci-dessus : un sort qui ne
+  // peut plus rien faire doit être grisé, pas échouer sans un mot.
+  if (sort.posePortail && (acteur.portails ?? 0) >= PORTAILS_MAX) return [];
+
   // Kaboom (Roublard) : ne se lance que si un adversaire vivant porte au moins 1 bombe
   if (sort.kaboom && !adverses(acteur, cs).some((e) => (e.bombes ?? 0) > 0)) return [];
 
