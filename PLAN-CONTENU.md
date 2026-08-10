@@ -153,6 +153,9 @@ propre à la zone, jamais la redite d'une précédente ; budgets de PA intégral
 dépensables ; le boss domine sa salle ; toute espèce capturable doit apparaître dans
 un pack **normal**.
 
+- **Effet du Dofus du Cauchemar** — la relique s'obtient (Cauchemar sur les 5 tranches) mais reste
+  inerte. Test de dormance dans `src/ascension.test.ts`.
+
 ### T3 · 101–150 (esquisse)
 
 Pandala, Île d'Otomaï, Kimbo, Bworker, Skeunk, Sphincter Cell…

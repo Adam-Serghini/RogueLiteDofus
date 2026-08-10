@@ -336,6 +336,12 @@ de porteur** (celui-là doit tomber le jour où une classe reprend une purge).
   `lancerSort` (dégâts et soutien).
 - **Une formule copiée deux fois finit par raconter deux histoires** : `chanceEsquive` a été extraite pour
   ça. Même logique pour toute nouvelle formule lue par le moteur et par l'UI.
+- **Un index qui change de sens ne change pas de type.** `palier` d'Ascension est passé de « nombre
+  de crans appliqués » (0-8) à « index du cran » (0-4) : c'est un `number` dans les deux cas, donc
+  **le typecheck ne voit rien**, et `ASCENSION_MAX` a changé de définition (`length` → `length - 1`)
+  sous le même nom. Toute borne qui lisait la constante est restée juste par coïncidence de
+  changement simultané. Quand le sens d'un nombre bouge, chercher ses lecteurs au grep — le
+  compilateur ne le fera pas.
 - **Un contre documenté mais jamais atteignable n'est pas un contre** : `ignoreLigne` face à `tetanise`
   était décrit ici pendant des mois sans exister dans le moteur, faute d'un seul porteur des deux côtés.
   Seul un test qui l'exerce le révèle.
@@ -417,13 +423,30 @@ un bonus permanent et irrévocable.
 
 ### Mode Ascension
 
-Une tranche battue devient rejouable à difficulté croissante : 8 paliers cumulatifs A1→A8, catalogue
-`ASCENSION`, fusionnés par `effetsAscension(palier)` (booléens OU, pourcentages « le dernier gagne »,
-multiplicateurs composés, bonus additionnés). Effets : packs normaux élargis, soin de taverne réduit, boss
-enragés, multiplicateurs globaux de PV/stats offensives, modificateurs d'élite doublés à partir de A5, PV
-de départ réduits, bonus de PA du dernier boss. Record par tranche dans `Meta.ascension`
-(`recordAscension`/`enregistrerAscension`, **ne décroît jamais**) — il sert aussi de **preuve de clear**
-pour le déverrouillage de la tranche suivante, sans champ `Meta` supplémentaire.
+Une tranche battue devient rejouable à difficulté croissante : **5 crans** affichés en étoiles
+(`ASCENSION`), dont le premier (★1 Normal) est le jeu de base. **Le palier est l'INDEX du cran
+(0-4), pas un nombre de paliers appliqués** — `effetsAscension(n)` est une **lecture directe** de
+la table, sans fusion, et chaque cran **redéclare tout son tableau en absolu**. `ASCENSION_MAX` vaut
+donc `ASCENSION.length - 1`.
+
+Effets : dégâts des monstres (`degatsMult`, via `enemyDamageBonus` — un multiplicateur de **camp**
+dans le contexte de combat, miroir de `playerDamageBonus`, qui couvre donc aussi les ennemis
+apparus en cours de combat), PV des monstres (`pvMult`, appliqué monstre par monstre à la
+fabrication), renfort **en ligne avant** dans les combats normaux ET durs (`renfortAvant`), soin de
+taverne réduit, **mort définitive** (`mortDefinitive` : à partir de Cauchemar, `soignerEquipe` ne
+relève plus un héros à 0 PV — ce qui couvre d'un coup la taverne et le soin de fin de zone ; seul
+le Kwakwanneau y échappe, en combat), et **tavernes coupées** à l'équipe complète
+(`tavernesCoupeesAPlein`, via `sansNoeudsDeZone` — source unique lue par la génération de carte ET
+par la roue du Zaap).
+
+Record par tranche dans `Meta.ascension` (`recordAscension`/`enregistrerAscension`, **ne décroît
+jamais**) — il sert aussi de **preuve de clear** pour le déverrouillage de la tranche suivante.
+Les records de l'ancienne échelle (0-8) sont **écrêtés** au chargement.
+
+Le **Dofus du Cauchemar** s'obtient en clean­ant Cauchemar sur **les cinq tranches déclarées** (pas
+seulement les jouables) : il est donc hors de portée tant que T2-T5 ne le sont pas. **Son effet est
+dormant**, comme celui du Turquoise, et un test le constate — il tombera le jour où on lui en donne
+un.
 
 ### Multi-tranches
 
