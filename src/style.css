@@ -571,43 +571,50 @@ button.item-carte:disabled {
   margin: 4px auto 8px;
   text-align: center;
 }
+.asc-titre {
+  color: var(--muet);
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 2px;
+}
 .asc-rangee {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
 }
-.asc-btn {
-  background: var(--panel-2);
-  border: 1px solid var(--bord);
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-weight: 800;
-  font-size: 0.85em;
-  color: var(--txt);
+/* Une étoile = un cran. Bouton dénudé : c'est le glyphe qui porte tout. */
+.asc-etoile {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 1.7em;
+  line-height: 1;
+  color: var(--muet);
   cursor: pointer;
+  transition: transform 0.08s ease, color 0.08s ease;
 }
-.asc-btn.asc-sel {
-  border-color: var(--danger);
-  box-shadow: 0 0 8px #b23b2e55;
-  color: var(--danger);
+.asc-etoile.pleine {
+  color: var(--or);
 }
-.asc-btn.asc-verrou {
+.asc-etoile:not(:disabled):hover {
+  transform: scale(1.15);
+}
+.asc-etoile.verrou {
+  font-size: 1.1em;
   opacity: 0.45;
   cursor: not-allowed;
+  align-self: center;
 }
-.asc-malus {
-  list-style: none;
-  margin: 6px 0 0;
-  padding: 0;
+.asc-nom {
+  font-weight: 800;
+  margin: 4px 0 0;
+}
+.asc-desc {
   color: var(--muet);
   font-size: 0.85em;
-  text-align: left;
+  margin: 2px auto 0;
   max-width: 380px;
-  margin-inline: auto;
-}
-.asc-malus li {
-  padding: 1px 0;
 }
 .asc-record {
   color: var(--or);

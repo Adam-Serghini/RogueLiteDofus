@@ -57,21 +57,22 @@ export function showStart(
       // remportée au moins une fois (record défini), et pas en reprise (palier figé)
       const ascensionHtml = (!reprise && record !== undefined) ? (() => {
         const max = Math.min(record + 1, ASCENSION_MAX);
-        const rangs: string[] = [];
-        for (let n = 0; n <= max; n++) {
-          rangs.push(`<button class="asc-btn ${n === sel ? "asc-sel" : ""}" data-asc="${n}" title="${escapeHtml(ASCENSION[n].desc)}">
-            <span class="asc-etoiles">${etoiles(n)}</span> ${escapeHtml(ASCENSION[n].nom)}
-          </button>`);
-        }
-        if (max < ASCENSION_MAX) {
-          rangs.push(`<button class="asc-btn asc-verrou" disabled title="Bats ${escapeHtml(ASCENSION[max].nom)} pour la débloquer">🔒 ${escapeHtml(ASCENSION[max + 1].nom)}</button>`);
-        }
-        // les effets du cran SÉLECTIONNÉ (la table est absolue : chaque cran porte
-        // déjà tout ce que les précédents portaient)
-        const malus = sel > 0 ? `<ul class="asc-malus"><li>• ${escapeHtml(ASCENSION[sel].desc)}</li></ul>` : "";
+        // Une étoile par cran, cliquable : la n-ième choisit le cran n (★1 = jeu de
+        // base). Au-delà du cran suivant le record, l'étoile est verrouillée et ne
+        // répond pas. Le nom et les effets affichés sont ceux du cran SÉLECTIONNÉ —
+        // la table est absolue, chaque cran porte déjà tout ce que les précédents
+        // portaient, donc il n'y a rien à cumuler à l'affichage.
+        const etoilesHtml = ASCENSION.map((cran, n) => {
+          const verrou = n > max;
+          const cls = ["asc-etoile", n <= sel ? "pleine" : "", verrou ? "verrou" : ""].filter(Boolean).join(" ");
+          const titre = verrou ? `Bats ${ASCENSION[max].nom} pour débloquer ${cran.nom}` : cran.nom;
+          return `<button class="${cls}" ${verrou ? "disabled" : `data-asc="${n}"`} title="${escapeHtml(titre)}" aria-label="${escapeHtml(cran.nom)}">${verrou ? "🔒" : n <= sel ? "★" : "☆"}</button>`;
+        }).join("");
         return `<div class="asc-section">
-          <div class="asc-rangee">${rangs.join("")}</div>
-          ${malus}
+          <p class="asc-titre">Difficulté</p>
+          <div class="asc-rangee" id="asc-rangee">${etoilesHtml}</div>
+          <p class="asc-nom" id="asc-nom">${escapeHtml(ASCENSION[sel].nom)}</p>
+          <p class="asc-desc" id="asc-desc">${escapeHtml(ASCENSION[sel].desc)}</p>
           ${record >= 1 ? `<p class="asc-record">Record : ${etoiles(record)} ${escapeHtml(ASCENSION[record].nom)} ✓</p>` : ""}
         </div>`;
       })() : "";
@@ -150,14 +151,35 @@ export function showStart(
           await showCollectionDofus(meta);
           draw();
         });
+      // Survol : prévisualise un cran sans le choisir. On repeint les étoiles et les
+      // deux lignes de texte à la main plutôt que de rappeler `draw()` — un rendu
+      // complet de l'accueil à chaque passage de souris détruirait le nœud survolé
+      // et le `mouseleave` ne partirait jamais.
+      const etoilesBtns = [...root.querySelectorAll<HTMLButtonElement>(".asc-etoile")];
+      const nomEl = document.getElementById("asc-nom");
+      const descEl = document.getElementById("asc-desc");
+      const peindre = (n: number): void => {
+        etoilesBtns.forEach((btn, i) => {
+          if (btn.disabled) return; // une étoile verrouillée garde son cadenas
+          btn.classList.toggle("pleine", i <= n);
+          btn.textContent = i <= n ? "★" : "☆";
+        });
+        if (nomEl) nomEl.textContent = ASCENSION[n].nom;
+        if (descEl) descEl.textContent = ASCENSION[n].desc;
+      };
       root
-        .querySelectorAll<HTMLButtonElement>(".asc-btn[data-asc]")
+        .querySelectorAll<HTMLButtonElement>(".asc-etoile[data-asc]")
         .forEach((btn) => {
+          const n = Number(btn.dataset.asc);
           btn.addEventListener("click", () => {
-            sel = Number(btn.dataset.asc);
+            sel = n;
             draw();
           });
+          btn.addEventListener("mouseenter", () => peindre(n));
         });
+      document
+        .getElementById("asc-rangee")
+        ?.addEventListener("mouseleave", () => peindre(sel));
       root.querySelectorAll<HTMLElement>("[data-tranche]").forEach((el) =>
         el.addEventListener("click", () => { trancheSel = el.dataset.tranche!; sel = 0; draw(); }));
       document
