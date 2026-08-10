@@ -378,11 +378,17 @@ describe("Ascension — rétro-compatibilité", () => {
     expect(meta.ascension!.t2).toBe(ASCENSION_MAX);
   });
 
-  it("un record déjà dans les bornes est intact", () => {
+  it("un record à la borne haute reste intact, un record juste au-dessus est écrêté", () => {
+    // valeurs limites plutôt qu'un 2 arbitraire : à ASCENSION_MAX, le test passerait même
+    // sans écrêtage (rien à écrêter) — ASCENSION_MAX + 1 le distingue vraiment, et une
+    // implémentation trop agressive (qui écrêterait sous ASCENSION_MAX) ferait échouer t1.
     localStorage.setItem("rld_meta_v0", JSON.stringify({
-      dofus: [], archis: [], runs: 1, victoires: 1, ascension: { t1: 2 },
+      dofus: [], archis: [], runs: 1, victoires: 1,
+      ascension: { t1: ASCENSION_MAX, t2: ASCENSION_MAX + 1 },
     }));
-    expect(chargerMeta().ascension!.t1).toBe(2);
+    const meta = chargerMeta();
+    expect(meta.ascension!.t1).toBe(ASCENSION_MAX);
+    expect(meta.ascension!.t2).toBe(ASCENSION_MAX);
   });
 
   it("une run sauvée sur l'ancienne échelle reprend dans les bornes", () => {

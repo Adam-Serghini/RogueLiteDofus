@@ -226,6 +226,10 @@ export function showCollectionDofus(meta: Meta): Promise<void> {
 export function showSucces(meta: Meta): Promise<void> {
   return new Promise((res) => {
     const deja = new Set(meta.succes ?? []);
+    // ne compter que les succès du catalogue courant : `meta.succes` peut porter des ids
+    // orphelins (ex. les anciens paliers d'Ascension remplacés) qui gonfleraient le numérateur
+    // au-delà du dénominateur sans correspondre à une carte affichée.
+    const nbDebloques = SUCCES.filter((s) => deja.has(s.id)).length;
     const cartes = SUCCES.map((su) => `
       <div class="succes-carte ${deja.has(su.id) ? "ok" : "verrouille"}">
         <span class="succes-icone">${deja.has(su.id) ? "🏆" : "🔒"}</span>
@@ -233,7 +237,7 @@ export function showSucces(meta: Meta): Promise<void> {
       </div>`).join("");
     ecran(`
       <h1>Succès</h1>
-      <p class="sous-titre">${deja.size} / ${SUCCES.length} débloqués. Les récompenses arriveront avec le système d'objets.</p>
+      <p class="sous-titre">${nbDebloques} / ${SUCCES.length} débloqués. Les récompenses arriveront avec le système d'objets.</p>
       <div class="succes-grille">${cartes}</div>
       <div class="boutons-ecran"><button id="succes-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
     `);
