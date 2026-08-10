@@ -443,7 +443,7 @@ Record par tranche dans `Meta.ascension` (`recordAscension`/`enregistrerAscensio
 jamais**) — il sert aussi de **preuve de clear** pour le déverrouillage de la tranche suivante.
 Les records de l'ancienne échelle (0-8) sont **écrêtés** au chargement.
 
-Le **Dofus du Cauchemar** s'obtient en clean­ant Cauchemar sur **les cinq tranches déclarées** (pas
+Le **Dofus du Cauchemar** s'obtient en cleanant Cauchemar sur **les cinq tranches déclarées** (pas
 seulement les jouables) : il est donc hors de portée tant que T2-T5 ne le sont pas. **Son effet est
 dormant**, comme celui du Turquoise, et un test le constate — il tombera le jour où on lui en donne
 un.
