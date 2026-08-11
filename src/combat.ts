@@ -6,7 +6,8 @@
 import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, statElement } from "./progression";
 import {
-  crochetDebutTour, crochetFinTour, crochetMortEnnemi, marquerSeuilArgente, type IntentionsDofus,
+  crochetDebutTour, crochetDegatsInfliges, crochetFinTour, crochetMortEnnemi, marquerSeuilArgente,
+  type IntentionsDofus,
 } from "./dofus-effets";
 
 import type {
@@ -720,6 +721,10 @@ function degatsAvec(
   // relique Dofus à déclenchement (Nébuleux, Domakuro…) : bonus/malus du TOUR en
   // cours, posé par `appliquerIntentions` sur `lanceur.degatsPctDofus`.
   if (lanceur.degatsPctDofus) dmg *= 1 + lanceur.degatsPctDofus;
+  // relique Dofus à déclenchement (Domakuro) : bonus PERMANENT acquis pour le reste
+  // du combat — distinct de `degatsPctDofus` ci-dessus (qui ne vaut que le tour en
+  // cours), ne pas fusionner les deux malgré la ressemblance des noms.
+  if (lanceur.degatsPctPermanent) dmg *= 1 + lanceur.degatsPctPermanent;
 
   // puissance offensive (Intelligence) — s'applique à tout lanceur
   dmg *= multOffensif(se);
@@ -2318,6 +2323,13 @@ export function lancerSort(
       }
     }
   });
+
+  // Tacheté/Domakuro (dofus-effets.ts) : UNE SEULE FOIS par lancer, jamais une fois
+  // par cible touchée — même raisonnement que `effetRangeeAlliee`/`bouclierPortee`
+  // ailleurs dans cette fonction. Gardé sur `totalDmg > 0` : un sort qui n'a fait
+  // qu'esquiver n'a rien « infligé ». La garde de camp vit dans `reliquesPour`,
+  // jamais ici — voir sa docstring.
+  if (totalDmg > 0) crochetDegatsInfliges(lanceur, cs, reliquesPour(lanceur, ctx));
 
   // Chausse-Trappe (Sram) : consommation INCONDITIONNELLE — c'est un coût payé au
   // lancer, pas au succès. Remet le compteur à zéro même à 0 cumul, et même si le

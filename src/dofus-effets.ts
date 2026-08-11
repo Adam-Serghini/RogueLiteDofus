@@ -84,6 +84,35 @@ export function crochetMortEnnemi(tueur: Combatant, actives: Set<string>): Inten
 
 const estAvant = (c: Combatant): boolean => c.position < 4;
 
+const STATS_ELEM = ["force", "intelligence", "agilite", "chance"] as const;
+
+/** Crochet de dégâts infligés : appelé UNE FOIS PAR LANCER qui inflige réellement des
+ *  dégâts (jamais une fois par cible touchée — même règle que les effets de rangée/
+ *  portée, voir CLAUDE.md), quel que soit le nombre de cibles atteintes par ce lancer.
+ *
+ *  Tacheté : buff les ALLIÉS (jamais le porteur lui-même) de +5 dans les quatre stats
+ *  élémentaires pour 1 tour, non cumulable — un allié ne porte qu'un exemplaire à la
+ *  fois, reconnu par le marqueur `source` posé sur l'effet. Muté DIRECTEMENT (ce sont
+ *  des effets datés, comme `appliquerEffet`, pas des soins/boucliers décrits) : les
+ *  décrire via `IntentionsDofus` n'apporterait qu'une indirection, ce module pose déjà
+ *  ses propres marques d'état ailleurs (voir en-tête de fichier).
+ *
+ *  Domakuro : ne fait ici que poser `aFrappeCeTour`, lu par `crochetFinTour` — son
+ *  bonus se décide à la fin du tour, jamais ici (voir `crochetFinTour`). */
+export function crochetDegatsInfliges(
+  lanceur: Combatant, cs: Combatant[], actives: Set<string>,
+): void {
+  lanceur.aFrappeCeTour = true;
+  if (!actives.has("dofus_tachete")) return;
+  for (const a of cs) {
+    if (a.camp !== lanceur.camp || a.ref === lanceur.ref || a.pvActuels <= 0) continue;
+    if (a.effets.some((e) => e.source === "dofus_tachete")) continue; // non cumulable
+    for (const stat of STATS_ELEM) {
+      a.effets.push({ stat, valeur: 5, toursRestants: 1, source: "dofus_tachete" });
+    }
+  }
+}
+
 /** Crochet de fin de tour : décrit les soins/boucliers dus au porteur pour le tour
  *  qui vient de se terminer.
  *
@@ -114,5 +143,15 @@ export function crochetFinTour(
       out.soins.push({ ref: a.ref, montant: pct(acteur, 0.05) });
     }
   }
+  // Domakuro : le bonus se décide à la fin du PREMIER tour du porteur, et vaut pour
+  // le reste du combat. Après ce tour-là, `toursJoues` n'est plus jamais égal à 1 et
+  // plus rien ne peut le déclencher — ni le réarmer si un tour ultérieur est calme.
+  if (actives.has("domakuro") && (acteur.toursJoues ?? 0) === 1 && !acteur.aFrappeCeTour) {
+    acteur.degatsPctPermanent = (acteur.degatsPctPermanent ?? 0) + 0.01;
+  }
+  // Remis à zéro à CHAQUE fin de tour, quelles que soient les reliques actives :
+  // sans ça, un porteur qui frappe une seule fois resterait marqué `aFrappeCeTour`
+  // pour tout le reste du combat.
+  acteur.aFrappeCeTour = false;
   return out;
 }

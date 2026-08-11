@@ -533,6 +533,181 @@ describe("crochet début de tour — intégration moteur (runCombat)", () => {
   });
 });
 
+describe("crochet dégâts infligés", () => {
+  it("Tacheté : +5 aux quatre stats élémentaires des ALLIÉS, 1 tour, non cumulable", async () => {
+    const { crochetDegatsInfliges } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const allie = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const actives = new Set(["dofus_tachete"]);
+    crochetDegatsInfliges(h, [h, allie], actives);
+    const buffs = allie.effets.filter((e) => e.stat === "force");
+    expect(buffs).toHaveLength(1);
+    expect(buffs[0].valeur).toBe(5);
+    crochetDegatsInfliges(h, [h, allie], actives); // second coup dans le même tour
+    expect(allie.effets.filter((e) => e.stat === "force")).toHaveLength(1); // non cumulable
+  });
+
+  it("Tacheté : ne buffe jamais le porteur lui-même, ni un ennemi", async () => {
+    const { crochetDegatsInfliges } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const ennemi = ennemiTest({ position: 0 });
+    crochetDegatsInfliges(h, [h, ennemi], new Set(["dofus_tachete"]));
+    expect(h.effets.filter((e) => e.stat === "force")).toHaveLength(0);
+    expect(ennemi.effets.filter((e) => e.stat === "force")).toHaveLength(0);
+  });
+
+  it("sans la relique, aucun buff n'est posé", async () => {
+    const { crochetDegatsInfliges } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const allie = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    crochetDegatsInfliges(h, [h, allie], new Set());
+    expect(allie.effets).toHaveLength(0);
+  });
+
+  it("Domakuro : +1 % de dégâts finaux si AUCUN dégât au premier tour", async () => {
+    const { crochetFinTour, crochetDegatsInfliges } = await import("./dofus-effets");
+    const actives = new Set(["domakuro"]);
+    const muet = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 1 });
+    crochetFinTour(muet, [muet], actives); // fin du tour 1 sans avoir frappé
+    expect(muet.degatsPctPermanent).toBeCloseTo(0.01);
+
+    const frappeur = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 1 });
+    crochetDegatsInfliges(frappeur, [frappeur], actives);
+    crochetFinTour(frappeur, [frappeur], actives);
+    expect(frappeur.degatsPctPermanent ?? 0).toBe(0);
+  });
+
+  it("Domakuro : ne se réarme plus après le premier tour, même si un tour ultérieur est calme", async () => {
+    const { crochetFinTour, crochetDegatsInfliges } = await import("./dofus-effets");
+    const actives = new Set(["domakuro"]);
+    const c = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 1 });
+    crochetDegatsInfliges(c, [c], actives); // frappe au tour 1 : pas de bonus
+    crochetFinTour(c, [c], actives);
+    expect(c.degatsPctPermanent ?? 0).toBe(0);
+    c.toursJoues = 5; // tour ultérieur, calme (pas de crochetDegatsInfliges appelé)
+    crochetFinTour(c, [c], actives);
+    expect(c.degatsPctPermanent ?? 0).toBe(0); // toujours rien : la fenêtre est fermée
+  });
+
+  it("aFrappeCeTour est remis à zéro d'un tour sur l'autre par crochetFinTour", async () => {
+    const { crochetFinTour, crochetDegatsInfliges } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 2 });
+    crochetDegatsInfliges(c, [c], new Set());
+    expect(c.aFrappeCeTour).toBe(true);
+    crochetFinTour(c, [c], new Set());
+    expect(c.aFrappeCeTour).toBe(false);
+  });
+});
+
+// Comme pour le Dorigami/l'Émeraude plus haut : les tests ci-dessus n'exercent que le
+// module PUR. Un vrai combat vérifie que le bonus du Domakuro modifie RÉELLEMENT les
+// dégâts calculés par le pipeline (`degatsCible`), pas seulement le champ posé.
+describe("Domakuro — intégration moteur (runCombat)", () => {
+  it("le bonus de +1 % s'applique RÉELLEMENT aux dégâts des coups suivants", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const spellFrappe = {
+      ...SORTS.morsure, id: "test_domakuro_frappe", baseMin: 1000, baseMax: 1000, scaling: 0, coutPA: 1,
+    };
+    // Isole le bonus : stats à zéro (multOffensif = ×1, pas de crit ni de scaling
+    // élémentaire) et résistances/armure nulles, même patron que le test Nébuleux
+    // ci-dessus, pour que le SEUL écart entre les deux combats soit `degatsPctPermanent`.
+    const construireCombat = () => {
+      const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+      heros.stats = { ...heros.stats, force: 0, intelligence: 0, agilite: 0, chance: 0 };
+      heros.pvActuels = heros.pvMax; heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+      const ennemi = fabriquerEnnemis("combat_1")[0];
+      ennemi.stats = { ...ennemi.stats, agilite: 0 };
+      ennemi.resistances = {}; ennemi.armure = 0;
+      ennemi.pvMax = 6000; ennemi.pvActuels = 6000; ennemi.initiative = 1;
+      return { heros, ennemi };
+    };
+    // Plan : le héros PASSE son premier tour (aucun dégât infligé), ce qui arme le
+    // Domakuro en fin de ce tour ; il frappe ensuite à chaque tour suivant jusqu'à
+    // abattre l'ennemi. On capture le PREMIER coup réellement porté (tour 2).
+    const premierCoupApresPasse = async (actives: Set<string>): Promise<number> => {
+      const { heros, ennemi } = construireCombat();
+      let premier: number | undefined;
+      const controllerJoueur = (acteur: Combatant): Action | null => {
+        if (acteur.ref !== heros.ref) return null;
+        if (acteur.toursJoues === 1) return null; // passe le tour 1 : rien infligé
+        return { sort: spellFrappe, cibleRef: ennemi.ref };
+      };
+      await runCombat([heros, ennemi], {
+        controllers: { joueur: controllerJoueur, ennemi: () => null },
+        rng: () => 0.99,
+        reliquesActives: actives,
+        onDegats: (_ref, dmg) => { if (premier === undefined) premier = dmg; },
+      });
+      return premier!;
+    };
+    const sansRelique = await premierCoupApresPasse(new Set());
+    const avecDomakuro = await premierCoupApresPasse(new Set(["domakuro"]));
+    expect(sansRelique).toBe(1000);
+    expect(avecDomakuro).toBe(1010); // +1 % acquis en fin de tour 1, sans avoir frappé
+    expect(avecDomakuro).toBeGreaterThan(sansRelique);
+  });
+
+  it("un porteur qui frappe dès son premier tour ne gagne AUCUN bonus permanent", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const spellFrappe = {
+      ...SORTS.morsure, id: "test_domakuro_frappe_direct", baseMin: 1000, baseMax: 1000, scaling: 0, coutPA: 1,
+    };
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, force: 0, intelligence: 0, agilite: 0, chance: 0 };
+    heros.pvActuels = heros.pvMax; heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {}; ennemi.armure = 0;
+    ennemi.pvMax = 6000; ennemi.pvActuels = 6000; ennemi.initiative = 1;
+    const controllerJoueur = (acteur: Combatant): Action | null =>
+      acteur.ref === heros.ref ? { sort: spellFrappe, cibleRef: ennemi.ref } : null;
+    const dmgs: number[] = [];
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0.99,
+      reliquesActives: new Set(["domakuro"]),
+      onDegats: (_ref, dmg) => dmgs.push(dmg),
+    });
+    expect(heros.degatsPctPermanent ?? 0).toBe(0);
+    expect(new Set(dmgs)).toEqual(new Set([1000])); // aucun coup n'a jamais été majoré
+  });
+
+  it("un ennemi passif à son premier tour ne gagne jamais le bonus, même si le JOUEUR porte le Domakuro (garde de camp)", async () => {
+    // `ctx.reliquesActives` vient de `Meta` — les reliques DU JOUEUR. Sans la garde
+    // de camp (`reliquesPour`, `src/combat.ts`), un ennemi qui passe son premier tour
+    // sans infliger de dégâts se verrait accorder le même bonus permanent que le héros.
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const spellFrappe = {
+      ...SORTS.morsure, id: "test_domakuro_garde", baseMin: 1, baseMax: 1, scaling: 0, coutPA: 1,
+    };
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 1000; heros.pvBase = 1000; heros.pvActuels = 1000;
+    heros.initiative = 1; heros.paMax = 1; heros.paActuels = 1;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 1000; ennemi.pvActuels = 1000;
+    ennemi.initiative = 100; // agit avant le héros à chaque ronde, mais reste passif
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref !== heros.ref) return null;
+      if (acteur.toursJoues !== 2) return null; // passe la ronde 1, laisse l'ennemi finir son tour 1 SANS dégâts
+      return { sort: spellFrappe, cibleRef: ennemi.ref }; // abat l'ennemi pour borner le combat
+    };
+    heros.stats = { ...heros.stats, force: 0, intelligence: 0, agilite: 0, chance: 0 };
+    ennemi.pvActuels = 1; // un seul coup suffit à l'abattre au tour 2 du héros
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null }, // l'ennemi ne fait RIEN, à aucun tour
+      rng: () => 0.99,
+      reliquesActives: new Set(["domakuro"]),
+    });
+    expect(ennemi.degatsPctPermanent ?? 0).toBe(0); // aucun bonus, malgré un premier tour sans dégâts
+  });
+});
+
 describe("Dofus Ocre", () => {
   it("n'accorde son PA qu'une fois TOUTES les espèces capturables capturées", async () => {
     const { MONSTRES } = await import("./data");

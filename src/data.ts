@@ -78,6 +78,8 @@ const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dofus_emeraude: { desc: "En fin de tour, octroie 3 % des PV max en bouclier par ennemi en ligne avant, pour 1 tour." },
   dofus_des_veilleurs: { desc: "En fin de tour, soigne les alliés de sa ligne de 5 % de ses PV max. Non cumulable." },
   dorigami: { desc: "Quand il abat un ennemi, octroie 20 % des PV max en bouclier pour 1 tour." },
+  dofus_tachete: { desc: "Quand il inflige des dégâts, octroie 5 en force, intelligence, agilité et chance à ses alliés pour 1 tour. Non cumulable." },
+  domakuro: { desc: "S'il n'inflige aucun dégât lors de son premier tour, gagne 1 % de dégâts finaux pour le reste du combat." },
 };
 
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(

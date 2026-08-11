@@ -407,6 +407,12 @@ export interface EffetActif {
   // combat.ts) — sans lui, une Brume déjà active sur le lanceur gonflerait la valeur
   // qu'il partage à sa rangée à chaque relance, une auto-alimentation non voulue.
   viaBrume?: boolean;
+  // Marqueur MOTEUR (jamais posé par le contenu) : identifie la relique qui a posé cet
+  // effet (ex. "dofus_tachete") — sert UNIQUEMENT à reconnaître ses propres exemplaires
+  // pour un buff « non cumulable », sur le même principe que `viaBuffRangee`/`viaBrume`
+  // ci-dessus (deux marqueurs dédiés plutôt qu'un seul champ générique, pour rester
+  // cohérent avec l'existant).
+  source?: string;
 }
 
 export interface Combatant {
@@ -483,6 +489,16 @@ export interface Combatant {
   argenteArme?: number;
   argenteUtilise?: boolean; // Argenté : déjà déclenché ce combat
   degatsPctDofus?: number; // bonus/malus de dégâts finaux du tour en cours (Nébuleux, Domakuro)
+  /** Domakuro : a-t-il infligé des dégâts pendant le tour COURANT ? Posé par
+   *  `crochetDegatsInfliges`, remis à `false` par `crochetFinTour` à la fin de CHAQUE
+   *  tour (quelles que soient les reliques actives), sinon un porteur qui frappe une
+   *  fois resterait marqué pour tout le combat. */
+  aFrappeCeTour?: boolean;
+  /** Domakuro : bonus de dégâts finaux acquis pour le RESTE du combat — décidé une
+   *  fois, à la fin du PREMIER tour du porteur, jamais réarmé après. Distinct de
+   *  `degatsPctDofus` ci-dessus (qui ne vaut que pour le tour en cours) : ne pas
+   *  confondre les deux, malgré la ressemblance des noms. */
+  degatsPctPermanent?: number;
   /** Veilleurs : ce BÉNÉFICIAIRE a déjà reçu le soin non cumulable depuis son propre
    *  dernier tour. Posé sur le bénéficiaire (pas le porteur), remis à `false` au
    *  début de son tour dans `reinitialiserLancersTour`. */
