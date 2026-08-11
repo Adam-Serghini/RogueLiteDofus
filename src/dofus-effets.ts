@@ -12,6 +12,13 @@
 // =============================================================================
 import type { Combatant } from "./types";
 
+/** Reliques que ce module sait déclencher. Confrontée au catalogue par un test :
+ *  un identifiant mal orthographié donnerait un effet qui ne part jamais, en silence. */
+export const RELIQUES_A_CROCHET = [
+  "dokoko", "dofus_nebuleux", "dofus_argente", "dofus_argente_scintillant",
+  "dofus_emeraude", "dofus_des_veilleurs", "dorigami", "dofus_tachete", "domakuro",
+] as const;
+
 export interface IntentionsDofus {
   soins: { ref: string; montant: number }[];
   boucliers: { ref: string; montant: number; tours: number }[];

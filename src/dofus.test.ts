@@ -753,6 +753,54 @@ describe("Dofus Ocre", () => {
   });
 });
 
+describe("cohérence du catalogue", () => {
+  const AVEC_EFFET = [
+    "dofus_pourpre", "dolmanax", "dofus_ivoire", "dofus_ebene", "dofus_turquoise",
+    "dofus_des_glaces", "dofawa", "dofus_kaliptus", "dofus_ocre", "dokoko",
+    "dofus_nebuleux", "dofus_argente", "dofus_argente_scintillant", "dofus_emeraude",
+    "dofus_des_veilleurs", "dorigami", "dofus_tachete", "domakuro", "dofus_du_cauchemar",
+  ];
+
+  it("les 19 reliques pourvues ont une description propre, les autres restent dormantes", () => {
+    for (const id of AVEC_EFFET) {
+      expect(DOFUS[id], id).toBeDefined();
+      expect(DOFUS[id].desc, id).not.toBe("Relique légendaire — effet à venir.");
+    }
+    for (const d of Object.values(DOFUS)) {
+      if (AVEC_EFFET.includes(d.id)) continue;
+      expect(d.desc, d.id).toBe("Relique légendaire — effet à venir.");
+    }
+  });
+
+  // DORMANCE : l'Abyssal n'a volontairement aucun effet. Ce test tombera le jour où
+  // on lui en donnera un, forçant la mise à jour du spec et de la description.
+  it("le Dofus Abyssal n'a aucun effet", () => {
+    const nu = bonusEquipe(metaVide());
+    const avec = bonusEquipe({ ...metaVide(), dofus: [{ id: "dofus_abyssal" }] });
+    expect(avec).toEqual(nu);
+  });
+
+  it("le Scintillant absorbe l'Argenté : posséder les deux ne soigne qu'une fois", async () => {
+    // Le Scintillant est censé REMPLACER l'Argenté (la transformation relève de
+    // l'obtention, hors périmètre). Si les deux se retrouvaient possédés, le soin de
+    // seuil ne doit toujours partir qu'une seule fois par combat.
+    const { marquerSeuilArgente, crochetDebutTour } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 150 });
+    const actives = new Set(["dofus_argente", "dofus_argente_scintillant"]);
+    marquerSeuilArgente(c, actives);
+    c.toursJoues = (c.toursJoues ?? 0) + 1; // tour suivant : le soin peut se consommer
+    expect(crochetDebutTour(c, [c], actives).soins).toHaveLength(1);
+    marquerSeuilArgente(c, actives);
+    c.toursJoues = (c.toursJoues ?? 0) + 1;
+    expect(crochetDebutTour(c, [c], actives).soins).toHaveLength(0);
+  });
+
+  it("toute clé du module de crochets existe dans DOFUS", async () => {
+    const mod = await import("./dofus-effets");
+    for (const id of mod.RELIQUES_A_CROCHET) expect(DOFUS[id], id).toBeDefined();
+  });
+});
+
 describe("Dofus du Cauchemar", () => {
   it("le camp joueur ouvre même avec une initiative inférieure", async () => {
     const { ordreDuCombat } = await import("./combat");
