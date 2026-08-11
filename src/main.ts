@@ -9,7 +9,7 @@ import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   appliquerModificateursElite, effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
   tavernePctAscension, tauxDofusAscension, enregistrerAscension,
-  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, prospectionEquipe,
+  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, prospectionEquipe, reliquesActives,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
   appliquerArchimonstres, appliquerErrants, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
@@ -95,6 +95,7 @@ async function resoudreCombat(
     },
     playerDamageBonus: damageMult,
     enemyDamageBonus: effetsAscension(run.ascension).degatsMult ?? 1,
+    reliquesActives: reliquesActives(meta),
   });
   synchroniserPV(run, combatants); // PV conservés d'un nœud à l'autre
   if (gagne) {

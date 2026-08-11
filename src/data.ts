@@ -70,7 +70,10 @@ const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dofus_des_glaces: { desc: "Les dégâts ignorent 5 % des résistances ennemies.", perceResistances: 0.05 },
   dofawa: { desc: "+1 PV max.", pvBonus: 1 },
   dofus_kaliptus: { desc: "+1 à 30 en prospection, selon le meilleur exemplaire obtenu.", prospectionJet: [1, 30] },
-  dofus_argente: { desc: "Relique légendaire — effet à venir.", },
+  dofus_argente: { desc: "Une fois par combat, sous 20 % de ses PV, soigne de 20 % des PV max au début du tour suivant." },
+  dofus_argente_scintillant: { desc: "Une fois par combat, sous 20 % de ses PV, soigne de 20 % des PV max au début du tour suivant. +10 % de dégâts finaux.", degatsPct: 0.10 },
+  dokoko: { desc: "Un tour sur deux, soigne de 10 % des PV max en début de tour." },
+  dofus_nebuleux: { desc: "+5 % de dégâts finaux les tours pairs, −5 % les tours impairs." },
   dofus_ocre: { desc: "+1 PA à toute l'équipe, une fois tous les archimonstres capturés.", paBonus: 1 },
 };
 

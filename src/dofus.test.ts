@@ -3,8 +3,11 @@
 // =============================================================================
 import { describe, it, expect, beforeEach } from "vitest";
 import { DOFUS } from "./data";
-import { chargerMeta, ajouterDofus, bonusEquipe, reliquesActives, meilleurJet } from "./run";
-import type { Meta } from "./types";
+import {
+  chargerMeta, ajouterDofus, bonusEquipe, reliquesActives, meilleurJet,
+  equipeCombattante, nouvelleRun,
+} from "./run";
+import type { Meta, Combatant } from "./types";
 
 const store = new Map<string, string>();
 (globalThis as Record<string, unknown>).localStorage = {
@@ -126,6 +129,58 @@ describe("effets chiffrés", () => {
     heros.perceResistances = 0.5; // moitié de la résistance ignorée
     const perce = degatsCible(heros, sort, cible, { useMax: true, mult: 1, ctx });
     expect(perce.dmg).toBeGreaterThan(nu.dmg);
+  });
+});
+
+/** Un héros de test aux PV et au compteur de tour imposés. Défini une fois en tête
+ *  de fichier et réutilisé par tous les describe de crochets. */
+let refSeq = 0;
+function herosTest(o: { pvMax: number; pvActuels: number; toursJoues?: number; position?: number }): Combatant {
+  const c = equipeCombattante(nouvelleRun(["iop"]))[0];
+  c.ref = `h_${++refSeq}`; // refs uniques : plusieurs héros dans un même test
+  c.pvMax = o.pvMax; c.pvBase = o.pvMax; c.pvActuels = o.pvActuels;
+  c.toursJoues = o.toursJoues ?? 2;
+  if (o.position !== undefined) c.position = o.position;
+  return c;
+}
+// `ennemiTest` (même forme, via `fabriquerEnnemis`) sera ajouté quand un crochet
+// suivant (Émeraude, Veilleurs…) en aura réellement besoin — un helper non lu par
+// aucun test échoue au typecheck (`noUnusedLocals`), donc on ne l'anticipe pas.
+
+describe("crochet début de tour", () => {
+  it("Dokoko soigne 10 % des PV max un tour sur DEUX", async () => {
+    const { crochetDebutTour } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 500, toursJoues: 2 });
+    expect(crochetDebutTour(c, [c], new Set(["dokoko"])).soins).toEqual([{ ref: c.ref, montant: 100 }]);
+    c.toursJoues = 3;
+    expect(crochetDebutTour(c, [c], new Set(["dokoko"])).soins).toEqual([]);
+  });
+
+  it("Nébuleux : +5 % aux tours pairs, −5 % aux tours impairs", async () => {
+    const { crochetDebutTour } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 2 });
+    expect(crochetDebutTour(c, [c], new Set(["dofus_nebuleux"])).degatsPct).toBeCloseTo(0.05);
+    c.toursJoues = 3;
+    expect(crochetDebutTour(c, [c], new Set(["dofus_nebuleux"])).degatsPct).toBeCloseTo(-0.05);
+  });
+
+  it("Argenté : soigne au tour SUIVANT le passage sous 20 %, une seule fois par combat", async () => {
+    const { crochetDebutTour, marquerSeuilArgente } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 150, toursJoues: 2 });
+    const actives = new Set(["dofus_argente"]);
+    marquerSeuilArgente(c, actives); // appelé par le moteur quand les PV descendent
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200 }]);
+    // consommé : plus jamais de ce combat
+    marquerSeuilArgente(c, actives);
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([]);
+  });
+
+  it("sans la relique, aucune intention", async () => {
+    const { crochetDebutTour } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 500, toursJoues: 2 });
+    const vide = crochetDebutTour(c, [c], new Set());
+    expect(vide.soins).toEqual([]);
+    expect(vide.degatsPct).toBe(0);
   });
 });
 

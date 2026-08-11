@@ -5,6 +5,7 @@
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, statElement } from "./progression";
+import { crochetDebutTour, marquerSeuilArgente, type IntentionsDofus } from "./dofus-effets";
 
 import type {
   BuffRangeeAlliee, Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
@@ -36,6 +37,10 @@ export interface CombatCtx {
   fx?: (ev: FxEvent) => void; // effets visuels (optionnel)
   onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (optionnel)
   combatants?: Combatant[]; // référence vivante de la liste en cours (posée par lancerSort) — lookup Lance/redirection
+  /** Reliques Dofus à déclenchement possédées par le joueur (`reliquesActives(meta)`,
+   *  calculé côté `main.ts` — ce module reste pur). Défaut ensemble vide pour ne pas
+   *  invalider les littéraux de contexte des tests existants. */
+  reliquesActives?: Set<string>;
 }
 
 export type Controller = (
@@ -52,6 +57,7 @@ export interface CombatHooks {
   enemyDamageBonus?: number;
   fx?: (ev: FxEvent) => void; // effets visuels (crit, esquive…)
   onDegats?: (attaquantRef: string, dmg: number) => void; // stats de run (récap de fin)
+  reliquesActives?: Set<string>; // reliques Dofus à déclenchement possédées (défaut vide)
 }
 
 // --- Helpers de base ---------------------------------------------------------
@@ -698,6 +704,10 @@ function degatsAvec(
   // y compris pour un ennemi apparu en cours de combat (renfort, invocation).
   dmg *= lanceur.camp === "joueur" ? ctx.playerDamageBonus : (ctx.enemyDamageBonus ?? 1);
 
+  // relique Dofus à déclenchement (Nébuleux, Domakuro…) : bonus/malus du TOUR en
+  // cours, posé par `appliquerIntentions` sur `lanceur.degatsPctDofus`.
+  if (lanceur.degatsPctDofus) dmg *= 1 + lanceur.degatsPctDofus;
+
   // puissance offensive (Intelligence) — s'applique à tout lanceur
   dmg *= multOffensif(se);
 
@@ -886,6 +896,7 @@ function infligerDegats(
     reste -= absorbe;
   }
   cible.pvActuels = Math.max(0, cible.pvActuels - reste);
+  marquerSeuilArgente(cible, ctx?.reliquesActives ?? new Set()); // Argenté : arme le soin sous 20 %
   verifierRenaissance(cible, ctx); // Kwakwanneau : renaît une fois par combat
   // récupération (Goyave) : le porteur survivant régénère une fraction des dégâts subis
   if (cible.soinDegatsRecus && dmg > 0 && cible.pvActuels > 0) {
@@ -1042,6 +1053,10 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
     acteur.pvActuels = Math.max(0, acteur.pvActuels - e.valeur);
     ctx.log(`${acteur.nom} subit ${e.valeur} dégâts de poison.`);
   }
+  // le poison retire les PV hors `infligerDegats` (voir sa note en tête de fichier) :
+  // l'Argenté doit pouvoir s'armer sur cette perte-là aussi, comme le Kwakwanneau
+  // juste en dessous sauve déjà d'une mort au poison.
+  marquerSeuilArgente(acteur, ctx.reliquesActives ?? new Set());
   verifierRenaissance(acteur, ctx); // le Kwakwanneau sauve aussi d'une mort au poison
   if (acteur.pvActuels <= 0) {
     ctx.log(`${acteur.nom} succombe au poison !`);
@@ -1142,6 +1157,22 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): void {
   const avant = cible.pvActuels;
   cible.pvActuels = Math.min(cible.pvMax, cible.pvActuels + montant);
   if (cible.pvActuels > avant) ctx.log(`${cible.nom} récupère ${cible.pvActuels - avant} PV.`);
+}
+
+/** Applique les intentions décrites par `dofus-effets.ts`. Le module décrit, le
+ *  moteur exécute — c'est ici que vivent les seules mutations. */
+function appliquerIntentions(int: IntentionsDofus, cs: Combatant[], ctx: CombatCtx): void {
+  for (const s of int.soins) {
+    const c = cs.find((x) => x.ref === s.ref);
+    if (c && c.pvActuels > 0) soigner(c, s.montant, ctx);
+  }
+  for (const b of int.boucliers) {
+    const c = cs.find((x) => x.ref === b.ref);
+    if (!c || c.pvActuels <= 0) continue;
+    c.bouclier += b.montant;
+    (c.boucliersTemporaires ??= []).push({ montant: b.montant, tours: b.tours });
+    ctx.log(`${c.nom} gagne un bouclier de ${b.montant}.`);
+  }
 }
 
 /** Résout la liste de bénéficiaires d'une « portée » (soi / rangée du lanceur / rangée
@@ -2599,6 +2630,14 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
         await hooks.onUpdate?.();
         continue;
       }
+
+      // reliques Dofus à déclenchement (Dokoko, Nébuleux, Argenté…) : décrites par
+      // `dofus-effets.ts`, exécutées ici par `appliquerIntentions`. `degatsPctDofus`
+      // est RÉÉCRIT à chaque tour (jamais accumulé) pour que le malus du Nébuleux ne
+      // survive pas au tour suivant.
+      const intentions = crochetDebutTour(acteur, combatants, ctx.reliquesActives ?? new Set());
+      appliquerIntentions(intentions, combatants, ctx);
+      acteur.degatsPctDofus = intentions.degatsPct;
 
       ctx.log(`▶ Tour de ${acteur.nom} (${acteur.paActuels} PA).`);
       await hooks.onUpdate?.();

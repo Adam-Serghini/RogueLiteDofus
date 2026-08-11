@@ -473,6 +473,10 @@ export interface Combatant {
   /** Nombre de tours que ce combattant a COMMENCÉS (1 pendant son premier tour).
    *  Lu par `pasPremierTour` ; incrémenté par `runCombat`, jamais par un sort. */
   toursJoues?: number;
+  // --- reliques Dofus à déclenchement (src/dofus-effets.ts) ---
+  argenteArme?: boolean; // Argenté : seuil franchi, soin dû au prochain tour
+  argenteUtilise?: boolean; // Argenté : déjà déclenché ce combat
+  degatsPctDofus?: number; // bonus/malus de dégâts finaux du tour en cours (Nébuleux, Domakuro)
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
   bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
   telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX
