@@ -253,7 +253,7 @@ export const pctDgtsFinaux = (s: Stats): number => Math.round((multOffensif(s) -
 export function renderDofusRack(meta: Meta, compact = false): string {
   const slots = Object.values(DOFUS)
     .map((d) => {
-      const n = meta.dofus.filter((id) => id === d.id).length;
+      const n = meta.dofus.filter((x) => x.id === d.id).length;
       const possede = n > 0;
       const boss = DOFUS_DROP[d.id];
       const bossAttr = boss

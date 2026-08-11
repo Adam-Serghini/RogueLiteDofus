@@ -364,8 +364,9 @@ function sectionBonusDofus(meta: Meta | null): string {
   const dmg = Math.round((b.damageMult - 1) * 100);
   if (dmg) parts.push(`+${dmg} % dégâts`);
   if (b.paBonus) parts.push(`+${b.paBonus} PA`);
-  if (b.vitaBonus) parts.push(`+${b.vitaBonus} Vitalité`);
+  if (b.pvBonus) parts.push(`+${b.pvBonus} PV max`);
   if (b.resAllBonus) parts.push(`+${Math.round(b.resAllBonus * 100)} % résistances`);
+  if (b.statsElementaires) parts.push(`+${b.statsElementaires} force/intel./agi./chance`);
   if (!parts.length) return "";
   return `<div class="bonus-dofus">
     <span class="bonus-dofus-titre">🐉 Bonus de Dofus : toute l'équipe</span>

@@ -69,13 +69,16 @@ describe("philtres d'Otomai (taux d'archimonstre)", () => {
 });
 
 describe("bonus d'équipe (Dofus) appliqués aux combattants", () => {
-  it("le bonus de vitalité du Dofawa ne RESSUSCITE pas un héros mort (bug du 1 PV)", async () => {
+  it("le bonus de PV du Dofawa ne RESSUSCITE pas un héros mort (bug du 1 PV)", async () => {
     const { appliquerBonusEquipeCombat, equipeCombattante, nouvelleRun } = await import("./run");
     const run = nouvelleRun(["iop", "eniripsa"]);
     const [iop, eni] = equipeCombattante(run);
     eni.pvActuels = 0; // l'Eniripsa est morte au combat précédent
     const pvIopAvant = iop.pvActuels;
-    appliquerBonusEquipeCombat([iop, eni], { damageMult: 1.15, paBonus: 1, vitaBonus: 2, resAllBonus: 0.01 });
+    appliquerBonusEquipeCombat([iop, eni], {
+      damageMult: 1.15, paBonus: 1, pvBonus: 2, resAllBonus: 0.01,
+      statsElementaires: 0, critPlat: 0, perceResistances: 0, prospection: 0,
+    });
     // vivant : PV max ET courants montent, PA aussi
     expect(iop.pvMax).toBeGreaterThan(pvIopAvant);
     expect(iop.pvActuels).toBe(pvIopAvant + 2);

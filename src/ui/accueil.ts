@@ -46,7 +46,7 @@ export function showStart(
 
     const draw = () => {
       // lu à chaque rendu : la réinitialisation des Dofus (Paramètres) le fait tomber à 0
-      const nbUniques = new Set(meta.dofus).size;
+      const nbUniques = new Set(meta.dofus.map((d) => d.id)).size;
       const record = recordAscension(meta, trancheSel);
       // run en cours : Reprendre (principal) + Abandonner ; sinon : Jouer
       const boutons = reprise
@@ -242,7 +242,7 @@ export function showChoixEquipe(): Promise<string[] | null> {
 /** Collection de Dofus (accueil) : tout le catalogue, possédés en couleurs. */
 export function showCollectionDofus(meta: Meta): Promise<void> {
   return new Promise((res) => {
-    const nbUniques = new Set(meta.dofus).size;
+    const nbUniques = new Set(meta.dofus.map((d) => d.id)).size;
     ecran(`
       <h1>Dofus</h1>
       <p class="sous-titre">${nbUniques} / ${Object.keys(DOFUS).length} reliques collectées. Elles survivent à la mort et se cumulent.</p>

@@ -441,18 +441,18 @@ describe("Dofus du Cauchemar", () => {
     expect(meta.ascension).toBeUndefined();
     expect(tranchesEnCauchemar(meta)).toBe(0);
     expect(verifierDofusCauchemar(meta)).toBe(false);
-    expect(meta.dofus).not.toContain("dofus_du_cauchemar");
+    expect(meta.dofus.some((d) => d.id === "dofus_du_cauchemar")).toBe(false);
   });
 
   it("exige LES CINQ tranches déclarées, pas seulement les jouables", () => {
     const meta = metaVide();
     meta.ascension = { t1: 4 };
     expect(verifierDofusCauchemar(meta)).toBe(false);
-    expect(meta.dofus).not.toContain("dofus_du_cauchemar");
+    expect(meta.dofus.some((d) => d.id === "dofus_du_cauchemar")).toBe(false);
 
     meta.ascension = Object.fromEntries(TRANCHES.map((t) => [t.id, 3]));
     expect(verifierDofusCauchemar(meta)).toBe(true);
-    expect(meta.dofus).toContain("dofus_du_cauchemar");
+    expect(meta.dofus.some((d) => d.id === "dofus_du_cauchemar")).toBe(true);
   });
 
   it("ne l'accorde pas deux fois", () => {
@@ -460,7 +460,7 @@ describe("Dofus du Cauchemar", () => {
     meta.ascension = Object.fromEntries(TRANCHES.map((t) => [t.id, 4]));
     expect(verifierDofusCauchemar(meta)).toBe(true);
     expect(verifierDofusCauchemar(meta)).toBe(false);
-    expect(meta.dofus.filter((d) => d === "dofus_du_cauchemar")).toHaveLength(1);
+    expect(meta.dofus.filter((d) => d.id === "dofus_du_cauchemar")).toHaveLength(1);
   });
 
   // DORMANCE : ce test tombera le jour où on donne un effet à la relique. C'est
@@ -469,7 +469,7 @@ describe("Dofus du Cauchemar", () => {
   it("n'a AUCUN effet pour l'instant (dormance assumée)", () => {
     const meta = metaVide();
     const nu = bonusEquipe(meta);
-    meta.dofus.push("dofus_du_cauchemar");
+    meta.dofus.push({ id: "dofus_du_cauchemar" });
     expect(bonusEquipe(meta)).toEqual(nu);
     expect(DOFUS.dofus_du_cauchemar.desc).toBe("Relique légendaire — effet à venir.");
   });

@@ -6,10 +6,10 @@ import {
   fabriquerEnnemis, appliquerArchimonstres, capturerArchi, paliersOcre, bonusEquipe,
 } from "./run";
 import { ARCHI, ZONES, monstresDeZone } from "./data";
-import type { Meta } from "./types";
+import type { DofusInstance, Meta } from "./types";
 
-const metaAvec = (nbArchis: number, dofus: string[] = []): Meta => ({
-  dofus,
+const metaAvec = (nbArchis: number, dofusIds: string[] = []): Meta => ({
+  dofus: dofusIds.map((id): DofusInstance => ({ id })),
   archis: Array.from({ length: nbArchis }, (_, i) => `m${i}`),
   runs: 0,
   victoires: 0,
@@ -58,10 +58,11 @@ describe("paliers du Dofus Ocre", () => {
     expect(t5.degats).toBeCloseTo(0.3);
   });
 
-  it("bonusEquipe combine Dofus Pourpre et palier Ocre", () => {
+  it("bonusEquipe reflète l'effet propre du Dofus Pourpre (les paliers Ocre ne s'y mêlent plus)", () => {
     const b = bonusEquipe(metaAvec(100, ["dofus_pourpre"]));
-    expect(b.paBonus).toBe(2); // palier II
-    expect(b.damageMult).toBeCloseTo(1 + 0.15 + 0.1); // Pourpre + Ocre II
+    expect(b.statsElementaires).toBe(6);
+    expect(b.paBonus).toBe(0);
+    expect(b.damageMult).toBeCloseTo(1);
   });
 });
 

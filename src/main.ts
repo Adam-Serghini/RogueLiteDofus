@@ -202,7 +202,7 @@ async function resoudreType(
         const taux = tauxDofusAscension(run.ascension);
         if (Math.random() < taux * mult) {
           ajouterDofus(meta, boss.dofusLache);
-          const copies = meta.dofus.filter((d) => d === boss.dofusLache).length;
+          const copies = meta.dofus.filter((d) => d.id === boss.dofusLache).length;
           await ui.showDofus(boss.dofusLache, copies);
         } else {
           await ui.showTransition("Donjon vaincu !", `Le boss n'a pas lâché son Dofus cette fois… (${Math.round(taux * 100)} % de chance)`);

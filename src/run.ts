@@ -7,7 +7,7 @@ import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PA
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
-import type { Combatant, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, NodeType, Progression, Rarete, Spell, Stats } from "./types";
+import type { Combatant, DofusInstance, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, NodeType, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -700,9 +700,11 @@ export function appliquerErrants(
 // refaire à la reprise). Effacée au wipe, à la victoire ou à l'abandon.
 const RUN_KEY = "rld_run_v0";
 
-/** Version du schéma de `Meta`. 2 = après la refonte de l'Ascension : une sauvegarde
- *  d'une version antérieure voit ses records d'Ascension remis à zéro, une seule fois. */
-export const META_VERSION = 2;
+/** Version du schéma de `Meta`. 2 = après la refonte de l'Ascension (records remis à
+ *  zéro une seule fois pour une sauvegarde antérieure). 3 = les reliques sont passées
+ *  d'identifiants à des exemplaires (`DofusInstance`), conversion elle-même idempotente
+ *  (voir `chargerMeta`) donc sans garde de version dédiée. */
+export const META_VERSION = 3;
 /** Version du schéma de la run sauvegardée. 2 = après la refonte de l'Ascension. */
 export const RUN_VERSION = 2;
 
@@ -1024,12 +1026,19 @@ export function chargerMeta(): Meta {
       // qui a bel et bien fini T1.
       //
       // Passage UNIQUE, gardé par `version` : sans ce garde, chaque chargement effacerait
-      // la progression de la session précédente, indéfiniment.
-      const aMigrer = (m.version ?? 0) < META_VERSION;
-      const ascensionFinale = ascension && (aMigrer
+      // la progression de la session précédente, indéfiniment. Seuil FIGÉ à 2 (version de
+      // la refonte de l'Ascension) : quelqu'un déjà en version 2 ne doit pas revoir ses
+      // records remis à zéro simplement parce que META_VERSION a depuis grimpé à 3.
+      const aMigrerAscension = (m.version ?? 0) < 2;
+      const ascensionFinale = ascension && (aMigrerAscension
         ? Object.fromEntries(Object.keys(ascension).map((t) => [t, 0]))
         : ascension);
-      return { version: META_VERSION, dofus: m.dofus ?? [], archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: ascensionFinale };
+      // Les reliques sont passées d'une liste d'identifiants à une liste d'exemplaires
+      // (le Kalyptus porte un jet). Une sauvegarde antérieure ne contient que des chaînes.
+      const dofusBrut = (m.dofus ?? []) as unknown[];
+      const dofus: DofusInstance[] = dofusBrut.map((d) =>
+        typeof d === "string" ? { id: d } : (d as DofusInstance));
+      return { version: META_VERSION, dofus, archis: m.archis ?? [], runs: m.runs ?? 0, victoires: m.victoires ?? 0, succes: m.succes ?? [], collection: m.collection ?? {}, ascension: ascensionFinale };
     }
   } catch {
     /* localStorage indisponible : on reste en mémoire */
@@ -1045,8 +1054,8 @@ export function sauverMeta(meta: Meta): void {
   }
 }
 
-export function ajouterDofus(meta: Meta, id: string): void {
-  meta.dofus.push(id);
+export function ajouterDofus(meta: Meta, id: string, jet?: number): void {
+  meta.dofus.push(jet === undefined ? { id } : { id, jet });
   sauverMeta(meta);
 }
 
@@ -1112,7 +1121,7 @@ export function tranchesEnCauchemar(meta: Meta): number {
  *
  *  Renvoie true UNIQUEMENT au moment où elle est accordée (pour l'annonce). */
 export function verifierDofusCauchemar(meta: Meta): boolean {
-  if (meta.dofus.includes("dofus_du_cauchemar")) return false;
+  if (meta.dofus.some((d) => d.id === "dofus_du_cauchemar")) return false;
   if (tranchesEnCauchemar(meta) < TRANCHES.length) return false;
   ajouterDofus(meta, "dofus_du_cauchemar"); // persiste la Meta
   return true;
@@ -1133,23 +1142,17 @@ export function trancheJouable(meta: Meta, trancheId: string): boolean {
   return trancheDeverrouillee(meta, trancheId) && tranche.zones.length > 0 && !tranche.enChantier;
 }
 
-/** Multiplicateur de dégâts d'équipe issu des Dofus possédés (cumulable, PLAFONNÉ
- *  à `maxCopies` PAR relique — sans quoi le farm d'un même boss cumulerait sans
- *  borne un bonus permanent, et `Meta.dofus` n'est pas révocable). */
-export function bonusDegatsDofus(meta: Meta): number {
-  let bonus = 1;
-  for (const [id, n] of Object.entries(comptesDofus(meta))) {
-    const d = DOFUS[id];
-    if (d) bonus += d.bonusDegatsParCopie * Math.min(n, d.maxCopies ?? Infinity);
-  }
-  return bonus;
+/** Identifiants des reliques possédées, sans doublon. Les exemplaires ne cumulent
+ *  plus : posséder la relique suffit, la posséder trois fois n'ajoute rien. */
+export function reliquesActives(meta: Meta): Set<string> {
+  return new Set(meta.dofus.map((d) => d.id));
 }
 
-/** Nombre de copies possédées, par relique. */
-function comptesDofus(meta: Meta): Record<string, number> {
-  const copies: Record<string, number> = {};
-  for (const id of meta.dofus) copies[id] = (copies[id] ?? 0) + 1;
-  return copies;
+/** Meilleur jet possédé pour une relique à tirage. `undefined` si non possédée ou
+ *  sans jet — refarmer ne peut donc qu'améliorer, jamais dégrader. */
+export function meilleurJet(meta: Meta, id: string): number | undefined {
+  const jets = meta.dofus.filter((d) => d.id === id && d.jet !== undefined).map((d) => d.jet!);
+  return jets.length ? Math.max(...jets) : undefined;
 }
 
 // Armurerie : rang des paliers de collection, dérivé de l'ordre canonique RARETES
@@ -1191,37 +1194,53 @@ export function paliersOcre(meta: Meta): { tier: number; paBonus: number; degats
   return { tier, paBonus, degats };
 }
 
-/** Bonus d'équipe combinés (Dofus + paliers Ocre) appliqués en combat. */
-export function bonusEquipe(meta: Meta): { damageMult: number; paBonus: number; vitaBonus: number; resAllBonus: number } {
-  const ocre = paliersOcre(meta);
-  // effets « par copie, plafonnés à maxCopies » (Dofawa vita, Argenté résistance)
-  const copies = comptesDofus(meta);
-  let vitaBonus = 0, resAllBonus = 0;
-  for (const [id, n] of Object.entries(copies)) {
-    const d = DOFUS[id];
-    if (!d) continue;
-    const eff = Math.min(n, d.maxCopies ?? Infinity);
-    if (d.vitaParCopie) vitaBonus += d.vitaParCopie * eff;
-    if (d.resAllParCopie) resAllBonus += d.resAllParCopie * eff;
-  }
-  return { damageMult: bonusDegatsDofus(meta) + ocre.degats, paBonus: ocre.paBonus, vitaBonus, resAllBonus };
+export interface BonusEquipe {
+  damageMult: number;
+  paBonus: number;
+  pvBonus: number;
+  resAllBonus: number;
+  statsElementaires: number;
+  critPlat: number;
+  perceResistances: number;
+  prospection: number;
 }
 
-/** Applique les bonus d'équipe (Dofus + Ocre) aux combattants du joueur, à la
- *  construction du combat. Un héros MORT (0 PV) voit ses maxima montés mais reste
- *  mort — le bonus de vitalité du Dofawa ressuscitait sinon les morts à 1 PV/copie. */
+/** Bonus d'équipe issus des reliques possédées. Chaque relique compte UNE fois : les
+ *  exemplaires ne cumulent plus. Les paliers du Dofus Ocre ne sont pas encore rendus
+ *  ici (chantier à part). */
+export function bonusEquipe(meta: Meta): BonusEquipe {
+  const b: BonusEquipe = {
+    damageMult: 1, paBonus: 0, pvBonus: 0, resAllBonus: 0,
+    statsElementaires: 0, critPlat: 0, perceResistances: 0, prospection: 0,
+  };
+  for (const id of reliquesActives(meta)) {
+    const d = DOFUS[id];
+    if (!d) continue;
+    if (d.degatsPct) b.damageMult *= 1 + d.degatsPct;
+    if (d.paBonus) b.paBonus += d.paBonus;
+    if (d.pvBonus) b.pvBonus += d.pvBonus;
+    if (d.resAll) b.resAllBonus += d.resAll;
+    if (d.statsElementaires) b.statsElementaires += d.statsElementaires;
+    if (d.critPlat) b.critPlat += d.critPlat;
+    if (d.perceResistances) b.perceResistances += d.perceResistances;
+    if (d.prospectionJet) b.prospection += meilleurJet(meta, id) ?? 0;
+  }
+  return b;
+}
+
+/** Applique les bonus d'équipe (Dofus) aux combattants du joueur, à la construction
+ *  du combat. Un héros MORT (0 PV) voit ses maxima montés mais reste mort — le
+ *  bonus de PV du Dofawa ne ressuscite personne. */
 export function appliquerBonusEquipeCombat(
   equipe: Combatant[],
-  bonus: { damageMult: number; paBonus: number; vitaBonus: number; resAllBonus: number },
+  bonus: BonusEquipe,
 ): void {
   for (const c of equipe) {
     if (bonus.paBonus) { c.paMax += bonus.paBonus; c.paActuels = c.paMax; }
-    if (bonus.vitaBonus) {
-      c.stats.vitalite += bonus.vitaBonus;
-      const add = bonus.vitaBonus * PV_PAR_VITA;
-      c.pvBase += add;
-      c.pvMax += add;
-      if (c.pvActuels > 0) c.pvActuels += add; // jamais de résurrection par le bonus
+    if (bonus.pvBonus) {
+      c.pvBase += bonus.pvBonus;
+      c.pvMax += bonus.pvBonus;
+      if (c.pvActuels > 0) c.pvActuels += bonus.pvBonus; // jamais de résurrection par le bonus
     }
     if (bonus.resAllBonus) {
       for (const el of ["terre", "feu", "eau", "air"] as Element[]) {

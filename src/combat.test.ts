@@ -11,8 +11,8 @@ import {
   type CombatCtx,
   ordreDuCombat,
 } from "./combat";
-import { SORTS, DOFUS } from "./data";
-import { fabriquerEquipe, fabriquerEnnemis, bonusDegatsDofus, bonusEquipe, equipeCombattante, nouvelleRun } from "./run";
+import { SORTS } from "./data";
+import { fabriquerEquipe, fabriquerEnnemis, equipeCombattante, nouvelleRun } from "./run";
 import type { Spell, Combatant } from "./types";
 
 // rng=0.99 → jamais d'esquive, jet au max, jamais de crit (déterministe).
@@ -168,45 +168,6 @@ describe("règle de ligne (grille avant/arrière)", () => {
     const cibles = ciblesValides(bouftou, SORTS.morsure, [...equipe, bouftou]);
     expect(cibles.length).toBe(equipe.filter((c) => c.position < 4).length);
     expect(cibles.every((c) => c.position < 4)).toBe(true);
-  });
-});
-
-describe("bonusDegatsDofus", () => {
-  it("cumule les copies du Dofus Pourpre", () => {
-    expect(bonusDegatsDofus({ dofus: [], archis: [], runs: 0, victoires: 0 })).toBeCloseTo(1);
-    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre"], archis: [], runs: 0, victoires: 0 })).toBeCloseTo(1.15);
-    expect(bonusDegatsDofus({ dofus: ["dofus_pourpre", "dofus_pourpre"], archis: [], runs: 0, victoires: 0 })).toBeCloseTo(1.3);
-  });
-
-  it("plafonne le cumul à maxCopies, relique par relique", () => {
-    const meta = (dofus: string[]) => ({ dofus, archis: [], runs: 0, victoires: 0 });
-    // le Pourpre est plafonné à 10 copies : 15 exemplaires valent 10
-    expect(bonusDegatsDofus(meta(Array(10).fill("dofus_pourpre")))).toBeCloseTo(2.5);
-    expect(bonusDegatsDofus(meta(Array(15).fill("dofus_pourpre")))).toBeCloseTo(2.5);
-    // le plafond est PAR relique, pas sur le total : un Dofawa surnuméraire
-    // (sans bonus de dégâts) ne consomme pas le quota du Pourpre
-    expect(bonusDegatsDofus(meta([...Array(15).fill("dofus_pourpre"), ...Array(15).fill("dofawa")]))).toBeCloseTo(2.5);
-    // une relique SANS maxCopies garde son cumul illimité
-    DOFUS.dofus_test_sans_plafond = {
-      id: "dofus_test_sans_plafond", nom: "Dofus d'essai", desc: "", bonusDegatsParCopie: 0.1,
-    };
-    try {
-      expect(bonusDegatsDofus(meta(Array(15).fill("dofus_test_sans_plafond")))).toBeCloseTo(2.5);
-    } finally {
-      delete DOFUS.dofus_test_sans_plafond;
-    }
-  });
-});
-
-describe("effets de Dofus (Dofawa / Argenté)", () => {
-  const dofus = (id: string, n: number) => ({ dofus: Array(n).fill(id), archis: [], runs: 0, victoires: 0 });
-  it("Dofawa : +1 vitalité par copie, plafonné à 10", () => {
-    expect(bonusEquipe(dofus("dofawa", 3)).vitaBonus).toBe(3);
-    expect(bonusEquipe(dofus("dofawa", 12)).vitaBonus).toBe(10); // cap maxCopies
-  });
-  it("Dofus Argenté : +1 % résistance par copie, plafonné à 10", () => {
-    expect(bonusEquipe(dofus("dofus_argente", 5)).resAllBonus).toBeCloseTo(0.05);
-    expect(bonusEquipe(dofus("dofus_argente", 20)).resAllBonus).toBeCloseTo(0.1); // cap
   });
 });
 

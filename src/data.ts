@@ -25,10 +25,15 @@ export interface DofusDef {
   id: string;
   nom: string;
   desc: string;
-  bonusDegatsParCopie: number; // +% dégâts d'équipe par copie (Pourpre)
-  vitaParCopie?: number; // +vitalité d'équipe par copie (Dofawa)
-  resAllParCopie?: number; // +résistance toutes par copie (Argenté)
-  maxCopies?: number; // nombre de copies max prises en compte pour l'effet
+  // --- bonus chiffrés, repliés dans le combattant à la construction du combat ---
+  degatsPct?: number; // dégâts finaux (multiplicatif) — 0.01 = +1 %
+  resAll?: number; // résistance à tous les éléments — 0.05 = +5 %
+  critPlat?: number; // taux de critique, en POINTS de pourcentage (la formule divise par 100)
+  perceResistances?: number; // FRACTION de la résistance ignorée — 0.05 = 5 % de la résistance
+  statsElementaires?: number; // +N sur force, intelligence, agilité et chance
+  pvBonus?: number; // PV max plats
+  paBonus?: number; // PA
+  prospectionJet?: [number, number]; // bornes du tirage, pour les reliques à jet
   img?: string;
 }
 
@@ -57,9 +62,9 @@ const CATALOGUE_DOFUS: Array<[string, string]> = [
 // Effets des Dofus dotés (les autres restent « à débloquer »).
 type DofusEffet = Partial<Omit<DofusDef, "id" | "nom" | "img">>;
 const DOFUS_EFFETS: Record<string, DofusEffet> = {
-  dofus_pourpre: { desc: "+15 % de dégâts pour toute l'équipe par copie (max 10).", bonusDegatsParCopie: 0.15, maxCopies: 10 },
-  dofawa: { desc: "+1 Vitalité à toute l'équipe par copie (max 10).", vitaParCopie: 1, maxCopies: 10 },
-  dofus_argente: { desc: "+1 % de résistance à tous les éléments par copie, pour l'équipe (max 10).", resAllParCopie: 0.01, maxCopies: 10 },
+  dofus_pourpre: { desc: "+6 en force, intelligence, agilité et chance.", statsElementaires: 6 },
+  dofawa: { desc: "+1 PV max.", pvBonus: 1 },
+  dofus_argente: { desc: "Relique légendaire — effet à venir.", },
 };
 
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(
@@ -70,10 +75,14 @@ export const DOFUS: Record<string, DofusDef> = Object.fromEntries(
       {
         id, nom,
         desc: eff?.desc ?? "Relique légendaire — effet à venir.",
-        bonusDegatsParCopie: eff?.bonusDegatsParCopie ?? 0,
-        vitaParCopie: eff?.vitaParCopie,
-        resAllParCopie: eff?.resAllParCopie,
-        maxCopies: eff?.maxCopies,
+        ...(eff?.degatsPct !== undefined ? { degatsPct: eff.degatsPct } : {}),
+        ...(eff?.resAll !== undefined ? { resAll: eff.resAll } : {}),
+        ...(eff?.critPlat !== undefined ? { critPlat: eff.critPlat } : {}),
+        ...(eff?.perceResistances !== undefined ? { perceResistances: eff.perceResistances } : {}),
+        ...(eff?.statsElementaires !== undefined ? { statsElementaires: eff.statsElementaires } : {}),
+        ...(eff?.pvBonus !== undefined ? { pvBonus: eff.pvBonus } : {}),
+        ...(eff?.paBonus !== undefined ? { paBonus: eff.paBonus } : {}),
+        ...(eff?.prospectionJet !== undefined ? { prospectionJet: eff.prospectionJet } : {}),
         img: `/assets/dofus/${id}.png`,
       },
     ];

@@ -511,8 +511,15 @@ export interface Progression {
 }
 
 /** État persistant — la seule chose qui survit à la mort. */
+/** Un exemplaire possédé d'une relique. `jet` n'existe que pour les reliques à
+ *  tirage (Kalyptus) : sa valeur est figée à l'obtention. */
+export interface DofusInstance {
+  id: string;
+  jet?: number;
+}
+
 export interface Meta {
-  dofus: string[]; // ids des Dofus possédés (peut contenir des doublons)
+  dofus: DofusInstance[]; // exemplaires de Dofus possédés (peut contenir des doublons)
   archis: string[]; // ids d'espèces de monstres capturées en Archimonstre (uniques)
   runs: number; // nombre total de runs terminées (victoire ou mort)
   victoires: number; // sous-ensemble : runs achevées (les 6 zones vaincues)
