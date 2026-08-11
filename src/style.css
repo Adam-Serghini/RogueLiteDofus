@@ -75,8 +75,7 @@ body.avec-fond {
 }
 /* Glassmorphisme in-run : les panneaux laissent transparaître le fond de tranche
    (flou renforcé pour garder le texte lisible sur l'image). */
-body.avec-fond .ecran,
-body.avec-fond .verre {
+body.avec-fond .ecran {
   background: rgba(237, 226, 198, 0.68);
   -webkit-backdrop-filter: blur(14px) saturate(1.15);
   backdrop-filter: blur(14px) saturate(1.15);
@@ -150,18 +149,6 @@ button:focus-visible {
   background: linear-gradient(180deg, #e6d8b4, #d4c198);
 }
 
-/* --- Panneau de verre réutilisable --- */
-.verre {
-  background: var(--panel);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--bord);
-  box-shadow:
-    inset 0 1px 0 #ffffff10,
-    0 10px 30px #0009;
-  border-radius: 14px;
-}
-
 /* --- Écrans plein cadre --- */
 .ecran {
   position: relative;
@@ -218,16 +205,6 @@ button:focus-visible {
 .defaite {
   color: var(--danger);
 }
-.dofus-img {
-  width: 130px;
-  height: 130px;
-  object-fit: contain;
-  margin: 10px auto;
-  display: block;
-  filter: drop-shadow(0 0 22px var(--or));
-}
-
-/* collection de reliques (toujours affichée ; non possédées = transparentes) */
 /* Récap de fin de run */
 .recap-compteurs {
   display: flex;
@@ -321,26 +298,6 @@ button:focus-visible {
   text-align: right;
   padding: 8px 4px 2px;
   font-size: 1.02rem;
-}
-.aside-sep {
-  width: 26px;
-  height: 1px;
-  margin: 4px auto;
-  background: var(--bord-clair);
-  opacity: 0.7;
-}
-.aside-icone.aside-emoji {
-  font-size: 1.35rem;
-  line-height: 1;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-}
-.boutons-colonne {
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
 }
 .hdv-solde {
   font-size: 1.2rem;
@@ -658,7 +615,6 @@ button.item-carte:disabled {
   font-size: 0.85em;
   margin: 6px 0 0;
 }
-.asc-etoiles { letter-spacing: 0.08em; }
 .asc-avertissement { color: var(--danger, #d05); font-weight: 600; }
 /* Badge de palier (carte, recap) */
 .asc-badge {
@@ -1000,18 +956,6 @@ button.item-carte:disabled {
   color: var(--muet);
 }
 
-.aside-dofus {
-  margin-top: 14px;
-  border-top: 1px solid var(--bord);
-  padding-top: 12px;
-}
-.aside-dofus h3 {
-  font-size: 0.78rem;
-  color: var(--muet);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
-}
 /* Barre d'actions de bas d'écran. COLLANTE : les écrans de collection (Bestiaire,
    Armurerie, Encyclopédie) dépassent largement la fenêtre, et un mauvais clic obligeait
    à dérouler jusqu'en bas pour retrouver le bouton Retour. Les douze écrans partagent
@@ -1064,6 +1008,46 @@ button.item-carte:disabled {
 }
 .accueil-runs-compte b {
   color: var(--or-texte);
+}
+/* Mention Ankama au pied de l'accueil : DANS la barre collante (flex-wrap), en
+   ligne pleine largeur sous les boutons — toujours visible, jamais recouverte. */
+.mention-ankama {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 0.68rem;
+  color: var(--muet);
+  text-align: center;
+}
+/* Bouton rendu comme un lien texte (le disclaimer n'est pas une action de jeu). */
+.btn-lien {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--or-texte);
+  text-decoration: underline;
+}
+.btn-lien:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  filter: brightness(1.15);
+}
+/* Écran Mentions légales : bloc de lecture, aligné à gauche contrairement aux
+   écrans de jeu (un texte juridique centré se lit mal). */
+.disclaimer-texte {
+  max-width: 58ch;
+  margin: 10px auto 0;
+  text-align: left;
+  line-height: 1.55;
+}
+.disclaimer-texte p {
+  margin: 0 0 14px;
+}
+.disclaimer-texte a {
+  color: var(--or-texte);
+  font-weight: 700;
 }
 .coin-param {
   position: absolute;
@@ -1158,13 +1142,6 @@ button.item-carte:disabled {
 }
 
 /* plateau : boutons d'action en icône seule (libellé en tooltip) */
-.aside-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  margin: 10px 0;
-}
 .aside-icone {
   position: relative;
   background: none;
@@ -2032,14 +2009,6 @@ kbd {
 .camp-host {
   display: contents;
 }
-.tl-titre {
-  flex: none;
-  font-size: 0.6rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--or-clair);
-}
 .tl-liste {
   display: flex;
   flex-direction: row;
@@ -2103,11 +2072,6 @@ kbd {
   opacity: 1;
   box-shadow: 0 0 12px var(--or);
 }
-.tl-fleche {
-  color: var(--muet);
-  font-size: 0.8rem;
-}
-
 .plateau {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2431,23 +2395,7 @@ kbd {
   object-fit: contain;
 }
 
-/* bouclier (icône + valeur) + ligne de résistances */
-.bouclier-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 2px;
-  font-size: 0.64rem;
-  font-weight: 800;
-  color: #3a5f8a;
-  font-variant-numeric: tabular-nums;
-}
-.bouclier-row img {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-}
+/* ligne de résistances */
 .res-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 4 éléments → grille 2×2 */
@@ -2485,62 +2433,6 @@ kbd {
   width: 13px;
   height: 13px;
   object-fit: contain;
-}
-
-.pv-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.pv-row .barre-pv {
-  flex: 1;
-}
-.pv-coeur {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  flex: none;
-  filter: drop-shadow(0 1px 1px #0006);
-}
-.barre-pv {
-  position: relative;
-  height: 16px;
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 4px 0;
-  background: #4a3a26;
-  border: 1px solid #00000066;
-  box-shadow: inset 0 1px 3px #000;
-}
-.barre-pv-rempli {
-  height: 100%;
-  width: 100%;
-  background: linear-gradient(180deg, #76e07e, var(--pv));
-  transform-origin: left;
-  transition: transform 0.25s ease;
-}
-.barre-bouclier {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: repeating-linear-gradient(
-    45deg,
-    #ffffff55 0 5px,
-    #ffffff22 5px 10px
-  );
-}
-.pv-txt {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 1px 2px #000;
-  font-variant-numeric: tabular-nums;
 }
 
 .badges {
@@ -3082,12 +2974,6 @@ kbd {
   text-align: center;
   text-shadow: 0 2px 0 #00000060;
 }
-.aside-equipe {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
-}
 .aside-perso {
   position: relative;
   display: flex;
@@ -3153,17 +3039,6 @@ kbd {
   font-size: 0.72rem;
   font-weight: 700;
 }
-.aside-btn {
-  width: 100%;
-}
-.barre-pv.mini {
-  height: 14px;
-}
-.barre-pv.mini .pv-txt {
-  font-size: 0.64rem;
-}
-
-
 .map-scroll {
   flex: 1;
   overflow: auto; /* les plateaux profonds défilent horizontalement */

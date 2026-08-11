@@ -13,10 +13,9 @@ import {
   MENU_PARAM,
   MENU_ACCUEIL,
   MENU_DOFUS,
-  BTN_RETOUR,
   PA_ICON,
 } from "./assets";
-import { renderDofusRack, carteClasse, etoiles } from "./composants";
+import { renderDofusRack, carteClasse, etoiles, barreRetour } from "./composants";
 import { classesDisponibles, SUCCES, recordAscension, trancheDeverrouillee, trancheJouable } from "../run";
 import { showSettings } from "./inventaire";
 import { showBestiaire, showArmurerie, showEncyclopedie } from "./collections";
@@ -118,8 +117,15 @@ export function showStart(
         ${ascensionHtml}
         <div class="boutons-ecran">
           ${boutons}
+          <p class="mention-ankama">Certaines illustrations sont la propriété d'Ankama Studio et de DOFUS — Tous droits réservés. <button id="btn-disclaimer" class="btn-lien">Mentions légales</button></p>
         </div>
       `, "ecran-accueil");
+      document
+        .getElementById("btn-disclaimer")
+        ?.addEventListener("click", async () => {
+          await showDisclaimer();
+          draw();
+        });
       document
         .getElementById("btn-settings")
         ?.addEventListener("click", async () => {
@@ -201,6 +207,34 @@ export function showStart(
   });
 }
 
+/** Mentions légales : disclaimer fangame, accessible depuis le pied de l'accueil.
+ *  Texte statique — les liens externes sortent du jeu, d'où `target="_blank"`
+ *  + `rel="noopener noreferrer"` (pas d'accès à `window.opener` depuis dofus.com & co). */
+function showDisclaimer(): Promise<void> {
+  return new Promise((res) => {
+    ecran(`
+      <h1>Mentions légales</h1>
+      <div class="disclaimer-texte">
+        <p><b>Ce projet est un fangame non officiel</b>, créé par des fans, à titre d'hommage.
+          Il n'est ni affilié à, ni soutenu, ni approuvé par Ankama.</p>
+        <p>DOFUS, ses personnages, illustrations, éléments graphiques, marques, univers et
+          autres propriétés intellectuelles appartiennent à Ankama et à leurs ayants droit.</p>
+        <p>Ce projet est <b>entièrement gratuit et sans but lucratif</b> : aucun paiement,
+          don ou achat n'est proposé dans le cadre de ce projet.</p>
+        <p>Pour découvrir le jeu officiel dont ce projet s'inspire, rendez-vous sur
+          <a href="https://www.dofus.com" target="_blank" rel="noopener noreferrer">dofus.com</a>,
+          et sur <a href="https://www.ankama.com" target="_blank" rel="noopener noreferrer">ankama.com</a>
+          pour l'ensemble des créations du studio.</p>
+        <p>Si vous êtes titulaire de droits sur un élément utilisé dans ce projet et souhaitez
+          son retrait, <a href="https://github.com/Adam-Serghini/RogueLiteDofus/issues" target="_blank" rel="noopener noreferrer">contactez-nous</a> :
+          il sera retiré dans les meilleurs délais.</p>
+      </div>
+      ${barreRetour("disclaimer-retour")}
+    `);
+    document.getElementById("disclaimer-retour")?.addEventListener("click", () => res());
+  });
+}
+
 /** Écran de départ : choisir 2 classes parmi les classes jouables pour commencer la run. */
 export function showChoixEquipe(): Promise<string[] | null> {
   return new Promise((res) => {
@@ -247,7 +281,7 @@ export function showCollectionDofus(meta: Meta): Promise<void> {
       <h1>Dofus</h1>
       <p class="sous-titre">${nbUniques} / ${Object.keys(DOFUS).length} reliques collectées. Elles survivent à la mort ; en posséder plusieurs exemplaires n'ajoute rien, seule la possession compte.</p>
       ${renderDofusRack(meta)}
-      <div class="boutons-ecran"><button id="dofus-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      ${barreRetour("dofus-retour")}
     `);
     document.getElementById("dofus-retour")?.addEventListener("click", () => res());
   });
@@ -270,7 +304,7 @@ export function showSucces(meta: Meta): Promise<void> {
       <h1>Succès</h1>
       <p class="sous-titre">${nbDebloques} / ${SUCCES.length} débloqués. Les récompenses arriveront avec le système d'objets.</p>
       <div class="succes-grille">${cartes}</div>
-      <div class="boutons-ecran"><button id="succes-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      ${barreRetour("succes-retour")}
     `);
     document.getElementById("succes-retour")?.addEventListener("click", () => res());
   });
