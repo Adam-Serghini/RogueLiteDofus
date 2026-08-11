@@ -2582,6 +2582,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
     enemyDamageBonus: hooks.enemyDamageBonus ?? 1,
     fx: hooks.fx,
     onDegats: hooks.onDegats,
+    reliquesActives: hooks.reliquesActives,
   };
 
   let garde = 0;

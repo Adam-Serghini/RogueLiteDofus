@@ -5,9 +5,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { DOFUS } from "./data";
 import {
   chargerMeta, ajouterDofus, bonusEquipe, reliquesActives, meilleurJet,
-  equipeCombattante, nouvelleRun,
+  equipeCombattante, nouvelleRun, fabriquerEnnemis,
 } from "./run";
-import type { Meta, Combatant } from "./types";
+import type { Meta, Combatant, Action } from "./types";
 
 const store = new Map<string, string>();
 (globalThis as Record<string, unknown>).localStorage = {
@@ -164,13 +164,33 @@ describe("crochet début de tour", () => {
     expect(crochetDebutTour(c, [c], new Set(["dofus_nebuleux"])).degatsPct).toBeCloseTo(-0.05);
   });
 
-  it("Argenté : soigne au tour SUIVANT le passage sous 20 %, une seule fois par combat", async () => {
+  it("Argenté : soigne au tour SUIVANT le passage sous 20 %, JAMAIS le tour où le seuil est franchi", async () => {
     const { crochetDebutTour, marquerSeuilArgente } = await import("./dofus-effets");
     const c = herosTest({ pvMax: 1000, pvActuels: 150, toursJoues: 2 });
     const actives = new Set(["dofus_argente"]);
-    marquerSeuilArgente(c, actives); // appelé par le moteur quand les PV descendent
+    marquerSeuilArgente(c, actives); // appelé par le moteur quand les PV descendent, tour 2
+    // toujours le tour 2 : pas de soin, même si le drapeau vient d'être posé (la
+    // régression corrigée en Round 1 — un site d'armement DANS ce même tour ne doit
+    // pas se voir consommé par le crochet de ce même tour)
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([]);
+    c.toursJoues = 3; // tour SUIVANT
     expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200 }]);
-    // consommé : plus jamais de ce combat
+    // consommé : plus jamais de ce combat, même si le seuil est re-franchi
+    c.toursJoues = 4;
+    marquerSeuilArgente(c, actives);
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([]);
+  });
+
+  it("Argenté Scintillant absorbe l'Argenté : un seul soin sur tout le combat avec les deux reliques", async () => {
+    const { crochetDebutTour, marquerSeuilArgente } = await import("./dofus-effets");
+    const c = herosTest({ pvMax: 1000, pvActuels: 150, toursJoues: 2 });
+    const actives = new Set(["dofus_argente", "dofus_argente_scintillant"]);
+    marquerSeuilArgente(c, actives);
+    c.toursJoues = 3;
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200 }]);
+    // un second passage sous le seuil, même avec les DEUX reliques actives, ne
+    // redonne rien : `argenteUtilise` couvre les deux identifiants à la fois.
+    c.toursJoues = 4;
     marquerSeuilArgente(c, actives);
     expect(crochetDebutTour(c, [c], actives).soins).toEqual([]);
   });
@@ -181,6 +201,89 @@ describe("crochet début de tour", () => {
     const vide = crochetDebutTour(c, [c], new Set());
     expect(vide.soins).toEqual([]);
     expect(vide.degatsPct).toBe(0);
+  });
+});
+
+// Round de correction 1, point 3 : les quatre tests ci-dessus n'exercent que le
+// module PUR, à la main — exactement pourquoi le défaut de séquencement (armer et
+// consommer l'Argenté dans la MÊME itération de `runCombat`) leur était invisible.
+// Ces deux tests montent un VRAI combat via `runCombat` et vérifient l'effet sur
+// des PV/dégâts réellement calculés par le moteur, pas seulement sur les champs
+// posés par `crochetDebutTour`.
+describe("crochet début de tour — intégration moteur (runCombat)", () => {
+  const rngMax: () => number = () => 0.99; // pas d'esquive, jet haut, pas de crit
+
+  it("Dokoko : le porteur reçoit RÉELLEMENT son soin, au tour pair, sur ses PV", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 1000; heros.pvBase = 1000; heros.pvActuels = 500;
+    heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 500; ennemi.pvActuels = 500;
+    ennemi.initiative = 1;
+    const spellTue = {
+      ...SORTS.morsure, id: "test_dofus_tue", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+    };
+    const cs = [heros, ennemi];
+    // Plan : round 1 (tour 1, IMPAIR) le héros passe — pas de Dokoko à ce tour-là.
+    // Round 2 (tour 2, PAIR) le héros achève l'ennemi APRÈS le soin de début de tour,
+    // ce qui bornent le combat sans dépendre de la sécurité anti-boucle de `runCombat`.
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref !== heros.ref) return null;
+      if (acteur.toursJoues === 1) return null;
+      return { sort: spellTue, cibleRef: ennemi.ref };
+    };
+    await runCombat(cs, {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: rngMax,
+      reliquesActives: new Set(["dokoko"]),
+    });
+    expect(heros.pvActuels).toBe(600); // 500 + 10 % de 1000 PV max, posé avant le coup qui achève l'ennemi
+    expect(ennemi.pvActuels).toBe(0);
+  });
+
+  it("Nébuleux : le malus du tour impair réduit RÉELLEMENT les dégâts calculés par le pipeline", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const spellFrappe = {
+      ...SORTS.morsure, id: "test_dofus_frappe", baseMin: 1000, baseMax: 1000, scaling: 0, coutPA: 1,
+    };
+    // Isole le multiplicateur du Nébuleux : stats à zéro (multOffensif = ×1, pas de
+    // crit ni de scaling élémentaire) et résistances/armure nulles, pour que le SEUL
+    // écart entre les deux combats soit `degatsPctDofus`.
+    const construireCombat = () => {
+      const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+      heros.stats = { ...heros.stats, force: 0, intelligence: 0, agilite: 0, chance: 0 };
+      heros.pvActuels = heros.pvMax; heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+      const ennemi = fabriquerEnnemis("combat_1")[0];
+      ennemi.stats = { ...ennemi.stats, agilite: 0 };
+      ennemi.resistances = {}; ennemi.armure = 0;
+      ennemi.pvMax = 5000; ennemi.pvActuels = 5000; ennemi.initiative = 1;
+      return { heros, ennemi };
+    };
+    const premierCoup = async (actives: Set<string>): Promise<number> => {
+      const { heros, ennemi } = construireCombat();
+      let premier: number | undefined;
+      const controllerJoueur = (acteur: Combatant): Action | null =>
+        acteur.ref === heros.ref ? { sort: spellFrappe, cibleRef: ennemi.ref } : null;
+      await runCombat([heros, ennemi], {
+        controllers: { joueur: controllerJoueur, ennemi: () => null },
+        rng: rngMax,
+        reliquesActives: actives,
+        onDegats: (_ref, dmg) => { if (premier === undefined) premier = dmg; },
+      });
+      return premier!;
+    };
+    const sansRelique = await premierCoup(new Set());
+    const avecNebuleux = await premierCoup(new Set(["dofus_nebuleux"]));
+    // premier coup = tour 1 du héros = tour IMPAIR → malus −5 % du Nébuleux
+    expect(sansRelique).toBe(1000);
+    expect(avecNebuleux).toBe(950);
+    expect(avecNebuleux).toBeLessThan(sansRelique);
   });
 });
 

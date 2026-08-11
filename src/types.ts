@@ -474,7 +474,13 @@ export interface Combatant {
    *  Lu par `pasPremierTour` ; incrémenté par `runCombat`, jamais par un sort. */
   toursJoues?: number;
   // --- reliques Dofus à déclenchement (src/dofus-effets.ts) ---
-  argenteArme?: boolean; // Argenté : seuil franchi, soin dû au prochain tour
+  /** Argenté : seuil franchi, soin dû à un tour STRICTEMENT postérieur. Retient le
+   *  numéro de `toursJoues` du porteur au moment de l'armement (pas un booléen) :
+   *  la consommation compare ce numéro à `toursJoues` courant, pour que la règle
+   *  « jamais pendant le tour où le seuil a été franchi » tienne quel que soit
+   *  l'ORDRE des appels moteur qui peuvent armer ce drapeau (poison en tout début
+   *  de tour du porteur lui-même, ou coup direct pendant le tour d'un autre). */
+  argenteArme?: number;
   argenteUtilise?: boolean; // Argenté : déjà déclenché ce combat
   degatsPctDofus?: number; // bonus/malus de dégâts finaux du tour en cours (Nébuleux, Domakuro)
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
