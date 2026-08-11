@@ -2,9 +2,24 @@ function zoneDeCombat(id) {
   for (const [zone, p] of Object.entries(C.zones_pools)) {
     if (p.normales.includes(id)) return { zone, pool: "normales" };
     if ((p.elite ?? []).includes(id)) return { zone, pool: "elite" };
-    if (p.boss === id) return { zone, pool: "boss" };
+    if ((p.boss ?? []).includes(id)) return { zone, pool: "boss" };
   }
   return null;
+}
+
+// Marque affichée dans la liste, par pool. Absente = rencontre normale.
+const MARQUE_POOL = { boss: " 👑", elite: " ★" };
+
+/** Retire la rencontre de TOUS les pools de zone.
+ *  `p.boss` est une LISTE comme les deux autres pools (`zones_pools.json`,
+ *  exigé par `content-validate.mjs`) — une zone peut avoir plusieurs
+ *  rencontres de boss (Blops, Gelées). */
+function retirerCombatDesPools(id) {
+  for (const p of Object.values(C.zones_pools)) {
+    p.normales = p.normales.filter((x) => x !== id);
+    p.elite = (p.elite ?? []).filter((x) => x !== id);
+    p.boss = (p.boss ?? []).filter((x) => x !== id);
+  }
 }
 
 enregistrerCategorie("rencontres", "Rencontres", {
@@ -16,7 +31,7 @@ enregistrerCategorie("rencontres", "Rencontres", {
       lignes.push(el("div", { class: "groupe" }, zone));
       for (const id of ids) {
         const p = zoneDeCombat(id).pool;
-        lignes.push(ligneListe(id, `${C.combats[id].nom}${p === "boss" ? " 👑" : p === "elite" ? " ★" : ""}`));
+        lignes.push(ligneListe(id, `${C.combats[id].nom}${MARQUE_POOL[p] ?? ""}`));
       }
     }
     const orphelins = Object.keys(C.combats).filter((id) => !zoneDeCombat(id) && filtre(C.combats[id].nom + id));
@@ -50,7 +65,7 @@ enregistrerCategorie("rencontres", "Rencontres", {
         for (const p of Object.values(C.zones_pools)) {
           p.normales = p.normales.map((x) => (x === ancien ? nouveau : x));
           p.elite = (p.elite ?? []).map((x) => (x === ancien ? nouveau : x));
-          if (p.boss === ancien) p.boss = nouveau;
+          p.boss = (p.boss ?? []).map((x) => (x === ancien ? nouveau : x));
         }
       }),
       el("div", { class: "champ" }, el("label", {}, "Zone / pool"),
@@ -66,18 +81,14 @@ enregistrerCategorie("rencontres", "Rencontres", {
       el("div", { class: "grille-place" }, ...[4, 5, 6, 7].map(cellule)),
       el("p", { class: "note" }, "Rappel : les sorts « ligne » ne touchent que la ligne avant tant qu'elle est vivante ; un tireur en 4-7 est protégé."),
       el("div", { class: "boutons" },
-        el("button", { class: "danger", onclick: () => { if (!confirm(`Supprimer ${c.nom} ?`)) return; delete C.combats[id]; for (const p of Object.values(C.zones_pools)) { p.normales = p.normales.filter((x) => x !== id); p.elite = (p.elite ?? []).filter((x) => x !== id); if (p.boss === id) p.boss = ""; } E.selection = null; sauverBrouillon(); rendre(); } }, "Supprimer")),
+        el("button", { class: "danger", onclick: () => { if (!confirm(`Supprimer ${c.nom} ?`)) return; delete C.combats[id]; retirerCombatDesPools(id); E.selection = null; sauverBrouillon(); rendre(); } }, "Supprimer")),
     ];
   },
 });
 
 function deplacerCombat(id, zone, pool) {
-  for (const p of Object.values(C.zones_pools)) {
-    p.normales = p.normales.filter((x) => x !== id);
-    p.elite = (p.elite ?? []).filter((x) => x !== id);
-    if (p.boss === id) p.boss = "";
-  }
+  retirerCombatDesPools(id);
   const p = C.zones_pools[zone];
-  if (pool === "boss") p.boss = id; else p[pool].push(id);
+  (p[pool] ??= []).push(id);
   sauverBrouillon(); rendre();
 }

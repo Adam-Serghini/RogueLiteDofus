@@ -4,6 +4,8 @@ const SLOTS_ED = [["arme", "Arme"], ["coiffe", "Coiffe"], ["cape", "Cape"], ["an
 // stat ADAPTATIVE (ligne « adaptatif »), qui alimente la voie du porteur.
 const STATS_ED = ["vitalite", "soin", "prospection", "crit"];
 const ELEMENTS_ED = ["terre", "feu", "eau", "air"];
+// Les trois listes d'un pool de butin de toile, dans l'ordre du JSON.
+const SOURCES_BUTIN = ["normales", "elites", "boss"];
 // Catalogue des mécaniques spéciales existantes (champ → valeur par défaut).
 const SPECIAUX = [
   ["paGamble", "Pari de PA (Chance d'Ecaflip)", { pPlus: 0.33, plus: 1, moins: 1 }],
@@ -53,6 +55,19 @@ function grilleRaretes(item) {
     ...lignes);
 }
 
+/** Éditeur de la VALEUR d'un spécial : un nombre, un objet de sous-champs, ou un
+ *  simple drapeau — la forme du défaut du catalogue dit lequel. */
+function valeurSpeciale(item, cle, defaut) {
+  if (typeof defaut === "number")
+    return el("input", { type: "number", step: "any", value: item[cle],
+      oninput: (ev) => { item[cle] = Number(ev.target.value); sauverBrouillon(); } });
+  if (typeof defaut === "object")
+    return el("span", {}, ...Object.keys(defaut).map((k) =>
+      el("input", { type: "number", step: "any", value: item[cle][k], title: k, style: "width:70px;margin-right:4px",
+        oninput: (ev) => { item[cle][k] = Number(ev.target.value); sauverBrouillon(); } })));
+  return el("span", { class: "badge" }, "actif");
+}
+
 function blocSpeciaux(item) {
   const actifs = SPECIAUX.filter(([cle]) => item[cle] !== undefined);
   const dispo = SPECIAUX.filter(([cle]) => item[cle] === undefined);
@@ -60,11 +75,7 @@ function blocSpeciaux(item) {
     ...actifs.map(([cle, lib, defaut]) => el("div", { class: "champ" },
       el("label", {}, lib),
       el("div", {},
-        typeof defaut === "number"
-          ? el("input", { type: "number", step: "any", value: item[cle], oninput: (ev) => { item[cle] = Number(ev.target.value); sauverBrouillon(); } })
-          : typeof defaut === "object"
-            ? el("span", {}, ...Object.keys(defaut).map((k) => el("input", { type: "number", step: "any", value: item[cle][k], title: k, style: "width:70px;margin-right:4px", oninput: (ev) => { item[cle][k] = Number(ev.target.value); sauverBrouillon(); } })))
-            : el("span", { class: "badge" }, "actif"),
+        valeurSpeciale(item, cle, defaut),
         el("button", { onclick: () => { delete item[cle]; sauverBrouillon(); rendre(); } }, "✕")))),
     dispo.length ? el("div", { class: "champ" }, el("label", {}, "Ajouter un spécial"),
       el("select", { onchange: (ev) => { const [cle, , defaut] = SPECIAUX.find(([c]) => c === ev.target.value); item[cle] = structuredClone(defaut); sauverBrouillon(); rendre(); } },
@@ -74,9 +85,16 @@ function blocSpeciaux(item) {
 
 function pouleDeItem(id) { // toile ↔ pools de butin
   for (const [toile, p] of Object.entries(C.butin_toiles))
-    for (const src of ["normales", "elites", "boss"])
+    for (const src of SOURCES_BUTIN)
       if (p[src].includes(id)) return { toile, src };
   return null;
+}
+
+/** Retire l'objet de TOUS les pools de butin. Un objet ne vit que dans un seul,
+ *  mais on balaie tout : c'est ce qui rend un déplacement idempotent. */
+function retirerItemDesPools(id) {
+  for (const p of Object.values(C.butin_toiles))
+    for (const src of SOURCES_BUTIN) p[src] = p[src].filter((x) => x !== id);
 }
 
 enregistrerCategorie("items", "Items", {
@@ -107,7 +125,7 @@ enregistrerCategorie("items", "Items", {
       el("div", { class: "section" }, "Identité"),
       champNom("items", id, (ancien, nouveau) => {
         for (const bp of Object.values(C.butin_toiles))
-          for (const s of ["normales", "elites", "boss"])
+          for (const s of SOURCES_BUTIN)
             bp[s] = bp[s].map((x) => (x === ancien ? nouveau : x));
       }),
       champSelect(it, "slot", "Slot", SLOTS_ED),
@@ -124,14 +142,13 @@ enregistrerCategorie("items", "Items", {
       blocSpeciaux(it),
       el("div", { class: "boutons" },
         el("button", { onclick: () => { const nid = idDepuisNom(it.nom + " copie", C.items); C.items[nid] = structuredClone(it); C.items[nid].id = nid; C.items[nid].nom += " (copie)"; if (p) C.butin_toiles[p.toile][p.src].push(nid); E.nouveaux.push(`items:${nid}`); E.selection = nid; E.focusNom = true; sauverBrouillon(); rendre(); } }, "Dupliquer"),
-        el("button", { class: "danger", onclick: () => { if (!confirm(`Supprimer ${it.nom} ?`)) return; delete C.items[id]; for (const bp of Object.values(C.butin_toiles)) for (const s of ["normales", "elites", "boss"]) bp[s] = bp[s].filter((x) => x !== id); E.selection = null; sauverBrouillon(); rendre(); } }, "Supprimer")),
+        el("button", { class: "danger", onclick: () => { if (!confirm(`Supprimer ${it.nom} ?`)) return; delete C.items[id]; retirerItemDesPools(id); E.selection = null; sauverBrouillon(); rendre(); } }, "Supprimer")),
     ];
   },
 });
 
 function deplacerItem(id, toile, src) {
-  for (const bp of Object.values(C.butin_toiles))
-    for (const s of ["normales", "elites", "boss"]) bp[s] = bp[s].filter((x) => x !== id);
+  retirerItemDesPools(id);
   (C.butin_toiles[toile] ??= { normales: [], elites: [], boss: [] })[src].push(id);
   sauverBrouillon(); rendre();
 }

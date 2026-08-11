@@ -90,6 +90,21 @@ function mesurerKit() {
   return { lignes, slotsEquipes, paMax: heros.paMax };
 }
 
+// Pièces attendues par état d'équipement, pour confronter le réglage à la réalité.
+const PIECES_ATTENDUES = { nu: 0, mi: 2, set: 4 };
+
+/** Ce que le héros PORTE vraiment, comparé au réglage. Une toile sans objets (les
+ *  douze de la Tranche 2) rend un héros nu alors que le réglage annonce « Set
+ *  complet », et les colonnes NU/MI/SET y sont identiques sans que rien ne le
+ *  dise : le désaccord doit donc être ÉCRIT, pas déduit. */
+function noteEquipement(slotsEquipes, toile, attendu) {
+  if (slotsEquipes.length === attendu)
+    return `${slotsEquipes.length} pièce(s) équipée(s)${slotsEquipes.length ? " : " + slotsEquipes.join(", ") : ""}`;
+  if (slotsEquipes.length === 0)
+    return `⚠ aucun objet à la toile ${toile} : le héros est NU malgré le réglage`;
+  return `⚠ ${slotsEquipes.length} pièce(s) sur ${attendu} à la toile ${toile} (${slotsEquipes.join(", ")})`;
+}
+
 /** Libellé de ce qui manque au chiffre affiché — il dit POURQUOI, jamais juste
  *  « incomplet » : un designer qui lit « les pièges du Sram font 0 » les gonfle. */
 const RAISONS = {
@@ -133,15 +148,7 @@ enregistrerCategorie("banc", "Banc d'essai", {
         el("td", {}, `${tour.total} (×${tour.lancers})`),
         el("td", { class: "note" }, lancer.raisons.map((r) => RAISONS[r] ?? r).join(" · "))));
 
-    // I3 — ce que le héros PORTE vraiment : une toile sans objets (les douze de
-    // la Tranche 2) rend un héros nu alors que le réglage annonce « Set complet »,
-    // et les colonnes NU/MI/SET y sont identiques sans que rien ne le dise.
-    const attendu = { nu: 0, mi: 2, set: 4 }[BANC.equipement];
-    const equipementNote = slotsEquipes.length === attendu
-      ? `${slotsEquipes.length} pièce(s) équipée(s)${slotsEquipes.length ? " : " + slotsEquipes.join(", ") : ""}`
-      : slotsEquipes.length === 0
-        ? `⚠ aucun objet à la toile ${BANC.toile} : le héros est NU malgré le réglage`
-        : `⚠ ${slotsEquipes.length} pièce(s) sur ${attendu} à la toile ${BANC.toile} (${slotsEquipes.join(", ")})`;
+    const equipementNote = noteEquipement(slotsEquipes, BANC.toile, PIECES_ATTENDUES[BANC.equipement]);
 
     const curseur = (cle, libelle, min, max) => el("div", { class: "champ" },
       el("label", {}, libelle),

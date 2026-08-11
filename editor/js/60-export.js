@@ -36,7 +36,3 @@ function reprendreExport(ev) {
   };
   lecteur.readAsText(f);
 }
-
-// ---- Boot ----
-restaurerBrouillon();
-rendre();
