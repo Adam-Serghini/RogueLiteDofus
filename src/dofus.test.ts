@@ -285,6 +285,54 @@ describe("crochet fin de tour — intégration moteur (runCombat)", () => {
   });
 });
 
+// Round de correction 1 : `ctx.reliquesActives` vient de `Meta`, la progression DU
+// JOUEUR — sans garde de camp, un monstre dont c'est le tour se soignait au Dokoko
+// et gagnait le bouclier de l'Émeraude en comptant les héros comme des « ennemis ».
+// Le même combat porte le cas négatif (l'ennemi) ET le positif (le héros) : sans le
+// second, une garde trop large qui désactiverait tout passerait inaperçue.
+describe("reliques Dofus : garde de camp (Round de correction 1)", () => {
+  it("un ennemi ne reçoit ni le soin du Dokoko ni le bouclier de l'Émeraude ; le héros, lui, les reçoit", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 1000; heros.pvBase = 1000; heros.pvActuels = 400;
+    heros.initiative = 1; heros.paMax = 1; heros.paActuels = 1;
+    heros.position = 0; // ligne avant
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 1000; ennemi.pvActuels = 400;
+    ennemi.initiative = 100; // agit avant le héros à chaque ronde
+    ennemi.position = 0; // ligne avant : compterait pour l'Émeraude si la garde sautait
+    const spellTue = {
+      ...SORTS.morsure, id: "test_dofus_garde", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+    };
+    let ennemiSoigne = false, ennemiBouclierVu = false, herosSoigne = false, herosBouclierVu = false;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref !== heros.ref) return null;
+      if (acteur.toursJoues !== 2) return null; // ronde 1, puis DÉBUT de la ronde 2 : passe
+      return { sort: spellTue, cibleRef: ennemi.ref }; // achève l'ennemi après son propre tour 2
+    };
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0.99,
+      reliquesActives: new Set(["dokoko", "dofus_emeraude"]),
+      onUpdate: () => {
+        if (ennemi.pvActuels > 400) ennemiSoigne = true; // Dokoko sur l'ennemi : ne doit JAMAIS arriver
+        if (ennemi.bouclier > 0) ennemiBouclierVu = true; // Émeraude sur l'ennemi : idem
+        if (heros.pvActuels > 400) herosSoigne = true; // le héros, lui, doit être soigné
+        if (heros.bouclier > 0) herosBouclierVu = true; // ... et boucliérisé
+      },
+    });
+    expect(ennemiSoigne).toBe(false);
+    expect(ennemiBouclierVu).toBe(false);
+    expect(herosSoigne).toBe(true);
+    expect(herosBouclierVu).toBe(true);
+    expect(ennemi.pvActuels).toBe(0); // combat bouclé : l'ennemi est mort, le héros a bien joué son tour 2
+  });
+});
+
 // Round de correction 1, point 3 : les quatre tests ci-dessus n'exercent que le
 // module PUR, à la main — exactement pourquoi le défaut de séquencement (armer et
 // consommer l'Argenté dans la MÊME itération de `runCombat`) leur était invisible.

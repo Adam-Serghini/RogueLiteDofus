@@ -63,6 +63,16 @@ export interface CombatHooks {
 // --- Helpers de base ---------------------------------------------------------
 export const vivants = (cs: Combatant[]): Combatant[] => cs.filter((c) => c.pvActuels > 0);
 const parRef = (cs: Combatant[], ref: string): Combatant | undefined => cs.find((c) => c.ref === ref);
+/** `ctx.reliquesActives` vient de `Meta` : ce sont les reliques DU JOUEUR, jamais
+ *  celles d'un monstre. SEUL point de passage vers les crochets de reliques
+ *  (`crochetDebutTour`, `crochetFinTour`, `marquerSeuilArgente`) : un acteur du
+ *  camp "ennemi" reçoit toujours un ensemble vide, quel que soit `ctx`. Un futur
+ *  crochet qui appelle cette fonction plutôt que de lire `ctx.reliquesActives`
+ *  directement est donc correct par défaut, sans garde de camp à répéter à chaque
+ *  site d'appel — l'absence de cette garde a fait soigner des monstres au Dokoko
+ *  et gagner le bouclier de l'Émeraude en comptant les héros comme des ennemis. */
+const reliquesPour = (acteur: Combatant, ctx: { reliquesActives?: Set<string> }): Set<string> =>
+  acteur.camp === "joueur" ? ctx.reliquesActives ?? new Set() : new Set();
 const adverses = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
   vivants(cs).filter((c) => c.camp !== acteur.camp);
 // la Lance (Forgelance) partage le camp « ennemi » pour la grille/le ciblage,
@@ -897,7 +907,7 @@ function infligerDegats(
     reste -= absorbe;
   }
   cible.pvActuels = Math.max(0, cible.pvActuels - reste);
-  marquerSeuilArgente(cible, ctx?.reliquesActives ?? new Set()); // Argenté : arme le soin sous 20 %
+  marquerSeuilArgente(cible, reliquesPour(cible, ctx ?? {})); // Argenté : arme le soin sous 20 %
   verifierRenaissance(cible, ctx); // Kwakwanneau : renaît une fois par combat
   // récupération (Goyave) : le porteur survivant régénère une fraction des dégâts subis
   if (cible.soinDegatsRecus && dmg > 0 && cible.pvActuels > 0) {
@@ -1057,7 +1067,7 @@ export function effetsDebutTour(acteur: Combatant, cs: Combatant[], ctx: CombatC
   // le poison retire les PV hors `infligerDegats` (voir sa note en tête de fichier) :
   // l'Argenté doit pouvoir s'armer sur cette perte-là aussi, comme le Kwakwanneau
   // juste en dessous sauve déjà d'une mort au poison.
-  marquerSeuilArgente(acteur, ctx.reliquesActives ?? new Set());
+  marquerSeuilArgente(acteur, reliquesPour(acteur, ctx));
   verifierRenaissance(acteur, ctx); // le Kwakwanneau sauve aussi d'une mort au poison
   if (acteur.pvActuels <= 0) {
     ctx.log(`${acteur.nom} succombe au poison !`);
@@ -2637,7 +2647,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       // `dofus-effets.ts`, exécutées ici par `appliquerIntentions`. `degatsPctDofus`
       // est RÉÉCRIT à chaque tour (jamais accumulé) pour que le malus du Nébuleux ne
       // survive pas au tour suivant.
-      const intentions = crochetDebutTour(acteur, combatants, ctx.reliquesActives ?? new Set());
+      const intentions = crochetDebutTour(acteur, combatants, reliquesPour(acteur, ctx));
       appliquerIntentions(intentions, combatants, ctx);
       acteur.degatsPctDofus = intentions.degatsPct;
 
@@ -2659,7 +2669,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
 
       // Émeraude, Veilleurs : décrits par `dofus-effets.ts`, exécutés ici par
       // `appliquerIntentions`, juste avant que les effets datés ne décomptent.
-      appliquerIntentions(crochetFinTour(acteur, combatants, ctx.reliquesActives ?? new Set()), combatants, ctx);
+      appliquerIntentions(crochetFinTour(acteur, combatants, reliquesPour(acteur, ctx)), combatants, ctx);
 
       decrementerEffets(acteur);
       // Conjuration (Éliotrope) : décompte les marques posées par cet acteur, s'éteint à 0.
