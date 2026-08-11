@@ -38,8 +38,12 @@ describe("modèle des reliques", () => {
   });
 
   it("les exemplaires supplémentaires n'ajoutent RIEN à l'effet", () => {
-    const un = metaVide(); un.dofus = [{ id: "dofus_ebene" }];
-    const trois = metaVide(); trois.dofus = [{ id: "dofus_ebene" }, { id: "dofus_ebene" }, { id: "dofus_ebene" }];
+    // dofus_pourpre porte statsElementaires:6 : trois exemplaires doivent donner
+    // exactement 6, pas 18 — une relique SANS effet ne prouverait rien (deux
+    // résultats nuls sont égaux même sans dédoublonnage).
+    const un = metaVide(); un.dofus = [{ id: "dofus_pourpre" }];
+    const trois = metaVide(); trois.dofus = [{ id: "dofus_pourpre" }, { id: "dofus_pourpre" }, { id: "dofus_pourpre" }];
+    expect(bonusEquipe(un).statsElementaires).toBe(6);
     expect(bonusEquipe(trois)).toEqual(bonusEquipe(un));
   });
 
@@ -63,5 +67,19 @@ describe("modèle des reliques", () => {
       expect(d, d.id).not.toHaveProperty("bonusDegatsParCopie");
       expect(d, d.id).not.toHaveProperty("maxCopies");
     }
+  });
+
+  it("une sauvegarde déjà en version 2 garde ses records d'Ascension INTACTS au passage en 3", () => {
+    // Le garde qui remet les records d'Ascension à zéro est figé à `< 2` (la version
+    // de la refonte de l'Ascension), DÉCOUPLÉ de META_VERSION (passé à 3 pour les
+    // reliques). Si quelqu'un le rebranchait un jour sur META_VERSION, ce test tombe :
+    // sans lui, un joueur déjà migré verrait ses records effacés pour rien.
+    store.set("rld_meta_v0", JSON.stringify({
+      version: 2, dofus: ["dofawa"], archis: [], runs: 3, victoires: 1,
+      ascension: { t1: 5, t2: 2 },
+    }));
+    const meta = chargerMeta();
+    expect(meta.version).toBe(3);
+    expect(meta.ascension).toEqual({ t1: 5, t2: 2 });
   });
 });
