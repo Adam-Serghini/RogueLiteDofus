@@ -83,6 +83,12 @@ const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dofus_du_cauchemar: { desc: "Le premier personnage de l'équipe joue toujours en premier." },
 };
 
+/** Identifiants des reliques réellement pourvues d'un effet — dérivé de
+ *  `DOFUS_EFFETS`, jamais recopié à la main : une relique qui reçoit un champ
+ *  d'effet (chiffré ou non) sans description entre automatiquement dans cet
+ *  ensemble, ce qu'une liste écrite en dur ailleurs ne pourrait pas garantir. */
+export const DOFUS_AVEC_EFFET: string[] = Object.keys(DOFUS_EFFETS);
+
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(
   CATALOGUE_DOFUS.map(([id, nom]) => {
     const eff = DOFUS_EFFETS[id];

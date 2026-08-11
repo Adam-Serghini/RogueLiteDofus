@@ -2,7 +2,7 @@
 //  dofus.test.ts — effets des reliques : modèle, données, déclenchements.
 // =============================================================================
 import { describe, it, expect, beforeEach } from "vitest";
-import { DOFUS } from "./data";
+import { DOFUS, DOFUS_AVEC_EFFET } from "./data";
 import {
   chargerMeta, ajouterDofus, bonusEquipe, reliquesActives, meilleurJet,
   equipeCombattante, nouvelleRun, fabriquerEnnemis,
@@ -754,30 +754,62 @@ describe("Dofus Ocre", () => {
 });
 
 describe("cohérence du catalogue", () => {
-  const AVEC_EFFET = [
-    "dofus_pourpre", "dolmanax", "dofus_ivoire", "dofus_ebene", "dofus_turquoise",
-    "dofus_des_glaces", "dofawa", "dofus_kaliptus", "dofus_ocre", "dokoko",
-    "dofus_nebuleux", "dofus_argente", "dofus_argente_scintillant", "dofus_emeraude",
-    "dofus_des_veilleurs", "dorigami", "dofus_tachete", "domakuro", "dofus_du_cauchemar",
-  ];
+  // AVEC_EFFET n'est PLUS recopiée à la main : elle est dérivée de `DOFUS_EFFETS`
+  // par `DOFUS_AVEC_EFFET` (src/data.ts) — Round de correction 1. Une liste écrite
+  // ici, déconnectée du code, laisserait passer une relique qui gagne un effet SANS
+  // description propre (l'oubli n'apparaîtrait dans aucune des deux listes).
 
-  it("les 19 reliques pourvues ont une description propre, les autres restent dormantes", () => {
-    for (const id of AVEC_EFFET) {
+  it("les reliques pourvues (dérivées de DOFUS_EFFETS) ont une description propre, les autres restent dormantes", () => {
+    for (const id of DOFUS_AVEC_EFFET) {
       expect(DOFUS[id], id).toBeDefined();
       expect(DOFUS[id].desc, id).not.toBe("Relique légendaire — effet à venir.");
     }
     for (const d of Object.values(DOFUS)) {
-      if (AVEC_EFFET.includes(d.id)) continue;
+      if (DOFUS_AVEC_EFFET.includes(d.id)) continue;
       expect(d.desc, d.id).toBe("Relique légendaire — effet à venir.");
     }
   });
 
-  // DORMANCE : l'Abyssal n'a volontairement aucun effet. Ce test tombera le jour où
-  // on lui en donnera un, forçant la mise à jour du spec et de la description.
-  it("le Dofus Abyssal n'a aucun effet", () => {
+  // DORMANCE : l'Abyssal n'a volontairement aucun effet. Round de correction 1 :
+  // `bonusEquipe` seul ne couvrait que les bonus CHIFFRÉS — un crochet ajouté pour
+  // `dofus_abyssal` dans dofus-effets.ts (soin, bouclier, degatsPct, ou simple
+  // drapeau posé sur le combattant) serait passé inaperçu. On appelle donc les
+  // QUATRE crochets du module avec `dofus_abyssal` comme SEULE relique active et on
+  // vérifie qu'aucun n'y répond — intentions vides ET aucune mutation d'état.
+  it("le Dofus Abyssal n'a aucun effet, ni chiffré ni dans les quatre crochets", async () => {
     const nu = bonusEquipe(metaVide());
     const avec = bonusEquipe({ ...metaVide(), dofus: [{ id: "dofus_abyssal" }] });
     expect(avec).toEqual(nu);
+
+    const {
+      crochetDebutTour, crochetFinTour, crochetMortEnnemi, crochetDegatsInfliges, marquerSeuilArgente,
+    } = await import("./dofus-effets");
+    const actives = new Set(["dofus_abyssal"]);
+
+    const porteur = herosTest({ pvMax: 1000, pvActuels: 150, toursJoues: 1 });
+    const allie = herosTest({ pvMax: 1000, pvActuels: 1000 });
+
+    marquerSeuilArgente(porteur, actives);
+    expect(porteur.argenteArme).toBeUndefined();
+
+    const debut = crochetDebutTour(porteur, [porteur, allie], actives);
+    expect(debut.soins).toEqual([]);
+    expect(debut.boucliers).toEqual([]);
+    expect(debut.degatsPct).toBe(0);
+
+    crochetDegatsInfliges(porteur, [porteur, allie], actives);
+    expect(allie.effets).toEqual([]);
+    expect(porteur.effets).toEqual([]);
+
+    const fin = crochetFinTour(porteur, [porteur, allie], actives);
+    expect(fin.soins).toEqual([]);
+    expect(fin.boucliers).toEqual([]);
+    expect(porteur.degatsPctPermanent ?? 0).toBe(0);
+
+    const tueur = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const mort = crochetMortEnnemi(tueur, actives);
+    expect(mort.soins).toEqual([]);
+    expect(mort.boucliers).toEqual([]);
   });
 
   it("le Scintillant absorbe l'Argenté : posséder les deux ne soigne qu'une fois", async () => {
