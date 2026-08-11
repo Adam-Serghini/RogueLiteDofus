@@ -463,14 +463,14 @@ describe("Dofus du Cauchemar", () => {
     expect(meta.dofus.filter((d) => d.id === "dofus_du_cauchemar")).toHaveLength(1);
   });
 
-  // DORMANCE : ce test tombera le jour où on donne un effet à la relique. C'est
-  // voulu — il force à rouvrir le spec plutôt qu'à découvrir la relique morte des
-  // mois plus tard, comme le Dofus Turquoise. Même dispositif que `dissipe`.
-  it("n'a AUCUN effet pour l'instant (dormance assumée)", () => {
+  // La dormance a pris fin : la relique force l'ouverture du camp joueur
+  // (`ordreDuCombat`, src/combat.ts), portée par `Combatant.ouvreToujours` plutôt
+  // que par ce `BonusEquipe` chiffré — voir combat.test.ts pour le comportement.
+  it("accorde bien le drapeau d'ouverture, sans toucher aux bonus chiffrés", () => {
     const meta = metaVide();
     const nu = bonusEquipe(meta);
     meta.dofus.push({ id: "dofus_du_cauchemar" });
-    expect(bonusEquipe(meta)).toEqual(nu);
-    expect(DOFUS.dofus_du_cauchemar.desc).toBe("Relique légendaire — effet à venir.");
+    expect(bonusEquipe(meta)).toEqual({ ...nu, ouvreToujours: true });
+    expect(DOFUS.dofus_du_cauchemar.desc).toBe("Le premier personnage de l'équipe joue toujours en premier.");
   });
 });

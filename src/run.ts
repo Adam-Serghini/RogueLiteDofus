@@ -1205,6 +1205,7 @@ export interface BonusEquipe {
   critPlat: number;
   perceResistances: number;
   prospection: number;
+  ouvreToujours: boolean;
 }
 
 /** Bonus d'équipe issus des reliques possédées. Chaque relique compte UNE fois : les
@@ -1213,6 +1214,7 @@ export function bonusEquipe(meta: Meta): BonusEquipe {
   const b: BonusEquipe = {
     damageMult: 1, paBonus: 0, pvBonus: 0, resAllBonus: 0,
     statsElementaires: 0, critPlat: 0, perceResistances: 0, prospection: 0,
+    ouvreToujours: false,
   };
   for (const id of reliquesActives(meta)) {
     const d = DOFUS[id];
@@ -1226,6 +1228,7 @@ export function bonusEquipe(meta: Meta): BonusEquipe {
     if (d.critPlat) b.critPlat += d.critPlat;
     if (d.perceResistances) b.perceResistances += d.perceResistances;
     if (d.prospectionJet) b.prospection += meilleurJet(meta, id) ?? 0;
+    if (id === "dofus_du_cauchemar") b.ouvreToujours = true;
   }
   return b;
 }
@@ -1260,5 +1263,6 @@ export function appliquerBonusEquipeCombat(
     }
     if (bonus.critPlat) c.stats = { ...c.stats, crit: (c.stats.crit ?? 0) + bonus.critPlat };
     if (bonus.perceResistances) c.perceResistances = (c.perceResistances ?? 0) + bonus.perceResistances;
+    if (bonus.ouvreToujours) c.ouvreToujours = true;
   }
 }

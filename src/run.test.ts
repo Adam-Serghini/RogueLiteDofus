@@ -78,6 +78,7 @@ describe("bonus d'équipe (Dofus) appliqués aux combattants", () => {
     appliquerBonusEquipeCombat([iop, eni], {
       damageMult: 1.15, paBonus: 1, pvBonus: 2, resAllBonus: 0.01,
       statsElementaires: 0, critPlat: 0, perceResistances: 0, prospection: 0,
+      ouvreToujours: false,
     });
     // vivant : PV max ET courants montent, PA aussi
     expect(iop.pvMax).toBeGreaterThan(pvIopAvant);

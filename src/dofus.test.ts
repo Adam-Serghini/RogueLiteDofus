@@ -752,3 +752,18 @@ describe("Dofus Ocre", () => {
     expect(bonusEquipe(meta).paBonus).toBe(1);
   });
 });
+
+describe("Dofus du Cauchemar", () => {
+  it("le camp joueur ouvre même avec une initiative inférieure", async () => {
+    const { ordreDuCombat } = await import("./combat");
+    const equipe = equipeCombattante(nouvelleRun(["iop", "cra"]));
+    const ennemis = fabriquerEnnemis("combat_1");
+    for (const c of equipe) c.initiative = 1;
+    for (const e of ennemis) e.initiative = 999;
+    const cs = [...equipe, ...ennemis];
+    expect(ordreDuCombat(cs)[0]).toBe(ennemis[0].ref); // sans la relique, l'ennemi ouvre
+
+    for (const c of equipe) c.ouvreToujours = true;
+    expect(ordreDuCombat(cs)[0]).toBe(equipe[0].ref); // avec, le premier héros ouvre
+  });
+});

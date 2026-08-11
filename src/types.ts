@@ -465,6 +465,7 @@ export interface Combatant {
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente
+  ouvreToujours?: boolean; // Dofus du Cauchemar : force l'ouverture du camp joueur, quelle que soit l'initiative moyenne
   dofusLache?: string; // pour le boss
   // --- invocation (Poupée de garde) ---
   estInvocation?: boolean; // ne joue pas de tour

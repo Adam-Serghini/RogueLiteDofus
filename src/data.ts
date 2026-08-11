@@ -80,6 +80,7 @@ const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dorigami: { desc: "Quand il abat un ennemi, octroie 20 % des PV max en bouclier pour 1 tour." },
   dofus_tachete: { desc: "Quand il inflige des dégâts, octroie 5 en force, intelligence, agilité et chance à ses alliés pour 1 tour. Non cumulable." },
   domakuro: { desc: "S'il n'inflige aucun dégât lors de son premier tour, gagne 1 % de dégâts finaux pour le reste du combat." },
+  dofus_du_cauchemar: { desc: "Le premier personnage de l'équipe joue toujours en premier." },
 };
 
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(

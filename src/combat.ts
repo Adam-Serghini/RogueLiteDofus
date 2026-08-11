@@ -2573,7 +2573,15 @@ export function ordreDuCombat(cs: Combatant[]): string[] {
   // ce qui contredirait la séquence figée.
   const moyenneInit = (l: Combatant[]): number =>
     l.length ? l.reduce((s, c) => s + c.initiative, 0) / l.length : 0;
-  let camp: Camp = moyenneInit(files.ennemi) > moyenneInit(files.joueur) ? "ennemi" : "joueur";
+  // ... sauf si un héros porte le Dofus du Cauchemar : il force l'ouverture côté
+  // joueur et rend donc les effets d'initiative adverses inertes. Le drapeau est
+  // posé sur les combattants (pas dans le contexte de combat) précisément parce que
+  // cette fonction est rappelée à chaque interrogation de `prochainActeur` : il faut
+  // qu'il survive à tous ces rappels sans être repassé en argument. Il ne peut porter
+  // que sur le camp joueur (`appliquerBonusEquipeCombat` ne touche que l'équipe).
+  const cauchemar = files.joueur.some((c) => c.ouvreToujours);
+  let camp: Camp = cauchemar ? "joueur"
+    : moyenneInit(files.ennemi) > moyenneInit(files.joueur) ? "ennemi" : "joueur";
   const ordre: string[] = [];
   while (files.joueur.length || files.ennemi.length) {
     if (!files[camp].length) camp = camp === "joueur" ? "ennemi" : "joueur"; // surplus de l'autre camp
