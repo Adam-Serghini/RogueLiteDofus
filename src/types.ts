@@ -563,8 +563,11 @@ export interface Meta {
   succes?: string[]; // ids des succès débloqués (optionnel : rétro-compat)
   collection?: Record<string, string>; // Armurerie : itemId → meilleure rareté obtenue
   ascension?: Record<string, number>; // record par tranche : plus haut palier VAINCU (absent = tranche jamais finie)
-  /** Version du schéma. Absente ou < META_VERSION = sauvegarde d'avant la refonte de
-   *  l'Ascension : ses records sont remis à zéro au chargement, une seule fois. */
+  /** Version du schéma. Absente ou < 2 = sauvegarde d'avant la refonte de
+   *  l'Ascension : ses records sont remis à zéro au chargement, une seule fois. Le
+   *  seuil est FIGÉ à 2, pas `< META_VERSION` : un joueur déjà en version 2 ne doit
+   *  pas revoir ses records remis à zéro simplement parce que META_VERSION grimpe
+   *  depuis (voir `chargerMeta`, src/run.ts, et le test qui verrouille ce découplage). */
   version?: number;
 }
 

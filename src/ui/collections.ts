@@ -88,7 +88,11 @@ export function showDofus(dofusId: string, totalCopies: number): Promise<void> {
       ${d?.img ? `<img class="dofus-img" src="${A(d.img)}" alt="" onerror="this.remove()" />` : ""}
       <h2>${escapeHtml(d?.nom ?? dofusId)}</h2>
       <p class="sous-titre">${escapeHtml(d?.desc ?? "")}</p>
-      <p>Copies possédées : <b>×${totalCopies}</b>. La prochaine run sera plus facile.</p>
+      <p>Copies possédées : <b>×${totalCopies}</b>.${
+        totalCopies > 1
+          ? " Un exemplaire supplémentaire : l'effet ne se cumule pas, il reste inchangé."
+          : " Elle reste acquise pour les prochaines runs."
+      }</p>
       <div class="boutons-ecran"><button id="btn-continue" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
     `);
     document

@@ -1057,7 +1057,15 @@ export function sauverMeta(meta: Meta): void {
   }
 }
 
-export function ajouterDofus(meta: Meta, id: string, jet?: number): void {
+/** Ajoute un exemplaire de relique à la Meta. Les reliques à tirage
+ *  (`DOFUS[id].prospectionJet`, ex. le Kalyptus) tirent ICI leur jet dans ses
+ *  bornes — à la source, pas chez chaque appelant : un futur site d'obtention qui
+ *  oublierait de tirer laisserait sa relique inerte pour toujours (`meilleurJet`
+ *  ne verrait jamais que des exemplaires sans jet). `rng` par défaut `Math.random`
+ *  pour les call sites réels ; les tests injectent un générateur à graine. */
+export function ajouterDofus(meta: Meta, id: string, rng: () => number = Math.random): void {
+  const bornes = DOFUS[id]?.prospectionJet;
+  const jet = bornes ? bornes[0] + Math.floor(rng() * (bornes[1] - bornes[0] + 1)) : undefined;
   meta.dofus.push(jet === undefined ? { id } : { id, jet });
   sauverMeta(meta);
 }

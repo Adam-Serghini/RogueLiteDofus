@@ -5,10 +5,13 @@
 //
 //  Il DÉCRIT les soins et les boucliers (`IntentionsDofus`) au lieu de les appliquer :
 //  soigner et poser un bouclier vivent dans `combat.ts`, et les importer ici créerait
-//  un cycle (combat → effets → combat). Il POSE en revanche lui-même les marques
-//  d'état du porteur (`argenteArme`, `argenteUtilise`) : ce sont des drapeaux, pas des
-//  mutations de PV, et les faire transiter par une intention n'apporterait qu'une
-//  indirection.
+//  un cycle (combat → effets → combat). Il POSE lui-même la marque d'ARMEMENT du
+//  porteur (`argenteArme`, via `marquerSeuilArgente`) — un simple drapeau, pas une
+//  mutation de PV — mais PAS les marques de CONSOMMATION (`argenteUtilise`,
+//  `veilleursRecuCeTour`) : celles-ci ne se posent qu'une fois le soin CONFIRMÉ
+//  appliqué (la friction peut le bloquer, et ce module ne sait pas la lire), donc
+//  `combat.ts` les pose lui-même dans `appliquerIntentions`, sur la foi des jetons
+//  `argenteConsume`/`veilleursConsume` que ce module se contente de DÉCRIRE.
 // =============================================================================
 import type { Combatant } from "./types";
 
@@ -20,7 +23,16 @@ export const RELIQUES_A_CROCHET = [
 ] as const;
 
 export interface IntentionsDofus {
-  soins: { ref: string; montant: number }[];
+  soins: {
+    ref: string;
+    montant: number;
+    // Jetons de consommation, posés par `appliquerIntentions` (src/combat.ts)
+    // SEULEMENT si le soin a réellement eu lieu (la friction peut le bloquer) —
+    // ce module ne les pose pas lui-même : il ne sait pas si la cible a la
+    // friction, `combat.ts` seul le sait.
+    argenteConsume?: boolean; // Argenté/Scintillant : une seule fois par combat
+    veilleursConsume?: boolean; // Veilleurs : non cumulable sur un même bénéficiaire
+  }[];
   boucliers: { ref: string; montant: number; tours: number }[];
   degatsPct: number; // multiplicateur additif appliqué au lanceur ce tour-ci
 }
@@ -67,10 +79,12 @@ export function crochetDebutTour(
   if (actives.has("dofus_nebuleux")) {
     out.degatsPct += tour % 2 === 0 ? 0.05 : -0.05;
   }
+  // `argenteArme` n'est PAS désarmé ici : si `combat.ts` constate que la friction
+  // bloque le soin, il ne pose pas `argenteConsume`, et l'armement doit rester
+  // intact pour retenter au prochain tour du porteur — sans quoi son unique
+  // déclenchement par combat serait brûlé pour un soin qui n'a jamais eu lieu.
   if (acteur.argenteArme !== undefined && tour > acteur.argenteArme) {
-    acteur.argenteArme = undefined;
-    acteur.argenteUtilise = true;
-    out.soins.push({ ref: acteur.ref, montant: pct(acteur, 0.2) });
+    out.soins.push({ ref: acteur.ref, montant: pct(acteur, 0.2), argenteConsume: true });
   }
   return out;
 }
@@ -90,6 +104,15 @@ export function crochetMortEnnemi(tueur: Combatant, actives: Set<string>): Inten
 }
 
 const estAvant = (c: Combatant): boolean => c.position < 4;
+
+// Dupliqué depuis `allies()` (src/combat.ts) plutôt qu'importé : ce module est PUR
+// et `combat.ts` l'importe déjà (crochets de reliques) — l'importer en retour créerait
+// le cycle décrit en tête de fichier. Même compromis que `estAvant`/`vivants`
+// ci-dessus. Exclut la Lance (camp "ennemi" mais équipement du joueur, jamais un
+// ALLIÉ réel) et les invocations-obstacles (Poupée, Égide) — règle née sur l'Égide,
+// qui se faisait sinon buffer/soigner par un effet « allié » automatique.
+const alliesVivants = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
+  cs.filter((c) => c.pvActuels > 0 && c.camp === acteur.camp && !c.estLance && !c.estInvocation);
 
 const STATS_ELEM = ["force", "intelligence", "agilite", "chance"] as const;
 
@@ -117,8 +140,8 @@ export function crochetDegatsInfliges(
   lanceur: Combatant, cs: Combatant[], actives: Set<string>,
 ): void {
   if (!actives.has("dofus_tachete")) return;
-  for (const a of cs) {
-    if (a.camp !== lanceur.camp || a.ref === lanceur.ref || a.pvActuels <= 0) continue;
+  for (const a of alliesVivants(lanceur, cs)) {
+    if (a.ref === lanceur.ref) continue;
     if (a.effets.some((e) => e.source === "dofus_tachete")) continue; // non cumulable
     for (const stat of STATS_ELEM) {
       a.effets.push({ stat, valeur: 5, toursRestants: 1, source: "dofus_tachete" });
@@ -150,15 +173,22 @@ export function crochetFinTour(
   const out = vide();
   const vivants = cs.filter((c) => c.pvActuels > 0);
   if (actives.has("dofus_emeraude")) {
-    const devant = vivants.filter((c) => c.camp !== acteur.camp && estAvant(c)).length;
+    // `!c.estLance` : la Lance (Forgelance) partage le camp "ennemi" pour la
+    // grille/le ciblage mais appartient à l'équipe du joueur — sans cette garde,
+    // un Iop qui plante sa propre Lance gonfle le bouclier de l'Émeraude en la
+    // comptant comme une menace en ligne avant adverse.
+    const devant = vivants.filter((c) => c.camp !== acteur.camp && !c.estLance && estAvant(c)).length;
     if (devant > 0) out.boucliers.push({ ref: acteur.ref, montant: pct(acteur, 0.03 * devant), tours: 1 });
   }
   if (actives.has("dofus_des_veilleurs")) {
-    for (const a of vivants) {
-      if (a.camp !== acteur.camp || a.ref === acteur.ref) continue;
+    // Ne pose PAS `veilleursRecuCeTour` ici : `combat.ts` (`appliquerIntentions`) ne
+    // le fait qu'après confirmation que le soin a réellement eu lieu (`veilleursConsume`)
+    // — sinon la friction (toile 19) marquerait un bénéficiaire comme déjà servi pour
+    // un soin qui n'a jamais atterri, lui fermant la porte pour le reste du round.
+    for (const a of alliesVivants(acteur, cs)) {
+      if (a.ref === acteur.ref) continue;
       if (estAvant(a) !== estAvant(acteur) || a.veilleursRecuCeTour) continue;
-      a.veilleursRecuCeTour = true;
-      out.soins.push({ ref: a.ref, montant: pct(acteur, 0.05) });
+      out.soins.push({ ref: a.ref, montant: pct(acteur, 0.05), veilleursConsume: true });
     }
   }
   // Domakuro : le bonus se décide à la fin du PREMIER tour du porteur, et vaut pour

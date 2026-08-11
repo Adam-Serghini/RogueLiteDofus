@@ -65,6 +65,35 @@ describe("modèle des reliques", () => {
     expect(meilleurJet(meta, "dofawa")).toBeUndefined();
   });
 
+  // Sans ce tirage à l'obtention, `prospectionJet` (data.ts) n'est jamais lu que
+  // comme un booléen : `meilleurJet` renvoie toujours undefined, `bonusEquipe`
+  // ajoute 0, indéfiniment — la description « +1 à 30 » promettrait un effet nul.
+  it("ajouterDofus tire un jet dans les bornes pour une relique à tirage (Kaliptus)", () => {
+    const meta = metaVide();
+    ajouterDofus(meta, "dofus_kaliptus", () => 0); // borne basse
+    const jetBas = meta.dofus.find((d) => d.id === "dofus_kaliptus")?.jet;
+    expect(jetBas).toBe(1);
+    ajouterDofus(meta, "dofus_kaliptus", () => 0.999999); // borne haute
+    const jets = meta.dofus.filter((d) => d.id === "dofus_kaliptus").map((d) => d.jet);
+    expect(jets).toEqual([1, 30]);
+  });
+
+  it("un second exemplaire au jet meilleur fait foi (refarmer ne peut qu'améliorer)", () => {
+    const meta = metaVide();
+    ajouterDofus(meta, "dofus_kaliptus", () => 0.2); // jet modeste
+    ajouterDofus(meta, "dofus_kaliptus", () => 0.9); // jet meilleur
+    expect(meilleurJet(meta, "dofus_kaliptus")).toBe(
+      Math.max(...meta.dofus.filter((d) => d.id === "dofus_kaliptus").map((d) => d.jet!)),
+    );
+    expect(meilleurJet(meta, "dofus_kaliptus")).toBeGreaterThan(6); // ~0.2 * 29 + 1 ≈ 6.8
+  });
+
+  it("ajouterDofus ne tire AUCUN jet pour une relique sans bornes de tirage", () => {
+    const meta = metaVide();
+    ajouterDofus(meta, "dofus_pourpre", () => 0.5);
+    expect(meta.dofus).toEqual([{ id: "dofus_pourpre" }]);
+  });
+
   it("aucune relique ne déclare plus d'effet PAR COPIE", () => {
     // Le modèle par copie et son plafond `maxCopies` ont disparu : leur survivance
     // dans les données ferait croire à un cumul qui n'existe plus.
@@ -181,7 +210,13 @@ describe("crochet début de tour", () => {
     // pas se voir consommé par le crochet de ce même tour)
     expect(crochetDebutTour(c, [c], actives).soins).toEqual([]);
     c.toursJoues = 3; // tour SUIVANT
-    expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200 }]);
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200, argenteConsume: true }]);
+    // `argenteConsume` décrit la CONSOMMATION, mais ne la pose pas lui-même — c'est
+    // `combat.ts` (`appliquerIntentions`) qui le fait, une fois le soin confirmé
+    // appliqué (voir Round de correction 2 : la friction ne doit pas brûler ce
+    // jeton pour un soin qui n'a jamais eu lieu). On simule ici cette confirmation.
+    c.argenteArme = undefined;
+    c.argenteUtilise = true;
     // consommé : plus jamais de ce combat, même si le seuil est re-franchi
     c.toursJoues = 4;
     marquerSeuilArgente(c, actives);
@@ -194,7 +229,10 @@ describe("crochet début de tour", () => {
     const actives = new Set(["dofus_argente", "dofus_argente_scintillant"]);
     marquerSeuilArgente(c, actives);
     c.toursJoues = 3;
-    expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200 }]);
+    expect(crochetDebutTour(c, [c], actives).soins).toEqual([{ ref: c.ref, montant: 200, argenteConsume: true }]);
+    // simule la confirmation posée par `combat.ts` (voir test précédent)
+    c.argenteArme = undefined;
+    c.argenteUtilise = true;
     // un second passage sous le seuil, même avec les DEUX reliques actives, ne
     // redonne rien : `argenteUtilise` couvre les deux identifiants à la fois.
     c.toursJoues = 4;
@@ -222,13 +260,26 @@ describe("crochet fin de tour", () => {
     expect(int.boucliers).toEqual([{ ref: h.ref, montant: 60, tours: 1 }]); // 2 ennemis × 3 %
   });
 
+  // La Lance (Forgelance) partage le camp "ennemi" pour la grille/le ciblage, mais
+  // appartient à l'équipe du joueur — sans cette garde, planter sa PROPRE lance
+  // gonflait le bouclier de l'Émeraude comme si elle était une menace adverse.
+  it("Émeraude : la Lance du Forgelance ne compte JAMAIS comme un ennemi en ligne avant", async () => {
+    const { crochetFinTour } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000, position: 0 });
+    const e1 = ennemiTest({ position: 1 }); // un VRAI ennemi en ligne avant : compte
+    const lance = ennemiTest({ position: 2 });
+    lance.estLance = true; // camp "ennemi" par construction, mais pas une menace
+    const int = crochetFinTour(h, [h, e1, lance], new Set(["dofus_emeraude"]));
+    expect(int.boucliers).toEqual([{ ref: h.ref, montant: 30, tours: 1 }]); // 1 ennemi × 3 %, la lance exclue
+  });
+
   it("Veilleurs : soigne les alliés de SA ligne, jamais lui-même", async () => {
     const { crochetFinTour } = await import("./dofus-effets");
     const h = herosTest({ pvMax: 1000, pvActuels: 1000, position: 0 });
     const allieAvant = herosTest({ pvMax: 400, pvActuels: 100, position: 1 });
     const allieArriere = herosTest({ pvMax: 400, pvActuels: 100, position: 4 });
     const int = crochetFinTour(h, [h, allieAvant, allieArriere], new Set(["dofus_des_veilleurs"]));
-    expect(int.soins).toEqual([{ ref: allieAvant.ref, montant: 50 }]); // 5 % des PV max DU PORTEUR
+    expect(int.soins).toEqual([{ ref: allieAvant.ref, montant: 50, veilleursConsume: true }]); // 5 % des PV max DU PORTEUR
   });
 
   it("Veilleurs : un allié ne reçoit qu'UN soin entre deux de ses propres tours", async () => {
@@ -238,6 +289,11 @@ describe("crochet fin de tour", () => {
     const cible = herosTest({ pvMax: 400, pvActuels: 100, position: 2 });
     const actives = new Set(["dofus_des_veilleurs"]);
     expect(crochetFinTour(p1, [p1, p2, cible], actives).soins).toHaveLength(2); // p2 et cible
+    // `veilleursConsume` décrit la consommation, mais ne la pose pas : c'est
+    // `combat.ts` qui le fait après confirmation du soin (voir Round de correction
+    // 2) — on simule ici cette confirmation pour p2 et cible avant le tour suivant.
+    cible.veilleursRecuCeTour = true;
+    p2.veilleursRecuCeTour = true;
     // p2 finit son tour à son tour : la cible a déjà reçu son soin cette ronde
     const second = crochetFinTour(p2, [p1, p2, cible], actives).soins.map((s) => s.ref);
     expect(second).not.toContain(cible.ref);
@@ -401,6 +457,45 @@ describe("crochet fin de tour — intégration moteur (runCombat)", () => {
     expect(bouclierVu).toBe(30); // 3 % de 1000 PV max, un ennemi vivant en ligne avant
     expect(ennemi.pvActuels).toBe(0);
   });
+
+  // Round de correction 2 : `appliquerBouclierPortee` et `appliquerSoutien` testent
+  // `aFriction` avant de poser un bouclier, mais `appliquerIntentions` (les
+  // boucliers de reliques Dofus) ne le testait pas — la toile 19 (curare) promet
+  // « soins ET boucliers bloqués », et un porteur de l'Émeraude sous friction
+  // continuait pourtant à en gagner un.
+  it("Émeraude : la friction bloque AUSSI le bouclier de relique, pas seulement les soins", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 1000; heros.pvBase = 1000; heros.pvActuels = 1000;
+    heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+    heros.position = 0; // ligne avant
+    heros.effets.push({ stat: "friction", valeur: 1, toursRestants: 5 }); // couvre tout le combat
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 500; ennemi.pvActuels = 500;
+    ennemi.initiative = 1;
+    ennemi.position = 0; // ligne avant : compterait pour l'Émeraude si le bouclier passait
+    const spellTue = {
+      ...SORTS.morsure, id: "test_dofus_emeraude_friction", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+    };
+    let bouclierVu = 0;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref !== heros.ref) return null;
+      if (acteur.toursJoues === 1) return null; // round 1 : passe, laisse l'Émeraude tenter de se déclencher
+      return { sort: spellTue, cibleRef: ennemi.ref };
+    };
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0.99,
+      reliquesActives: new Set(["dofus_emeraude"]),
+      onUpdate: () => { bouclierVu = Math.max(bouclierVu, heros.bouclier); },
+    });
+    expect(bouclierVu).toBe(0); // la friction a bloqué le bouclier de l'Émeraude
+    expect(ennemi.pvActuels).toBe(0);
+  });
 });
 
 // Round de correction 1 : `ctx.reliquesActives` vient de `Meta`, la progression DU
@@ -555,6 +650,21 @@ describe("crochet dégâts infligés", () => {
     crochetDegatsInfliges(h, [h, ennemi], new Set(["dofus_tachete"]));
     expect(h.effets.filter((e) => e.stat === "force")).toHaveLength(0);
     expect(ennemi.effets.filter((e) => e.stat === "force")).toHaveLength(0);
+  });
+
+  // Même camp que le porteur ne suffit pas à être un « allié réel » — la Lance
+  // (Forgelance) et une invocation-obstacle (Poupée, Égide) n'en sont pas, règle
+  // née sur l'Égide (`allies()`, src/combat.ts). Ce module ne peut pas importer
+  // `allies()` sans créer de cycle (voir en-tête de fichier) : il en duplique
+  // l'exclusion localement (`alliesVivants`).
+  it("Tacheté : ne buffe ni la Lance ni une invocation-obstacle du même camp", async () => {
+    const { crochetDegatsInfliges } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const lance = herosTest({ pvMax: 2, pvActuels: 2 }); lance.estLance = true;
+    const invocation = herosTest({ pvMax: 500, pvActuels: 500 }); invocation.estInvocation = true;
+    crochetDegatsInfliges(h, [h, lance, invocation], new Set(["dofus_tachete"]));
+    expect(lance.effets.filter((e) => e.stat === "force")).toHaveLength(0);
+    expect(invocation.effets.filter((e) => e.stat === "force")).toHaveLength(0);
   });
 
   it("sans la relique, aucun buff n'est posé", async () => {
@@ -740,6 +850,27 @@ describe("Domakuro — intégration moteur (runCombat)", () => {
     expect(ennemi.pvActuels).toBe(0); // le combat s'est bien terminé sur la Flèche Enflammée
     expect(heros.degatsPctPermanent ?? 0).toBe(0); // aucun bonus : le porteur a bel et bien frappé
   });
+
+  // Round de correction 2 : `aFrappeCeTour` ne doit se poser QUE sur les dégâts
+  // infligés PENDANT le tour de l'attaquant (`ctx.tourDeRef`) — sinon un dégât
+  // attribué à quelqu'un hors de son propre tour (une riposte, par exemple) le
+  // marquerait quand même, et un porteur du Domakuro resté calme pendant SON tour
+  // perdrait le bonus pour un coup qu'il n'a pas porté DANS ce tour-là.
+  it("infligerDegats ne marque aFrappeCeTour que pendant le tour de l'attaquant (ctx.tourDeRef)", async () => {
+    const { infligerDegats } = await import("./combat");
+    const attaquant = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const cible = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const ctxLog = { rng: () => 0.5, log: () => {}, playerDamageBonus: 1 };
+
+    // hors du tour de l'attaquant (tourDeRef pointe vers un autre acteur) : pas de marquage
+    attaquant.aFrappeCeTour = false;
+    infligerDegats(cible, 10, attaquant, { ...ctxLog, tourDeRef: cible.ref });
+    expect(attaquant.aFrappeCeTour).toBe(false);
+
+    // pendant le tour de l'attaquant lui-même : marquage normal
+    infligerDegats(cible, 10, attaquant, { ...ctxLog, tourDeRef: attaquant.ref });
+    expect(attaquant.aFrappeCeTour).toBe(true);
+  });
 });
 
 describe("Dofus Ocre", () => {
@@ -833,6 +964,10 @@ describe("cohérence du catalogue", () => {
     marquerSeuilArgente(c, actives);
     c.toursJoues = (c.toursJoues ?? 0) + 1; // tour suivant : le soin peut se consommer
     expect(crochetDebutTour(c, [c], actives).soins).toHaveLength(1);
+    // simule la confirmation posée par `combat.ts` (`appliquerIntentions`) une fois
+    // le soin réellement appliqué — voir le test dédié plus haut pour le pourquoi.
+    c.argenteArme = undefined;
+    c.argenteUtilise = true;
     marquerSeuilArgente(c, actives);
     c.toursJoues = (c.toursJoues ?? 0) + 1;
     expect(crochetDebutTour(c, [c], actives).soins).toHaveLength(0);

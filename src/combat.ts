@@ -44,6 +44,15 @@ export interface CombatCtx {
    *  calculé côté `main.ts` — ce module reste pur). Défaut ensemble vide pour ne pas
    *  invalider les littéraux de contexte des tests existants. */
   reliquesActives?: Set<string>;
+  /** Référence de l'acteur DONT C'EST LE TOUR — posée par `runCombat` à chaque
+   *  itération de sa boucle, jamais ailleurs. Sert de garde à `aFrappeCeTour`
+   *  (Domakuro) dans `infligerDegats` : sans elle, une riposte ou un dégât
+   *  reversé infligé par un combattant HORS de son propre tour marquerait
+   *  quand même son drapeau, et lui volerait le bonus du Domakuro au moment où
+   *  son propre tour, resté calme, se termine. `undefined` en dehors de
+   *  `runCombat` (tests unitaires à littéral de contexte) : la garde s'efface
+   *  alors plutôt que de bloquer un marquage légitime. */
+  tourDeRef?: string;
 }
 
 export type Controller = (
@@ -917,7 +926,16 @@ export function infligerDegats(
   // bouclier a quand même été porté. Idempotent (simple affectation à `true`),
   // donc aucun risque à le poser plusieurs fois pour un même lancer (éclaboussures,
   // redirection récursive).
-  if (attaquant && dmg > 0) attaquant.aFrappeCeTour = true;
+  //
+  // Restreint à `ctx.tourDeRef` : sans cette garde, un dégât infligé HORS du tour de
+  // l'attaquant (une riposte comptée à son nom, par exemple) marquerait quand même
+  // son drapeau, et un porteur du Domakuro qui n'a par ailleurs rien lancé perdrait
+  // le bonus « aucun dégât au premier tour » pour un coup qu'il n'a pas porté PENDANT
+  // ce tour. `ctx?.tourDeRef === undefined` laisse passer les tests à littéral de
+  // contexte qui n'en posent pas.
+  if (attaquant && dmg > 0 && (ctx?.tourDeRef === undefined || attaquant.ref === ctx.tourDeRef)) {
+    attaquant.aFrappeCeTour = true;
+  }
   const vivantAvant = cible.pvActuels > 0;
   let reste = dmg;
   if (cible.bouclier > 0 && !ignoreBouclier) {
@@ -1193,26 +1211,45 @@ const consommeMaxRoll = (lanceur: Combatant): boolean => {
 };
 
 // --- Lancement d'un sort -----------------------------------------------------
-function soigner(cible: Combatant, montant: number, ctx: CombatCtx): void {
+/** Renvoie `false` sans rien muter si la friction bloque le soin — c'est ce
+ *  retour, et non la seule trace de log, qu'`appliquerIntentions` consulte pour
+ *  décider si un jeton de relique (Argenté, Veilleurs) doit vraiment se
+ *  consommer : un soin qui n'a pas eu lieu ne doit pas brûler l'unique
+ *  déclenchement par combat de l'Argenté, ni marquer un bénéficiaire des
+ *  Veilleurs comme déjà servi ce tour-ci. */
+function soigner(cible: Combatant, montant: number, ctx: CombatCtx): boolean {
   if (aFriction(cible)) {
     ctx.log(`${cible.nom} ne peut pas être soigné (friction).`);
-    return;
+    return false;
   }
   const avant = cible.pvActuels;
   cible.pvActuels = Math.min(cible.pvMax, cible.pvActuels + montant);
   if (cible.pvActuels > avant) ctx.log(`${cible.nom} récupère ${cible.pvActuels - avant} PV.`);
+  return true;
 }
 
 /** Applique les intentions décrites par `dofus-effets.ts`. Le module décrit, le
- *  moteur exécute — c'est ici que vivent les seules mutations. */
+ *  moteur exécute — c'est ici que vivent les seules mutations.
+ *
+ *  Les jetons `argenteConsume`/`veilleursConsume` ne sont posés sur le combattant
+ *  QU'APRÈS que `soigner` ait confirmé l'application (voir sa docstring) — sinon
+ *  la friction (toile 19, curare) brûlerait l'unique soin par combat de l'Argenté,
+ *  ou marquerait un bénéficiaire des Veilleurs comme déjà servi pour un soin qui
+ *  n'a jamais eu lieu. Le bouclier suit la MÊME garde de friction que `soigner` —
+ *  jusqu'ici seuls `appliquerBouclierPortee` et `appliquerSoutien` la testaient,
+ *  laissant les boucliers de reliques (Émeraude, Dorigami) passer au travers de la
+ *  leçon de la toile 19 (soins ET boucliers bloqués). */
 function appliquerIntentions(int: IntentionsDofus, cs: Combatant[], ctx: CombatCtx): void {
   for (const s of int.soins) {
     const c = cs.find((x) => x.ref === s.ref);
-    if (c && c.pvActuels > 0) soigner(c, s.montant, ctx);
+    if (!c || c.pvActuels <= 0) continue;
+    if (!soigner(c, s.montant, ctx)) continue; // friction : jeton non consommé
+    if (s.argenteConsume) { c.argenteArme = undefined; c.argenteUtilise = true; }
+    if (s.veilleursConsume) c.veilleursRecuCeTour = true;
   }
   for (const b of int.boucliers) {
     const c = cs.find((x) => x.ref === b.ref);
-    if (!c || c.pvActuels <= 0) continue;
+    if (!c || c.pvActuels <= 0 || aFriction(c)) continue;
     c.bouclier += b.montant;
     (c.boucliersTemporaires ??= []).push({ montant: b.montant, tours: b.tours });
     ctx.log(`${c.nom} gagne un bouclier de ${b.montant}.`);
@@ -2659,6 +2696,7 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       const acteur = prochainActeur(combatants, aJoue);
       if (!acteur) break;
       aJoue.add(acteur.ref);
+      ctx.tourDeRef = acteur.ref; // garde de `aFrappeCeTour` (Domakuro) dans infligerDegats
 
       reinitialiserLancersTour(acteur); // remise à zéro des limites de lancer ET des remises de coût par tour
       // Compteur de tours du combattant : vaut 1 PENDANT son premier tour, d'où la

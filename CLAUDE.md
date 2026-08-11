@@ -223,7 +223,9 @@ rien.
 esquive (Agilité, plafonnée) → jet (ou max si charge `maxRoll`) → + stat de l'élément de frappe ×
 scaling → critique (Agilité, plafond 35 %, il *ajoute* des dégâts, ne double pas) → debuff
 `degatsInfliges` → multiplicateur de rebond → résistances (sauf `ignoreResistances`) → bonus d'équipe
-Dofus (camp joueur) → `multOffensif` (Intelligence, plafonné, tous lanceurs) → `armure` (montant **plat**
+Dofus (camp joueur) / palier d'Ascension (camp ennemi) → reliques Dofus à déclenchement, DU TOUR
+(`degatsPctDofus` — Nébuleux, Domakuro) puis PERMANENT (`degatsPctPermanent` — Domakuro une fois acquis)
+→ `multOffensif` (Intelligence, plafonné, tous lanceurs) → `armure` (montant **plat**
 retranché, `sommeEffet(cible, "armure") + (cible.armure ?? 0)`) → arrondi, plancher à 0.
 
 ### Effets, soutien, ticks

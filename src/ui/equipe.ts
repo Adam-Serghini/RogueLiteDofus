@@ -367,6 +367,9 @@ function sectionBonusDofus(meta: Meta | null): string {
   if (b.pvBonus) parts.push(`+${b.pvBonus} PV max`);
   if (b.resAllBonus) parts.push(`+${Math.round(b.resAllBonus * 100)} % résistances`);
   if (b.statsElementaires) parts.push(`+${b.statsElementaires} force/intel./agi./chance`);
+  if (b.critPlat) parts.push(`+${b.critPlat} % critique`);
+  if (b.perceResistances) parts.push(`${Math.round(b.perceResistances * 100)} % de résistances ennemies ignorées`);
+  if (b.prospection) parts.push(`+${b.prospection} prospection`);
   if (!parts.length) return "";
   return `<div class="bonus-dofus">
     <span class="bonus-dofus-titre">🐉 Bonus de Dofus : toute l'équipe</span>

@@ -245,7 +245,7 @@ export function showCollectionDofus(meta: Meta): Promise<void> {
     const nbUniques = new Set(meta.dofus.map((d) => d.id)).size;
     ecran(`
       <h1>Dofus</h1>
-      <p class="sous-titre">${nbUniques} / ${Object.keys(DOFUS).length} reliques collectées. Elles survivent à la mort et se cumulent.</p>
+      <p class="sous-titre">${nbUniques} / ${Object.keys(DOFUS).length} reliques collectées. Elles survivent à la mort ; en posséder plusieurs exemplaires n'ajoute rien, seule la possession compte.</p>
       ${renderDofusRack(meta)}
       <div class="boutons-ecran"><button id="dofus-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
     `);

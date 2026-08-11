@@ -465,7 +465,7 @@ describe("Dofus du Cauchemar", () => {
 
   // La dormance a pris fin : la relique force l'ouverture du camp joueur
   // (`ordreDuCombat`, src/combat.ts), portée par `Combatant.ouvreToujours` plutôt
-  // que par ce `BonusEquipe` chiffré — voir combat.test.ts pour le comportement.
+  // que par ce `BonusEquipe` chiffré — voir dofus.test.ts pour le comportement.
   it("accorde bien le drapeau d'ouverture, sans toucher aux bonus chiffrés", () => {
     const meta = metaVide();
     const nu = bonusEquipe(meta);
