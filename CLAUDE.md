@@ -453,8 +453,11 @@ un errant n'est réellement atteignable que s'il a un taux > 0, un archi et un s
 
 ### Reliques Dofus
 
-Chaque boss de T1 lâche un Dofus, **une relique par GROUPE de zones** : zones 1-6 → Dofawa, 7-12 →
-Argenté. Test de distribution dans `zones.test.ts`, **T1 uniquement**.
+**Aucune relique ne se lâche au combat.** Les boss n'en portent plus : le champ `Monstre.dofus`,
+`Combatant.dofusLache`, la table `DOFUS_DROP`, le taux `DOFUS_DROP_RATE` et l'écran « Dofus obtenu »
+ont tous été retirés. Les reliques s'obtiendront **par quête** ; en attendant, la seule voie câblée
+est le Dofus du Cauchemar (Cauchemar sur les cinq tranches), donc **aucune n'est atteignable
+aujourd'hui** et `bonusEquipe` rend du neutre pour tout le monde. C'est assumé.
 
 **Une relique agit UNE fois, quel que soit le nombre d'exemplaires possédés.** Le modèle « par copie
 plafonné par `maxCopies` » a disparu ; le badge `×N` du rack est décoratif. `Meta.dofus` est une

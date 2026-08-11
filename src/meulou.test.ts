@@ -197,7 +197,6 @@ describe("la zone Tanière du Meulou", () => {
     expect(zone.pools.boss).toHaveLength(1);
     const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
     expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["meulou"]);
-    expect(MONSTRES.meulou.dofus).toBe("dofus_turquoise");
   });
 
   it("le compteur d'annulations est armé dès la fabrication", () => {

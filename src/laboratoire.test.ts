@@ -68,7 +68,6 @@ describe("bestiaire du Laboratoire", () => {
     const n = MONSTRES.nelween;
     expect(n.boss).toBe(true);
     expect(n.pa).toBe(10);
-    expect(n.dofus).toBe("dofus_pourpre");
     expect(n.sorts[0]).toBe("vapeurs_corrosives"); // signature en tête : l'IA joue le plus cher, à égalité l'ordre de la liste
   });
 });

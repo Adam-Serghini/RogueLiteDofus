@@ -3,7 +3,6 @@
 //  Armurerie), l'encyclopédie des classes + le petit écran de capture d'Archi.
 // =============================================================================
 import {
-  DOFUS,
   ITEMS,
   MONSTRES,
   ZONES,
@@ -77,27 +76,6 @@ export function showEncyclopedie(): Promise<void> {
       root.querySelector<HTMLButtonElement>("#retour")?.addEventListener("click", () => res());
     };
     draw();
-  });
-}
-
-export function showDofus(dofusId: string, totalCopies: number): Promise<void> {
-  return new Promise((res) => {
-    const d = DOFUS[dofusId];
-    ecran(`
-      <h1 class="victoire">Dofus obtenu !</h1>
-      ${d?.img ? `<img class="dofus-img" src="${A(d.img)}" alt="" onerror="this.remove()" />` : ""}
-      <h2>${escapeHtml(d?.nom ?? dofusId)}</h2>
-      <p class="sous-titre">${escapeHtml(d?.desc ?? "")}</p>
-      <p>Copies possédées : <b>×${totalCopies}</b>.${
-        totalCopies > 1
-          ? " Un exemplaire supplémentaire : l'effet ne se cumule pas, il reste inchangé."
-          : " Elle reste acquise pour les prochaines runs."
-      }</p>
-      <div class="boutons-ecran"><button id="btn-continue" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
-    `);
-    document
-      .getElementById("btn-continue")
-      ?.addEventListener("click", () => res());
   });
 }
 

@@ -27,7 +27,6 @@
   },
   "abraknyde_ancestral": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "abraknyde_ancestral",
     "img": "/assets/monstres/abraknyde_ancestral.png",
@@ -206,7 +205,6 @@
   },
   "batofu": {
     "boss": true,
-    "dofus": "dofawa",
     "ia": "agressif",
     "id": "batofu",
     "img": "/assets/monstres/batofu.png",
@@ -404,7 +402,6 @@
   },
   "blop_coco_royal": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "blop_coco_royal",
     "img": "/assets/monstres/blop_coco_royal.png",
@@ -457,7 +454,6 @@
   },
   "blop_griotte_royal": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "blop_griotte_royal",
     "img": "/assets/monstres/blop_griotte_royal.png",
@@ -510,7 +506,6 @@
   },
   "blop_indigo_royal": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "blop_indigo_royal",
     "img": "/assets/monstres/blop_indigo_royal.png",
@@ -563,7 +558,6 @@
   },
   "blop_reinette_royal": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "blop_reinette_royal",
     "img": "/assets/monstres/blop_reinette_royal.png",
@@ -640,7 +634,6 @@
   },
   "boostache": {
     "boss": true,
-    "dofus": "dofus_argente",
     "ia": "agressif",
     "id": "boostache",
     "img": "/assets/monstres/boostache.png",
@@ -792,7 +785,6 @@
   },
   "bouftou_royal": {
     "boss": true,
-    "dofus": "dofawa",
     "ia": "agressif",
     "id": "bouftou_royal",
     "img": "/assets/monstres/bouftou_royal.png",
@@ -1105,7 +1097,6 @@
   },
   "coffre_forgerons": {
     "boss": true,
-    "dofus": "dofus_argente",
     "ia": "agressif",
     "id": "coffre_forgerons",
     "img": "/assets/monstres/coffre_forgerons.png",
@@ -1160,7 +1151,6 @@
   },
   "corailleur_magistral": {
     "boss": true,
-    "dofus": "dofus_argente",
     "ia": "agressif",
     "id": "corailleur_magistral",
     "img": "/assets/monstres/corailleur_magistral.png",
@@ -1271,7 +1261,6 @@
   "craqueleur_legendaire": {
     "armure": 30,
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "craqueleur_legendaire",
     "img": "/assets/monstres/craqueleur_legendaire.png",
@@ -1472,7 +1461,6 @@
   "directeur_grunob": {
     "bonusParAllieLigne": 0.06,
     "boss": true,
-    "dofus": "dofawa",
     "ia": "agressif",
     "id": "directeur_grunob",
     "img": "/assets/monstres/directeur_grunob.png",
@@ -1600,7 +1588,6 @@
   },
   "draegnerys": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "draegnerys",
     "img": "/assets/monstres/draegnerys.png",
@@ -1732,7 +1719,6 @@
   },
   "dragon_cochon": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "dragon_cochon",
     "img": "/assets/monstres/dragon_cochon.png",
@@ -2056,7 +2042,6 @@
   },
   "gelee_royale_bleuet": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "gelee_royale_bleuet",
     "img": "/assets/monstres/gelee_royale_bleuet.png",
@@ -2085,7 +2070,6 @@
   },
   "gelee_royale_citron": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "gelee_royale_citron",
     "img": "/assets/monstres/gelee_royale_citron.png",
@@ -2114,7 +2098,6 @@
   },
   "gelee_royale_fraise": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "gelee_royale_fraise",
     "img": "/assets/monstres/gelee_royale_fraise.png",
@@ -2143,7 +2126,6 @@
   },
   "gelee_royale_menthe": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "gelee_royale_menthe",
     "img": "/assets/monstres/gelee_royale_menthe.png",
@@ -2362,7 +2344,6 @@
   },
   "gourlo_le_terrible": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "gourlo_le_terrible",
     "img": "/assets/monstres/gourlo_le_terrible.png",
@@ -2440,7 +2421,6 @@
   },
   "kankreblath": {
     "boss": true,
-    "dofus": "dofawa",
     "ia": "agressif",
     "id": "kankreblath",
     "img": "/assets/monstres/kankreblath.png",
@@ -2495,7 +2475,6 @@
   },
   "kanniboul_ebil": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "kanniboul_ebil",
     "img": "/assets/monstres/kanniboul_ebil.png",
@@ -2626,7 +2605,6 @@
   },
   "kardorim": {
     "boss": true,
-    "dofus": "dofawa",
     "ia": "agressif",
     "id": "kardorim",
     "img": "/assets/monstres/kardorim.png",
@@ -2656,7 +2634,6 @@
   "kharnozor": {
     "bonusParAllieLigne": 0.1,
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "kharnozor",
     "img": "/assets/monstres/kharnozor.png",
@@ -2906,7 +2883,6 @@
   },
   "kwakwa": {
     "boss": true,
-    "dofus": "dofus_argente",
     "ia": "agressif",
     "id": "kwakwa",
     "img": "/assets/monstres/kwakwa.png",
@@ -3171,7 +3147,6 @@
   },
   "le_chouque": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "le_chouque",
     "img": "/assets/monstres/le_chouque.png",
@@ -3270,7 +3245,6 @@
   },
   "meulou": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "meulou",
     "img": "/assets/monstres/meulou.png",
@@ -3345,7 +3319,6 @@
   },
   "moon": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "moon",
     "img": "/assets/monstres/moon.png",
@@ -3501,7 +3474,6 @@
   },
   "nelween": {
     "boss": true,
-    "dofus": "dofus_pourpre",
     "ia": "agressif",
     "id": "nelween",
     "img": "/assets/monstres/nelween.png",
@@ -3848,7 +3820,6 @@
   },
   "reine_nyee": {
     "boss": true,
-    "dofus": "dofus_turquoise",
     "ia": "agressif",
     "id": "reine_nyee",
     "img": "/assets/monstres/reine_nyee.png",
@@ -3950,7 +3921,6 @@
   },
   "scarabosse_dore": {
     "boss": true,
-    "dofus": "dofus_argente",
     "ia": "agressif",
     "id": "scarabosse_dore",
     "img": "/assets/monstres/scarabosse_dore.png",
@@ -4168,7 +4138,6 @@
   },
   "shin_larve": {
     "boss": true,
-    "dofus": "dofus_argente",
     "ia": "agressif",
     "id": "shin_larve",
     "img": "/assets/monstres/shin_larve.png",
@@ -4465,7 +4434,6 @@
   },
   "tournesol_affame": {
     "boss": true,
-    "dofus": "dofawa",
     "ia": "agressif",
     "id": "tournesol_affame",
     "img": "/assets/monstres/tournesol_affame.png",
@@ -4594,7 +4562,6 @@
   },
   "wa_wabbit": {
     "boss": true,
-    "dofus": "dofus_cawotte",
     "ia": "agressif",
     "id": "wa_wabbit",
     "img": "/assets/monstres/wa_wabbit.png",
@@ -4623,7 +4590,6 @@
   },
   "wa_wobot": {
     "boss": true,
-    "dofus": "dofus_cawotte",
     "ia": "agressif",
     "id": "wa_wobot",
     "img": "/assets/monstres/wa_wobot.png",

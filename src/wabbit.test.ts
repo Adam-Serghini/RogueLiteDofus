@@ -134,12 +134,6 @@ describe("la zone Terrier du Wa Wabbit", () => {
     expect(salle.some((m) => MONSTRES[m].archiNom), "l'escorte doit être capturable").toBe(true);
   });
 
-  it("les deux boss lâchent le Dofus Cawotte", () => {
-    // Rompt volontairement la règle « une relique par groupe de six zones » : les
-    // quatre premières zones de t2 lâchent le Pourpre, le Terrier porte la sienne.
-    for (const id of ["wa_wabbit", "wa_wobot"]) expect(MONSTRES[id].dofus).toBe("dofus_cawotte");
-  });
-
   it("aucune rencontre n'aligne deux fois la même espèce, ni plus de 5 ennemis", () => {
     const zone = ZONES.find((z) => z.id === "terrier_wa_wabbit")!;
     for (const id of [...zone.pools.normales, ...zone.pools.elite, ...zone.pools.boss]) {

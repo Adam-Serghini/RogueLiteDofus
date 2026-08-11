@@ -46,7 +46,6 @@ describe("bestiaire de la Gelaxième Dimension", () => {
       const r = MONSTRES[`gelee_royale_${c}`];
       expect(r, `gelee_royale_${c} manquante`).toBeTruthy();
       expect(r.boss).toBe(true);
-      expect(r.dofus).toBe("dofus_pourpre"); // la paire est tirée au hasard : les 4 doivent le porter
       expect(dominante(`gelee_royale_${c}`)).toBe(STAT_DE_ELEMENT[ELEM_DE_COULEUR[c]]);
       expect(r.pv).toBeGreaterThan(MONSTRES[`gelee_${c}`].pv);
     }

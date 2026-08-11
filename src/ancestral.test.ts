@@ -145,9 +145,6 @@ describe("la zone Domaine Ancestral", () => {
     expect(zone.pools.boss).toHaveLength(1);
     const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
     expect(salle.filter((m) => MONSTRES[m].boss).sort()).toEqual(["abraknyde_ancestral", "reine_nyee"]);
-    for (const id of ["reine_nyee", "abraknyde_ancestral"]) {
-      expect(MONSTRES[id].dofus).toBe("dofus_turquoise");
-    }
   });
 
   it("la salle finale place l'Ancestral DERRIÈRE la Reine — c'est le design", () => {

@@ -191,7 +191,6 @@ describe("la zone Pitons Rocheux", () => {
     expect(zone.pools.boss).toHaveLength(1);
     const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
     expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["craqueleur_legendaire"]);
-    expect(MONSTRES.craqueleur_legendaire.dofus).toBe("dofus_pourpre");
   });
 
   it("l'élite n'est le doublon d'aucun pack normal", () => {

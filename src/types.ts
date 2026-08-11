@@ -367,7 +367,6 @@ export interface Monstre {
   sorts: string[];
   ia: IA;
   boss?: boolean;
-  dofus?: string; // id du Dofus lâché (boss uniquement)
   archiNom?: string; // vrai nom d'Archimonstre (DofusDB) ; absent = pas d'archi → non capturable
   img?: string; // chemin du sprite (public/assets)
   /** Signature du Kwakwa : au début de son tour, résistances = cette valeur
@@ -466,7 +465,6 @@ export interface Combatant {
   doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente
   ouvreToujours?: boolean; // Dofus du Cauchemar : force l'ouverture du camp joueur, quelle que soit l'initiative moyenne
-  dofusLache?: string; // pour le boss
   // --- invocation (Poupée de garde) ---
   estInvocation?: boolean; // ne joue pas de tour
   joueTour?: boolean; // false pour une invocation

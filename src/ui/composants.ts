@@ -3,7 +3,7 @@
 //  formatage %, pastilles d'élément, cartes de classe, chips de stats d'objet…).
 //  Aucune logique de combat ni d'écran complet ici.
 // =============================================================================
-import { DOFUS, DOFUS_DROP, CLASSES, ITEMS, RARETE_INFO, ASCENSION, ASCENSION_MAX } from "../data";
+import { DOFUS, CLASSES, ITEMS, RARETE_INFO, ASCENSION, ASCENSION_MAX } from "../data";
 import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort, coutEffectif } from "../combat";
 import { statElement, multSoin, multOffensif, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
@@ -86,15 +86,11 @@ export function initDofusTooltip(): void {
   const placer = (slot: HTMLElement) => {
     const nom = slot.dataset.nom ?? "";
     const effet = slot.dataset.effet ?? "";
-    const boss = slot.dataset.boss ?? "";
-    const bossImg = slot.dataset.bossImg ?? "";
     let bas: string;
-    if (boss) {
-      bas = `<div class="tip-boss">${bossImg ? `<img src="${bossImg}" alt="" onerror="this.remove()" />` : ""}Lâché par ${escapeHtml(boss)}</div>`;
-    } else if (slot.dataset.ocre) {
+    if (slot.dataset.ocre) {
       bas = `<div class="tip-boss"><img src="${A("/assets/divers/Archmonster.webp")}" alt="" onerror="this.remove()" />Débloqué via les Archimonstres</div>`;
     } else {
-      bas = `<div class="tip-muet">Pas encore obtenable</div>`;
+      bas = `<div class="tip-muet">À débloquer par quête</div>`;
     }
     tip.innerHTML =
       `<div class="tip-nom">${escapeHtml(nom)}</div>` +
@@ -255,10 +251,10 @@ export function renderDofusRack(meta: Meta, compact = false): string {
     .map((d) => {
       const n = meta.dofus.filter((x) => x.id === d.id).length;
       const possede = n > 0;
-      const boss = DOFUS_DROP[d.id];
-      const bossAttr = boss
-        ? `data-boss="${escapeHtml(boss.nom)}" data-boss-img="${boss.img ? A(boss.img) : ""}"`
-        : d.id === "dofus_ocre" ? `data-ocre="1"` : "";
+      // Les reliques ne se lâchent plus au combat : plus de « lâché par tel boss ».
+      // Seul l'Ocre garde une provenance affichable, la sienne étant une condition
+      // de bestiaire et non une quête.
+      const bossAttr = d.id === "dofus_ocre" ? `data-ocre="1"` : "";
       return `
         <div class="dofus-slot ${possede ? "" : "locked"}" data-nom="${escapeHtml(d.nom)}" data-effet="${escapeHtml(d.desc)}" ${bossAttr}>
           ${d.img ? `<img src="${A(d.img)}" alt="${escapeHtml(d.nom)}" loading="lazy" onerror="this.remove()" />` : ""}

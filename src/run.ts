@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, ASCENSION_MAX, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, ASCENSION_MAX, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
@@ -536,7 +536,6 @@ function depuisMonstre(m: Monstre, ref: string, position: number): Combatant {
     coupsAnnulesRestants: m.nullifieParTour,
     img: m.img,
     ...etatCombatInitial(),
-    dofusLache: m.dofus,
   };
 }
 
@@ -1085,13 +1084,6 @@ export function enregistrerRun(meta: Meta, reussie: boolean): void {
 /** % de soin de taverne effectif au palier donné. */
 export function tavernePctAscension(palier: number): number {
   return effetsAscension(palier).tavernePct ?? TAVERNE_PCT;
-}
-/** Chance de drop de Dofus par boss au palier donné (+1 %/palier). Écrêté comme
- *  `effetsAscension` : une sauvegarde de l'ancienne échelle (0-8) ne doit jamais
- *  produire un taux au-delà de celui du dernier cran réel. */
-export function tauxDofusAscension(palier: number): number {
-  const i = Math.max(0, Math.min(Math.trunc(palier) || 0, ASCENSION_MAX));
-  return DOFUS_DROP_RATE + 0.01 * i;
 }
 /** Record d'Ascension d'une tranche (undefined = jamais vaincue). */
 export function recordAscension(meta: Meta, trancheId: string): number | undefined {

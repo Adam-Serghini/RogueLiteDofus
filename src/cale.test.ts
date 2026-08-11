@@ -103,7 +103,6 @@ describe("Gourlo le Terrible", () => {
     const g = MONSTRES.gourlo_le_terrible;
     expect(g.boss).toBe(true);
     expect(g.pa).toBe(10); // salle à boss UNIQUE : le kit de T1 (6 + 4) est entièrement dépensé
-    expect(g.dofus).toBe("dofus_pourpre");
     expect(g.sorts[0]).toBe("bordee"); // l'IA agressive joue le plus cher, à égalité l'ordre de la liste
     expect(g.sorts).toContain("morsure"); // les 4 PA restants trouvent preneur
   });

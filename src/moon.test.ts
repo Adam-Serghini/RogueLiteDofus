@@ -135,7 +135,6 @@ describe("la zone Arbre de Moon", () => {
     expect(zone.pools.boss).toHaveLength(1);
     const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
     expect(salle.filter((m) => MONSTRES[m].boss)).toEqual(["moon"]);
-    expect(MONSTRES.moon.dofus).toBe("dofus_turquoise");
   });
 
   it("chaque pack normal contient un porteur de proc aléatoire", () => {

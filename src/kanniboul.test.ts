@@ -142,9 +142,6 @@ describe("la zone Bateau du Chouque", () => {
     expect(zone.pools.boss).toHaveLength(1);
     const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
     expect(salle.filter((m) => MONSTRES[m].boss).sort()).toEqual(["kanniboul_ebil", "le_chouque"]);
-    for (const id of ["le_chouque", "kanniboul_ebil"]) {
-      expect(MONSTRES[id].dofus).toBe("dofus_turquoise");
-    }
   });
 
   it("chaque pack normal contient un porteur de curare", () => {

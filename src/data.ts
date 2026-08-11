@@ -111,13 +111,6 @@ export const DOFUS: Record<string, DofusDef> = Object.fromEntries(
   }),
 );
 
-/** Dofus → boss qui le lâche (nom + sprite), dérivé des monstres `dofus`. */
-export const DOFUS_DROP: Record<string, { nom: string; img?: string }> = Object.fromEntries(
-  Object.values(MONSTRES)
-    .filter((m) => m.dofus)
-    .map((m) => [m.dofus as string, { nom: m.nom, img: m.img }]),
-);
-
 // --- Composition des combats (séquence linéaire de la run) -------------------
 // position : ordre dans la ligne ennemie (1 = devant). Recalculé à la mort.
 export interface EnnemiPlace {
@@ -307,9 +300,6 @@ export const DROP = {
   coefProspection: 0.001, // dropChance ×= 1 + min(cap, prospectionÉquipe × coef)
   capProspection: 0.75,
 };
-
-/** Chance qu'un boss de zone lâche son Dofus (tunable). */
-export const DOFUS_DROP_RATE = 0.01;
 
 // --- Modificateurs d'élites (cases « combat dur ») ------------------------------
 /** Chaque combat dur tire un modificateur : toute la meute est boostée, et la

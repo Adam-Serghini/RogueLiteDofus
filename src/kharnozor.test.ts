@@ -152,7 +152,6 @@ describe("la zone Repaire du Kharnozor", () => {
     const salle = COMBATS[zone.pools.boss[0]].ennemis.map((e) => e.monstre);
     expect(salle.filter((m) => MONSTRES[m].boss).sort()).toEqual(["draegnerys", "kharnozor"]);
     expect(salle, "le soigneur doit être dans la salle finale").toContain("dragoss_proteiforme");
-    for (const id of ["kharnozor", "draegnerys"]) expect(MONSTRES[id].dofus).toBe("dofus_turquoise");
   });
 
   it("le soigneur est dans les TROIS packs normaux", () => {

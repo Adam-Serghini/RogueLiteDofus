@@ -142,13 +142,6 @@ describe("zone Clos des Blops", () => {
     for (const b of blops) expect(b.position).toBeGreaterThanOrEqual(4); // rangée arrière
   });
 
-  it("le boss de la zone lâche le Dofus Pourpre, quelle que soit la paire tirée", () => {
-    const zone = ZONES.find((z) => z.id === "clos_des_blops")!;
-    for (const id of zone.pools.boss) {
-      const royaux = COMBATS[id].ennemis.filter((e) => e.monstre.endsWith("_royal"));
-      for (const r of royaux) expect(MONSTRES[r.monstre].dofus).toBe("dofus_pourpre");
-    }
-  });
 });
 
 // La panoplie de la toile 13 est retirée en attendant que le contenu d'objets

@@ -2,14 +2,14 @@
 //  main.ts — Orchestration (Phase B) : accueil → carte de nœuds → Dofus.
 // =============================================================================
 import "./style.css";
-import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, xpEffective, zonesDeTranche, trancheDe, DROP, type ZonePools, type ZoneDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, XP_PAR_TYPE, xpEffective, zonesDeTranche, trancheDe, type ZonePools, type ZoneDef } from "./data";
 import { runCombat, controllerIA, type Controller } from "./combat";
 import { genererCarte, tirerTypeZaap } from "./carte";
 import {
   nouvelleRun, equipeCombattante, fabriquerEnnemis, synchroniserPV, soignerEquipe,
   appliquerModificateursElite, effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone,
-  tavernePctAscension, tauxDofusAscension, enregistrerAscension,
-  chargerMeta, ajouterDofus, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, prospectionEquipe, reliquesActives,
+  tavernePctAscension, enregistrerAscension,
+  chargerMeta, reinitialiserMeta, bonusEquipe, appliquerBonusEquipeCombat, reliquesActives,
   propositionsRecrutement, recruter, tenterButin, enregistrerRun, gagnerXPPerso, enregistrerCollection,
   appliquerArchimonstres, appliquerErrants, capturerArchi, chanceArchi, verifierSucces, type RunState,
   gainKamas, crediterKamas, multKamasEquipe, genererStockHDV, toileDeZone,
@@ -194,24 +194,10 @@ async function resoudreType(
       return "continue";
     }
     case "donjon": {
-      const { gagne, combatants } = await resoudreCombat(run, combatId!, { type: "donjon", zone });
+      const { gagne } = await resoudreCombat(run, combatId!, { type: "donjon", zone });
       if (!gagne) return "wipe";
       await recompenserButin(run, zoneId, type);
-      const boss = combatants.find((c) => c.camp === "ennemi" && c.dofusLache);
-      if (boss?.dofusLache) {
-        // taux de base + prospection d'équipe (même formule que les items) + prospection
-        // de relique (Dofus Kaliptus, hors équipe) + palier d'Ascension
-        const prospection = prospectionEquipe(run) + bonusEquipe(meta).prospection;
-        const mult = 1 + Math.min(DROP.capProspection, prospection * DROP.coefProspection);
-        const taux = tauxDofusAscension(run.ascension);
-        if (Math.random() < taux * mult) {
-          ajouterDofus(meta, boss.dofusLache);
-          const copies = meta.dofus.filter((d) => d.id === boss.dofusLache).length;
-          await ui.showDofus(boss.dofusLache, copies);
-        } else {
-          await ui.showTransition("Donjon vaincu !", `Le boss n'a pas lâché son Dofus cette fois… (${Math.round(taux * 100)} % de chance)`);
-        }
-      }
+      // Les boss ne lâchent plus de Dofus : les reliques s'obtiennent par quête.
       return "victoire";
     }
     default:

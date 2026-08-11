@@ -2,11 +2,11 @@
 //  ascension.test.ts — Mode Ascension : catalogue, fusion des effets, application.
 // =============================================================================
 import { describe, it, expect } from "vitest";
-import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS_DROP_RATE, DOFUS, TRANCHES } from "./data";
+import { ASCENSION, ASCENSION_MAX, ZONES, MONSTRES, TAVERNE_PCT, DOFUS, TRANCHES } from "./data";
 import {
   effetsAscension, fabriquerEnnemis, fabriquerEquipe, appliquerAscensionEnnemis,
   especesNormalesDeZone, nouvelleRun, recruter, soignerEquipe, appliquerModificateursElite,
-  pvMaxPerso, tavernePctAscension, tauxDofusAscension, recordAscension, enregistrerAscension,
+  pvMaxPerso, tavernePctAscension, recordAscension, enregistrerAscension,
   chargerRunEnCours, sauverRunEnCours, verifierSucces,
   sansNoeudsDeZone, chargerMeta, SUCCES, bonusEquipe, tranchesEnCauchemar, verifierDofusCauchemar,
   trancheDeverrouillee,
@@ -210,13 +210,6 @@ describe("plomberie de run", () => {
     expect(tavernePctAscension(0)).toBe(TAVERNE_PCT);
     expect(tavernePctAscension(1)).toBe(TAVERNE_PCT);
     expect(tavernePctAscension(2)).toBeCloseTo(0.3);
-  });
-  it("taux de Dofus : +1 % par palier, écrêté au dernier cran réel", () => {
-    expect(tauxDofusAscension(0)).toBeCloseTo(DOFUS_DROP_RATE);
-    expect(tauxDofusAscension(ASCENSION_MAX)).toBeCloseTo(DOFUS_DROP_RATE + 0.01 * ASCENSION_MAX);
-    // hors bornes (ancienne échelle 0-8, ou négatif) : écrêté, jamais extrapolé
-    expect(tauxDofusAscension(8)).toBeCloseTo(DOFUS_DROP_RATE + 0.01 * ASCENSION_MAX);
-    expect(tauxDofusAscension(-3)).toBeCloseTo(DOFUS_DROP_RATE);
   });
   it("record : absent avant toute victoire, max(record, palier), ne baisse jamais", () => {
     const meta: Meta = { dofus: [], archis: [], runs: 0, victoires: 0 };
