@@ -15,11 +15,40 @@ import {
   zonesDeTranche,
   monstresDeZone,
 } from "../data";
-import { A, itemImg, sortIcon, classe_img, BTN_RETOUR, BTN_CONTINUER } from "./assets";
+import { A, itemImg, sortIcon, classe_img } from "./assets";
 import { ecran, escapeHtml, root } from "./dom";
-import { SLOT_NOM, ROLE_CLASSE, ligneArchetype, sortTooltipHtml } from "./composants";
+import {
+  SLOT_NOM,
+  ROLE_CLASSE,
+  classSymbol,
+  ligneArchetype,
+  sortTooltipHtml,
+  barreRetour,
+  barreContinuer,
+} from "./composants";
 import { bestiaireComplet, classesDisponibles } from "../run";
 import type { Meta } from "../types";
+
+/**
+ * Barre d'onglets par tranche, partagée par le Bestiaire et l'Armurerie : même
+ * balisage, même compteur d'avancement. Seul le calcul de `fait/sur` diffère entre
+ * les deux écrans, d'où le paramètre `compte` — le reste était recopié à l'identique.
+ */
+function ongletsTranche(
+  pourvues: (typeof TRANCHES)[number][],
+  activeId: string | undefined,
+  compte: (t: (typeof TRANCHES)[number]) => { fait: number; sur: number },
+): string {
+  return pourvues
+    .map((t) => {
+      const { fait, sur } = compte(t);
+      return `<button class="tranche-onglet${t.id === activeId ? " actif" : ""}" data-tranche="${t.id}"
+            title="${escapeHtml(t.nom)}, niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
+            ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
+          </button>`;
+    })
+    .join("");
+}
 
 /** Encyclopédie des classes : les persos jouables et leurs kits, en consultation. */
 export function showEncyclopedie(): Promise<void> {
@@ -57,7 +86,7 @@ export function showEncyclopedie(): Promise<void> {
       const onglets = classesDisponibles()
         .map((id) => `
           <button class="ency-onglet${id === selection ? " actif" : ""}" data-classe="${id}" title="${escapeHtml(CLASSES[id].nom)}">
-            <img src="${A(`/assets/class_symbol/${id}.png`)}" alt="" onerror="this.src='${classe_img(id)}'" />
+            <img src="${classSymbol(id)}" alt="" onerror="this.src='${classe_img(id)}'" />
           </button>`)
         .join("");
       ecran(`
@@ -65,7 +94,7 @@ export function showEncyclopedie(): Promise<void> {
         <p class="sous-titre">Les classes jouables et leurs sorts : les dégâts affichés sont les jets de base, avant caractéristiques.</p>
         <div class="ency-onglets">${onglets}</div>
         ${fiche(selection)}
-        <div class="boutons-ecran"><button id="retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("retour")}
       `);
       root.querySelectorAll<HTMLButtonElement>(".ency-onglet").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -150,15 +179,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
 
     const draw = (): void => {
       const active = pourvues.find((t) => t.id === selection) ?? pourvues[0];
-      const onglets = pourvues
-        .map((t) => {
-          const { fait, sur } = compteTranche(t);
-          return `<button class="tranche-onglet${t.id === active?.id ? " actif" : ""}" data-tranche="${t.id}"
-            title="${escapeHtml(t.nom)}, niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
-            ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
-          </button>`;
-        })
-        .join("");
+      const onglets = ongletsTranche(pourvues, active?.id, compteTranche);
       const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") + errantsHtml(active) : "";
       ecran(`
         <h1>Bestiaire des archimonstres</h1>
@@ -168,7 +189,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
         ${active ? `<p class="muet tranche-niveaux">Niveaux ${active.niveaux[0]}–${active.niveaux[1]} · ${zonesDeTranche(active).length} zones</p>` : ""}
         ${corps}
         ${aVenir.length ? `<p class="muet monde-verrouille">🔒 ${aVenir.map((t) => t.nom).join(", ")} : à venir</p>` : ""}
-        <div class="boutons-ecran"><button id="best-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("best-retour")}
       `);
       root.querySelectorAll<HTMLButtonElement>(".tranche-onglet").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -246,15 +267,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
 
     const draw = (): void => {
       const active = pourvues.find((t) => t.id === selection) ?? pourvues[0];
-      const onglets = pourvues
-        .map((t) => {
-          const { fait, sur } = compte(entreesTranche(t));
-          return `<button class="tranche-onglet${t.id === active?.id ? " actif" : ""}" data-tranche="${t.id}"
-            title="${escapeHtml(t.nom)}, niveaux ${t.niveaux[0]}–${t.niveaux[1]}">
-            ${escapeHtml(t.nom)} <small>${fait}/${sur}</small>
-          </button>`;
-        })
-        .join("");
+      const onglets = ongletsTranche(pourvues, active?.id, (t) => compte(entreesTranche(t)));
       const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") : "";
       ecran(`
         <h1>Armurerie</h1>
@@ -264,7 +277,7 @@ export function showArmurerie(meta: Meta): Promise<void> {
         ${active ? `<p class="muet tranche-niveaux">Niveaux ${active.niveaux[0]}–${active.niveaux[1]} · ${zonesDeTranche(active).length} zones</p>` : ""}
         ${corps}
         ${aVenir.length ? `<p class="muet monde-verrouille">🔒 ${aVenir.map((t) => t.nom).join(", ")} : aucun objet pour l'instant</p>` : ""}
-        <div class="boutons-ecran"><button id="armu-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("armu-retour")}
       `);
       root.querySelectorAll<HTMLButtonElement>(".tranche-onglet").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -285,7 +298,7 @@ export function showCapture(especes: string[]): Promise<void> {
     ecran(`
       <h1>✨ Âme${s ? "s" : ""} d'Archimonstre capturée${s ? "s" : ""} !</h1>
       <p class="sous-titre">${especes.map(escapeHtml).join(", ")} ${s ? "rejoignent" : "rejoint"} ton bestiaire (Dofus Ocre).</p>
-      <div class="boutons-ecran"><button id="capt-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
+      ${barreContinuer("capt-ok")}
     `);
     document.getElementById("capt-ok")?.addEventListener("click", () => res());
   });

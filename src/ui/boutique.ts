@@ -2,7 +2,7 @@
 //  ui/boutique.ts — Écrans Hôtel de vente et Forgemagie.
 // =============================================================================
 import { CLASSES, ITEMS, RARETE_INFO, KAMAS } from "../data";
-import { itemImg, BTN_RETOUR } from "./assets";
+import { itemImg } from "./assets";
 import { root, ecran, escapeHtml } from "./dom";
 import {
   kamasHtml,
@@ -10,6 +10,7 @@ import {
   rareteCls,
   itemNomHtml,
   itemStatsHtml,
+  barreRetour,
 } from "./composants";
 import {
   prixVente,
@@ -70,7 +71,7 @@ export function showHDV(run: RunStateT, stock: ArticleHDV[], meta?: Meta): Promi
             <div class="equip-inv">${vente}</div>
           </div>
         </div>
-        <div class="boutons-ecran"><button id="hdv-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("hdv-retour", "Retour au plateau")}
       `);
       root.querySelectorAll<HTMLButtonElement>("[data-achat]").forEach((btn) =>
         btn.addEventListener("click", () => {
@@ -139,7 +140,7 @@ export function showForgemagie(run: RunStateT, meta?: Meta): Promise<void> {
         <div class="forge-filtres"><button id="forge-filtre" class="${equipesSeul ? "primaire" : "secondaire"}" title="${equipesSeul ? "Afficher aussi l'inventaire" : "N'afficher que les objets équipés par l'équipe"}">⚔️ Équipés seulement</button></div>
         ${message ? `<p class="forge-message">${message}</p>` : ""}
         <div class="equip-inv forge-liste">${cartes}</div>
-        <div class="boutons-ecran"><button id="forge-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("forge-retour", "Retour au plateau")}
       `);
       const forger = (i: number, temeraire: boolean) => {
         const inst = forgeables[i]?.inst;

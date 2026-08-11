@@ -148,10 +148,21 @@ function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunStat
 // --- Simulation d'une rencontre ----------------------------------------------
 interface Bilan { win: number; turns: number; hpWin: number; maxTurns: number; }
 
+/** Rôle d'une rencontre dans le rapport, tel qu'il est imprimé dans la colonne. */
+type RoleRencontre = "normale" | "élite" | "boss";
+
 interface OptsRencontre {
   type: "combat" | "combat_dur" | "donjon";
   especesZone?: string[];
 }
+
+/** Rôle affiché → type de NŒUD du jeu, celui que lisent `appliquerAscensionEnnemis`
+ *  et `appliquerModificateursElite`. */
+const NOEUD_PAR_ROLE: Record<RoleRencontre, OptsRencontre["type"]> = {
+  normale: "combat",
+  "élite": "combat_dur",
+  boss: "donjon",
+};
 
 async function simuler(run: RunState, combatId: string, seed0: number, opts: OptsRencontre): Promise<Bilan> {
   let wins = 0, turnsTot = 0, hpWinTot = 0, maxTurns = 0;
@@ -199,11 +210,11 @@ function labelEnnemis(combatId: string): string {
     .map(([m, n]) => `${n}×${MONSTRES[m]?.nom ?? m}`)
     .join(", ");
 }
-function drapeaux(type: string, nu: Bilan, mi: Bilan, set: Bilan): string {
+function drapeaux(role: RoleRencontre, nu: Bilan, mi: Bilan, set: Bilan): string {
   const f: string[] = [];
   if (nu.win < 0.5 || set.win < 0.5) f.push("⚠ DUR");
-  if (type === "boss" && set.win > 0.9) f.push("· facile");
-  if ((type === "normale") && nu.win > 0.98 && nu.hpWin > 0.85) f.push("· trivial");
+  if (role === "boss" && set.win > 0.9) f.push("· facile");
+  if (role === "normale" && nu.win > 0.98 && nu.hpWin > 0.85) f.push("· trivial");
   if (set.win - mi.win > 0.5) f.push("· falaise 2→4p"); // le saut se joue entre mi-set et full set
   if (Math.max(nu.maxTurns, mi.maxTurns, set.maxTurns) >= 90) f.push("· stalemate?");
   return f.join(" ");
@@ -230,30 +241,26 @@ describe("équilibrage — simulation par rencontre", () => {
       const runMi = equipeReference(niveau, zone.id, 2);
       const runSet = equipeReference(niveau, zone.id);
       out.push(`── ${zone.nom} (niv ${niveau}, toile (objets communs)) ──`);
-      const lignes: Array<{ id: string; type: string }> = [
-        ...zone.pools.normales.map((id) => ({ id, type: "normale" })),
-        ...zone.pools.elite.map((id) => ({ id, type: "élite" })),
-        ...zone.pools.boss.map((id) => ({ id, type: "boss" as const })),
+      const lignes: Array<{ id: string; role: RoleRencontre }> = [
+        ...zone.pools.normales.map((id) => ({ id, role: "normale" as const })),
+        ...zone.pools.elite.map((id) => ({ id, role: "élite" as const })),
+        ...zone.pools.boss.map((id) => ({ id, role: "boss" as const })),
       ];
       // le donjon se joue en FIN de zone : équipes de boss au niveau de sortie
       const runNuBoss = equipeReference(niveauxFin[z]);
       const runMiBoss = equipeReference(niveauxFin[z], zone.id, 2);
       const runSetBoss = equipeReference(niveauxFin[z], zone.id);
       const especesZone = especesNormalesDeZone(zone);
-      for (const { id, type } of lignes) {
+      for (const { id, role } of lignes) {
         const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
-        const boss = type === "boss";
-        const elite = type === "élite";
-        const opts: OptsRencontre = {
-          type: boss ? "donjon" : elite ? "combat_dur" : "combat",
-          especesZone,
-        };
+        const boss = role === "boss";
+        const opts: OptsRencontre = { type: NOEUD_PAR_ROLE[role], especesZone };
         const nu = await simuler(boss ? runNuBoss : runNu, id, seed, opts);
         const mi = await simuler(boss ? runMiBoss : runMi, id, seed, opts);
         const set = await simuler(boss ? runSetBoss : runSet, id, seed, opts);
-        const dr = drapeaux(type === "élite" ? "elite" : type, nu, mi, set);
+        const dr = drapeaux(role, nu, mi, set);
         out.push(
-          `  ${type.padEnd(7)} ${id.padEnd(10)} ` +
+          `  ${role.padEnd(7)} ${id.padEnd(10)} ` +
           `NU ${pct(nu.win)} ${f1(nu.turns)}t ${pct(nu.hpWin)} | ` +
           `MI ${pct(mi.win)} ${f1(mi.turns)}t ${pct(mi.hpWin)} | ` +
           `SET ${pct(set.win)} ${f1(set.turns)}t ${pct(set.hpWin)}  ` +

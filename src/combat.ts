@@ -103,11 +103,6 @@ const adverses = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
 const allies = (acteur: Combatant, cs: Combatant[]): Combatant[] =>
   vivants(cs).filter((c) => c.camp === acteur.camp && !c.estLance && !c.estInvocation);
 
-/** Stat (buffable) portant chaque élément — pour buffer la carac d'un élément. */
-const ELEMENT_STAT: Record<Element, EffetStat> = {
-  terre: "force", feu: "intelligence", eau: "chance", air: "agilite",
-};
-
 /** Liste des 4 éléments (ordre stable d'affichage). */
 export const ELEMENTS: Element[] = ["terre", "feu", "eau", "air"];
 
@@ -157,9 +152,9 @@ export function elementDeFrappe(c: Combatant): Element {
 const multSoinDe = (c: Combatant): number =>
   multSoin(c.stats, statElement(statsEffectives(c), elementDeFrappe(c)));
 
-/** Initiative effective = base + effets (négatifs = ralentissement). */
-// (l'ancien initOf — initiative effective avec effets — a disparu avec la séquence
-//  figée : seule l'initiative de DÉPART compte pour l'ordre, cf. ordreDuCombat)
+// Il n'y a PAS d'initiative « effective » : l'ancien `initOf` (base + effets) a disparu
+// avec la séquence figée — seule l'initiative de DÉPART compte pour l'ordre, cf.
+// `ordreDuCombat`, et les effets d'initiative en cours de combat sont donc inertes.
 
 // --- Grille & règle de ligne -------------------------------------------------
 // position = case de grille 0..7 : 0-3 = ligne avant, 4-7 = ligne arrière.
@@ -248,9 +243,9 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
     case "soi":
       base = [acteur];
       break;
+    // "allie_tous" ne se distingue de "allie" qu'à la RÉSOLUTION (lancerSort touche
+    // toute la liste au lieu de la seule cible cliquée) : le ciblage est le même.
     case "allie":
-      base = allies(acteur, csSansEgide);
-      break;
     case "allie_tous":
       base = allies(acteur, csSansEgide);
       break;
@@ -397,17 +392,13 @@ function ciblesDegats(acteur: Combatant, sort: Spell, primaire: Combatant, cs: C
     const memeRangee = estAvant(primaire);
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
   }
-  // zone : toute la rangée (avant/arrière) de la cible cliquée (Zénith du Iop)
-  if (sort.zoneLigne) {
-    const memeRangee = estAvant(primaire);
-    return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
-  }
-  // Pugilat : la rangée de la cible est touchée, mais à puissance RÉDUITE hors cible
-  // principale — le ratio lui-même est appliqué à la résolution, pas ici. Ce retour
-  // anticipé annule silencieusement `rebond` sur un sort qui porterait les deux
-  // champs — aucun porteur aujourd'hui, donc pas de branche à écrire, mais à revoir
-  // si un futur sort combine les deux.
-  if (sort.ratioLigne) {
+  // zoneLigne : toute la rangée (avant/arrière) de la cible cliquée (Zénith du Iop).
+  // ratioLigne (Pugilat) : la MÊME rangée, mais à puissance RÉDUITE hors cible
+  // principale — le ratio lui-même est appliqué à la résolution, pas ici, donc les
+  // deux champs sélectionnent exactement les mêmes cibles. Ce retour anticipé annule
+  // silencieusement `rebond` sur un sort qui porterait les deux champs — aucun porteur
+  // aujourd'hui, donc pas de branche à écrire, mais à revoir si un futur sort les combine.
+  if (sort.zoneLigne || sort.ratioLigne) {
     const memeRangee = estAvant(primaire);
     return adverses(acteur, cs).filter((e) => estAvant(e) === memeRangee);
   }
@@ -598,12 +589,10 @@ function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats, la
   return resistanceAffichee(cible, el) * (1 - perce);
 }
 
-/** Élément de CE coup : celui qui maximise les dégâts contre CETTE cible. `jetTire` est le
- *  jet déjà obtenu, donc le choix est exact et ne consomme aucun tirage. Égalité départagée
- *  par l'ordre des candidats, pour que le résultat soit stable. */
-/** Éléments candidats classés par dégâts attendus DÉCROISSANTS contre cette cible.
- *  `Array.prototype.sort` est stable : à égalité, l'ordre des candidats est conservé,
- *  donc le premier reste celui que choisissait la boucle d'avant ce refactor. */
+/** Éléments candidats classés par dégâts attendus DÉCROISSANTS contre CETTE cible : le
+ *  premier est donc l'élément de frappe du coup. `jetTire` est le jet DÉJÀ obtenu, donc le
+ *  choix est exact et ne consomme aucun tirage. `Array.prototype.sort` est stable : à
+ *  égalité, l'ordre des candidats est conservé, donc le résultat reste déterministe. */
 function elementsClasses(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element[] {
   const se = statsEffectives(lanceur);
   return elementsCandidats(lanceur)
@@ -771,10 +760,6 @@ function appliquerEffet(cible: Combatant, effet: EffetSpec): void {
 
 /** Friction : tant qu'elle est active, la cible ne peut être ni soignée ni protégée. */
 const aFriction = (c: Combatant): boolean => sommeEffet(c, "friction") > 0;
-
-/** Double la durée d'un effet/poison si `x` (Tir Puissant), sinon le renvoie tel quel. */
-const etirer = <T extends { duree: number }>(e: T, x: boolean): T =>
-  x ? { ...e, duree: e.duree * 2 } : e;
 
 /** Applique un poison. */
 function appliquerPoison(
@@ -1228,6 +1213,19 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): boolean {
   return true;
 }
 
+/** Soigne le plus blessé d'un pool allié d'une fraction des dégâts infligés — SOURCE
+ *  UNIQUE partagée par `soinAllieBlesseRatio` (Masse du Corailleur, tous les alliés) et
+ *  `soinAvantBlesseRatio` (Ecaflip, rangée avant seulement) : seul le POOL les distingue.
+ *  Le montant suit la convention des soins dérivés de dégâts (× `multSoinDe(lanceur)`) ;
+ *  un pool vide ou déjà au maximum ne soigne rien, sans un mot au journal. */
+function soignerPlusBlesse(
+  pool: Combatant[], ratio: number, totalDmg: number, lanceur: Combatant, ctx: CombatCtx,
+): void {
+  const blesse = [...pool].sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
+  if (!blesse || blesse.pvActuels >= blesse.pvMax) return;
+  soigner(blesse, Math.round(totalDmg * ratio * multSoinDe(lanceur)), ctx);
+}
+
 /** Applique les intentions décrites par `dofus-effets.ts`. Le module décrit, le
  *  moteur exécute — c'est ici que vivent les seules mutations.
  *
@@ -1241,14 +1239,14 @@ function soigner(cible: Combatant, montant: number, ctx: CombatCtx): boolean {
  *  leçon de la toile 19 (soins ET boucliers bloqués). */
 function appliquerIntentions(int: IntentionsDofus, cs: Combatant[], ctx: CombatCtx): void {
   for (const s of int.soins) {
-    const c = cs.find((x) => x.ref === s.ref);
+    const c = parRef(cs, s.ref);
     if (!c || c.pvActuels <= 0) continue;
     if (!soigner(c, s.montant, ctx)) continue; // friction : jeton non consommé
     if (s.argenteConsume) { c.argenteArme = undefined; c.argenteUtilise = true; }
     if (s.veilleursConsume) c.veilleursRecuCeTour = true;
   }
   for (const b of int.boucliers) {
-    const c = cs.find((x) => x.ref === b.ref);
+    const c = parRef(cs, b.ref);
     if (!c || c.pvActuels <= 0 || aFriction(c)) continue;
     c.bouclier += b.montant;
     (c.boucliersTemporaires ??= []).push({ montant: b.montant, tours: b.tours });
@@ -1264,9 +1262,14 @@ function ciblesPortee(
   cs: Combatant[],
   portee: "soi" | "rangee_lanceur" | "rangee_avant",
 ): Combatant[] {
-  return portee === "soi" ? [lanceur]
-    : portee === "rangee_lanceur" ? allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur))
-    : allies(lanceur, cs).filter(estAvant);
+  switch (portee) {
+    case "soi":
+      return [lanceur];
+    case "rangee_lanceur":
+      return allies(lanceur, cs).filter((a) => estAvant(a) === estAvant(lanceur));
+    case "rangee_avant":
+      return allies(lanceur, cs).filter(estAvant);
+  }
 }
 
 /** Applique un bouclier en % des PV max sur une portée donnée, avec une durée
@@ -1289,6 +1292,17 @@ function appliquerBouclierPortee(
     // sans borne à chaque recharge — voir Combatant.boucliersTemporaires (types.ts).
     if (tours) (u.boucliersTemporaires ??= []).push({ montant: b, tours });
   }
+}
+
+/** Bénéficiaires d'un sort de soin/soutien : toute l'équipe pour `allie_tous`, sinon la
+ *  seule cible résolue — vide si `cibleRef` ne désignait personne. SOURCE UNIQUE partagée
+ *  par la branche SOIN et la branche BUFF/DEBUFF de `lancerSort`, qui appliquaient jusqu'ici
+ *  la même règle écrite deux fois. */
+function ciblesDeSoutien(
+  sort: Spell, lanceur: Combatant, cible: Combatant | undefined, cs: Combatant[],
+): Combatant[] {
+  if (sort.cible === "allie_tous") return allies(lanceur, cs);
+  return cible ? [cible] : [];
 }
 
 /** Un sort de soutien ne tire un critique QUE s'il en dépend. Le tirer à chaque buff
@@ -1348,18 +1362,6 @@ function appliquerSoutien(sort: Spell, cible: Combatant, lanceur: Combatant, ctx
     ctx.log(`${cible.nom} prépare un sort renforcé (+${Math.round(sort.bonusProchainSortPct * 100)} %).`);
   }
   if (sort.effet) appliquerEffet(cible, sort.effet);
-  if (sort.maitriseArc) {
-    const [princ, sec] = elementsForts(cible); // buffe les 2 éléments de frappe du lanceur
-    appliquerEffet(cible, { stat: ELEMENT_STAT[princ], valeur: sort.maitriseArc.principal, duree: sort.maitriseArc.duree });
-    if (ELEMENT_STAT[sec] !== ELEMENT_STAT[princ]) {
-      appliquerEffet(cible, { stat: ELEMENT_STAT[sec], valeur: sort.maitriseArc.secondaire, duree: sort.maitriseArc.duree });
-    }
-    ctx.log(`${cible.nom} affûte sa maîtrise de l'arc (+${sort.maitriseArc.principal}/+${sort.maitriseArc.secondaire}).`);
-  }
-  if (sort.doubleEffetProchain) {
-    cible.doubleEffetProchain = true;
-    ctx.log(`${cible.nom} prépare un Tir Puissant (effet de la prochaine flèche doublé).`);
-  }
   if (sort.dissipePositifs) dissiperPositifs(cible, ctx);
   if (sort.nullifieProchain) {
     cible.nullifieProchainCoup = true;
@@ -1622,7 +1624,7 @@ export function invoquerEgide(
 /** Première case libre (0-7) du camp — les invocations arrivent devant d'abord. */
 function caseLibre(camp: Camp, cs: Combatant[]): number | null {
   const prises = new Set(vivants(cs).filter((c) => c.camp === camp).map((c) => c.position));
-  for (let p = 0; p < 8; p++) if (!prises.has(p)) return p;
+  for (let p = 0; p < 2 * NB_COLONNES; p++) if (!prises.has(p)) return p;
   return null;
 }
 
@@ -2060,7 +2062,7 @@ export function lancerSort(
     const dest = caseLibreRangeeOpposee(lanceur, cs);
     if (dest === null) return; // gardé aussi par ciblesValides
     lanceur.position = dest;
-    ctx.log(`${lanceur.nom} se glisse en ligne ${dest < 4 ? "AVANT" : "ARRIÈRE"} (Dagues Eurfolles).`);
+    ctx.log(`${lanceur.nom} se glisse en ligne ${dest < NB_COLONNES ? "AVANT" : "ARRIÈRE"} (Dagues Eurfolles).`);
     poseCooldown(lanceur);
     return;
   }
@@ -2106,8 +2108,7 @@ export function lancerSort(
   // --- SOIN ---
   if (sort.type === "soin") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
-    const cibles = sort.cible === "allie_tous" ? allies(lanceur, cs) : cible ? [cible] : [];
-    for (const t of cibles) {
+    for (const t of ciblesDeSoutien(sort, lanceur, cible, cs)) {
       const montant = sort.soinComplet
         ? t.pvMax - t.pvActuels
         : Math.round(jet(sort.baseMin, sort.baseMax, ctx.rng) * multSoinDe(lanceur));
@@ -2182,15 +2183,7 @@ export function lancerSort(
   if (sort.type === "buff" || sort.type === "debuff") {
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`); // annonce avant les effets (ordre du journal)
     const critSoutien = dependDuCritique(sort) && ctx.rng() < chanceCritEffective(statsEffectives(lanceur));
-    let cibles: Combatant[];
-    if (sort.cible === "allie_tous") {
-      cibles = allies(lanceur, cs);
-    } else if (cible) {
-      cibles = [cible];
-    } else {
-      cibles = [];
-    }
-    for (const t of cibles) {
+    for (const t of ciblesDeSoutien(sort, lanceur, cible, cs)) {
       appliquerSoutien(sort, t, lanceur, ctx, critSoutien);
       poseCooldown(t);
     }
@@ -2224,9 +2217,6 @@ export function lancerSort(
   // Vigueur des bois : bonus % consommé sur ce sort offensif (tous les coups)
   const bonusVigueur = lanceur.bonusOffensifProchain;
   lanceur.bonusOffensifProchain = 0;
-  // Tir Puissant : la prochaine flèche applique ses effets à durée doublée (one-shot)
-  const doubleDuree = !!lanceur.doubleEffetProchain;
-  lanceur.doubleEffetProchain = false;
   // Signature de Grunob (« Travail d'équipe ») : +X % par allié vivant dans sa rangée
   // (allies() exclut déjà la Lance — elle ne compte jamais comme un allié réel).
   let multLigne = 1 + (lanceur.bonusParAllieLigne ?? 0) *
@@ -2260,19 +2250,10 @@ export function lancerSort(
     ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
     let total = 0;
     for (const t of ciblesDegats(lanceur, sort, cible, cs)) {
-      const r = degatsCible(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx, paAvant });
-      if (r.esquive) {
-        ctx.log(`${t.nom} esquive ${sort.nom} !`);
-        ctx.fx?.({ type: "esquive", ref: t.ref });
-        continue;
-      }
-      if (r.crit) ctx.fx?.({ type: "crit", ref: t.ref });
-      infligerDegats(t, r.dmg, lanceur, ctx);
-      if (!t.estLance) total += r.dmg; // durabilité de lance ≠ dégâts réels : pas de soin fantôme
-      logDegats(
-        ctx, `${lanceur.nom} → ${sort.nom} sur ${t.nom} : `, r.dmg, r.element,
-        `${r.crit ? " (CRIT)" : ""}.${t.pvActuels <= 0 ? ` ${t.nom} est K.O. !` : ""}`,
-      );
+      // `frappe` fait déjà exactement ce chemin (jet, esquive/crit + fx, dégâts, journal
+      // et silence sur la Lance) et rend les dégâts portés — 0 sur esquive.
+      const dmg = frappe(lanceur, sort, t, { useMax, mult: (1 + bonusVigueur) * multLigne, ctx, paAvant }, sort.nom);
+      if (!t.estLance) total += dmg; // durabilité de lance ≠ dégâts réels : pas de soin fantôme
     }
     const rangeeAvant = allies(lanceur, cs).filter(estAvant);
     if (total > 0 && rangeeAvant.length) {
@@ -2328,20 +2309,20 @@ export function lancerSort(
         );
       }
       if (t.pvActuels > 0) {
-        if (sort.poison) appliquerPoison(t, etirer(sort.poison, doubleDuree));
+        if (sort.poison) appliquerPoison(t, sort.poison);
         // Parasite (Éliotrope) : poison = jet (dégâts réellement infligés) × ratio, si portails ≥ seuil
         if (sort.poisonSiPortails && (lanceur.portails ?? 0) >= sort.poisonSiPortails.seuil) {
-          appliquerPoison(t, etirer(
-            { degats: Math.round(r.dmg * sort.poisonSiPortails.ratio), duree: sort.poisonSiPortails.duree },
-            doubleDuree,
-          ));
+          appliquerPoison(t, {
+            degats: Math.round(r.dmg * sort.poisonSiPortails.ratio),
+            duree: sort.poisonSiPortails.duree,
+          });
         }
         if (sort.effet) {
           // Sarcasme (Éliotrope) : remplace la valeur de l'effet si portails du lanceur ≥ seuil
           const effetFinal = sort.effetSiPortails && (lanceur.portails ?? 0) >= sort.effetSiPortails.seuil
             ? { ...sort.effet, valeur: sort.effetSiPortails.valeur }
             : sort.effet;
-          appliquerEffet(t, etirer(effetFinal, doubleDuree));
+          appliquerEffet(t, effetFinal);
         }
         // Féca (Tétanie) : sort de DÉGÂTS — comme sort.effet ci-dessus, ce rider ne
         // s'applique que si le coup a porté (on est dans la branche `!r.esquive`, et
@@ -2353,7 +2334,7 @@ export function lancerSort(
         if (sort.procAleatoire && sort.procAleatoire.length) {
           const proc = sort.procAleatoire[Math.floor(ctx.rng() * sort.procAleatoire.length)];
           if (proc.dissipePositifs) dissiperPositifs(t, ctx);
-          if (proc.effet) appliquerEffet(t, etirer(proc.effet, doubleDuree));
+          if (proc.effet) appliquerEffet(t, proc.effet);
         }
         // Bluff : le critique paie en frappant une seconde fois, dans l'AUTRE élément. Un
         // seul jet de critique a eu lieu (celui du premier coup) — il déclenche ce second
@@ -2439,22 +2420,13 @@ export function lancerSort(
 
   // Masse du Corailleur : soigne l'allié le plus blessé d'une fraction des dégâts
   if (sort.soinAllieBlesseRatio && totalDmg > 0) {
-    const blesse = allies(lanceur, cs)
-      .sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
-    if (blesse && blesse.pvActuels < blesse.pvMax) {
-      soigner(blesse, Math.round(totalDmg * sort.soinAllieBlesseRatio * multSoinDe(lanceur)), ctx);
-    }
+    soignerPlusBlesse(allies(lanceur, cs), sort.soinAllieBlesseRatio, totalDmg, lanceur, ctx);
   }
 
   // Ecaflip : soigne le plus blessé de la RANGÉE AVANT d'une fraction des dégâts infligés
-  // (calqué sur soinAllieBlesseRatio ci-dessus, filtré à la rangée avant AVANT le tri).
+  // (même règle que soinAllieBlesseRatio ci-dessus, sur un pool restreint à la rangée avant).
   if (sort.soinAvantBlesseRatio && totalDmg > 0) {
-    const blesse = allies(lanceur, cs)
-      .filter(estAvant)
-      .sort((a, b) => a.pvActuels / a.pvMax - b.pvActuels / b.pvMax)[0];
-    if (blesse && blesse.pvActuels < blesse.pvMax) {
-      soigner(blesse, Math.round(totalDmg * sort.soinAvantBlesseRatio * multSoinDe(lanceur)), ctx);
-    }
+    soignerPlusBlesse(allies(lanceur, cs).filter(estAvant), sort.soinAvantBlesseRatio, totalDmg, lanceur, ctx);
   }
 
   // Mot vampirique : soigne l'équipe d'une fraction des dégâts infligés
@@ -2617,8 +2589,8 @@ export function ordreDuCombat(cs: Combatant[]): string[] {
   // qu'il survive à tous ces rappels sans être repassé en argument. Il ne peut porter
   // que sur le camp joueur (`appliquerBonusEquipeCombat` ne touche que l'équipe).
   const cauchemar = files.joueur.some((c) => c.ouvreToujours);
-  let camp: Camp = cauchemar ? "joueur"
-    : moyenneInit(files.ennemi) > moyenneInit(files.joueur) ? "ennemi" : "joueur";
+  let camp: Camp = "joueur"; // égalité d'initiative → le joueur ouvre
+  if (!cauchemar && moyenneInit(files.ennemi) > moyenneInit(files.joueur)) camp = "ennemi";
   const ordre: string[] = [];
   while (files.joueur.length || files.ennemi.length) {
     if (!files[camp].length) camp = camp === "joueur" ? "ennemi" : "joueur"; // surplus de l'autre camp
@@ -2662,11 +2634,9 @@ export function purgerInvocationsOrphelines(cs: Combatant[], ctx: CombatCtx): vo
     if (!orphelines.length) return;
     for (const o of orphelines) {
       o.pvActuels = 0;
-      ctx.log(o.estLance
-        ? `La lance se brise : son porteur est tombé.`
-        : o.estEgide
-          ? `L'Égide s'efface : son invocateur est tombé.`
-          : `${o.nom} disparaît avec son invocateur !`);
+      if (o.estLance) ctx.log(`La lance se brise : son porteur est tombé.`);
+      else if (o.estEgide) ctx.log(`L'Égide s'efface : son invocateur est tombé.`);
+      else ctx.log(`${o.nom} disparaît avec son invocateur !`);
     }
   }
 }

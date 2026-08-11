@@ -3,8 +3,7 @@
 // =============================================================================
 import { CLASSES, ASCENSION } from "../data";
 import { escapeHtml, ecran } from "./dom";
-import { BTN_RETOUR } from "./assets";
-import { classSymbol, kamasHtml, etoiles } from "./composants";
+import { classSymbol, kamasHtml, etoiles, barreRetour } from "./composants";
 import type { RunState, Succes } from "../run";
 
 /** Récap de fin de run (victoire ou wipe) : dégâts par héros, MVP, compteurs. */
@@ -39,21 +38,8 @@ export function showRecap(
       </div>
       <div class="recap-degats">${barres}</div>
       ${nouveauxSucces.length ? `<div class="recap-succes">${nouveauxSucces.map((su) => `<span class="succes-chip nouveau" title="${escapeHtml(su.desc)}">🏆 ${escapeHtml(su.nom)}</span>`).join("")}</div>` : ""}
-      <div class="boutons-ecran"><button id="recap-retour" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+      ${barreRetour("recap-retour", "Retour à l'accueil")}
     `);
     document.getElementById("recap-retour")?.addEventListener("click", () => res());
-  });
-}
-
-export function showWipe(): Promise<void> {
-  return new Promise((res) => {
-    ecran(`
-      <h1 class="defaite">Équipe anéantie</h1>
-      <p class="sous-titre">La run s'arrête. Tes Dofus, eux, sont conservés.</p>
-      <div class="boutons-ecran"><button id="btn-retry" class="btn-retour" title="Retour à l'accueil"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
-    `);
-    document
-      .getElementById("btn-retry")
-      ?.addEventListener("click", () => res());
   });
 }

@@ -308,39 +308,9 @@ describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
   };
 
 
-  it("maitriseArc : buff des 2 éléments DÉCLARÉS du lanceur — mécanique sans sort réel, candidate à purge", () => {
-    // `elementsForts` lit désormais la paire déclarée de la classe pour un héros
-    // (cra : feu + air) et non plus la stat dominante — les stats mutées ci-dessous
-    // ne pèsent donc plus sur le résultat, elles ne sont là que pour prouver le point.
-    const synMaitrise: Spell = {
-      id: "syn_maitrise_arc", nom: "Syn Maîtrise", type: "buff", cible: "soi", coutPA: 2,
-      baseMin: 0, baseMax: 0, scaling: 0,
-      maitriseArc: { principal: 20, secondaire: 10, duree: 3 },
-    };
-    const [, cra] = fabriquerEquipe(); // cra : feu + air
-    cra.stats = { ...cra.stats, force: 50, intelligence: 30, agilite: 10, chance: 0 }; // terre > feu > air > eau
-    lancerSort(cra, synMaitrise, cra.ref, [cra], ctx());
-    expect(cra.effets.some((e) => e.stat === "intelligence" && e.valeur === 20 && e.toursRestants === 3)).toBe(true); // feu, principal
-    expect(cra.effets.some((e) => e.stat === "agilite" && e.valeur === 10 && e.toursRestants === 3)).toBe(true); // air, secondaire
-  });
-
-  it("doubleEffetProchain : double la durée de l'effet posé par la PROCHAINE flèche — mécanique sans sort réel, candidate à purge", () => {
-    const synPrepare: Spell = {
-      id: "syn_double_effet", nom: "Syn Tir Puissant", type: "buff", cible: "soi", coutPA: 1,
-      baseMin: 0, baseMax: 0, scaling: 0, doubleEffetProchain: true,
-    };
-    const synTir: Spell = {
-      id: "syn_tir_marque", nom: "Syn Tir", type: "degats", cible: "ennemi_ligne", coutPA: 3,
-      baseMin: 5, baseMax: 5, scaling: 0, effet: { stat: "tetanise", valeur: 1, duree: 1 },
-    };
-    const [, cra] = fabriquerEquipe();
-    const e = mkEnnemi("cible_double");
-    lancerSort(cra, synPrepare, cra.ref, [cra, e], ctx());
-    expect(cra.doubleEffetProchain).toBe(true);
-    lancerSort(cra, synTir, "cible_double", [cra, e], ctx());
-    expect(e.effets.some((x) => x.stat === "tetanise" && x.toursRestants === 2)).toBe(true); // durée doublée (1 → 2)
-    expect(cra.doubleEffetProchain).toBe(false); // consommé (one-shot)
-  });
+  // `maitriseArc` et `doubleEffetProchain` ont été retirés du moteur (aucun porteur :
+  // ni sort du contenu, ni objet) — leurs tests synthétiques sont partis avec eux,
+  // conformément à la jurisprudence « un champ sans porteur se retire » (CLAUDE.md).
 
   it("ignoreBouclier : dégâts directs aux PV, bouclier contourné", () => {
     const [, cra] = fabriquerEquipe();

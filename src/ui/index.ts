@@ -23,7 +23,7 @@ export function init(el: HTMLElement): void {
 export { showStart, showChoixEquipe, showSucces, showCollectionDofus } from "./accueil";
 export type { RepriseInfo, StartAction } from "./accueil";
 export { showCarte, showZaap, showTransition } from "./carte";
-export { showRecap, showWipe } from "./fin";
+export { showRecap } from "./fin";
 export { showTaverne, showFormation, showStatPanel } from "./equipe";
 export type { ActionTaverne } from "./equipe";
 export { showInventaire, showDrop, showSettings } from "./inventaire";

@@ -141,8 +141,6 @@ export interface Spell {
   ignoreResistances?: boolean; // Flèche intrusive
   ignoreBouclier?: boolean; // Flèche intrusive : les dégâts sautent le bouclier
   retraitPA?: number; // Caprice royal : −PA immédiat à la cible (visible avant son tour)
-  maitriseArc?: { principal: number; secondaire: number; duree: number }; // +X/+Y aux 2 éléments de frappe
-  doubleEffetProchain?: boolean; // Tir Puissant : double la DURÉE de l'effet de la prochaine flèche
   effet?: EffetSpec; // buff/debuff appliqué à la cible
   effetLanceur?: EffetSpec; // buff appliqué au lanceur après le sort (Mâchoire du Coffre, Colère royale)
   zoneLigne?: boolean; // dégâts sur TOUTE la rangée de la cible cliquée (Zénith du Iop)
@@ -462,7 +460,6 @@ export interface Combatant {
    *  les saute une fois, sinon un cooldown perdrait un tour avant d'avoir commencé. */
   cooldownsPosesCeTour?: Set<string>;
   bonusOffensifProchain: number; // Vigueur des bois : bonus % consommé au prochain sort de dégâts
-  doubleEffetProchain?: boolean; // Tir Puissant : la prochaine flèche applique ses effets à durée doublée
   armeSort?: Spell; // attaque d'arme équipée (case 1 « corps à corps »), sinon absente
   ouvreToujours?: boolean; // Dofus du Cauchemar : force l'ouverture du camp joueur, quelle que soit l'initiative moyenne
   // --- invocation (Poupée de garde) ---

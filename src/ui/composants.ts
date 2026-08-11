@@ -8,8 +8,34 @@ import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffect
 import { statElement, multSoin, multOffensif, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
-import { A, elementAsset, archetypeAsset, classe_img, ICON_KAMAS, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
+import { A, elementAsset, archetypeAsset, classe_img, ICON_KAMAS, BTN_RETOUR, BTN_CONTINUER, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
 import { escapeHtml, tipsFlottants, setFond } from "./dom";
+
+// --- Barre d'actions des écrans (`.boutons-ecran`, collante en bas) -----------
+/**
+ * Bouton Retour d'un écran hors combat. Source UNIQUE du balisage : c'est le
+ * `.btn-retour` que `initEchapRetour` (dom.ts) va chercher pour doubler le clic
+ * par la touche Échap — le faire diverger d'un écran à l'autre casserait Échap
+ * sur cet écran seul, sans rien casser ailleurs.
+ */
+export function boutonRetour(id: string, titre = "Retour"): string {
+  return `<button id="${id}" class="btn-retour" title="${escapeHtml(titre)}"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button>`;
+}
+
+/** Barre d'actions ne contenant que le bouton Retour (le cas de la majorité des écrans). */
+export function barreRetour(id: string, titre = "Retour"): string {
+  return `<div class="boutons-ecran">${boutonRetour(id, titre)}</div>`;
+}
+
+/** Bouton Continuer : écrans d'ÉVÉNEMENT (butin, capture, transition, recap de zone). */
+export function boutonContinuer(id: string): string {
+  return `<button id="${id}" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button>`;
+}
+
+/** Barre d'actions ne contenant que le bouton Continuer. */
+export function barreContinuer(id: string): string {
+  return `<div class="boutons-ecran">${boutonContinuer(id)}</div>`;
+}
 
 /** Rendu d'un cran d'Ascension en étoiles (★1 = jeu de base). Source UNIQUE :
  *  accueil, carte et récap de fin lisent la même formule. */
@@ -120,7 +146,8 @@ export function initDofusTooltip(): void {
   });
 }
 
-export const CIBLE_LBL: Record<string, string> = {
+// libellés de `Spell.cible` — lus uniquement par `sortTooltipHtml` ci-dessus
+const CIBLE_LBL: Record<string, string> = {
   ennemi_ligne: "Ennemi (ligne avant)",
   ennemi_tous: "N'importe quel ennemi",
   allie: "Un allié",
@@ -181,7 +208,7 @@ export const kamasHtml = (n: number): string =>
   `<span class="kamas"><img src="${ICON_KAMAS}" alt="k" onerror="this.remove()" />${n.toLocaleString("fr-FR")}</span>`;
 
 /** Les 2 éléments d'un perso : ceux de sa classe (l'équipement ne les change plus). */
-export function elementsFortsPerso(p: PersoState): [Element, Element] {
+function elementsFortsPerso(p: PersoState): [Element, Element] {
   return CLASSES[p.classeId].elements;
 }
 
@@ -208,7 +235,7 @@ export const ARCHETYPE_NOM: Record<Archetype, string> = {
  *  Les deux éléments sont fixes (ceux de la classe) ; celui qui part au moment du coup
  *  se choisit CIBLE PAR CIBLE (cf. `meilleurElement`, combat.ts) — il n'y a plus de
  *  « défaut » ni de second élément au sens hiérarchique. */
-export interface OptionsArchetype {
+interface OptionsArchetype {
   /** l'archétype en icône plutôt qu'en toutes lettres (encyclopédie) */
   icone?: boolean;
 }

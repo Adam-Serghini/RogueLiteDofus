@@ -3,10 +3,9 @@
 // =============================================================================
 import { CLASSES, COMBATS, MONSTRES, MODIFICATEURS_ELITE, ASCENSION } from "../data";
 import { atteignables, noeud } from "../carte";
-import { escapeHtml, ecran, root } from "./dom";
+import { escapeHtml, ecran, masquerTooltips, root } from "./dom";
 import {
   A,
-  BTN_CONTINUER,
   MENU_PERSOS,
   MENU_FORMATION,
   MENU_INVENTAIRE,
@@ -19,7 +18,7 @@ import {
   CASE_DEPART,
   COEUR_PLEIN,
 } from "./assets";
-import { classSymbol, pastillesElements, kamasHtml, etoiles } from "./composants";
+import { classSymbol, pastillesElements, kamasHtml, etoiles, barreContinuer } from "./composants";
 import { pvMaxPerso, type PersoState } from "../run";
 import { showStatPanel, showFormation } from "./equipe";
 import { showInventaire } from "./inventaire";
@@ -39,7 +38,7 @@ export function showTransition(
     ecran(`
       <h1>${escapeHtml(message)}</h1>
       <p class="sous-titre">${escapeHtml(sousTitre)}</p>
-      <div class="boutons-ecran"><button id="btn-next" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
+      ${barreContinuer("btn-next")}
     `);
     document.getElementById("btn-next")?.addEventListener("click", () => res());
   });
@@ -171,18 +170,18 @@ export function showCarte(
           // encore porter plusieurs ids dans `eliteModifs` ; l'infobulle ne doit promettre
           // que celui qui sera réellement appliqué, sous peine de mentir sur la salle.
           const modifId = (n.eliteModifs ?? []).find((id) => MODIFICATEURS_ELITE.some((m) => m.id === id));
-          const modifs = n.type === "combat_dur" && modifId
-            ? [MODIFICATEURS_ELITE.find((m) => m.id === modifId)!]
-            : [];
-          const tip = modifs.length ? ` data-tip="${escapeHtml(`Combat dur : ${modifs.map((m) => m.nom).join(" · ")}
-${modifs.map((m) => m.desc).join(" · ")}
+          const modif = n.type === "combat_dur" && modifId
+            ? MODIFICATEURS_ELITE.find((m) => m.id === modifId)!
+            : undefined;
+          const tip = modif ? ` data-tip="${escapeHtml(`Combat dur : ${modif.nom}
+${modif.desc}
 Butin au taux donjon.`)}"` : "";
           return `<button class="${cls}" data-id="${n.id}" ${r ? "" : "disabled"} style="left:${p.x}px;top:${p.y}px"${tip}>
             <span class="case-art">
               <img class="case-img" src="${caseAsset(n)}" alt="" onerror="this.onerror=null;this.nextElementSibling.style.display='';this.remove()" />
               <span class="mn-icon" style="display:none">${NODE_ICON[n.type]}</span>
             </span>
-            <span class="mn-lbl">${NODE_LABEL[n.type]}${modifs.length ? `<small class="mn-modif">${escapeHtml(modifs.map((m) => m.nom).join(" · "))}</small>` : ""}</span>
+            <span class="mn-lbl">${NODE_LABEL[n.type]}${modif ? `<small class="mn-modif">${escapeHtml(modif.nom)}</small>` : ""}</span>
           </button>`;
         })
         .join("");
@@ -211,6 +210,10 @@ Butin au taux donjon.`)}"` : "";
         .join("");
       persos.forEach((p) => { p.flashNiveau = false; }); // le flash ne joue qu'une fois
 
+      // Le plateau n'est pas un `.ecran` (mise en page propre), donc il ne passe pas
+      // par `ecran()` — il doit cacher lui-même les infobulles flottantes, sinon un
+      // re-render (retour de Formation, nœud résolu) laisse une bulle orpheline.
+      masquerTooltips();
       root.innerHTML = `
         <div class="carte-ecran map-layout">
           <header class="map-topbar">

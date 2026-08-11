@@ -46,7 +46,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `node scripts/gris-icones.mjs <dossier> [--essai] [--sauvegarde <dossier>]` — passe des PNG en
   niveaux de gris **sur place** (Node pur, coefficients Rec.709 comme le `filter: grayscale(1)` du CSS,
   idempotent, refuse bruyamment tout format autre que PNG 8 bits non entrelacé type 2 ou 6)
-- `scripts/extract-content.mjs` — bootstrap historique data.ts → JSON, **ne pas le relancer**
 
 **Il n'y a ni linter ni formatter** dans le projet : `typecheck` + `test` sont les seules portes.
 

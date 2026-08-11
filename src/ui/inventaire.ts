@@ -4,7 +4,7 @@
 // =============================================================================
 import { ITEMS, RARETE_INFO, CLASSES } from "../data";
 import { sauverConfig, libelleTouche, rangClasse } from "../config";
-import { itemImg, BTN_RETOUR, BTN_CONTINUER } from "./assets";
+import { itemImg } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
   classSymbol,
@@ -15,6 +15,8 @@ import {
   itemNomHtml,
   itemStatsHtml,
   ligneArchetype,
+  barreRetour,
+  barreContinuer,
 } from "./composants";
 import {
   classesDisponibles,
@@ -126,7 +128,7 @@ export function showInventaire(
             <div class="equip-inv">${inv}</div>
           </div>
         </div>
-        <div class="boutons-ecran"><button id="equip-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("equip-retour", "Retour au plateau")}
       `);
       // glisser-déposer : payload "inv:<index>" (exemplaire d'inventaire) ou "slot:<slot>" (pièce équipée)
       const equiperIndex = (index: number) => {
@@ -238,7 +240,7 @@ export function showDrop(drops: ItemInstance[]): Promise<void> {
       <h1>🎁 Butin !</h1>
       <p class="sous-titre">L'équipe ramasse ${drops.length} pièce${drops.length > 1 ? "s" : ""} d'équipement.</p>
       <div class="drop-liste">${cartes}</div>
-      <div class="boutons-ecran"><button id="drop-ok" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button></div>
+      ${barreContinuer("drop-ok")}
     `);
     document.getElementById("drop-ok")?.addEventListener("click", () => res());
   });
@@ -313,7 +315,7 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
             </div>`;
           }).join("")}
         </div>
-        <div class="boutons-ecran"><button id="set-retour" class="btn-retour" title="Retour"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("set-retour")}
       `);
       root.querySelectorAll<HTMLButtonElement>(".preset-pos [data-rangee]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -332,8 +334,7 @@ export function showSettings(dofus?: ResetDofus): Promise<void> {
       // attend sa réactivation, prévue au programme.
       const reordonner = (srcId: string, dstId: string) => {
         if (srcId === dstId) return;
-        const disponibles = [...classesDisponibles()];
-        const ids = disponibles.sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b));
+        const ids = [...classesDisponibles()].sort((a, b) => rangClasse(config.ordre, a) - rangClasse(config.ordre, b));
         const from = ids.indexOf(srcId);
         const to = ids.indexOf(dstId);
         if (from < 0 || to < 0) return;

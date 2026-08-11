@@ -7,7 +7,7 @@ import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, MODIFIC
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
-import type { Combatant, DofusInstance, Element, EquipSlot, GameMap, ItemInstance, Meta, Monstre, NodeType, Progression, Rarete, Spell, Stats } from "./types";
+import type { Combatant, DofusInstance, Element, EquipSlot, GameMap, Item, ItemInstance, Meta, Monstre, NodeType, Progression, Rarete, Spell, Stats } from "./types";
 
 // --- État de run -------------------------------------------------------------
 export interface PersoState {
@@ -62,12 +62,10 @@ const CLASSES_DESACTIVEES = new Set(["sadida"]); // déséquilibré, en attente 
 export const classesDisponibles = (): string[] =>
   Object.keys(CLASSES).filter((id) => !CLASSES_DESACTIVEES.has(id));
 
-/** Case de grille (0..7) de chaque membre, depuis la RANGÉE préférée sauvegardée
- *  (avant = cases 0-3, arrière = 4-7). Les héros s'EMPILENT dans leur rangée
- *  (1re case libre) → la préférence marche à tous les coups ; si la rangée est
- *  pleine, on déborde dans l'autre. */
-/** Première case libre de la rangée PRÉFÉRÉE de la classe (débordement dans
- *  l'autre rangée si pleine) — utilisée au départ ET au recrutement. */
+/** Première case libre (0..7) de la rangée PRÉFÉRÉE de la classe — avant = 0-3,
+ *  arrière = 4-7. Les héros s'EMPILENT dans leur rangée, donc la préférence marche
+ *  à tous les coups ; si la rangée est pleine, on déborde dans l'autre. Utilisée au
+ *  départ ET au recrutement. */
 function caseLibrePreferee(classeId: string, pris: Set<number>): number {
   const pref = chargerConfig().formation[classeId] === "arriere" ? "arriere" : "avant";
   const caseLibreDans = (rangee: "avant" | "arriere"): number | undefined => {
@@ -209,6 +207,35 @@ function ajouterRes(acc: Partial<Record<Element, number>>, ajout?: Partial<Recor
   for (const k of Object.keys(ajout) as Element[]) acc[k] = (acc[k] ?? 0) + (ajout[k] ?? 0);
 }
 
+/** Valeur du champ `k` sur le PREMIER objet équipé qui le porte. Les mécaniques
+ *  spéciales d'équipement ne se cumulent pas : le premier porteur gagne. Source
+ *  unique de cette recherche (fabrication du combattant ET prospection du
+ *  Caskoffre), pour ne pas la réécrire à chaque nouveau champ d'objet. */
+function champEquipement<K extends keyof Item>(
+  equipement: Partial<Record<EquipSlot, ItemInstance>>, k: K,
+): Item[K] | undefined {
+  return Object.values(equipement)
+    .map((inst) => inst && ITEMS[inst.id]?.[k])
+    .find(Boolean) as Item[K] | undefined;
+}
+
+const ELEMENTS: Element[] = ["terre", "feu", "eau", "air"];
+
+/** Ajoute `valeur` à la résistance du combattant dans CHACUN des quatre éléments
+ *  (modificateur d'élite « Cuirassés », relique Ivoire). */
+function ajouterResTous(c: Combatant, valeur: number): void {
+  for (const el of ELEMENTS) c.resistances[el] = (c.resistances[el] ?? 0) + valeur;
+}
+
+/** Recale les PV d'un monstre sur un multiplicateur : maximum, base de référence
+ *  (pour les buffs de vitalité en %) et PV courants bougent ENSEMBLE — un monstre
+ *  est toujours fabriqué à plein. */
+function multiplierPvMax(c: Combatant, mult: number): void {
+  c.pvMax = Math.round(c.pvMax * mult);
+  c.pvBase = c.pvMax;
+  c.pvActuels = c.pvMax;
+}
+
 /** Bonus de PA quand les 4 pièces d'une même panoplie sont équipées. */
 export const PANOPLIE_BONUS_PA = 1;
 
@@ -293,8 +320,7 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
     }
     : undefined;
   // Effets spéciaux d'équipement (premier objet porteur, non cumulables)
-  const special = <K extends "paGamble" | "riposteAvant" | "esquiveArriere" | "soinDegatsRecus" | "changeLigne" | "bouclierDebut" | "elementLibre" | "renaissance">(k: K) =>
-    (Object.values(state.equipement).map((i) => i && ITEMS[i.id]?.[k]).find(Boolean)) ?? undefined;
+  const special = <K extends keyof Item>(k: K): Item[K] | undefined => champEquipement(state.equipement, k);
   // Dagues Eurfolles : l'objet confère le sort « Changer de ligne »
   const sortsEquipement = special("changeLigne") ? ["changer_ligne"] : [];
   const renaissance = special("renaissance");
@@ -422,9 +448,7 @@ export function rollItem(itemId: string, rng: () => number): ItemInstance {
 export function prospectionEquipe(run: RunState): number {
   return run.persos.reduce((s, p) => {
     const base = statsFinales(CLASSES[p.classeId], p.progression).prospection ?? 0;
-    const parPvManquant = Object.values(p.equipement)
-      .map((i) => i && ITEMS[i.id]?.prospParPvManquant)
-      .find(Boolean);
+    const parPvManquant = champEquipement(p.equipement, "prospParPvManquant");
     const bonusCoffre = parPvManquant ? Math.round(parPvManquant * Math.max(0, pvMaxPerso(p) - p.pvActuels)) : 0;
     return s + base + (bonusEquipement(p).stats.prospection ?? 0) + bonusCoffre;
   }, 0);
@@ -561,35 +585,28 @@ export function appliquerModificateurElite(enemies: Combatant[], rng: () => numb
         chance: Math.round((st.chance ?? 0) * m.statMult),
       };
     }
-    if (m.pvMult) {
-      e.pvMax = Math.round(e.pvMax * m.pvMult);
-      e.pvBase = e.pvMax;
-      e.pvActuels = e.pvMax;
-    }
-    if (m.resAll) {
-      for (const el of ["terre", "feu", "eau", "air"] as Element[]) {
-        e.resistances[el] = (e.resistances[el] ?? 0) + m.resAll;
-      }
-    }
+    if (m.pvMult) multiplierPvMax(e, m.pvMult);
+    if (m.resAll) ajouterResTous(e, m.resAll);
     if (m.initBonus) e.initiative += m.initBonus;
     if (m.paBonus) { e.paMax += m.paBonus; e.paActuels = e.paMax; }
   }
   return m;
 }
 
-/** Applique le modificateur d'élite (id imposé si fourni, sinon tiré). */
+/** Applique le modificateur d'élite d'une salle : le PREMIER id connu de `modifIds`
+ *  s'il en porte un (nœud de carte, où il a été tiré à la génération), sinon un
+ *  tirage. Renvoie un tableau d'UN élément — la forme est conservée pour les
+ *  appelants (titre de la rencontre, infobulle du nœud), pas parce que plusieurs
+ *  modificateurs peuvent s'empiler : une salle n'en porte qu'un. */
 export function appliquerModificateursElite(
   enemies: Combatant[], rng: () => number, modifIds?: string[],
 ): ModificateurElite[] {
-  const restants = [...MODIFICATEURS_ELITE];
-  const choisis: ModificateurElite[] = [];
-  for (const id of modifIds ?? []) {
-    const i = restants.findIndex((m) => m.id === id);
-    if (i >= 0 && !choisis.length) choisis.push(restants.splice(i, 1)[0]);
-  }
-  if (!choisis.length && restants.length) choisis.push(restants.splice(Math.floor(rng() * restants.length), 1)[0]);
-  for (const m of choisis) appliquerModificateurElite(enemies, rng, m.id);
-  return choisis;
+  const impose = (modifIds ?? [])
+    .map((id) => MODIFICATEURS_ELITE.find((m) => m.id === id))
+    .find((m): m is ModificateurElite => m !== undefined);
+  const choisi = impose ?? MODIFICATEURS_ELITE[Math.floor(rng() * MODIFICATEURS_ELITE.length)];
+  appliquerModificateurElite(enemies, rng, choisi.id);
+  return [choisi];
 }
 
 // --- Ascension : application aux ennemis ----------------------------------------
@@ -618,12 +635,8 @@ export function appliquerAscensionEnnemis(
       ennemis.push(depuisMonstre(MONSTRES[espece], `asc_${espece}`, cell));
     }
   }
-  for (const e of ennemis) {
-    if (eff.pvMult) {
-      e.pvMax = Math.round(e.pvMax * eff.pvMult);
-      e.pvBase = e.pvMax;
-      e.pvActuels = e.pvMax;
-    }
+  if (eff.pvMult) {
+    for (const e of ennemis) multiplierPvMax(e, eff.pvMult);
   }
 }
 
@@ -649,9 +662,7 @@ export function muterEnArchi(e: Combatant): void {
   if (e.archi || !e.archiNom) return;
   e.archi = true;
   e.nom = e.archiNom; // vrai nom d'Archimonstre (DofusDB)
-  e.pvMax = Math.round(e.pvMax * ARCHI.pvMult);
-  e.pvBase = e.pvMax;
-  e.pvActuels = e.pvMax;
+  multiplierPvMax(e, ARCHI.pvMult);
   const s = e.stats;
   e.stats = {
     force: Math.round(s.force * ARCHI.statMult),
@@ -1247,11 +1258,7 @@ export function appliquerBonusEquipeCombat(
       c.pvMax += bonus.pvBonus;
       if (c.pvActuels > 0) c.pvActuels += bonus.pvBonus; // jamais de résurrection par le bonus
     }
-    if (bonus.resAllBonus) {
-      for (const el of ["terre", "feu", "eau", "air"] as Element[]) {
-        c.resistances[el] = (c.resistances[el] ?? 0) + bonus.resAllBonus;
-      }
-    }
+    if (bonus.resAllBonus) ajouterResTous(c, bonus.resAllBonus);
     if (bonus.statsElementaires) {
       c.stats = {
         ...c.stats,

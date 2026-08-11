@@ -39,7 +39,7 @@ import {
   pctDgtsFinaux,
   sortTooltipHtml,
 } from "./composants";
-import type { Action, Camp, Combatant, Meta, Spell } from "../types";
+import type { Action, Camp, Combatant, Element, Meta, Spell } from "../types";
 
 /** Règle du piège (Sram), redite au survol de son indicateur de rangée — la même
  *  phrase qu'Adam a demandée : sans elle, un joueur voit un chiffre sans savoir
@@ -50,7 +50,9 @@ const TITRE_PIEGE =
 
 let combatants: Combatant[] = [];
 /** Une ligne de journal : son texte, plus la méta que le moteur y attache pour les lignes
- *  de dégâts (quel fragment concerne quel élément — voir `CombatCtx.log`). */
+ *  de dégâts (quel fragment concerne quel élément — voir `CombatCtx.log`).
+ *  `Element` est bien l'élément de frappe du jeu (types.ts) : sans cet import, le nom
+ *  retombait sur l'`Element` du DOM et cette signature ne vérifiait plus rien. */
 interface LigneJournal { msg: string; meta?: { element: Element; portion: string } }
 let logLines: LigneJournal[] = [];
 let titre = "";
@@ -630,7 +632,7 @@ function renderTimeline(): string {
     activeActeur && selectedSpell ? ciblesValides(activeActeur, selectedSpell, combatants) : [];
   const items = ordre
     .map((c) => {
-      const camp = c.camp === "joueur" ? "joueur" : "ennemi";
+      const camp = c.camp; // `Camp` vaut déjà "joueur" | "ennemi" : la classe CSS est le camp
       const actif = c === activeActeur ? "actif" : "";
       const ciblable = cibles.some((t) => t.ref === c.ref) ? "ciblable" : "";
       const inner = c.img

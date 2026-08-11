@@ -41,9 +41,8 @@ const items = Object.values(JSON.parse(readFileSync("src/content/items.json", "u
 const echap = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const manquants = [];
 for (const [id, nom] of items) {
-  const url = `https://api.dofusdb.fr/items?name.fr[$regex]=^${encodeURIComponent(echap(nom))}$&name.fr[$options]=i&$limit=2`;
-  const j = await (await fetch(url)).json();
-  const hit = j.data?.[0];
+  // La surcharge court-circuite AVANT toute requête : ces objets sont inventés,
+  // la recherche par nom ne pouvait rien trouver pour eux.
   if (id in SURCHARGES) {
     const iconId = SURCHARGES[id];
     if (iconId) {
@@ -53,6 +52,9 @@ for (const [id, nom] of items) {
     console.log("SURCH ", id.padEnd(28), `iconId ${iconId ?? "(conservé)"}`);
     continue;
   }
+  const url = `https://api.dofusdb.fr/items?name.fr[$regex]=^${encodeURIComponent(echap(nom))}$&name.fr[$options]=i&$limit=2`;
+  const j = await (await fetch(url)).json();
+  const hit = j.data?.[0];
   if (!hit) {
     manquants.push([id, nom]);
     console.log("MISS  ", id.padEnd(28), `« ${nom} »`);

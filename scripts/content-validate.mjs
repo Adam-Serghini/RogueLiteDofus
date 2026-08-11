@@ -3,6 +3,8 @@
 //  validerContenu(contenu, base) → string[] d'erreurs en français (vide = OK).
 //  base = contenu ACTUEL du repo (référence des passes lecture-seule).
 // =============================================================================
+import { stringifyCanonique } from "./canonical.mjs";
+
 export const NOMS_FICHIERS = ["sorts", "classes", "monstres", "combats", "zones_pools", "items", "butin_toiles"];
 export const SCHEMA_VERSION = 1;
 
@@ -160,9 +162,11 @@ export function validerContenu(contenu, base) {
       if (!contenu.items[iId]) E("butin_toiles", id, `l'objet « ${iId} » n'existe pas`);
 
   // ---- Passe 3 : lecture seule / numérique ---------------------------------
-  const memeJson = (a, b) => JSON.stringify(a) === JSON.stringify(b); // ordre de clés identique : même source canonique
+  // Comparaison par la sérialisation CANONIQUE (clés triées récursivement) :
+  // c'est `stringifyCanonique` qui fait foi, jamais un tri recopié ici — l'export
+  // de l'éditeur et les fichiers du repo passent tous les deux par elle.
   for (const id of new Set([...Object.keys(base.classes), ...Object.keys(contenu.classes)])) {
-    if (!memeJson(triCles(base.classes[id]), triCles(contenu.classes[id])))
+    if (stringifyCanonique(base.classes[id]) !== stringifyCanonique(contenu.classes[id]))
       E("classes", id, "les classes sont en lecture seule — modification refusée");
   }
 
@@ -182,16 +186,9 @@ export function validerContenu(contenu, base) {
   return err;
 }
 
-function triCles(v) {
-  if (Array.isArray(v)) return v.map(triCles);
-  if (v && typeof v === "object")
-    return Object.fromEntries(Object.keys(v).sort().map((k) => [k, triCles(v[k])]));
-  return v;
-}
-
 /** Signale tout diff qui n'est pas nombre→nombre (ajout/retrait de clé compris). */
 function diffNumerique(av, ap, chemin, signale) {
-  if (estNombreBrut(av) && estNombreBrut(ap)) return; // changement numérique : autorisé
+  if (estNombre(av) && estNombre(ap)) return; // changement numérique : autorisé
   if (av === ap) return;
   const objAv = av && typeof av === "object", objAp = ap && typeof ap === "object";
   if (objAv && objAp && Array.isArray(av) === Array.isArray(ap)) {
@@ -204,4 +201,3 @@ function diffNumerique(av, ap, chemin, signale) {
   }
   if (JSON.stringify(av) !== JSON.stringify(ap)) signale(chemin || "(racine)", av, ap);
 }
-const estNombreBrut = (v) => typeof v === "number" && Number.isFinite(v);

@@ -75,7 +75,6 @@ async function resoudreCombat(
   // bonus d'équipe (Dofus + paliers Ocre) : dégâts, PA, vitalité (Dofawa), résistances (Argenté)
   const bonus = bonusEquipe(meta);
   appliquerBonusEquipeCombat(equipe, bonus); // un héros mort reste mort (pas de résurrection Dofawa)
-  const damageMult = bonus.damageMult;
   const combatants = [...equipe, ...ennemis];
   ui.beginCombat(combatants, titre, meta);
   const gagne = await runCombat(combatants, {
@@ -93,7 +92,7 @@ async function resoudreCombat(
       ui.onUpdate();
       await sleep(60);
     },
-    playerDamageBonus: damageMult,
+    playerDamageBonus: bonus.damageMult,
     enemyDamageBonus: effetsAscension(run.ascension).degatsMult ?? 1,
     reliquesActives: reliquesActives(meta),
   });
@@ -136,6 +135,13 @@ async function recompenserButin(run: RunState, zoneId: string | undefined, type:
   if (drops.length) await ui.showDrop(drops);
 }
 
+/** Kamas d'une victoire : gain du type de nœud à cette toile, × le multiplicateur
+ *  d'équipe (Ann'or). Un seul point de calcul pour les deux sites qui paient —
+ *  les combats/élites d'un nœud, et le donjon qui clôt la zone. */
+function crediterVictoire(run: RunState, type: string, toile: number): void {
+  crediterKamas(run, Math.round(gainKamas(type, toile, Math.random) * multKamasEquipe(run)));
+}
+
 type Issue = "continue" | "wipe" | "victoire";
 
 const LABEL_FR: Record<NodeType, string> = {
@@ -155,7 +161,7 @@ async function resoudreType(
       const { gagne } = await resoudreCombat(run, combatId!, { elite: type === "combat_dur", eliteModifs, type, zone });
       if (!gagne) return "wipe";
       const toile = zoneId ? toileDeZone(zoneId) : 1;
-      crediterKamas(run, Math.round(gainKamas(type, toile, Math.random) * multKamasEquipe(run)));
+      crediterVictoire(run, type, toile);
       recompenserXP(run, xpEffective(xp, toile, run.trancheId));
       // combat dur → butin au TAUX donjon (la prise de risque paie), mais le pool
       // exclusif reste celui des élites (les objets boss ne tombent qu'au donjon)
@@ -164,10 +170,10 @@ async function resoudreType(
     }
     case "taverne": {
       const pct = tavernePctAscension(run.ascension);
+      const eff = effetsAscension(run.ascension);
       const propos = propositionsRecrutement(run, Math.random);
       const choix = await ui.showTaverne(run.persos, propos, pct,
-        !!effetsAscension(run.ascension).mortDefinitive,
-        !!effetsAscension(run.ascension).tavernesCoupeesAPlein);
+        !!eff.mortDefinitive, !!eff.tavernesCoupeesAPlein);
       if (choix.type === "soin") {
         soignerEquipe(run, pct);
         await ui.showTransition("🍺 Taverne", `L'équipe récupère ${Math.round(pct * 100)} % de ses PV max.`);
@@ -247,8 +253,8 @@ async function jouerZone(run: RunState, zone: ZoneDef, zoneIdx: number): Promise
 
     if (issue === "wipe") return "wipe";
     if (issue === "victoire") {
-      crediterKamas(run, Math.round(gainKamas("donjon", toileDeZone(zone.id), Math.random) * multKamasEquipe(run)));
-      return "clear"; // donjon de la zone vaincu (+ Dofus)
+      crediterVictoire(run, "donjon", toileDeZone(zone.id));
+      return "clear"; // donjon de la zone vaincu
     }
     sauverRunEnCours(zoneIdx, run); // étape franchie → point de reprise
   }

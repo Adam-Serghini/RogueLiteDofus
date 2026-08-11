@@ -8,15 +8,18 @@ import {
   xpRequis,
 } from "../progression";
 import { sauverConfig } from "../config";
-import { BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { root, ecran, escapeHtml, config } from "./dom";
 import {
   pastillesElements,
   classSymbol,
   carteClasse,
+  ARCHETYPE_NOM,
   STAT_NOM,
   STAT_AIDE,
   AIDE_ELEMENT,
+  barreRetour,
+  boutonRetour,
+  boutonContinuer,
 } from "./composants";
 import {
   bonusEquipement,
@@ -25,13 +28,7 @@ import {
   TAILLE_MAX_EQUIPE,
   type PersoState,
 } from "../run";
-import type { Archetype, Meta, Stats } from "../types";
-
-/** Libellé lisible d'un archétype (mêlée = plus robuste, distance = frappe plus fort). */
-const ARCHETYPE_LBL: Record<Archetype, string> = {
-  melee: "Mêlée",
-  distance: "Distance",
-};
+import type { Meta, Stats } from "../types";
 
 /** Décision prise à la taverne. */
 export type ActionTaverne =
@@ -211,7 +208,7 @@ export function showFormation(persos: PersoState[]): Promise<void> {
               <span class="ordre-nom">${escapeHtml(CLASSES[p.classeId].nom)}</span>
             </button>`).join("")}
         </div>
-        <div class="boutons-ecran"><button id="form-retour" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button></div>
+        ${barreRetour("form-retour", "Retour au plateau")}
       `);
       root.querySelectorAll<HTMLButtonElement>(".form-cell").forEach((btn) => {
         const cell = Number(btn.dataset.cell);
@@ -347,7 +344,7 @@ function carteProgression(p: PersoState): string {
         <span class="prog-nom">${escapeHtml(classe.nom)}</span>
         <span class="prog-niv">Niv. ${prog.niveau}</span>
       </div>
-      <div class="prog-archetype muet">${ARCHETYPE_LBL[classe.archetype]} · ${pastillesElements(p)}</div>
+      <div class="prog-archetype muet">${ARCHETYPE_NOM[classe.archetype]} · ${pastillesElements(p)}</div>
       <div class="barre-xp"><div class="barre-xp-rempli" style="width:${xpPct}%"></div>
         <span class="xp-txt">XP ${prog.xp} / ${xpReq}</span>
       </div>
@@ -396,8 +393,8 @@ export function showStatPanel(
       ${sectionBonusDofus(meta)}
       <div class="prog-grille">${persos.map(carteProgression).join("")}</div>
       <div class="boutons-ecran">${retour
-        ? `<button id="prog-fermer" class="btn-retour" title="Retour au plateau"><img src="${BTN_RETOUR}" alt="Retour" onerror="this.remove()" /></button>`
-        : `<button id="prog-fermer" class="btn-continuer" title="Continuer"><img src="${BTN_CONTINUER}" alt="Continuer" onerror="this.remove()" /></button>`}</div>
+        ? boutonRetour("prog-fermer", "Retour au plateau")
+        : boutonContinuer("prog-fermer")}</div>
     `);
     document
       .getElementById("prog-fermer")

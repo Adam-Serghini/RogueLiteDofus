@@ -180,7 +180,10 @@ export const MAX_COMPTEURS = {
 
 const borne = (v: number | undefined, max: number): number => Math.max(0, Math.min(max, v ?? 0));
 
-export function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c: Conditionnels): void {
+/** Interne : seul `reinitialiser` la pose, à chaque répétition. Ni la façade
+ *  (`banc-moteur.ts`) ni l'éditeur ne l'appellent — un compteur posé hors de la
+ *  boucle de mesure serait écrasé par la répétition suivante. */
+function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c: Conditionnels): void {
   // chaque compteur est BORNÉ au plafond du moteur : au-delà, on mesurerait un
   // état que le jeu ne peut pas produire.
   heros.chausseTrappe = borne(c.chausseTrappe, MAX_COMPTEURS.chausseTrappe);
@@ -229,7 +232,6 @@ function reinitialiserEtatTransitoire(c: Combatant): void {
   c.maxRollCharges = 0;
   c.paBonusNextTurn = 0;
   c.bonusOffensifProchain = 0;
-  c.doubleEffetProchain = false;
   c.nullifieProchainCoup = false;
   c.resquilleActive = undefined;
   c.conjuration = undefined;
