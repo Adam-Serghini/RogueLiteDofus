@@ -7,6 +7,7 @@ import {
   chargerMeta, ajouterDofus, bonusEquipe, reliquesActives, meilleurJet,
   equipeCombattante, nouvelleRun, fabriquerEnnemis,
 } from "./run";
+import { RELIQUES_A_CROCHET } from "./dofus-effets";
 import type { Meta, Combatant, Action } from "./types";
 import type { CombatCtx } from "./combat";
 
@@ -755,17 +756,27 @@ describe("Dofus Ocre", () => {
 
 describe("cohérence du catalogue", () => {
   // AVEC_EFFET n'est PLUS recopiée à la main : elle est dérivée de `DOFUS_EFFETS`
-  // par `DOFUS_AVEC_EFFET` (src/data.ts) — Round de correction 1. Une liste écrite
-  // ici, déconnectée du code, laisserait passer une relique qui gagne un effet SANS
+  // (`DOFUS_AVEC_EFFET`, src/data.ts) — Round de correction 1. Une liste écrite ici,
+  // déconnectée du code, laisserait passer une relique qui gagne un effet SANS
   // description propre (l'oubli n'apparaîtrait dans aucune des deux listes).
+  //
+  // Round de correction 2 : `DOFUS_AVEC_EFFET` seule ne couvre que les effets
+  // CHIFFRÉS. Les reliques à effet purement CODÉ vivent dans `RELIQUES_A_CROCHET`
+  // (dofus-effets.ts), une liste distincte que rien ne recoupait avec les
+  // descriptions. La notion de « relique pourvue » est donc l'UNION des deux
+  // sources — calculée ICI, dans le test, pour ne pas faire importer
+  // `dofus-effets.ts` (qui tire les types du moteur) depuis `data.ts`, ce qui
+  // créerait un cycle data → effets → (types du moteur, sans retour vers data,
+  // mais l'inverse — effets → data — n'existe pas et doit le rester).
+  const AVEC_EFFET = new Set<string>([...DOFUS_AVEC_EFFET, ...RELIQUES_A_CROCHET]);
 
-  it("les reliques pourvues (dérivées de DOFUS_EFFETS) ont une description propre, les autres restent dormantes", () => {
-    for (const id of DOFUS_AVEC_EFFET) {
+  it("les reliques pourvues (union des effets chiffrés et des reliques à crochet) ont une description propre, les autres restent dormantes", () => {
+    for (const id of AVEC_EFFET) {
       expect(DOFUS[id], id).toBeDefined();
       expect(DOFUS[id].desc, id).not.toBe("Relique légendaire — effet à venir.");
     }
     for (const d of Object.values(DOFUS)) {
-      if (DOFUS_AVEC_EFFET.includes(d.id)) continue;
+      if (AVEC_EFFET.has(d.id)) continue;
       expect(d.desc, d.id).toBe("Relique légendaire — effet à venir.");
     }
   });
@@ -827,9 +838,16 @@ describe("cohérence du catalogue", () => {
     expect(crochetDebutTour(c, [c], actives).soins).toHaveLength(0);
   });
 
-  it("toute clé du module de crochets existe dans DOFUS", async () => {
-    const mod = await import("./dofus-effets");
-    for (const id of mod.RELIQUES_A_CROCHET) expect(DOFUS[id], id).toBeDefined();
+  it("toute clé du module de crochets existe dans DOFUS et a une description personnalisée", () => {
+    // Round de correction 2 : vérifier l'existence dans DOFUS ne suffisait pas — le
+    // catalogue couvre déjà TOUTE relique par un texte par défaut, donc `toBeDefined`
+    // était vrai par construction. Une relique à crochet sans entrée dans
+    // `DOFUS_EFFETS` afficherait « effet à venir » malgré un vrai effet mécanique ;
+    // c'est cette description, pas la seule présence de la clé, qui doit être vérifiée.
+    for (const id of RELIQUES_A_CROCHET) {
+      expect(DOFUS[id], id).toBeDefined();
+      expect(DOFUS[id].desc, id).not.toBe("Relique légendaire — effet à venir.");
+    }
   });
 });
 
