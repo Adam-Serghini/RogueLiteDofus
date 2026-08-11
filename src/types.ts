@@ -438,6 +438,7 @@ export interface Combatant {
   renaissancesRestantes?: number; // compteur de renaissances disponibles ce combat
   riposteAvant?: number; // riposte d'équipement (Sabre Shodanwa), active si ligne avant
   armure?: number; // armure NATIVE permanente (Craqueleurs) — s'ajoute aux effets `armure` temporaires
+  perceResistances?: number; // fraction des résistances ignorée par TOUTES ses frappes (relique)
   nullifieParTour?: number; // allocation par tour (Meulou) — voir Monstre.nullifieParTour
   coupsAnnulesRestants?: number; // annulations encore disponibles ce tour-ci
   esquiveArriere?: number; // esquive d'équipement (Baguette Rikiki), active si ligne arrière

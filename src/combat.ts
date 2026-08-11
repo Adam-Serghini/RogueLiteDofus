@@ -563,9 +563,10 @@ export function resistanceAffichee(cible: Combatant, el: Element): number {
 
 /** Résistance effective d'une cible à un élément POUR UNE FRAPPE, telle que l'applique
  *  `degatsAvec` — même formule, une seule vérité : une copie approchée finirait par diverger. */
-function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats): number {
+function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats, lanceur?: Combatant): number {
   if (base.ignoreResistances) return 0;
-  return resistanceAffichee(cible, el) * (1 - (base.perceResistances ?? 0));
+  const perce = Math.min(1, (base.perceResistances ?? 0) + (lanceur?.perceResistances ?? 0));
+  return resistanceAffichee(cible, el) * (1 - perce);
 }
 
 /** Élément de CE coup : celui qui maximise les dégâts contre CETTE cible. `jetTire` est le
@@ -578,7 +579,7 @@ function elementsClasses(lanceur: Combatant, cible: Combatant, base: BaseDegats,
   const se = statsEffectives(lanceur);
   return elementsCandidats(lanceur)
     .map((el): [Element, number] =>
-      [el, (jetTire + statElement(se, el) * base.scaling) * (1 - resistanceEffective(cible, el, base))])
+      [el, (jetTire + statElement(se, el) * base.scaling) * (1 - resistanceEffective(cible, el, base, lanceur))])
     .sort((a, b) => b[1] - a[1])
     .map(([el]) => el);
 }
@@ -686,7 +687,7 @@ function degatsAvec(
   // résistance de l'élément (+ resAll), sauf ignoreResistances ;
   // perceResistances (arme) : seule une fraction de la résistance compte
   if (!base.ignoreResistances) {
-    dmg *= 1 - resistanceEffective(cible, el, base);
+    dmg *= 1 - resistanceEffective(cible, el, base, lanceur);
   }
 
   // réduction de dégâts subis (Bâton du berger), plafonnée à 80 %

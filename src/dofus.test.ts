@@ -83,3 +83,48 @@ describe("modèle des reliques", () => {
     expect(meta.ascension).toEqual({ t1: 5, t2: 2 });
   });
 });
+
+describe("effets chiffrés", () => {
+  const avec = (...ids: string[]): Meta => ({ ...metaVide(), dofus: ids.map((id) => ({ id })) });
+
+  it("chaque relique chiffrée produit son bonus, et rien d'autre", () => {
+    expect(bonusEquipe(avec("dofus_ivoire")).resAllBonus).toBe(0.05);
+    expect(bonusEquipe(avec("dofus_ebene")).damageMult).toBeCloseTo(1.01);
+    expect(bonusEquipe(avec("dofus_turquoise")).critPlat).toBe(10);
+    expect(bonusEquipe(avec("dofus_des_glaces")).perceResistances).toBe(0.05);
+    expect(bonusEquipe(avec("dofus_pourpre")).statsElementaires).toBe(6);
+    expect(bonusEquipe(avec("dolmanax")).statsElementaires).toBe(10);
+    expect(bonusEquipe(avec("dofawa")).pvBonus).toBe(1);
+  });
+
+  it("les bonus de plusieurs reliques s'additionnent entre elles", () => {
+    expect(bonusEquipe(avec("dofus_pourpre", "dolmanax")).statsElementaires).toBe(16);
+  });
+
+  it("statsElementaires monte les QUATRE stats élémentaires du combattant", async () => {
+    const { equipeCombattante, nouvelleRun, appliquerBonusEquipeCombat } = await import("./run");
+    const equipe = equipeCombattante(nouvelleRun(["iop"]));
+    const avantF = equipe[0].stats.force;
+    const avantI = equipe[0].stats.intelligence;
+    appliquerBonusEquipeCombat(equipe, bonusEquipe(avec("dofus_pourpre")));
+    expect(equipe[0].stats.force).toBe(avantF + 6);
+    expect(equipe[0].stats.intelligence).toBe(avantI + 6);
+  });
+
+  it("le perce-résistances du Dofus s'ajoute à celui du sort", async () => {
+    const { degatsCible } = await import("./combat");
+    const { equipeCombattante, nouvelleRun, fabriquerEnnemis } = await import("./run");
+    const { SORTS, CLASSES } = await import("./data");
+    const [heros] = equipeCombattante(nouvelleRun(["iop"]));
+    heros.stats = { ...heros.stats, agilite: 0 };
+    const cible = fabriquerEnnemis("combat_1")[0];
+    cible.stats = { ...cible.stats, agilite: 0 };
+    cible.resistances = { terre: 0.5, feu: 0.5, air: 0.5, eau: 0.5 };
+    const sort = SORTS[CLASSES.iop.sorts[1] as keyof typeof SORTS];
+    const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
+    const nu = degatsCible(heros, sort, cible, { useMax: true, mult: 1, ctx });
+    heros.perceResistances = 0.5; // moitié de la résistance ignorée
+    const perce = degatsCible(heros, sort, cible, { useMax: true, mult: 1, ctx });
+    expect(perce.dmg).toBeGreaterThan(nu.dmg);
+  });
+});

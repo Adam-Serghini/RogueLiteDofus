@@ -63,7 +63,13 @@ const CATALOGUE_DOFUS: Array<[string, string]> = [
 type DofusEffet = Partial<Omit<DofusDef, "id" | "nom" | "img">>;
 const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dofus_pourpre: { desc: "+6 en force, intelligence, agilité et chance.", statsElementaires: 6 },
+  dolmanax: { desc: "+10 en force, intelligence, agilité et chance.", statsElementaires: 10 },
+  dofus_ivoire: { desc: "+5 % de résistance dans chaque élément.", resAll: 0.05 },
+  dofus_ebene: { desc: "+1 % de dégâts finaux.", degatsPct: 0.01 },
+  dofus_turquoise: { desc: "+10 % de chance de coup critique.", critPlat: 10 },
+  dofus_des_glaces: { desc: "Les dégâts ignorent 5 % des résistances ennemies.", perceResistances: 0.05 },
   dofawa: { desc: "+1 PV max.", pvBonus: 1 },
+  dofus_kaliptus: { desc: "+1 à 30 en prospection, selon le meilleur exemplaire obtenu.", prospectionJet: [1, 30] },
   dofus_argente: { desc: "Relique légendaire — effet à venir.", },
 };
 

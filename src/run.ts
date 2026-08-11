@@ -1247,5 +1247,16 @@ export function appliquerBonusEquipeCombat(
         c.resistances[el] = (c.resistances[el] ?? 0) + bonus.resAllBonus;
       }
     }
+    if (bonus.statsElementaires) {
+      c.stats = {
+        ...c.stats,
+        force: c.stats.force + bonus.statsElementaires,
+        intelligence: c.stats.intelligence + bonus.statsElementaires,
+        agilite: c.stats.agilite + bonus.statsElementaires,
+        chance: (c.stats.chance ?? 0) + bonus.statsElementaires,
+      };
+    }
+    if (bonus.critPlat) c.stats = { ...c.stats, crit: (c.stats.crit ?? 0) + bonus.critPlat };
+    if (bonus.perceResistances) c.perceResistances = (c.perceResistances ?? 0) + bonus.perceResistances;
   }
 }

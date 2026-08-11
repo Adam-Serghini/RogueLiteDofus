@@ -197,8 +197,10 @@ async function resoudreType(
       await recompenserButin(run, zoneId, type);
       const boss = combatants.find((c) => c.camp === "ennemi" && c.dofusLache);
       if (boss?.dofusLache) {
-        // taux de base + prospection d'équipe (même formule que les items) + palier d'Ascension
-        const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
+        // taux de base + prospection d'équipe (même formule que les items) + prospection
+        // de relique (Dofus Kaliptus, hors équipe) + palier d'Ascension
+        const prospection = prospectionEquipe(run) + bonusEquipe(meta).prospection;
+        const mult = 1 + Math.min(DROP.capProspection, prospection * DROP.coefProspection);
         const taux = tauxDofusAscension(run.ascension);
         if (Math.random() < taux * mult) {
           ajouterDofus(meta, boss.dofusLache);
