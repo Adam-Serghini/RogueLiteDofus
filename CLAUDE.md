@@ -431,7 +431,8 @@ d'élément aux 4), `renaissance` (une résurrection par combat à 30 % PV, bran
 N'importe quel ennemi peut apparaître en variante **Archi** boostée (`ARCHI`, taux de base 0,8 %). Le
 **nœud Otomai est l'événement philtre** : chaque visite ajoute +`ARCHI.philtre` (0,4 %) pour le reste de
 la run, **plafonné à `ARCHI.philtresMax` = 4** (au-delà, le détour vers chaque Otomai remplissait le
-bestiaire en quelques runs alors que les paliers Ocre visent le long terme).
+bestiaire en quelques runs, alors que le Dofus Ocre récompense un bestiaire complet visé sur le long
+terme).
 
 Le vaincre capture l'espèce une fois (`Meta.archis` persistant), suivi dans un **Bestiaire** paginé par
 tranche (seules les tranches pourvues de zones ont un onglet). Le **Dofus Ocre** n'est pas un drop de
