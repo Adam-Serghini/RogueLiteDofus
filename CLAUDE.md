@@ -338,11 +338,10 @@ boucliers bloqués (19), désenvoûtement `dissipePositifs` (20), premier soigne
 (21), annulations par tour (22), toile `tetanise` (23), examen final tirant une des quatre leçons au
 hasard (24).
 
-**Quatre chantiers ouverts sur T2** : (1) les **objets des toiles 13 à 24**, qu'Adam fournira ; (2) la
+**Trois chantiers ouverts sur T2** : (1) les **objets des toiles 13 à 24**, qu'Adam fournira ; (2) la
 **passe d'équilibrage** — sans objets, les colonnes NU/MI/SET du banc sont **identiques par
-construction**, donc **aucun chiffre de T2 n'est exploitable** ; (3) **l'effet du Dofus Turquoise**,
-lâché par six zones et toujours inerte ; (4) **retirer `enChantier: true`** de `TRANCHES[1]` (un test
-verrouille sa présence tant que ce n'est pas décidé).
+construction**, donc **aucun chiffre de T2 n'est exploitable** ; (3) **retirer `enChantier: true`** de
+`TRANCHES[1]` (un test verrouille sa présence tant que ce n'est pas décidé).
 
 **Mécaniques qui ont quitté le camp du joueur** (elles vivent encore côté monstres, sauf mention) :
 `dissipePositifs`, poison transmissible (`poison.transmet`), taunt (`provoqueTours`), riposte
@@ -395,6 +394,10 @@ de porteur** (celui-là doit tomber le jour où une classe reprend une purge).
   description, cible et cooldown. **Toutes** les mécaniques introduites par les reworks récents
   n'atteignent le joueur que par le texte libre de la description. Les tests de contenu figent ces
   descriptions, mais le trou reste ouvert — c'est un chantier possible, pas un défaut d'un rework.
+- **Une description est un engagement.** Le Dofus Turquoise a passé des mois avec une description
+  prometteuse et aucune mécanique. Une relique, un objet ou un sort ne reçoit sa description qu'au
+  moment où son effet est branché ; sinon il garde le libellé neutre « effet à venir ». Un test de
+  cohérence confronte les deux listes (`dofus.test.ts`).
 
 ## Systèmes
 
@@ -432,8 +435,8 @@ bestiaire en quelques runs alors que les paliers Ocre visent le long terme).
 
 Le vaincre capture l'espèce une fois (`Meta.archis` persistant), suivi dans un **Bestiaire** paginé par
 tranche (seules les tranches pourvues de zones ont un onglet). Le **Dofus Ocre** n'est pas un drop de
-boss : il se débloque par paliers tous les 50 captures (`OCRE_PALIERS`), donnant des passifs d'équipe
-croissants via `bonusEquipe(meta)`.
+boss : il donne +1 PA à toute l'équipe une fois **toutes** les espèces à `archiNom` capturées
+(`bestiaireComplet`, lu par `bonusEquipe(meta)`) — pas de palier intermédiaire.
 
 **Archimonstres errants** (`ERRANTS`, `appliquerErrants`) : les six Piou n'appartiennent à aucun donjon,
 donc à aucun pool. Ils surgissent **en plus d'un pack de combat NORMAL** (`type === "combat"` seulement —
@@ -447,11 +450,30 @@ un errant n'est réellement atteignable que s'il a un taux > 0, un archi et un s
 
 ### Reliques Dofus
 
-Chaque boss de T1 lâche un Dofus, **une relique par GROUPE de zones** : zones 1-6 → Dofawa (+1 vita/copie),
-7-12 → Argenté (+1 % résistances/copie). Test de distribution dans `zones.test.ts`, **T1 uniquement** — T2
-ne suit plus la règle par groupe. **Tout effet par copie est plafonné par `maxCopies`, relique par
-relique**, dans `bonusDegatsDofus` comme dans `bonusEquipe` — sans quoi farmer une salle finale cumulerait
-un bonus permanent et irrévocable.
+Chaque boss de T1 lâche un Dofus, **une relique par GROUPE de zones** : zones 1-6 → Dofawa, 7-12 →
+Argenté. Test de distribution dans `zones.test.ts`, **T1 uniquement**.
+
+**Une relique agit UNE fois, quel que soit le nombre d'exemplaires possédés.** Le modèle « par copie
+plafonné par `maxCopies` » a disparu ; le badge `×N` du rack est décoratif. `Meta.dofus` est une
+liste d'**exemplaires** (`DofusInstance`) et non d'identifiants : seul le Kalyptus s'en sert, son
+`jet` étant figé à l'obtention et le **meilleur** jet possédé faisant foi.
+
+**Deux familles d'effets.** Les effets **chiffrés** vivent dans `DOFUS_EFFETS` (`data.ts`) et sont
+repliés dans le combattant par `appliquerBonusEquipeCombat`. Les effets **à déclenchement** vivent
+dans `src/dofus-effets.ts`, module **pur** qui ne mute presque rien : il **décrit** des intentions
+(soins, boucliers), et `combat.ts` les applique. C'est ce qui évite l'import circulaire et permet de
+tester un effet sans monter un combat.
+
+**Quatre ancrages** dans la boucle de tour : début de tour (Dokoko, Nébuleux, Argenté), fin de tour
+(Émeraude, Veilleurs, Domakuro), mort d'un ennemi (Dorigami), dégâts infligés (Tacheté). Le Dofus du
+Cauchemar est à part : il force le camp joueur à ouvrir dans `ordreDuCombat`, contredisant la règle
+d'initiative — c'est le seul effet qui touche la séquence de combat.
+
+**Le moteur ne lit jamais `Meta`** : `main.ts` calcule `bonusEquipe(meta)` et `reliquesActives(meta)`
+et les passe à `runCombat`.
+
+Le **Dofus Ocre** n'a plus de paliers : il donne +1 PA une fois **toutes** les espèces à `archiNom`
+capturées.
 
 ### Kamas, HDV & Forgemagie
 
@@ -492,9 +514,9 @@ chargement effacerait la session précédente. Même logique pour la run en cour
 pas basculer le joueur en pleine partie sous des règles qu'il n'a pas choisies.
 
 Le **Dofus du Cauchemar** s'obtient en cleanant Cauchemar sur **les cinq tranches déclarées** (pas
-seulement les jouables) : il est donc hors de portée tant que T2-T5 ne le sont pas. **Son effet est
-dormant**, comme celui du Turquoise, et un test le constate — il tombera le jour où on lui en donne
-un.
+seulement les jouables) : il est donc hors de portée tant que T2-T5 ne le sont pas. Son effet force le
+camp joueur à ouvrir le combat (voir *Reliques Dofus*) — hors de portée pour l'instant, mais plus
+dormant.
 
 ### Multi-tranches
 
