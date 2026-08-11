@@ -71,6 +71,7 @@ const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dofawa: { desc: "+1 PV max.", pvBonus: 1 },
   dofus_kaliptus: { desc: "+1 à 30 en prospection, selon le meilleur exemplaire obtenu.", prospectionJet: [1, 30] },
   dofus_argente: { desc: "Relique légendaire — effet à venir.", },
+  dofus_ocre: { desc: "+1 PA à toute l'équipe, une fois tous les archimonstres capturés.", paBonus: 1 },
 };
 
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(
@@ -350,16 +351,6 @@ export const ERRANTS: Record<string, { especes: string[]; chance: number }> = {
     chance: 0.005,
   },
 };
-
-/** Paliers du Dofus Ocre : tous les 50 archis (valeur TOTALE du Dofus à ce palier). */
-export interface OcrePalier { seuil: number; paBonus: number; degats: number }
-export const OCRE_PALIERS: OcrePalier[] = [
-  { seuil: 50, paBonus: 1, degats: 0 },
-  { seuil: 100, paBonus: 2, degats: 0.1 },
-  { seuil: 150, paBonus: 2, degats: 0.2 },
-  { seuil: 200, paBonus: 3, degats: 0.2 },
-  { seuil: 250, paBonus: 3, degats: 0.3 },
-];
 
 // --- Ascension (difficulté opt-in — 5 crans, affichés en étoiles) ---------------
 // Le palier est l'INDEX du cran (0..ASCENSION_MAX), pas un nombre de paliers

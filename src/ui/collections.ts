@@ -15,12 +15,11 @@ import {
   butinToile,
   zonesDeTranche,
   monstresDeZone,
-  OCRE_PALIERS,
 } from "../data";
 import { A, itemImg, sortIcon, classe_img, BTN_RETOUR, BTN_CONTINUER } from "./assets";
 import { ecran, escapeHtml, root } from "./dom";
 import { SLOT_NOM, ROLE_CLASSE, ligneArchetype, sortTooltipHtml } from "./composants";
-import { paliersOcre, classesDisponibles } from "../run";
+import { bestiaireComplet, classesDisponibles } from "../run";
 import type { Meta } from "../types";
 
 /** Encyclopédie des classes : les persos jouables et leurs kits, en consultation. */
@@ -98,15 +97,6 @@ export function showDofus(dofusId: string, totalCopies: number): Promise<void> {
   });
 }
 
-/** Texte d'effet d'un palier Ocre. */
-function ocreEffetTxt(paBonus: number, degats: number): string {
-  if (!paBonus && !degats) return "aucun";
-  const parts: string[] = [];
-  if (paBonus) parts.push(`+${paBonus} PA`);
-  if (degats) parts.push(`+${Math.round(degats * 100)} % dégâts`);
-  return parts.join(" · ");
-}
-
 /** Bestiaire par zone : toutes les espèces (boss & miniboss inclus) ;
  *  les espèces à Archimonstre (archiNom) suivent la capture (Dofus Ocre). */
 export function showBestiaire(meta: Meta): Promise<void> {
@@ -119,8 +109,7 @@ export function showBestiaire(meta: Meta): Promise<void> {
     const idsErrants = Object.values(ERRANTS).flatMap((d) => d.especes).filter((id) => MONSTRES[id]?.archiNom);
     const total = new Set([...ZONES.flatMap(capturables), ...idsErrants]).size;
     const captures = meta.archis.length;
-    const ocre = paliersOcre(meta);
-    const prochain = OCRE_PALIERS.find((p) => captures < p.seuil);
+    const complet = bestiaireComplet(meta);
     /** Une carte d'espèce : archimonstre nommé s'il en a un, sinon entrée d'encyclopédie. */
     const carteEspece = (id: string): string => {
       const m = MONSTRES[id]!;
@@ -191,8 +180,8 @@ export function showBestiaire(meta: Meta): Promise<void> {
       const corps = active ? zonesDeTranche(active).map(zoneHtml).join("") + errantsHtml(active) : "";
       ecran(`
         <h1>Bestiaire des archimonstres</h1>
-        <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Chaque palier de 50 captures fait monter le Dofus Ocre.</p>
-        <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : <b>palier ${ocre.tier}</b> (${ocreEffetTxt(ocre.paBonus, ocre.degats)})${prochain ? ` · prochain palier à ${prochain.seuil}` : " · max atteint"}</p>
+        <p class="sous-titre">Capture l'âme des Archimonstres (variantes rares, plus puissantes) en les vainquant. Le Dofus Ocre s'active quand le bestiaire est complet.</p>
+        <p class="archi-resume"><b>${captures}</b> / ${total} espèces capturées · Dofus Ocre : ${complet ? "<b>+1 PA actif</b>" : `bestiaire complet requis (${captures}/${total})`}</p>
         <div class="tranche-onglets">${onglets}</div>
         ${active ? `<p class="muet tranche-niveaux">Niveaux ${active.niveaux[0]}–${active.niveaux[1]} · ${zonesDeTranche(active).length} zones</p>` : ""}
         ${corps}

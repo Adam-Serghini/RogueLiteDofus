@@ -3,7 +3,7 @@
 //  Ce qui survit à la mort : Meta.dofus (localStorage). Le reste (niveaux,
 //  points, PV courants) vit dans RunState et repart à zéro à chaque run.
 // =============================================================================
-import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, OCRE_PALIERS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, ASCENSION_MAX, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
+import { CLASSES, MONSTRES, COMBATS, DOFUS, ITEMS, DROP, ARCHI, ERRANTS, MODIFICATEURS_ELITE, type ModificateurElite, ASCENSION, ASCENSION_MAX, type EffetsAscension, ZONES, type ZoneDef, monstresDeZone, RARETES, RARETE_INFO, butinToile, itemsDeToile, KAMAS, TRANCHES, TAVERNE_PCT, DOFUS_DROP_RATE, localiserZone, offsetToile, trancheDe, type TrancheDef } from "./data";
 import { progressionInitiale, statsFinales, pvMaxFor, PV_PAR_VITA, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
 import { etatCombatInitial } from "./combat";
 import { chargerConfig, rangClasse } from "./config";
@@ -1187,14 +1187,13 @@ export function capturerArchi(meta: Meta, monstreId: string): boolean {
   return true;
 }
 
-/** Palier de Dofus Ocre atteint selon le nombre d'archis capturés (null si < 50). */
-export function paliersOcre(meta: Meta): { tier: number; paBonus: number; degats: number } {
-  const n = meta.archis.length;
-  let tier = 0, paBonus = 0, degats = 0;
-  OCRE_PALIERS.forEach((p, i) => {
-    if (n >= p.seuil) { tier = i + 1; paBonus = p.paBonus; degats = p.degats; }
-  });
-  return { tier, paBonus, degats };
+/** Toutes les espèces capturables (celles qui ont un `archiNom`) sont-elles capturées ?
+ *  `zones.test.ts` garantit que chaque espèce est placée en zone OU déclarée errante,
+ *  donc la condition est réellement atteignable. */
+export function bestiaireComplet(meta: Meta): boolean {
+  const capturables = Object.values(MONSTRES).filter((m) => m.archiNom).map((m) => m.id);
+  const captures = new Set(meta.archis);
+  return capturables.length > 0 && capturables.every((id) => captures.has(id));
 }
 
 export interface BonusEquipe {
@@ -1209,8 +1208,7 @@ export interface BonusEquipe {
 }
 
 /** Bonus d'équipe issus des reliques possédées. Chaque relique compte UNE fois : les
- *  exemplaires ne cumulent plus. Les paliers du Dofus Ocre ne sont pas encore rendus
- *  ici (chantier à part). */
+ *  exemplaires ne cumulent plus. */
 export function bonusEquipe(meta: Meta): BonusEquipe {
   const b: BonusEquipe = {
     damageMult: 1, paBonus: 0, pvBonus: 0, resAllBonus: 0,
@@ -1220,7 +1218,8 @@ export function bonusEquipe(meta: Meta): BonusEquipe {
     const d = DOFUS[id];
     if (!d) continue;
     if (d.degatsPct) b.damageMult *= 1 + d.degatsPct;
-    if (d.paBonus) b.paBonus += d.paBonus;
+    // L'Ocre est la seule relique conditionnée par autre chose que sa possession.
+    if (d.paBonus && (id !== "dofus_ocre" || bestiaireComplet(meta))) b.paBonus += d.paBonus;
     if (d.pvBonus) b.pvBonus += d.pvBonus;
     if (d.resAll) b.resAllBonus += d.resAll;
     if (d.statsElementaires) b.statsElementaires += d.statsElementaires;

@@ -128,3 +128,15 @@ describe("effets chiffrés", () => {
     expect(perce.dmg).toBeGreaterThan(nu.dmg);
   });
 });
+
+describe("Dofus Ocre", () => {
+  it("n'accorde son PA qu'une fois TOUTES les espèces capturables capturées", async () => {
+    const { MONSTRES } = await import("./data");
+    const capturables = Object.values(MONSTRES).filter((m) => m.archiNom).map((m) => m.id);
+    const meta = { ...metaVide(), dofus: [{ id: "dofus_ocre" }] };
+    meta.archis = capturables.slice(0, -1); // une espèce manquante
+    expect(bonusEquipe(meta).paBonus).toBe(0);
+    meta.archis = capturables;
+    expect(bonusEquipe(meta).paBonus).toBe(1);
+  });
+});
