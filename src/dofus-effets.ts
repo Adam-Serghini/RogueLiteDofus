@@ -86,23 +86,29 @@ const estAvant = (c: Combatant): boolean => c.position < 4;
 
 const STATS_ELEM = ["force", "intelligence", "agilite", "chance"] as const;
 
-/** Crochet de dégâts infligés : appelé UNE FOIS PAR LANCER qui inflige réellement des
- *  dégâts (jamais une fois par cible touchée — même règle que les effets de rangée/
- *  portée, voir CLAUDE.md), quel que soit le nombre de cibles atteintes par ce lancer.
+/** Crochet de dégâts infligés (Tacheté) : appelé UNE FOIS PAR LANCER qui inflige
+ *  réellement des dégâts (jamais une fois par cible touchée — même règle que les
+ *  effets de rangée/portée, voir CLAUDE.md), quel que soit le nombre de cibles
+ *  atteintes par ce lancer.
  *
- *  Tacheté : buff les ALLIÉS (jamais le porteur lui-même) de +5 dans les quatre stats
+ *  Buff les ALLIÉS (jamais le porteur lui-même) de +5 dans les quatre stats
  *  élémentaires pour 1 tour, non cumulable — un allié ne porte qu'un exemplaire à la
  *  fois, reconnu par le marqueur `source` posé sur l'effet. Muté DIRECTEMENT (ce sont
  *  des effets datés, comme `appliquerEffet`, pas des soins/boucliers décrits) : les
  *  décrire via `IntentionsDofus` n'apporterait qu'une indirection, ce module pose déjà
  *  ses propres marques d'état ailleurs (voir en-tête de fichier).
  *
- *  Domakuro : ne fait ici que poser `aFrappeCeTour`, lu par `crochetFinTour` — son
- *  bonus se décide à la fin du tour, jamais ici (voir `crochetFinTour`). */
+ *  Round de correction 1 : Domakuro ne s'appuie PLUS sur ce crochet. `aFrappeCeTour`
+ *  est posé directement dans `infligerDegats` (src/combat.ts), le seul point que
+ *  traversent VRAIMENT tous les sorts de dégâts — y compris les branches à retour
+ *  anticipé de `lancerSort` (Dagues Boomerang, Flèche Enflammée/de Recul, Rayon de
+ *  Wakfu) qui ne passent jamais par ce crochet-ci, appelé uniquement depuis le chemin
+ *  de dégâts « normal ». Un porteur qui ouvrirait son premier tour par un de ces sorts
+ *  aurait sinon gardé `aFrappeCeTour` à `false` et gagné le bonus permanent du
+ *  Domakuro malgré avoir frappé — l'inverse de ce que sa description promet. */
 export function crochetDegatsInfliges(
   lanceur: Combatant, cs: Combatant[], actives: Set<string>,
 ): void {
-  lanceur.aFrappeCeTour = true;
   if (!actives.has("dofus_tachete")) return;
   for (const a of cs) {
     if (a.camp !== lanceur.camp || a.ref === lanceur.ref || a.pvActuels <= 0) continue;
@@ -125,7 +131,12 @@ export function crochetDegatsInfliges(
  *  beaucoup. Non cumulable : la marque `veilleursRecuCeTour` est posée sur le
  *  BÉNÉFICIAIRE (pas le porteur) et effacée au début de son propre tour, dans
  *  `reinitialiserLancersTour` (src/combat.ts) — sans elle, plusieurs porteurs sur
- *  une même ligne se soigneraient mutuellement à chaque fin de tour. */
+ *  une même ligne se soigneraient mutuellement à chaque fin de tour.
+ *
+ *  Domakuro : lit `aFrappeCeTour`, posé par `infligerDegats` (src/combat.ts) sur
+ *  TOUT attaquant dont un coup inflige des dégâts — Round de correction 1, voir la
+ *  docstring de `crochetDegatsInfliges` ci-dessus pour le pourquoi de ce point
+ *  d'appel plutôt que celui-ci. */
 export function crochetFinTour(
   acteur: Combatant, cs: Combatant[], actives: Set<string>,
 ): IntentionsDofus {

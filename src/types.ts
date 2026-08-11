@@ -490,9 +490,14 @@ export interface Combatant {
   argenteUtilise?: boolean; // Argenté : déjà déclenché ce combat
   degatsPctDofus?: number; // bonus/malus de dégâts finaux du tour en cours (Nébuleux, Domakuro)
   /** Domakuro : a-t-il infligé des dégâts pendant le tour COURANT ? Posé par
-   *  `crochetDegatsInfliges`, remis à `false` par `crochetFinTour` à la fin de CHAQUE
-   *  tour (quelles que soient les reliques actives), sinon un porteur qui frappe une
-   *  fois resterait marqué pour tout le combat. */
+   *  `infligerDegats` (src/combat.ts) — PAS par `crochetDegatsInfliges`, qui ne couvre
+   *  que le chemin de dégâts « normal » de `lancerSort` : les branches à retour
+   *  anticipé (Dagues Boomerang, Flèche Enflammée/de Recul, Rayon de Wakfu)
+   *  infligent, elles aussi, de vrais dégâts et doivent marquer le porteur — seul
+   *  `infligerDegats` est traversé par TOUS ces chemins (Round de correction 1).
+   *  Remis à `false` par `crochetFinTour` à la fin de CHAQUE tour (quelles que soient
+   *  les reliques actives), sinon un porteur qui frappe une fois resterait marqué
+   *  pour tout le combat. */
   aFrappeCeTour?: boolean;
   /** Domakuro : bonus de dégâts finaux acquis pour le RESTE du combat — décidé une
    *  fois, à la fin du PREMIER tour du porteur, jamais réarmé après. Distinct de

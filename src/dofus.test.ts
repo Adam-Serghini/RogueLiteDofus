@@ -565,35 +565,39 @@ describe("crochet dégâts infligés", () => {
   });
 
   it("Domakuro : +1 % de dégâts finaux si AUCUN dégât au premier tour", async () => {
-    const { crochetFinTour, crochetDegatsInfliges } = await import("./dofus-effets");
+    // Round de correction 1 : `aFrappeCeTour` n'est plus posé par
+    // `crochetDegatsInfliges` (qui ne gère plus que le Tacheté) mais par
+    // `infligerDegats`, dans src/combat.ts — inatteignable depuis ce module pur.
+    // On simule ici directement ce que le moteur y poserait, comme le fait déjà
+    // `marquerSeuilArgente` plus haut pour ses propres drapeaux d'état.
+    const { crochetFinTour } = await import("./dofus-effets");
     const actives = new Set(["domakuro"]);
     const muet = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 1 });
     crochetFinTour(muet, [muet], actives); // fin du tour 1 sans avoir frappé
     expect(muet.degatsPctPermanent).toBeCloseTo(0.01);
 
     const frappeur = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 1 });
-    crochetDegatsInfliges(frappeur, [frappeur], actives);
+    frappeur.aFrappeCeTour = true; // simule le coup posé par infligerDegats
     crochetFinTour(frappeur, [frappeur], actives);
     expect(frappeur.degatsPctPermanent ?? 0).toBe(0);
   });
 
   it("Domakuro : ne se réarme plus après le premier tour, même si un tour ultérieur est calme", async () => {
-    const { crochetFinTour, crochetDegatsInfliges } = await import("./dofus-effets");
+    const { crochetFinTour } = await import("./dofus-effets");
     const actives = new Set(["domakuro"]);
     const c = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 1 });
-    crochetDegatsInfliges(c, [c], actives); // frappe au tour 1 : pas de bonus
+    c.aFrappeCeTour = true; // frappe au tour 1 (posé par infligerDegats) : pas de bonus
     crochetFinTour(c, [c], actives);
     expect(c.degatsPctPermanent ?? 0).toBe(0);
-    c.toursJoues = 5; // tour ultérieur, calme (pas de crochetDegatsInfliges appelé)
+    c.toursJoues = 5; // tour ultérieur, calme (aucun coup porté)
     crochetFinTour(c, [c], actives);
     expect(c.degatsPctPermanent ?? 0).toBe(0); // toujours rien : la fenêtre est fermée
   });
 
   it("aFrappeCeTour est remis à zéro d'un tour sur l'autre par crochetFinTour", async () => {
-    const { crochetFinTour, crochetDegatsInfliges } = await import("./dofus-effets");
+    const { crochetFinTour } = await import("./dofus-effets");
     const c = herosTest({ pvMax: 1000, pvActuels: 1000, toursJoues: 2 });
-    crochetDegatsInfliges(c, [c], new Set());
-    expect(c.aFrappeCeTour).toBe(true);
+    c.aFrappeCeTour = true; // posé par infligerDegats dans le moteur réel
     crochetFinTour(c, [c], new Set());
     expect(c.aFrappeCeTour).toBe(false);
   });
@@ -705,6 +709,35 @@ describe("Domakuro — intégration moteur (runCombat)", () => {
       reliquesActives: new Set(["domakuro"]),
     });
     expect(ennemi.degatsPctPermanent ?? 0).toBe(0); // aucun bonus, malgré un premier tour sans dégâts
+  });
+
+  // Round de correction 1 : la revue a signalé que les branches à retour anticipé de
+  // `lancerSort` (Dagues Boomerang, Flèche Enflammée/de Recul du Cra, Rayon de Wakfu
+  // via `soinLigneAvantRatio`) infligent de VRAIS dégâts sans jamais passer par
+  // `crochetDegatsInfliges` — un porteur qui ouvrait son premier tour par un de ces
+  // sorts gardait donc `aFrappeCeTour` à `false` et gagnait le bonus permanent du
+  // Domakuro malgré avoir frappé. Sort RÉEL du contenu (pas un sort synthétique) :
+  // c'est le cas de jeu qu'on veut figer, pas une approximation.
+  it("un porteur qui ouvre son premier tour par la Flèche Enflammée (retour anticipé) ne gagne AUCUN bonus", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["cra"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvActuels = heros.pvMax; heros.initiative = 100;
+    heros.paMax = 3; heros.paActuels = 3; // coût de fleche_enflammee
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {}; ennemi.armure = 0;
+    ennemi.pvMax = 50; ennemi.pvActuels = 50; ennemi.initiative = 1;
+    const controllerJoueur = (acteur: Combatant): Action | null =>
+      acteur.ref === heros.ref ? { sort: SORTS.fleche_enflammee, cibleRef: ennemi.ref } : null;
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0.99,
+      reliquesActives: new Set(["domakuro"]),
+    });
+    expect(ennemi.pvActuels).toBe(0); // le combat s'est bien terminé sur la Flèche Enflammée
+    expect(heros.degatsPctPermanent ?? 0).toBe(0); // aucun bonus : le porteur a bel et bien frappé
   });
 });
 

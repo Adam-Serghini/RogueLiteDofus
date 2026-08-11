@@ -907,6 +907,17 @@ export function infligerDegats(
   }
 
   if (attaquant && dmg > 0) ctx?.onDegats?.(attaquant.ref, dmg); // stats de run
+  // Domakuro (dofus-effets.ts) : posé ICI plutôt que dans `lancerSort`, pour
+  // traverser TOUS les chemins qui infligent réellement des dégâts, retours
+  // anticipés compris (Dagues Boomerang, Flèche Enflammée/de Recul, Rayon de Wakfu
+  // via `soinLigneAvantRatio` — toutes appellent `infligerDegats`, directement ou via
+  // `frappe`). Même jauge que `onDegats` juste au-dessus (`dmg > 0`, PRE-bouclier) :
+  // « avoir frappé » se lit comme « avoir réellement porté le coup », pas comme
+  // « avoir réduit les PV de la cible » — un coup entièrement absorbé par un
+  // bouclier a quand même été porté. Idempotent (simple affectation à `true`),
+  // donc aucun risque à le poser plusieurs fois pour un même lancer (éclaboussures,
+  // redirection récursive).
+  if (attaquant && dmg > 0) attaquant.aFrappeCeTour = true;
   const vivantAvant = cible.pvActuels > 0;
   let reste = dmg;
   if (cible.bouclier > 0 && !ignoreBouclier) {
@@ -2324,11 +2335,13 @@ export function lancerSort(
     }
   });
 
-  // Tacheté/Domakuro (dofus-effets.ts) : UNE SEULE FOIS par lancer, jamais une fois
-  // par cible touchée — même raisonnement que `effetRangeeAlliee`/`bouclierPortee`
-  // ailleurs dans cette fonction. Gardé sur `totalDmg > 0` : un sort qui n'a fait
-  // qu'esquiver n'a rien « infligé ». La garde de camp vit dans `reliquesPour`,
-  // jamais ici — voir sa docstring.
+  // Tacheté (dofus-effets.ts) : UNE SEULE FOIS par lancer, jamais une fois par cible
+  // touchée — même raisonnement que `effetRangeeAlliee`/`bouclierPortee` ailleurs
+  // dans cette fonction. Gardé sur `totalDmg > 0` : un sort qui n'a fait qu'esquiver
+  // n'a rien « infligé ». La garde de camp vit dans `reliquesPour`, jamais ici — voir
+  // sa docstring. Domakuro ne dépend PLUS de ce site : `aFrappeCeTour` est posé dans
+  // `infligerDegats`, seul point traversé par TOUS les chemins de dégâts, retours
+  // anticipés compris (Round de correction 1 — voir `crochetDegatsInfliges`).
   if (totalDmg > 0) crochetDegatsInfliges(lanceur, cs, reliquesPour(lanceur, ctx));
 
   // Chausse-Trappe (Sram) : consommation INCONDITIONNELLE — c'est un coût payé au
