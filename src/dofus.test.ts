@@ -8,6 +8,7 @@ import {
   equipeCombattante, nouvelleRun, fabriquerEnnemis,
 } from "./run";
 import type { Meta, Combatant, Action } from "./types";
+import type { CombatCtx } from "./combat";
 
 const store = new Map<string, string>();
 (globalThis as Record<string, unknown>).localStorage = {
@@ -313,6 +314,48 @@ describe("Dorigami — intégration moteur (runCombat)", () => {
     });
     expect(heros.pvActuels).toBe(0);
     expect(ennemi.bouclier).toBe(0);
+  });
+});
+
+// Round de correction 1 : le test « un ennemi qui achève un héros » ci-dessus passe,
+// mais pas grâce à la garde de camp écrite dans `infligerDegats` — il passe déjà
+// grâce à `reliquesPour`, qui refuse les reliques à quiconque n'est pas du camp
+// joueur. La garde de camp (`attaquant.camp !== cible.camp`) protège autre chose :
+// le DÉCLENCHEUR, pas le bénéficiaire — un héros qui achèverait un allié (aucun sort
+// du jeu ne le permet aujourd'hui, mais rien dans le moteur ne l'interdit) ne doit
+// pas gagner de bouclier pour ça. Sans un test qui appelle `infligerDegats`
+// DIRECTEMENT avec un attaquant et une cible du MÊME camp joueur, cette garde
+// pourrait disparaître sans qu'aucun test ne tombe.
+describe("Dorigami — garde de camp du déclencheur (Round de correction 1)", () => {
+  const ctxDorigami = (cs: Combatant[], actives: Set<string>): CombatCtx => ({
+    rng: () => 0.99,
+    log: () => {},
+    playerDamageBonus: 1,
+    combatants: cs,
+    reliquesActives: actives,
+  });
+
+  it("un héros qui achève un ALLIÉ ne gagne aucun bouclier, même porteur du Dorigami", async () => {
+    const { infligerDegats } = await import("./combat");
+    const tueur = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const victime = herosTest({ pvMax: 500, pvActuels: 10 }); // même camp "joueur" que tueur
+    const ctx = ctxDorigami([tueur, victime], new Set(["dorigami"]));
+    infligerDegats(victime, 999, tueur, ctx);
+    expect(victime.pvActuels).toBe(0); // la victime est bien morte de ce coup
+    expect(tueur.bouclier).toBe(0); // mais son auteur, du même camp, ne gagne rien
+  });
+
+  it("tuer une Égide déclenche bien le Dorigami sur son auteur", async () => {
+    const { infligerDegats } = await import("./combat");
+    const tueur = herosTest({ pvMax: 1000, pvActuels: 1000 });
+    const egide = ennemiTest({ position: 0 });
+    egide.estEgide = true;
+    egide.estInvocation = true;
+    egide.pvMax = 100; egide.pvActuels = 10;
+    const ctx = ctxDorigami([tueur, egide], new Set(["dorigami"]));
+    infligerDegats(egide, 999, tueur, ctx);
+    expect(egide.pvActuels).toBe(0);
+    expect(tueur.bouclier).toBe(200); // 20 % des PV max du tueur, comme sur toute autre cible
   });
 });
 

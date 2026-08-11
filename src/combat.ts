@@ -790,7 +790,7 @@ function dissiperPositifs(cible: Combatant, ctx: CombatCtx): void {
  *  (`contre` — posée par les Wobots du Terrier du Wa Wabbit via `effetLanceur`,
  *  ou par le Sabre Shodanwa via `riposteAvant`), elle peut riposter d'une
  *  frappe modeste (sans re-déclenchement). */
-function infligerDegats(
+export function infligerDegats(
   cible: Combatant,
   dmg: number,
   attaquant?: Combatant,
@@ -935,7 +935,7 @@ function infligerDegats(
     }
   }
   // Proie (Ouginak) : quiconque frappe la proie vole une fraction des dégâts
-  if (attaquant && ctx && dmg > 0 && attaquant.camp !== cible.camp && attaquant.pvActuels > 0) {
+  if (attaquant && ctx && dmg > 0 && attaquant.pvActuels > 0) {
     const ratio = sommeEffet(cible, "proie");
     if (ratio > 0) {
       const vol = Math.round(dmg * ratio);
