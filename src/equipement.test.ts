@@ -112,6 +112,16 @@ describe("drops", () => {
     expect(tenterButin(forte, "tainela", "combat", rng).length).toBeGreaterThan(0);
   });
 
+  it("le bonus de prospection HORS ÉQUIPE (relique Dofus Kaliptus) augmente aussi le taux de drop d'objets", () => {
+    // même run, mêmes pools, même graine — seul le bonus de relique change : la
+    // preuve doit porter sur le RÉSULTAT (plus d'objets), pas sur la simple
+    // transmission du paramètre.
+    const run = nouvelleRun(["iop"]); // prospection d'équipe 100 → p = 0,20×1,10 = 0,22 sans bonus
+    const rng = () => 0.23; // entre 0,22 (bonus 0) et 0,24 (bonus 100)
+    expect(tenterButin(run, "tainela", "combat", rng, "combat", 0).length).toBe(0);
+    expect(tenterButin(run, "tainela", "combat", rng, "combat", 100).length).toBeGreaterThan(0);
+  });
+
   it("zone inconnue (sans pool de toile) : aucun drop", () => {
     const run = nouvelleRun(["iop"]);
     expect(tenterButin(run, "zone_inconnue", "combat", MIN)).toEqual([]);

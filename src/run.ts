@@ -445,12 +445,15 @@ export function multKamasEquipe(run: RunState): number {
  * Tire le butin d'une victoire. Zone à toile (objets à rareté) : 4 tirages, chacun
  * pioche un objet au hasard dans le pool de la zone. Doublons autorisés.
  */
-export function tenterButin(run: RunState, zoneId: string, type: string, rng: () => number, tauxType: string = type): ItemInstance[] {
+export function tenterButin(
+  run: RunState, zoneId: string, type: string, rng: () => number, tauxType: string = type,
+  prospectionBonus: number = 0, // prospection hors équipe (relique Dofus Kaliptus) — PAS lu depuis Meta ici, l'appelant la calcule
+): ItemInstance[] {
   // tauxType découple le TAUX de drop du POOL : un combat dur modifié paie au taux
   // donjon (tauxType="donjon") mais pioche toujours ses exclusifs ÉLITE (type)
   const taux = DROP.taux[tauxType] ?? 0;
   if (taux <= 0) return [];
-  const mult = 1 + Math.min(DROP.capProspection, prospectionEquipe(run) * DROP.coefProspection);
+  const mult = 1 + Math.min(DROP.capProspection, (prospectionEquipe(run) + prospectionBonus) * DROP.coefProspection);
   const p = taux * mult;
   const drops: ItemInstance[] = [];
   const pools = butinToile(zoneId);
