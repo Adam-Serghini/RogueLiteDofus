@@ -5,7 +5,9 @@
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, statElement } from "./progression";
-import { crochetDebutTour, crochetFinTour, marquerSeuilArgente, type IntentionsDofus } from "./dofus-effets";
+import {
+  crochetDebutTour, crochetFinTour, crochetMortEnnemi, marquerSeuilArgente, type IntentionsDofus,
+} from "./dofus-effets";
 
 import type {
   BuffRangeeAlliee, Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
@@ -900,6 +902,7 @@ function infligerDegats(
   }
 
   if (attaquant && dmg > 0) ctx?.onDegats?.(attaquant.ref, dmg); // stats de run
+  const vivantAvant = cible.pvActuels > 0;
   let reste = dmg;
   if (cible.bouclier > 0 && !ignoreBouclier) {
     const absorbe = Math.min(cible.bouclier, reste);
@@ -909,6 +912,20 @@ function infligerDegats(
   cible.pvActuels = Math.max(0, cible.pvActuels - reste);
   marquerSeuilArgente(cible, reliquesPour(cible, ctx ?? {})); // Argenté : arme le soin sous 20 %
   verifierRenaissance(cible, ctx); // Kwakwanneau : renaît une fois par combat
+  // Dorigami : bouclier à l'auteur du coup fatal — seulement si la cible vient de
+  // tomber (vivantAvant) et reste tombée APRÈS la renaissance ci-dessus (un
+  // Kwakwanneau qui la relève annule le déclenchement), et seulement d'un camp
+  // adverse (jamais un allié qui achève un allié, jamais une mécanique de dégâts
+  // alliés). `ctx.combatants` est posé par `lancerSort` avant tout dégât de sort ;
+  // sans lui (riposte récursive, dégâts hors sort), pas de lookup possible pour le
+  // bouclier — c'est le même compromis que le lookup de Lance/redirection ailleurs
+  // dans cette fonction.
+  if (
+    vivantAvant && cible.pvActuels <= 0 && attaquant && ctx?.combatants &&
+    attaquant.camp !== cible.camp && attaquant.pvActuels > 0
+  ) {
+    appliquerIntentions(crochetMortEnnemi(attaquant, reliquesPour(attaquant, ctx)), ctx.combatants, ctx);
+  }
   // récupération (Goyave) : le porteur survivant régénère une fraction des dégâts subis
   if (cible.soinDegatsRecus && dmg > 0 && cible.pvActuels > 0) {
     const soin = Math.round(dmg * cible.soinDegatsRecus);

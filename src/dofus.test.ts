@@ -242,6 +242,80 @@ describe("crochet fin de tour", () => {
   });
 });
 
+describe("Dorigami", () => {
+  it("bouclier de 20 % des PV max à l'auteur du coup fatal, 1 tour", async () => {
+    const { crochetMortEnnemi } = await import("./dofus-effets");
+    const tueur = herosTest({ pvMax: 1000, pvActuels: 800 });
+    const int = crochetMortEnnemi(tueur, new Set(["dorigami"]));
+    expect(int.boucliers).toEqual([{ ref: tueur.ref, montant: 200, tours: 1 }]);
+  });
+
+  it("sans la relique, rien", async () => {
+    const { crochetMortEnnemi } = await import("./dofus-effets");
+    const tueur = herosTest({ pvMax: 1000, pvActuels: 800 });
+    expect(crochetMortEnnemi(tueur, new Set()).boucliers).toEqual([]);
+  });
+});
+
+// Comme pour l'Émeraude/les Veilleurs plus bas : le test pur ci-dessus ne prouve
+// pas que `runCombat` appelle réellement `crochetMortEnnemi` au bon moment (à la
+// mort d'un ENNEMI, jamais d'un allié) ni avec la garde de camp. Un vrai combat où
+// un héros porteur achève un ennemi vérifie l'état RÉEL du bouclier, pas seulement
+// l'intention décrite.
+describe("Dorigami — intégration moteur (runCombat)", () => {
+  it("le héros qui achève un ennemi gagne RÉELLEMENT le bouclier", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 1000; heros.pvBase = 1000; heros.pvActuels = 1000;
+    heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 500; ennemi.pvActuels = 500;
+    ennemi.initiative = 1;
+    const spellTue = {
+      ...SORTS.morsure, id: "test_dofus_dorigami", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+    };
+    const controllerJoueur = (acteur: Combatant): Action | null =>
+      acteur.ref === heros.ref ? { sort: spellTue, cibleRef: ennemi.ref } : null;
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0.99,
+      reliquesActives: new Set(["dorigami"]),
+    });
+    expect(ennemi.pvActuels).toBe(0);
+    expect(heros.bouclier).toBe(200); // 20 % de 1000 PV max
+  });
+
+  it("un ennemi qui achève un héros ne gagne rien, même si le joueur porte le Dorigami", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 500; heros.pvBase = 500; heros.pvActuels = 1;
+    heros.initiative = 1; heros.paMax = 1; heros.paActuels = 1;
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 1000; ennemi.pvActuels = 1000;
+    ennemi.initiative = 100; // agit avant le héros
+    const spellTue = {
+      ...SORTS.morsure, id: "test_dofus_dorigami_ennemi", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+    };
+    const controllerEnnemi = (acteur: Combatant): Action | null =>
+      acteur.ref === ennemi.ref ? { sort: spellTue, cibleRef: heros.ref } : null;
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: () => null, ennemi: controllerEnnemi },
+      rng: () => 0.99,
+      reliquesActives: new Set(["dorigami"]),
+    });
+    expect(heros.pvActuels).toBe(0);
+    expect(ennemi.bouclier).toBe(0);
+  });
+});
+
 // Comme pour l'Argenté (voir plus bas) : les trois tests ci-dessus n'exercent que
 // le module PUR, à la main — ils ne prouvent pas que `runCombat` appelle
 // réellement `crochetFinTour`. Un test d'intégration monte donc un vrai combat et

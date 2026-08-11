@@ -68,6 +68,20 @@ export function crochetDebutTour(
   return out;
 }
 
+/** Crochet de mort d'un ennemi : décrit le bouclier dû à l'auteur du coup fatal.
+ *
+ *  Dorigami : quand le porteur abat un ennemi, il gagne 20 % de SES PROPRES PV max
+ *  en bouclier pour 1 tour. `tueur` est déjà garanti être du camp joueur par le
+ *  site d'appel (`infligerDegats`, via `reliquesPour` côté combat.ts) — ce crochet
+ *  ne refait pas cette vérification, comme les deux autres crochets de ce module. */
+export function crochetMortEnnemi(tueur: Combatant, actives: Set<string>): IntentionsDofus {
+  const out = vide();
+  if (actives.has("dorigami")) {
+    out.boucliers.push({ ref: tueur.ref, montant: pct(tueur, 0.2), tours: 1 });
+  }
+  return out;
+}
+
 const estAvant = (c: Combatant): boolean => c.position < 4;
 
 /** Crochet de fin de tour : décrit les soins/boucliers dus au porteur pour le tour
