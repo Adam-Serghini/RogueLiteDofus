@@ -75,6 +75,8 @@ const DOFUS_EFFETS: Record<string, DofusEffet> = {
   dokoko: { desc: "Un tour sur deux, soigne de 10 % des PV max en début de tour." },
   dofus_nebuleux: { desc: "+5 % de dégâts finaux les tours pairs, −5 % les tours impairs." },
   dofus_ocre: { desc: "+1 PA à toute l'équipe, une fois tous les archimonstres capturés.", paBonus: 1 },
+  dofus_emeraude: { desc: "En fin de tour, octroie 3 % des PV max en bouclier par ennemi en ligne avant, pour 1 tour." },
+  dofus_des_veilleurs: { desc: "En fin de tour, soigne les alliés de sa ligne de 5 % de ses PV max. Non cumulable." },
 };
 
 export const DOFUS: Record<string, DofusDef> = Object.fromEntries(

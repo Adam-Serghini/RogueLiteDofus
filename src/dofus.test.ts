@@ -143,9 +143,14 @@ function herosTest(o: { pvMax: number; pvActuels: number; toursJoues?: number; p
   if (o.position !== undefined) c.position = o.position;
   return c;
 }
-// `ennemiTest` (même forme, via `fabriquerEnnemis`) sera ajouté quand un crochet
-// suivant (Émeraude, Veilleurs…) en aura réellement besoin — un helper non lu par
-// aucun test échoue au typecheck (`noUnusedLocals`), donc on ne l'anticipe pas.
+/** Un ennemi de test, position imposée. Refs uniques (`refSeq` partagé avec
+ *  `herosTest`) — plusieurs ennemis dans un même test. */
+function ennemiTest(o: { position: number }): Combatant {
+  const c = fabriquerEnnemis("combat_1")[0];
+  c.ref = `e_${++refSeq}`;
+  c.position = o.position;
+  return c;
+}
 
 describe("crochet début de tour", () => {
   it("Dokoko soigne 10 % des PV max un tour sur DEUX", async () => {
@@ -201,6 +206,82 @@ describe("crochet début de tour", () => {
     const vide = crochetDebutTour(c, [c], new Set());
     expect(vide.soins).toEqual([]);
     expect(vide.degatsPct).toBe(0);
+  });
+});
+
+describe("crochet fin de tour", () => {
+  it("Émeraude : 3 % des PV max par ennemi VIVANT en ligne avant", async () => {
+    const { crochetFinTour } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000, position: 0 });
+    const e1 = ennemiTest({ position: 0 }), e2 = ennemiTest({ position: 1 });
+    const e3 = ennemiTest({ position: 4 }); // arrière : ne compte pas
+    const mort = ennemiTest({ position: 2 }); mort.pvActuels = 0; // mort : ne compte pas
+    const int = crochetFinTour(h, [h, e1, e2, e3, mort], new Set(["dofus_emeraude"]));
+    expect(int.boucliers).toEqual([{ ref: h.ref, montant: 60, tours: 1 }]); // 2 ennemis × 3 %
+  });
+
+  it("Veilleurs : soigne les alliés de SA ligne, jamais lui-même", async () => {
+    const { crochetFinTour } = await import("./dofus-effets");
+    const h = herosTest({ pvMax: 1000, pvActuels: 1000, position: 0 });
+    const allieAvant = herosTest({ pvMax: 400, pvActuels: 100, position: 1 });
+    const allieArriere = herosTest({ pvMax: 400, pvActuels: 100, position: 4 });
+    const int = crochetFinTour(h, [h, allieAvant, allieArriere], new Set(["dofus_des_veilleurs"]));
+    expect(int.soins).toEqual([{ ref: allieAvant.ref, montant: 50 }]); // 5 % des PV max DU PORTEUR
+  });
+
+  it("Veilleurs : un allié ne reçoit qu'UN soin entre deux de ses propres tours", async () => {
+    const { crochetFinTour } = await import("./dofus-effets");
+    const p1 = herosTest({ pvMax: 1000, pvActuels: 1000, position: 0 });
+    const p2 = herosTest({ pvMax: 1000, pvActuels: 1000, position: 1 });
+    const cible = herosTest({ pvMax: 400, pvActuels: 100, position: 2 });
+    const actives = new Set(["dofus_des_veilleurs"]);
+    expect(crochetFinTour(p1, [p1, p2, cible], actives).soins).toHaveLength(2); // p2 et cible
+    // p2 finit son tour à son tour : la cible a déjà reçu son soin cette ronde
+    const second = crochetFinTour(p2, [p1, p2, cible], actives).soins.map((s) => s.ref);
+    expect(second).not.toContain(cible.ref);
+  });
+});
+
+// Comme pour l'Argenté (voir plus bas) : les trois tests ci-dessus n'exercent que
+// le module PUR, à la main — ils ne prouvent pas que `runCombat` appelle
+// réellement `crochetFinTour`. Un test d'intégration monte donc un vrai combat et
+// vérifie l'état RÉEL du bouclier du porteur, pas seulement l'intention décrite.
+// Note de séquencement : le bouclier temporaire ne décompte qu'au DÉBUT du tour
+// SUIVANT de son porteur (`effetsDebutTour`, Château de cartes) — le relever à la
+// fin du combat serait donc aveugle dès que le porteur rejoue. On le capture via
+// `onUpdate`, au tour de l'ENNEMI qui suit immédiatement, avant toute décroissance.
+describe("crochet fin de tour — intégration moteur (runCombat)", () => {
+  it("Émeraude : le porteur gagne RÉELLEMENT du bouclier en fin de son tour", async () => {
+    const { runCombat } = await import("./combat");
+    const { SORTS } = await import("./data");
+    const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
+    heros.stats = { ...heros.stats, agilite: 0 };
+    heros.pvMax = 1000; heros.pvBase = 1000; heros.pvActuels = 1000;
+    heros.initiative = 100; heros.paMax = 1; heros.paActuels = 1;
+    heros.position = 0; // ligne avant
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    ennemi.stats = { ...ennemi.stats, agilite: 0 };
+    ennemi.resistances = {};
+    ennemi.pvMax = 500; ennemi.pvActuels = 500;
+    ennemi.initiative = 1;
+    ennemi.position = 0; // ligne avant : compte pour l'Émeraude
+    const spellTue = {
+      ...SORTS.morsure, id: "test_dofus_emeraude", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+    };
+    let bouclierVu = 0;
+    const controllerJoueur = (acteur: Combatant): Action | null => {
+      if (acteur.ref !== heros.ref) return null;
+      if (acteur.toursJoues === 1) return null; // round 1 : passe, laisse l'Émeraude se déclencher
+      return { sort: spellTue, cibleRef: ennemi.ref }; // round 2 : achève l'ennemi, borne le combat
+    };
+    await runCombat([heros, ennemi], {
+      controllers: { joueur: controllerJoueur, ennemi: () => null },
+      rng: () => 0.99,
+      reliquesActives: new Set(["dofus_emeraude"]),
+      onUpdate: () => { bouclierVu = Math.max(bouclierVu, heros.bouclier); },
+    });
+    expect(bouclierVu).toBe(30); // 3 % de 1000 PV max, un ennemi vivant en ligne avant
+    expect(ennemi.pvActuels).toBe(0);
   });
 });
 

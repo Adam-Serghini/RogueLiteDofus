@@ -483,6 +483,10 @@ export interface Combatant {
   argenteArme?: number;
   argenteUtilise?: boolean; // Argenté : déjà déclenché ce combat
   degatsPctDofus?: number; // bonus/malus de dégâts finaux du tour en cours (Nébuleux, Domakuro)
+  /** Veilleurs : ce BÉNÉFICIAIRE a déjà reçu le soin non cumulable depuis son propre
+   *  dernier tour. Posé sur le bénéficiaire (pas le porteur), remis à `false` au
+   *  début de son tour dans `reinitialiserLancersTour`. */
+  veilleursRecuCeTour?: boolean;
   nullifieProchainCoup?: boolean; // le prochain coup DIRECT reçu (pas un poison) est annulé (0 dégâts), flag consommé
   bombes?: number; // charges de bombe posées (Roublard), cap BOMBES_MAX
   telefrags?: number; // Téléfrags posés (Xélor), cap TELEFRAGS_MAX

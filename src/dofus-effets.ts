@@ -67,3 +67,38 @@ export function crochetDebutTour(
   }
   return out;
 }
+
+const estAvant = (c: Combatant): boolean => c.position < 4;
+
+/** Crochet de fin de tour : décrit les soins/boucliers dus au porteur pour le tour
+ *  qui vient de se terminer.
+ *
+ *  Émeraude : compte les ennemis VIVANTS de la ligne AVANT du camp adverse (les
+ *  morts et la ligne arrière ne comptent pas), et rend un bouclier de 3 % des PV
+ *  max du porteur par ennemi ainsi compté.
+ *
+ *  Veilleurs : soigne les alliés de la MÊME ligne que le porteur (jamais lui-même)
+ *  de 5 % des PV max DU PORTEUR — délibéré : un tank qui porte la relique soigne
+ *  beaucoup. Non cumulable : la marque `veilleursRecuCeTour` est posée sur le
+ *  BÉNÉFICIAIRE (pas le porteur) et effacée au début de son propre tour, dans
+ *  `reinitialiserLancersTour` (src/combat.ts) — sans elle, plusieurs porteurs sur
+ *  une même ligne se soigneraient mutuellement à chaque fin de tour. */
+export function crochetFinTour(
+  acteur: Combatant, cs: Combatant[], actives: Set<string>,
+): IntentionsDofus {
+  const out = vide();
+  const vivants = cs.filter((c) => c.pvActuels > 0);
+  if (actives.has("dofus_emeraude")) {
+    const devant = vivants.filter((c) => c.camp !== acteur.camp && estAvant(c)).length;
+    if (devant > 0) out.boucliers.push({ ref: acteur.ref, montant: pct(acteur, 0.03 * devant), tours: 1 });
+  }
+  if (actives.has("dofus_des_veilleurs")) {
+    for (const a of vivants) {
+      if (a.camp !== acteur.camp || a.ref === acteur.ref) continue;
+      if (estAvant(a) !== estAvant(acteur) || a.veilleursRecuCeTour) continue;
+      a.veilleursRecuCeTour = true;
+      out.soins.push({ ref: a.ref, montant: pct(acteur, 0.05) });
+    }
+  }
+  return out;
+}

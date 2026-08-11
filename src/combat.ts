@@ -5,7 +5,7 @@
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
 import { multOffensif, multSoin, statElement } from "./progression";
-import { crochetDebutTour, marquerSeuilArgente, type IntentionsDofus } from "./dofus-effets";
+import { crochetDebutTour, crochetFinTour, marquerSeuilArgente, type IntentionsDofus } from "./dofus-effets";
 
 import type {
   BuffRangeeAlliee, Camp, Combatant, EffetSpec, EffetStat, Element, FaceRoulette, Monstre, Spell, Stats, Action,
@@ -336,6 +336,7 @@ export function ciblesValides(acteur: Combatant, sort: Spell, cs: Combatant[]): 
 export function reinitialiserLancersTour(c: Combatant): void {
   c.lancersCeTour = {};
   c.remisesCout = {};
+  c.veilleursRecuCeTour = false; // Veilleurs : non cumul entre deux de ses PROPRES tours
 }
 
 /**
@@ -2655,6 +2656,10 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
         purgerInvocationsOrphelines(combatants, ctx); // un invocateur vient-il de tomber ?
         await hooks.onUpdate?.();
       }
+
+      // Émeraude, Veilleurs : décrits par `dofus-effets.ts`, exécutés ici par
+      // `appliquerIntentions`, juste avant que les effets datés ne décomptent.
+      appliquerIntentions(crochetFinTour(acteur, combatants, ctx.reliquesActives ?? new Set()), combatants, ctx);
 
       decrementerEffets(acteur);
       // Conjuration (Éliotrope) : décompte les marques posées par cet acteur, s'éteint à 0.
