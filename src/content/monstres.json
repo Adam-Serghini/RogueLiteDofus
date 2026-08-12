@@ -1835,7 +1835,8 @@
       "feu": -0.1
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 12,
@@ -1912,7 +1913,8 @@
     },
     "sorts": [
       "soin_noir",
-      "picotement"
+      "picotement",
+      "grignotage"
     ],
     "stats": {
       "agilite": 28,
@@ -2947,7 +2949,8 @@
       "feu": -0.25
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -2973,7 +2976,8 @@
       "terre": 0.1
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -2989,7 +2993,7 @@
     "img": "/assets/monstres/larve_doree.png",
     "initiative": 8,
     "nom": "Larve Dorée",
-    "pa": 5,
+    "pa": 6,
     "pv": 155,
     "resistances": {
       "air": 0.15,
@@ -3021,7 +3025,8 @@
       "terre": 0.4
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -3044,7 +3049,8 @@
       "terre": -0.25
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 40,
@@ -3068,7 +3074,8 @@
       "feu": 0.3
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -3090,7 +3097,8 @@
       "feu": 0.4
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -3112,7 +3120,8 @@
       "feu": -0.3
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -3136,7 +3145,8 @@
       "terre": 0.3
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 10,
@@ -3761,7 +3771,8 @@
       "terre": 0.15
     },
     "sorts": [
-      "picotement"
+      "picotement",
+      "grignotage"
     ],
     "stats": {
       "agilite": 18,
@@ -3886,7 +3897,8 @@
       "terre": -0.2
     },
     "sorts": [
-      "picotement"
+      "picotement",
+      "grignotage"
     ],
     "stats": {
       "agilite": 16,
@@ -3962,7 +3974,8 @@
       "terre": -0.4
     },
     "sorts": [
-      "coup_de_bec"
+      "coup_de_bec",
+      "grignotage"
     ],
     "stats": {
       "agilite": 34,
@@ -3985,7 +3998,8 @@
       "feu": -0.4
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 8,
@@ -4010,7 +4024,8 @@
       "terre": 0.5
     },
     "sorts": [
-      "picotement"
+      "picotement",
+      "grignotage"
     ],
     "stats": {
       "agilite": 4,
@@ -4025,7 +4040,7 @@
     "img": "/assets/monstres/scarafeuille_noir.png",
     "initiative": 9,
     "nom": "Scarafeuille Noir",
-    "pa": 5,
+    "pa": 6,
     "pv": 95,
     "resistances": {
       "air": 0.15,
@@ -4058,7 +4073,8 @@
       "feu": 0.5
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 8,
@@ -4081,7 +4097,8 @@
       "terre": 0.5
     },
     "sorts": [
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 8,
@@ -4154,7 +4171,8 @@
       "ponte_larvaire",
       "ecrasement",
       "charge",
-      "morsure"
+      "morsure",
+      "grignotage"
     ],
     "stats": {
       "agilite": 11,
@@ -4451,7 +4469,8 @@
       "racines_voraces",
       "ecrasement",
       "charge",
-      "picotement"
+      "picotement",
+      "grignotage"
     ],
     "stats": {
       "agilite": 9,
@@ -4476,7 +4495,8 @@
       "terre": 0.05
     },
     "sorts": [
-      "picotement"
+      "picotement",
+      "grignotage"
     ],
     "stats": {
       "agilite": 14,

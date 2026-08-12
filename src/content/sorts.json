@@ -675,6 +675,16 @@
     "nom": "Griffe joueuse",
     "type": "degats"
   },
+  "grignotage": {
+    "baseMax": 3,
+    "baseMin": 2,
+    "cible": "ennemi_ligne",
+    "coutPA": 1,
+    "desc": "Petite morsure d'appoint, pour finir un tour entamé.",
+    "id": "grignotage",
+    "nom": "Grignotage",
+    "type": "degats"
+  },
   "hydra": {
     "baseMax": 12,
     "baseMin": 8,
