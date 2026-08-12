@@ -13,7 +13,6 @@
     },
     "id": "acuite_absolue",
     "nom": "Acuité absolue",
-    "scaling": 0,
     "type": "buff"
   },
   "aiguille": {
@@ -32,7 +31,6 @@
     "maxParCibleParTour": 1,
     "maxParTour": 2,
     "nom": "Aiguille",
-    "scaling": 0.35,
     "type": "degats"
   },
   "apaisement": {
@@ -44,7 +42,6 @@
     "desc": "Consomme toute la Rage accumulée et rend 8 à 12 PV par charge dépensée. Nécessite au moins 1 Rage.",
     "id": "apaisement",
     "nom": "Apaisement",
-    "scaling": 0,
     "type": "soin"
   },
   "attaque_mortelle": {
@@ -57,7 +54,6 @@
     "desc": "Le plus gros coup du Sram, d'autant plus fort qu'il a déjà fait mouche : +15 % de dégâts par Chausse-Trappe accumulé, puis le compteur repart de zéro.",
     "id": "attaque_mortelle",
     "nom": "Attaque Mortelle",
-    "scaling": 0.32,
     "type": "degats"
   },
   "bluff": {
@@ -70,7 +66,6 @@
     "id": "bluff",
     "maxParTour": 1,
     "nom": "Bluff",
-    "scaling": 0.28,
     "secondCoupSiCrit": true,
     "type": "degats"
   },
@@ -84,7 +79,6 @@
     "maxParTour": 2,
     "nom": "Bombe collante",
     "poseBombe": true,
-    "scaling": 0,
     "type": "degats"
   },
   "bordee": {
@@ -96,7 +90,6 @@
     "desc": "Gourlo le Terrible lâche une bordée de canon : frappe toute la rangée de la cible, même la rangée arrière.",
     "id": "bordee",
     "nom": "Bordée",
-    "scaling": 0.45,
     "type": "degats",
     "zoneLigne": true
   },
@@ -110,7 +103,6 @@
     "desc": "Blop Coco Royal souffle une bourrasque de pollen : dégâts et repousse la cible en rangée arrière.",
     "id": "bourrasque_de_pollen",
     "nom": "Bourrasque de pollen",
-    "scaling": 0.4,
     "type": "degats"
   },
   "brume": {
@@ -125,7 +117,6 @@
     },
     "id": "brume",
     "nom": "Brume",
-    "scaling": 0,
     "type": "buff"
   },
   "bulle": {
@@ -141,7 +132,6 @@
     },
     "id": "bulle",
     "nom": "Bulle",
-    "scaling": 0.28,
     "type": "degats"
   },
   "cadran_de_xelor": {
@@ -157,7 +147,6 @@
       "duree": 2,
       "valeur": 2
     },
-    "scaling": 0,
     "type": "buff"
   },
   "caprice_royal": {
@@ -171,7 +160,6 @@
     "nom": "Caprice royal",
     "retraitPA": 2,
     "retraitPAChance": 1,
-    "scaling": 0.5,
     "type": "degats",
     "zoneLigne": true
   },
@@ -185,7 +173,6 @@
     "desc": "Scarabosse Doré, charge cornée : gagne un bouclier de 40 % des dégâts infligés.",
     "id": "carapace_doree",
     "nom": "Carapace dorée",
-    "scaling": 0.45,
     "type": "degats"
   },
   "changer_ligne": {
@@ -197,7 +184,6 @@
     "desc": "Se déplace dans la rangée opposée (avant ↔ arrière), même colonne si possible. Conféré par les Dagues Eurfolles.",
     "id": "changer_ligne",
     "nom": "Changer de ligne",
-    "scaling": 0,
     "type": "buff"
   },
   "charge": {
@@ -208,7 +194,6 @@
     "desc": "Attaque dévastatrice du boss.",
     "id": "charge",
     "nom": "Charge",
-    "scaling": 0.72,
     "type": "degats"
   },
   "chateau_de_cartes": {
@@ -223,7 +208,6 @@
     "desc": "Couvre un allié d'un bouclier valant 20 % de ses PV max, porté à 40 % si le sort critique. Le bouclier expire au bout de 2 tours.",
     "id": "chateau_de_cartes",
     "nom": "Château de cartes",
-    "scaling": 0,
     "type": "buff"
   },
   "coalition": {
@@ -240,7 +224,6 @@
       "valeur": 2,
       "valeurSeuil": 3
     },
-    "scaling": 0,
     "type": "buff"
   },
   "colere_de_iop": {
@@ -253,7 +236,6 @@
     "desc": "Très gros dégâts ; +50 % par lancer précédent de ce sort depuis le début du combat.",
     "id": "colere_de_iop",
     "nom": "Colère de Iop",
-    "scaling": 0.55,
     "type": "degats"
   },
   "colere_royale": {
@@ -270,7 +252,6 @@
     },
     "id": "colere_royale",
     "nom": "Colère royale",
-    "scaling": 0.45,
     "type": "degats"
   },
   "concentration_de_chakra": {
@@ -284,7 +265,6 @@
     "desc": "Pendant 1 tour, les pièges du Sram infligent 50 % de dégâts en plus, y compris ceux qu'un allié fait partir en déplaçant un ennemi.",
     "id": "concentration_de_chakra",
     "nom": "Concentration de Chakra",
-    "scaling": 0,
     "type": "buff"
   },
   "confiture_bouillante": {
@@ -300,7 +280,6 @@
       "degats": 9,
       "duree": 2
     },
-    "scaling": 0.45,
     "type": "degats"
   },
   "conjuration": {
@@ -318,7 +297,6 @@
     "desc": "Marque une cible pendant 2 tours : l'Éliotrope et sa rangée lui infligent 5 % de dégâts en plus, et 10 % à partir de 3 portails ouverts.",
     "id": "conjuration",
     "nom": "Conjuration",
-    "scaling": 0,
     "type": "degats"
   },
   "contagion": {
@@ -335,7 +313,6 @@
       "duree": 3,
       "transmet": true
     },
-    "scaling": 0.42,
     "type": "degats"
   },
   "contre_mesure": {
@@ -352,7 +329,6 @@
     },
     "id": "contre_mesure",
     "nom": "Contre-mesure",
-    "scaling": 0.62,
     "type": "degats"
   },
   "coup_de_bec": {
@@ -363,7 +339,6 @@
     "desc": "Piqûre rapide.",
     "id": "coup_de_bec",
     "nom": "Coup de bec",
-    "scaling": 0.4,
     "type": "degats"
   },
   "crachat_de_seve": {
@@ -378,7 +353,6 @@
       "degats": 4,
       "duree": 2
     },
-    "scaling": 0.3,
     "type": "degats"
   },
   "croc_de_l_alpha": {
@@ -390,7 +364,6 @@
     "desc": "Meulou referme ses crocs sur une seule proie.",
     "id": "croc_de_l_alpha",
     "nom": "Croc de l'alpha",
-    "scaling": 0.66,
     "type": "degats"
   },
   "dagues_boomerang": {
@@ -403,7 +376,6 @@
     "id": "dagues_boomerang",
     "maxParTour": 1,
     "nom": "Dagues Boomerang",
-    "scaling": 0.4,
     "type": "degats"
   },
   "dard_venimeux": {
@@ -418,7 +390,6 @@
       "degats": 8,
       "duree": 2
     },
-    "scaling": 0.42,
     "type": "degats"
   },
   "deferlante": {
@@ -438,7 +409,6 @@
       "bonusParSaut": 0,
       "sauts": 1
     },
-    "scaling": 0.25,
     "type": "degats"
   },
   "depouille": {
@@ -452,7 +422,6 @@
     "id": "depouille",
     "nom": "Dépouille",
     "rage": true,
-    "scaling": 0.38,
     "type": "degats"
   },
   "durcissement": {
@@ -469,7 +438,6 @@
     },
     "id": "durcissement",
     "nom": "Durcissement",
-    "scaling": 0.6,
     "type": "degats"
   },
   "ecrasement": {
@@ -481,7 +449,6 @@
     "desc": "Piétine toute la ligne avant adverse (le soin de zone ne suit plus).",
     "id": "ecrasement",
     "nom": "Écrasement",
-    "scaling": 0.55,
     "type": "degats",
     "zoneLigne": true
   },
@@ -497,7 +464,6 @@
       "tours": 2
     },
     "nom": "Égide",
-    "scaling": 0,
     "type": "buff"
   },
   "endurance": {
@@ -514,7 +480,6 @@
     "id": "endurance",
     "maxParTour": 2,
     "nom": "Endurance",
-    "scaling": 0.18,
     "type": "degats"
   },
   "enfer_des_zombies": {
@@ -529,7 +494,6 @@
     "ressuscite": {
       "pvPct": 0.35
     },
-    "scaling": 0,
     "type": "invocation"
   },
   "etreinte_de_valkyr": {
@@ -545,7 +509,6 @@
       "duree": 1,
       "ratio": 0.5
     },
-    "scaling": 0,
     "type": "buff"
   },
   "etreinte_glaciale": {
@@ -559,7 +522,6 @@
     "nom": "Étreinte glaciale",
     "retraitPA": 1,
     "retraitPAChance": 1,
-    "scaling": 0.5,
     "type": "degats",
     "zoneLigne": true
   },
@@ -580,7 +542,6 @@
       "bonusParSaut": 0,
       "sauts": 1
     },
-    "scaling": 0.35,
     "type": "degats"
   },
   "fil_collant": {
@@ -596,7 +557,6 @@
     },
     "id": "fil_collant",
     "nom": "Fil collant",
-    "scaling": 0.42,
     "type": "degats"
   },
   "fleche_de_recul": {
@@ -609,7 +569,6 @@
     "id": "fleche_de_recul",
     "maxParTour": 1,
     "nom": "Flèche de recul",
-    "scaling": 0.2,
     "type": "degats"
   },
   "fleche_enflammee": {
@@ -621,7 +580,6 @@
     "enflammee": true,
     "id": "fleche_enflammee",
     "nom": "Flèche enflammée",
-    "scaling": 0.35,
     "type": "degats"
   },
   "fleche_punitive": {
@@ -633,7 +591,6 @@
     "desc": "Tir qui récompense une barre de PA pleine : +8 % de dégâts par PA disponible avant le lancer.",
     "id": "fleche_punitive",
     "nom": "Flèche Punitive",
-    "scaling": 0.45,
     "type": "degats"
   },
   "fortification": {
@@ -656,7 +613,6 @@
     },
     "id": "fortification",
     "nom": "Fortification",
-    "scaling": 0,
     "type": "buff"
   },
   "fumee_de_curare": {
@@ -673,7 +629,6 @@
     },
     "id": "fumee_de_curare",
     "nom": "Fumée de curare",
-    "scaling": 0.55,
     "type": "degats",
     "zoneLigne": true
   },
@@ -687,7 +642,6 @@
     "desc": "Gelée Royale se gélifie en frappant : gagne un bouclier valant 40 % des dégâts infligés.",
     "id": "gelification",
     "nom": "Gélification",
-    "scaling": 0.45,
     "type": "degats"
   },
   "goinfrerie": {
@@ -704,7 +658,6 @@
         "dissipePositifs": true
       }
     ],
-    "scaling": 0.62,
     "type": "degats"
   },
   "griffe_joueuse": {
@@ -720,7 +673,6 @@
     },
     "id": "griffe_joueuse",
     "nom": "Griffe joueuse",
-    "scaling": 0.29,
     "type": "degats"
   },
   "hydra": {
@@ -733,7 +685,6 @@
     "id": "hydra",
     "maxParTour": 1,
     "nom": "Hydra",
-    "scaling": 0.35,
     "type": "degats",
     "zoneLance": true
   },
@@ -746,7 +697,6 @@
     "id": "jormun",
     "maxParTour": 1,
     "nom": "Jormun",
-    "scaling": 0.35,
     "tousSiLanceArriere": true,
     "type": "degats",
     "zoneLance": true
@@ -760,7 +710,6 @@
     "id": "kaboom",
     "kaboom": true,
     "nom": "Kaboom",
-    "scaling": 0.35,
     "type": "degats"
   },
   "lame_liquide": {
@@ -771,7 +720,6 @@
     "desc": "Gros dégâts mono-cible.",
     "id": "lame_liquide",
     "nom": "Lame liquide",
-    "scaling": 0.5,
     "type": "degats"
   },
   "lance": {
@@ -784,7 +732,6 @@
     "invoqueLance": true,
     "maxParTour": 2,
     "nom": "Lance",
-    "scaling": 0,
     "type": "buff"
   },
   "langue_rapeuse": {
@@ -796,7 +743,6 @@
     "id": "langue_rapeuse",
     "maxParTour": 2,
     "nom": "Langue râpeuse",
-    "scaling": 0.24,
     "soinAvantBlesseRatio": 0.65,
     "type": "degats"
   },
@@ -814,7 +760,6 @@
     },
     "id": "machoire_du_coffre",
     "nom": "Mâchoire du coffre",
-    "scaling": 0.48,
     "type": "degats"
   },
   "maree_d_encre": {
@@ -831,7 +776,6 @@
     },
     "id": "maree_d_encre",
     "nom": "Marée d'encre",
-    "scaling": 0.45,
     "type": "degats"
   },
   "molosse": {
@@ -848,7 +792,6 @@
     "id": "molosse",
     "nom": "Molosse",
     "rage": true,
-    "scaling": 0.35,
     "type": "degats"
   },
   "morsure": {
@@ -859,7 +802,6 @@
     "desc": "Coup de mêlée.",
     "id": "morsure",
     "nom": "Morsure",
-    "scaling": 0.4,
     "type": "degats"
   },
   "morsure_vorace": {
@@ -875,7 +817,6 @@
         "dissipePositifs": true
       }
     ],
-    "scaling": 0.42,
     "type": "degats"
   },
   "mot_de_solidarite": {
@@ -887,7 +828,6 @@
     "desc": "Soin léger sur toute l'équipe, quel que soit l'état de chacun.",
     "id": "mot_de_solidarite",
     "nom": "Mot de solidarité",
-    "scaling": 0,
     "type": "soin"
   },
   "mot_galvanisant": {
@@ -902,7 +842,6 @@
     "hotPct": 0.05,
     "id": "mot_galvanisant",
     "nom": "Mot galvanisant",
-    "scaling": 0,
     "type": "buff"
   },
   "mot_reconstitution": {
@@ -914,7 +853,6 @@
     "desc": "Rend à un allié la totalité des PV qui lui manquent.",
     "id": "mot_reconstitution",
     "nom": "Mot de reconstitution",
-    "scaling": 0,
     "soinComplet": true,
     "type": "soin"
   },
@@ -934,7 +872,6 @@
       }
     },
     "nom": "Mot rituel",
-    "scaling": 0.25,
     "type": "degats"
   },
   "mot_stimulant": {
@@ -947,7 +884,6 @@
     "id": "mot_stimulant",
     "nom": "Mot stimulant",
     "paGain": 2,
-    "scaling": 0,
     "type": "buff"
   },
   "mot_vampirique": {
@@ -958,7 +894,6 @@
     "desc": "Dégâts modérés ; toute l'équipe récupère un quart des dégâts infligés.",
     "id": "mot_vampirique",
     "nom": "Mot vampirique",
-    "scaling": 0.35,
     "soinEquipeRatio": 0.25,
     "type": "degats"
   },
@@ -972,7 +907,6 @@
     "id": "muspel",
     "maxParTour": 1,
     "nom": "Muspel",
-    "scaling": 0.35,
     "type": "degats",
     "zoneLance": true
   },
@@ -990,7 +924,6 @@
     },
     "id": "oeil_de_taupe",
     "nom": "Œil de Taupe",
-    "scaling": 0.15,
     "type": "degats",
     "zoneLigne": true
   },
@@ -1007,7 +940,6 @@
       "ratio": 0.5,
       "seuil": 3
     },
-    "scaling": 0.45,
     "type": "degats"
   },
   "paturage": {
@@ -1029,7 +961,6 @@
     },
     "id": "paturage",
     "nom": "Pâturage",
-    "scaling": 0.28,
     "type": "degats"
   },
   "pendule": {
@@ -1042,7 +973,6 @@
     "id": "pendule",
     "maxParCibleParTour": 1,
     "nom": "Pendule",
-    "scaling": 0,
     "telefragSiOccupee": true,
     "type": "degats"
   },
@@ -1054,7 +984,6 @@
     "desc": "Dégâts faibles.",
     "id": "picotement",
     "nom": "Picotement",
-    "scaling": 0.3,
     "type": "degats"
   },
   "piege_a_fragmentation": {
@@ -1068,7 +997,6 @@
     "nom": "Piège à Fragmentation",
     "posePiege": true,
     "ratioLigne": 0.5,
-    "scaling": 0.28,
     "type": "degats"
   },
   "piege_funeste": {
@@ -1082,7 +1010,6 @@
     "maxParTour": 2,
     "nom": "Piège Funeste",
     "posePiege": true,
-    "scaling": 0.35,
     "type": "degats"
   },
   "pile_ou_face": {
@@ -1095,7 +1022,6 @@
     "maxParTour": 4,
     "nom": "Pile ou Face",
     "reduitCoutSiCrit": 1,
-    "scaling": 0.27,
     "type": "degats"
   },
   "pique_fulgurant": {
@@ -1112,7 +1038,6 @@
     },
     "id": "pique_fulgurant",
     "nom": "Piqué fulgurant",
-    "scaling": 0.45,
     "type": "degats"
   },
   "pluie_de_pommes": {
@@ -1124,7 +1049,6 @@
     "desc": "Blop Reinette Royal fait pleuvoir les pommes sur toute la rangée ciblée.",
     "id": "pluie_de_pommes",
     "nom": "Pluie de pommes",
-    "scaling": 0.48,
     "type": "degats",
     "zoneLigne": true
   },
@@ -1145,7 +1069,6 @@
       ]
     },
     "nom": "Ponte larvaire",
-    "scaling": 0,
     "type": "invocation"
   },
   "portail": {
@@ -1158,7 +1081,6 @@
     "maxParTour": 2,
     "nom": "Portail",
     "posePortail": true,
-    "scaling": 0,
     "type": "buff"
   },
   "poupee_garde": {
@@ -1174,7 +1096,6 @@
       "pv": 40
     },
     "nom": "Poupée de garde",
-    "scaling": 0,
     "type": "invocation"
   },
   "precipitation": {
@@ -1189,7 +1110,6 @@
     "nom": "Précipitation",
     "paImmediat": 5,
     "pasPremierTour": true,
-    "scaling": 0,
     "type": "buff"
   },
   "premonition": {
@@ -1201,7 +1121,6 @@
     "id": "premonition",
     "nom": "Prémonition",
     "paProchainTour": 2,
-    "scaling": 0,
     "type": "buff"
   },
   "proie": {
@@ -1213,7 +1132,6 @@
     "id": "proie",
     "marqueProie": 0.15,
     "nom": "Proie",
-    "scaling": 0,
     "type": "debuff"
   },
   "pugilat": {
@@ -1227,7 +1145,6 @@
     "maxParCibleParTour": 1,
     "nom": "Pugilat",
     "ratioLigne": 0.5,
-    "scaling": 0.22,
     "type": "degats"
   },
   "racines_ancestrales": {
@@ -1239,7 +1156,6 @@
     "desc": "Abraknyde Ancestral ses racines atteignent n'importe qui, même en rangée arrière.",
     "id": "racines_ancestrales",
     "nom": "Racines ancestrales",
-    "scaling": 0.64,
     "type": "degats"
   },
   "racines_voraces": {
@@ -1251,7 +1167,6 @@
     "desc": "Tournesol Affamé draine la cible et rend 60 % des dégâts en PV à tout son camp.",
     "id": "racines_voraces",
     "nom": "Racines voraces",
-    "scaling": 0.5,
     "soinEquipeRatio": 0.6,
     "type": "degats"
   },
@@ -1264,7 +1179,6 @@
     "id": "rayon_de_wakfu",
     "maxParTour": 2,
     "nom": "Rayon de Wakfu",
-    "scaling": 0.25,
     "soinLigneAvantRatio": 1,
     "type": "degats",
     "zoneLigne": true
@@ -1279,7 +1193,6 @@
     "desc": "Gros coup unique : +50 % de dégâts par Téléfrag accumulé sur la cible, jusqu'à quatre.",
     "id": "rayon_obscur",
     "nom": "Rayon Obscur",
-    "scaling": 0.4,
     "type": "degats"
   },
   "resquille": {
@@ -1292,7 +1205,6 @@
     "id": "resquille",
     "nom": "Resquille",
     "resquille": 2,
-    "scaling": 0,
     "type": "buff"
   },
   "ripaille": {
@@ -1304,7 +1216,6 @@
     "desc": "Le Chouque se repaît de sa victime : rend la moitié des dégâts en PV.",
     "id": "ripaille",
     "nom": "Ripaille",
-    "scaling": 0.65,
     "type": "degats",
     "vampirismeRatio": 0.5
   },
@@ -1322,7 +1233,6 @@
     "id": "riposte_mecanique",
     "maxParTour": 1,
     "nom": "Riposte mécanique",
-    "scaling": 0.42,
     "type": "degats"
   },
   "rosee_regenerante": {
@@ -1335,7 +1245,6 @@
     "hotPct": 0.05,
     "id": "rosee_regenerante",
     "nom": "Rosée régénérante",
-    "scaling": 0,
     "type": "buff"
   },
   "rostre_broyeur": {
@@ -1352,7 +1261,6 @@
     },
     "id": "rostre_broyeur",
     "nom": "Rostre broyeur",
-    "scaling": 0.55,
     "type": "degats"
   },
   "roublabot": {
@@ -1365,7 +1273,6 @@
     "desc": "Envoie un ennemi sur la rangée opposée, sans lui infliger de dégâts.",
     "id": "roublabot",
     "nom": "Roublabot",
-    "scaling": 0,
     "type": "degats"
   },
   "roublardise": {
@@ -1378,7 +1285,6 @@
     "id": "roublardise",
     "nom": "Roublardise",
     "nullifieProchain": true,
-    "scaling": 0,
     "type": "buff"
   },
   "roulette": {
@@ -1413,7 +1319,6 @@
     ],
     "id": "roulette",
     "nom": "Roulette",
-    "scaling": 0,
     "tiragesSiCrit": 2,
     "type": "buff"
   },
@@ -1427,7 +1332,6 @@
     "nom": "Sablier de Xélor",
     "retraitPA": 2,
     "retraitPAChance": 1,
-    "scaling": 0.25,
     "type": "degats"
   },
   "sarbacane_curare": {
@@ -1443,7 +1347,6 @@
     },
     "id": "sarbacane_curare",
     "nom": "Sarbacane au curare",
-    "scaling": 0.42,
     "type": "degats"
   },
   "sarcasme": {
@@ -1463,7 +1366,6 @@
     },
     "id": "sarcasme",
     "nom": "Sarcasme",
-    "scaling": 0.4,
     "type": "degats"
   },
   "sfvc": {
@@ -1484,7 +1386,6 @@
       ]
     },
     "nom": "Sfvc%$*R ?!",
-    "scaling": 0,
     "type": "invocation"
   },
   "soin_noir": {
@@ -1495,7 +1396,6 @@
     "desc": "Rend des PV à un allié.",
     "id": "soin_noir",
     "nom": "Soin noir",
-    "scaling": 0,
     "type": "soin"
   },
   "sortilege_lunaire": {
@@ -1533,7 +1433,6 @@
         }
       }
     ],
-    "scaling": 0.66,
     "type": "degats"
   },
   "souffle_capricieux": {
@@ -1560,7 +1459,6 @@
         }
       }
     ],
-    "scaling": 0.42,
     "type": "degats"
   },
   "souffle_draconique": {
@@ -1572,7 +1470,6 @@
     "desc": "Draegnerys embrase toute la rangée ciblée.",
     "id": "souffle_draconique",
     "nom": "Souffle draconique",
-    "scaling": 0.6,
     "type": "degats",
     "zoneLigne": true
   },
@@ -1584,7 +1481,6 @@
     "desc": "Dragoss Protéiforme régénère l'allié le plus blessé.",
     "id": "souffle_regenerant",
     "nom": "Souffle régénérant",
-    "scaling": 0,
     "type": "soin"
   },
   "sournoiserie": {
@@ -1597,7 +1493,6 @@
     "id": "sournoiserie",
     "maxParTour": 2,
     "nom": "Sournoiserie",
-    "scaling": 0.12,
     "type": "degats"
   },
   "tetanie": {
@@ -1610,7 +1505,6 @@
     "id": "tetanie",
     "nom": "Tétanie",
     "retraitPAProchainTour": 2,
-    "scaling": 0.22,
     "type": "degats"
   },
   "tetanisation": {
@@ -1628,7 +1522,6 @@
     "id": "tetanisation",
     "nom": "Tétanisation",
     "rage": true,
-    "scaling": 0.4,
     "type": "degats"
   },
   "tibias": {
@@ -1642,7 +1535,6 @@
     "id": "tibias",
     "nom": "Tibias",
     "rage": true,
-    "scaling": 0.3,
     "type": "degats",
     "zoneLigne": true
   },
@@ -1655,7 +1547,6 @@
     "desc": "Projectile en cloche : touche n'importe quel ennemi, même en ligne arrière.",
     "id": "tir_courbe",
     "nom": "Tir courbe",
-    "scaling": 0.35,
     "type": "degats"
   },
   "tir_puissant": {
@@ -1672,7 +1563,6 @@
     "id": "tir_puissant",
     "maxParTour": 1,
     "nom": "Tir Puissant",
-    "scaling": 0,
     "type": "buff"
   },
   "toile_gluante": {
@@ -1689,7 +1579,6 @@
     },
     "id": "toile_gluante",
     "nom": "Toile gluante",
-    "scaling": 0.55,
     "type": "degats",
     "zoneLigne": true
   },
@@ -1705,7 +1594,6 @@
     "rappelleLance": {
       "soinParDurabilite": 7
     },
-    "scaling": 0,
     "type": "buff"
   },
   "vapeurs_corrosives": {
@@ -1721,7 +1609,6 @@
       "degats": 12,
       "duree": 2
     },
-    "scaling": 0.5,
     "type": "degats",
     "zoneLigne": true
   },
@@ -1739,7 +1626,6 @@
     "desc": "Bouclier de 15 % des PV max à toute la rangée du Iop, lui compris, pendant 2 tours.",
     "id": "vertu",
     "nom": "Vertu",
-    "scaling": 0,
     "type": "buff"
   },
   "vigie": {
@@ -1766,7 +1652,6 @@
     },
     "id": "vigie",
     "nom": "Vigie",
-    "scaling": 0.28,
     "type": "degats"
   },
   "vigueur_bois": {
@@ -1778,7 +1663,6 @@
     "desc": "+30 % de dégâts au prochain sort offensif du lanceur.",
     "id": "vigueur_bois",
     "nom": "Vigueur des bois",
-    "scaling": 0,
     "type": "buff"
   },
   "zenith": {
@@ -1791,7 +1675,6 @@
     "id": "zenith",
     "maxParTour": 1,
     "nom": "Zénith",
-    "scaling": 0.32,
     "type": "degats",
     "zoneLigne": true
   }

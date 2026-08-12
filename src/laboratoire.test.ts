@@ -7,6 +7,7 @@ import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZon
 import { toileDeZone, fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { controllerIA, lancerSort, type CombatCtx } from "./combat";
 import type { Combatant } from "./types";
+import { multStatFrappe } from "./progression";
 
 const ELEMENT_DE = {
   scorbute: "feu", croc_gland: "terre", crowneille: "air",
@@ -275,7 +276,7 @@ describe("comportement des créatures du Laboratoire", () => {
       const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
       const coup = (s: string) => {
         const sort = SORTS[s];
-        const direct = ((sort.baseMin + sort.baseMax) / 2 + dom * sort.scaling) * mult;
+        const direct = ((sort.baseMin + sort.baseMax) / 2) * multStatFrappe(dom) * mult;
         const poison = sort.poison ? sort.poison.degats * sort.poison.duree : 0;
         return (direct + poison) * (sort.zoneLigne ? cibles : 1);
       };

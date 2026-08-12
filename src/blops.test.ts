@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, zonesDeTranche, localiserZone, offsetToile } from "./data";
 import { toileDeZone } from "./run";
+import { multStatFrappe } from "./progression";
 
 const COULEURS = ["griotte", "indigo", "reinette", "coco"] as const;
 const STAT_DE_COULEUR = { griotte: "intelligence", indigo: "chance", reinette: "force", coco: "agilite" } as const;
@@ -84,7 +85,7 @@ describe("signatures des Blops Royaux", () => {
     const coupType = (id: string, stat: string, sort: string) => {
       const s = SORTS[sort];
       const st = MONSTRES[id].stats as unknown as Record<string, number>;
-      return (s.baseMin + s.baseMax) / 2 + st[stat] * (s.scaling ?? 0);
+      return ((s.baseMin + s.baseMax) / 2) * multStatFrappe(st[stat]);
     };
     const glouto = coupType("gloutoblop", "force", "charge");
     const blopignon = coupType("blopignon", "agilite", "morsure");

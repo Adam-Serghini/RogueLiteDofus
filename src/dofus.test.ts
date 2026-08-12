@@ -334,7 +334,7 @@ describe("Dorigami — intégration moteur (runCombat)", () => {
     ennemi.pvMax = 500; ennemi.pvActuels = 500;
     ennemi.initiative = 1;
     const spellTue = {
-      ...SORTS.morsure, id: "test_dofus_dorigami", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_dorigami", baseMin: 999, baseMax: 999, coutPA: 1,
     };
     const controllerJoueur = (acteur: Combatant): Action | null =>
       acteur.ref === heros.ref ? { sort: spellTue, cibleRef: ennemi.ref } : null;
@@ -360,7 +360,7 @@ describe("Dorigami — intégration moteur (runCombat)", () => {
     ennemi.pvMax = 1000; ennemi.pvActuels = 1000;
     ennemi.initiative = 100; // agit avant le héros
     const spellTue = {
-      ...SORTS.morsure, id: "test_dofus_dorigami_ennemi", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_dorigami_ennemi", baseMin: 999, baseMax: 999, coutPA: 1,
     };
     const controllerEnnemi = (acteur: Combatant): Action | null =>
       acteur.ref === ennemi.ref ? { sort: spellTue, cibleRef: heros.ref } : null;
@@ -440,7 +440,7 @@ describe("crochet fin de tour — intégration moteur (runCombat)", () => {
     ennemi.initiative = 1;
     ennemi.position = 0; // ligne avant : compte pour l'Émeraude
     const spellTue = {
-      ...SORTS.morsure, id: "test_dofus_emeraude", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_emeraude", baseMin: 999, baseMax: 999, coutPA: 1,
     };
     let bouclierVu = 0;
     const controllerJoueur = (acteur: Combatant): Action | null => {
@@ -479,7 +479,7 @@ describe("crochet fin de tour — intégration moteur (runCombat)", () => {
     ennemi.initiative = 1;
     ennemi.position = 0; // ligne avant : compterait pour l'Émeraude si le bouclier passait
     const spellTue = {
-      ...SORTS.morsure, id: "test_dofus_emeraude_friction", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_emeraude_friction", baseMin: 999, baseMax: 999, coutPA: 1,
     };
     let bouclierVu = 0;
     const controllerJoueur = (acteur: Combatant): Action | null => {
@@ -519,7 +519,7 @@ describe("reliques Dofus : garde de camp (Round de correction 1)", () => {
     ennemi.initiative = 100; // agit avant le héros à chaque ronde
     ennemi.position = 0; // ligne avant : compterait pour l'Émeraude si la garde sautait
     const spellTue = {
-      ...SORTS.morsure, id: "test_dofus_garde", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_garde", baseMin: 999, baseMax: 999, coutPA: 1,
     };
     let ennemiSoigne = false, ennemiBouclierVu = false, herosSoigne = false, herosBouclierVu = false;
     const controllerJoueur = (acteur: Combatant): Action | null => {
@@ -568,7 +568,7 @@ describe("crochet début de tour — intégration moteur (runCombat)", () => {
     ennemi.pvMax = 500; ennemi.pvActuels = 500;
     ennemi.initiative = 1;
     const spellTue = {
-      ...SORTS.morsure, id: "test_dofus_tue", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_tue", baseMin: 999, baseMax: 999, coutPA: 1,
     };
     const cs = [heros, ennemi];
     // Plan : round 1 (tour 1, IMPAIR) le héros passe — pas de Dokoko à ce tour-là.
@@ -592,7 +592,7 @@ describe("crochet début de tour — intégration moteur (runCombat)", () => {
     const { runCombat } = await import("./combat");
     const { SORTS } = await import("./data");
     const spellFrappe = {
-      ...SORTS.morsure, id: "test_dofus_frappe", baseMin: 1000, baseMax: 1000, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_dofus_frappe", baseMin: 1000, baseMax: 1000, coutPA: 1,
     };
     // Isole le multiplicateur du Nébuleux : stats à zéro (multOffensif = ×1, pas de
     // crit ni de scaling élémentaire) et résistances/armure nulles, pour que le SEUL
@@ -722,7 +722,7 @@ describe("Domakuro — intégration moteur (runCombat)", () => {
     const { runCombat } = await import("./combat");
     const { SORTS } = await import("./data");
     const spellFrappe = {
-      ...SORTS.morsure, id: "test_domakuro_frappe", baseMin: 1000, baseMax: 1000, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_domakuro_frappe", baseMin: 1000, baseMax: 1000, coutPA: 1,
     };
     // Isole le bonus : stats à zéro (multOffensif = ×1, pas de crit ni de scaling
     // élémentaire) et résistances/armure nulles, même patron que le test Nébuleux
@@ -767,7 +767,7 @@ describe("Domakuro — intégration moteur (runCombat)", () => {
     const { runCombat } = await import("./combat");
     const { SORTS } = await import("./data");
     const spellFrappe = {
-      ...SORTS.morsure, id: "test_domakuro_frappe_direct", baseMin: 1000, baseMax: 1000, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_domakuro_frappe_direct", baseMin: 1000, baseMax: 1000, coutPA: 1,
     };
     const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
     heros.stats = { ...heros.stats, force: 0, intelligence: 0, agilite: 0, chance: 0 };
@@ -796,7 +796,7 @@ describe("Domakuro — intégration moteur (runCombat)", () => {
     const { runCombat } = await import("./combat");
     const { SORTS } = await import("./data");
     const spellFrappe = {
-      ...SORTS.morsure, id: "test_domakuro_garde", baseMin: 1, baseMax: 1, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_domakuro_garde", baseMin: 1, baseMax: 1, coutPA: 1,
     };
     const heros = equipeCombattante(nouvelleRun(["iop"]))[0];
     heros.stats = { ...heros.stats, agilite: 0 };

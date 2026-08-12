@@ -7,6 +7,7 @@ import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } 
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { lancerSort, controllerIA } from "./combat";
 import type { Combatant } from "./types";
+import { multStatFrappe } from "./progression";
 
 const ELEMENT_DE = {
   trukikol: "terre", moon: "terre",
@@ -341,7 +342,7 @@ describe("budget de PA et domination", () => {
     const offensifs = m.sorts.filter((s) => SORTS[s].type === "degats");
     const coup = (s: string) => {
       const sort = SORTS[s];
-      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      const direct = ((sort.baseMin + sort.baseMax) / 2) * multStatFrappe(d) * mult;
       return direct * (sort.zoneLigne ? cibles : 1);
     };
     const cycle = (dispo: string[]) => {

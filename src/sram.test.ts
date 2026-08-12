@@ -101,7 +101,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Attaque Mortelle", () => {
     expect(SORTS.attaque_mortelle).toEqual({
       id: "attaque_mortelle", nom: "Attaque Mortelle", type: "degats", cible: "ennemi_ligne",
-      coutPA: 4, baseMin: 9, baseMax: 13, scaling: 0.32,
+      coutPA: 4, baseMin: 9, baseMax: 13,
       bonusParChausseTrappe: 0.15, consommeChausseTrappe: true,
       desc: "Le plus gros coup du Sram, d'autant plus fort qu'il a déjà fait mouche : +15 % de dégâts par Chausse-Trappe accumulé, puis le compteur repart de zéro.",
     });
@@ -110,7 +110,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Sournoiserie", () => {
     expect(SORTS.sournoiserie).toEqual({
       id: "sournoiserie", nom: "Sournoiserie", type: "degats", cible: "ennemi_tous",
-      coutPA: 2, baseMin: 3, baseMax: 5, scaling: 0.12,
+      coutPA: 2, baseMin: 3, baseMax: 5,
       maxParTour: 2, deplaceCible: "toggle",
       desc: "Petit coup qui atteint n'importe quel ennemi, rangée arrière comprise, puis le fait passer sur la rangée opposée. Deux lancers par tour au maximum.",
     });
@@ -119,7 +119,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Piège Funeste", () => {
     expect(SORTS.piege_funeste).toEqual({
       id: "piege_funeste", nom: "Piège Funeste", type: "degats", cible: "ennemi_ligne",
-      coutPA: 3, baseMin: 10, baseMax: 14, scaling: 0.35,
+      coutPA: 3, baseMin: 10, baseMax: 14,
       maxParTour: 2, posePiege: true, bonusParEnnemiLigneCible: 0.3,
       desc: "Pose un piège sur la rangée de la cible, sans aucun dégât immédiat. Il part dès qu'un ennemi est déplacé sur cette rangée, avec +30 % de dégâts par autre ennemi vivant qui s'y trouve.",
     });
@@ -128,7 +128,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Piège à Fragmentation", () => {
     expect(SORTS.piege_a_fragmentation).toEqual({
       id: "piege_a_fragmentation", nom: "Piège à Fragmentation", type: "degats", cible: "ennemi_ligne",
-      coutPA: 3, baseMin: 8, baseMax: 11, scaling: 0.28,
+      coutPA: 3, baseMin: 8, baseMax: 11,
       maxParTour: 2, posePiege: true, ratioLigne: 0.5,
       desc: "Pose un piège sur la rangée de la cible, sans aucun dégât immédiat. Au déclenchement, il éclabousse le reste de la rangée pour la moitié des dégâts.",
     });
@@ -137,7 +137,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Concentration de Chakra", () => {
     expect(SORTS.concentration_de_chakra).toEqual({
       id: "concentration_de_chakra", nom: "Concentration de Chakra", type: "buff", cible: "soi",
-      coutPA: 2, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 2,
+      coutPA: 2, baseMin: 0, baseMax: 0, cooldownTours: 2,
       bonusPieges: 0.5, bonusPiegesDuree: 1,
       desc: "Pendant 1 tour, les pièges du Sram infligent 50 % de dégâts en plus, y compris ceux qu'un allié fait partir en déplaçant un ennemi.",
     });
@@ -146,7 +146,7 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges, objets
   it("Brume", () => {
     expect(SORTS.brume).toEqual({
       id: "brume", nom: "Brume", type: "buff", cible: "allie",
-      coutPA: 3, baseMin: 0, baseMax: 0, scaling: 0, cooldownTours: 5,
+      coutPA: 3, baseMin: 0, baseMax: 0, cooldownTours: 5,
       esquivePartageeRangee: { duree: 2 },
       desc: "Pendant 2 tours, toute la rangée de l'allié ciblé profite de l'esquive du Sram, bonus de position exclu.",
     });
@@ -213,7 +213,7 @@ describe("Piège Funeste : majoration au déclenchement", () => {
     // est prouvée sans dégât ci-dessus. Le mouvement qui déclenche est un sort
     // synthétique sans dégât propre (baseMax 0) pour n'attribuer AUCUN dégât au
     // mouvement lui-même, seulement au piège.
-    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_funeste", baseMin: 0, baseMax: 0, scaling: 0 };
+    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_funeste", baseMin: 0, baseMax: 0 };
 
     // Scénario A : la cible déplacée est SEULE sur la rangée surveillée à l'arrivée.
     const poseurA = sram();
@@ -253,7 +253,7 @@ describe("Piège à Fragmentation : éclaboussure au déclenchement", () => {
     autre.position = 0; // déjà en rangée avant : reçoit l'éclaboussure
     poseur.pieges = [{ sortId: "piege_a_fragmentation", camp: cible.camp, avant: true }];
 
-    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_fragmentation", baseMin: 0, baseMax: 0, scaling: 0 };
+    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_fragmentation", baseMin: 0, baseMax: 0 };
     const avantCible = cible.pvActuels;
     const avantAutre = autre.pvActuels;
     lancerSort(poseur, sortMouvement, cible.ref, [poseur, cible, autre], ctx());
@@ -393,7 +393,7 @@ describe("Concentration de Chakra : majore TOUS les pièges déclenchés pendant
     const cibleSans = mannequin();
     cibleSans.position = 4;
     cSansChakra.pieges = [{ sortId: "piege_funeste", camp: cibleSans.camp, avant: true }];
-    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_chakra_sans", baseMin: 0, baseMax: 0, scaling: 0 };
+    const sortMouvement = { ...SORTS.roublabot, id: "test_mouvement_chakra_sans", baseMin: 0, baseMax: 0 };
     const avantSans = cibleSans.pvActuels;
     lancerSort(cSansChakra, sortMouvement, cibleSans.ref, [cSansChakra, cibleSans], ctx());
     const dmgSans = avantSans - cibleSans.pvActuels;
@@ -405,7 +405,7 @@ describe("Concentration de Chakra : majore TOUS les pièges déclenchés pendant
     const cibleAvec = mannequin();
     cibleAvec.position = 4;
     cAvecChakra.pieges = [{ sortId: "piege_funeste", camp: cibleAvec.camp, avant: true }];
-    const sortMouvement2 = { ...SORTS.roublabot, id: "test_mouvement_chakra_avec", baseMin: 0, baseMax: 0, scaling: 0 };
+    const sortMouvement2 = { ...SORTS.roublabot, id: "test_mouvement_chakra_avec", baseMin: 0, baseMax: 0 };
     const avantAvec = cibleAvec.pvActuels;
     lancerSort(cAvecChakra, sortMouvement2, cibleAvec.ref, [cAvecChakra, cibleAvec], ctx());
     const dmgAvec = avantAvec - cibleAvec.pvActuels;
@@ -418,7 +418,7 @@ describe("Concentration de Chakra : majore TOUS les pièges déclenchés pendant
     const cibleAvec2 = mannequin();
     cibleAvec2.position = 4;
     cAvecChakra.pieges = [{ sortId: "piege_funeste", camp: cibleAvec2.camp, avant: true }];
-    const sortMouvement3 = { ...SORTS.roublabot, id: "test_mouvement_chakra_avec_2", baseMin: 0, baseMax: 0, scaling: 0 };
+    const sortMouvement3 = { ...SORTS.roublabot, id: "test_mouvement_chakra_avec_2", baseMin: 0, baseMax: 0 };
     const avantAvec2 = cibleAvec2.pvActuels;
     lancerSort(cAvecChakra, sortMouvement3, cibleAvec2.ref, [cAvecChakra, cibleAvec2], ctx());
     const dmgAvec2 = avantAvec2 - cibleAvec2.pvActuels;

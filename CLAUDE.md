@@ -32,10 +32,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run typecheck` — `tsc --noEmit`, strict
 - `npm run build` — typecheck + bundle de production dans `dist/`
 - `npm run sim` — **banc d'équilibrage headless** (`src/sim.ts` via `vitest.sim.config.ts`, hors du
-  glob `*.test.ts` donc ignoré par `npm test`). Rejoue chaque rencontre N fois (IA des deux côtés, RNG
-  à graine) pour une équipe de référence multi-éléments au niveau attendu de chaque zone, en trois
-  états d'équipement (**NU / MI 2-pièces / SET complet**), et imprime un tableau win% · tours · PV
-  restants (drapeaux `falaise 2→4p`, `stalemate?`…).
+  glob `*.test.ts` donc ignoré par `npm test`). Rejoue N **parcours de zone** (IA des deux côtés, RNG à
+  graine) pour une équipe de référence multi-éléments, en deux loadouts réalistes (**ATTENDU** = 4 pièces
+  de la toile à rareté tirée / **MALCHANCE** = 2 pièces commun), et imprime `clear%` · PV à l'entrée du
+  donjon · PV en fin de zone · héros KO, plus une **échelle d'Ascension** (clear% des 5 crans).
 - `npm run content:import -- <fichier> [--force] [--sans-assets] [--sans-tests]` — importe un export de
   l'éditeur (voir *Pipeline de contenu*)
 - `npm run editor:build` — génère `editeur.html` à la racine (gitignoré), l'éditeur de contenu
@@ -124,11 +124,28 @@ quelques semaines, et un chiffre faux est pire que pas de chiffre.
 
 ### Banc d'équilibrage — `npm run sim` (`src/sim.ts`)
 
-**Caveat** : son `controllerIA` soigne optimalement, ne joue que les sorts `type: "degats"` (le plus cher
-d'abord) et ne se trompe jamais → c'est un **plancher de difficulté**, pas le ressenti réel. Plusieurs
-rencontres sont structurellement **sous-lues** par lui et ne doivent pas être nerfées pour lui plaire : la
-mue du Kwakwa, les annulations par tour du Meulou, la toile du Domaine Ancestral, et tout kit dont la force
-passe par des buffs ou une séquence de PA.
+Il mesure un **parcours de zone**, jamais une rencontre isolée : la difficulté de ce jeu est une
+**attrition** (les PV persistent d'un nœud au suivant, la taverne est le seul soin), et un boss gagné à
+100 % depuis des PV pleins peut être un wipe quand on y arrive à 45 %. Le parcours simulé calque
+`main.ts` : 6 combats + 1 élite dans un ordre tiré, une taverne à position tirée (supprimée à l'Ultime
+via `sansNoeudsDeZone`, comme en jeu), puis le donjon ; PV reportés, XP en route, rencontres et salle de
+boss tirées dans les pools.
+
+**Pas de colonne « nu »** : personne n'est nu à un boss, et elle pilotait les drapeaux. Les deux loadouts
+encadrent la réalité — **ATTENDU** tire la rareté de chaque pièce aux vrais poids (60/25/12/3), donc la
+moyenne intègre la chance de drop au lieu de figer tout le monde en commun.
+
+**Caveat, et il compte** : son `controllerIA` soigne optimalement, ne joue que les sorts `type: "degats"`
+(le plus cher d'abord) et ignore buffs, placements et séquences de PA — c'est-à-dire l'essentiel des onze
+kits reworkés. C'est un **plancher de difficulté**, donc il n'est informatif que **dans un seul sens** :
+un `clear` élevé prouve qu'une zone est facile, un `clear` bas ne prouve pas qu'elle est trop dure.
+Plusieurs rencontres sont structurellement **sous-lues** par lui et ne doivent pas être nerfées pour lui
+plaire : la mue du Kwakwa, les annulations par tour du Meulou, la toile du Domaine Ancestral.
+
+**Cible de conception** (lue par `verdict()`) : ★1 doit être **clairable simplement sans être un autowin**
+— un clear parfait qui n'entame pas les PV n'offre aucune tension. Il faut de la marge au-dessus, parce
+que la méta-progression à venir (reliques Dofus, parchotage) aplanira le jeu : **Cauchemar et Ultime ne
+doivent pas être clairables en l'état**.
 
 ### Banc d'essai de l'éditeur — `src/banc.ts` + `editor/js/70-banc.js`
 
@@ -219,8 +236,9 @@ rien.
 
 ### Pipeline de dégâts (l'ordre compte — `degatsCible` dans `combat.ts`)
 
-esquive (Agilité, plafonnée) → jet (ou max si charge `maxRoll`) → + stat de l'élément de frappe ×
-scaling → critique (Agilité, plafond 35 %, il *ajoute* des dégâts, ne double pas) → debuff
+esquive (Agilité, plafonnée) → jet (ou max si charge `maxRoll`) → **× `multStatFrappe`** (la stat de
+l'élément de frappe MULTIPLIE la fourchette : `1 + DEGATS_PAR_POINT × stat`, taux unique du jeu, voir
+*Dégâts : un seul taux* plus bas) → critique (Agilité, plafond 35 %, il *ajoute* des dégâts, ne double pas) → debuff
 `degatsInfliges` → multiplicateur de rebond → résistances (sauf `ignoreResistances`) → bonus d'équipe
 Dofus (camp joueur) / palier d'Ascension (camp ennemi) → reliques Dofus à déclenchement, DU TOUR
 (`degatsPctDofus` — Nébuleux, Domakuro) puis PERMANENT (`degatsPctPermanent` — Domakuro une fois acquis)
@@ -245,7 +263,8 @@ c'est la leçon d'une zone entière.
 Soins via `soigner` (dont `soinComplet`, `allie_tous`, `soinEquipeRatio`) ; `appliquerSoutien` applique
 bouclier/HoT/`paGain`/`bonusProchainSortPct`. Les cooldowns vivent sur `acteur.cooldowns` et sont
 appliqués **dans `ciblesValides`**. Un soin vaut `jet(baseMin, baseMax) × multSoin(stats du lanceur)` —
-**`scaling` est IGNORÉ pour les soins**, la puissance se règle uniquement par `baseMin`/`baseMax`.
+un soin ne passe **jamais** par `multStatFrappe` : sa puissance se règle uniquement par
+`baseMin`/`baseMax`, et la caractéristique de frappe n'y entre que via `multSoin`.
 
 ### Ordre de tour (ALTERNÉ et FIGÉ)
 
@@ -275,6 +294,28 @@ invocations-**obstacles** (`estInvocation` : Poupée, Lance, Égide) n'ont jamai
 
 Seul le `crit` **plat** de l'équipement peut dépasser le plafond de 35 %, et uniquement via `critExcedent`
 (le surplus devient des dégâts plats). La part dérivée de la stat ne le dépasse jamais.
+
+### Dégâts : un seul taux, plus aucun coefficient par sort
+
+Un sort de dégâts se règle **uniquement par sa fourchette** (`baseMin`/`baseMax`). La caractéristique de
+frappe la **multiplie** au taux unique `DEGATS_PAR_POINT` (`progression.ts`, 3 % par point), via
+`multStatFrappe` — **source unique** partagée par le pipeline, le classement des éléments et les
+infobulles. Le champ `Spell.scaling` / `AttaqueArme.scaling` a été **retiré** : il n'existe plus de
+coefficient réglable sort par sort.
+
+Deux conséquences à garder en tête :
+
+1. **Le bonus de stat est PROPORTIONNEL à la fourchette.** Élargir une fourchette majore aussi tout le
+   scaling du sort — ce n'était pas le cas en additif. Un lanceur à grosse fourchette gagne donc
+   structurellement plus qu'un lanceur à petite fourchette, à stat égale. C'est ce qui rend la lecture
+   « telle fourchette one-shot telle tranche de PV » directe, et c'est aussi ce qui a fait grimper les
+   signatures de monstres de T2 (fourchettes de 20-26) quand les kits de héros (8-10) n'ont pas bougé.
+2. **Le choix de l'élément de frappe ne dépend plus du jet.** Le jet étant un facteur commun à tous les
+   candidats, `elementsClasses` ne classe plus que sur `multStatFrappe(stat) × (1 − résistance)` — donc
+   `elementContre` (affichage) est devenu **exact**, il n'approxime plus rien. Corollaire : le poids
+   relatif de la stat face à une résistance a baissé, et une résistance de 50 % (les Blops Royaux en
+   portent) peut légitimement faire basculer un monstre sur son second élément si son écart de
+   caractéristiques est faible — `element.test.ts` nomme le cas (l'Araknotron).
 
 ### Autres invariants
 
@@ -310,7 +351,7 @@ en fonction pure du niveau.
 | air (agilité) | taux **et** dégâts de critique (plafonds ci-dessus) |
 | eau (chance) | +prospection passive : `Math.floor(chance / 3)` |
 
-**L'intelligence compte double** (scaling élémentaire *et* `multOffensif`, qu'elle plafonne dès 100) : à
+**L'intelligence compte double** (multiplicateur de fourchette *et* `multOffensif`, qu'elle plafonne dès 100) : à
 dominante égale, un monstre feu frappe ~38 % plus fort qu'un autre. Repère mesuré : **75 en feu ≈ 105
 dans un autre élément**. C'est la cause la plus fréquente d'une escorte qui dépasse son boss.
 
@@ -339,10 +380,10 @@ boucliers bloqués (19), désenvoûtement `dissipePositifs` (20), premier soigne
 (21), annulations par tour (22), toile `tetanise` (23), examen final tirant une des quatre leçons au
 hasard (24).
 
-**Trois chantiers ouverts sur T2** : (1) les **objets des toiles 13 à 24**, qu'Adam fournira ; (2) la
-**passe d'équilibrage** — sans objets, les colonnes NU/MI/SET du banc sont **identiques par
-construction**, donc **aucun chiffre de T2 n'est exploitable** ; (3) **retirer `enChantier: true`** de
-`TRANCHES[1]` (un test verrouille sa présence tant que ce n'est pas décidé).
+**Deux chantiers ouverts sur T2** : (1) la **passe d'équilibrage** — les objets des toiles 13 à 24 sont
+en place, donc les chiffres du banc sont désormais exploitables, et ils disent que la tranche est un
+**mur** presque partout dès ★1 ; (2) **retirer `enChantier: true`** de `TRANCHES[1]` (un test verrouille
+sa présence tant que ce n'est pas décidé).
 
 **Mécaniques qui ont quitté le camp du joueur** (elles vivent encore côté monstres, sauf mention) :
 `dissipePositifs`, poison transmissible (`poison.transmet`), taunt (`provoqueTours`), riposte

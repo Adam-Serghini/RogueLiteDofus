@@ -19,9 +19,9 @@ afterEach(() => {
 
 describe("appliquerContenuEdite", () => {
   it("remplace la valeur d'un sort existant", () => {
-    expect(SORTS.zenith.scaling).toBe(0.32);
-    appliquerContenuEdite({ sorts: { ...sortsLivres, zenith: { ...SORTS.zenith, scaling: 9 } } as never });
-    expect(SORTS.zenith.scaling).toBe(9);
+    expect(SORTS.zenith.baseMax).toBe(11);
+    appliquerContenuEdite({ sorts: { ...sortsLivres, zenith: { ...SORTS.zenith, baseMax: 99 } } as never });
+    expect(SORTS.zenith.baseMax).toBe(99);
   });
 
   it("ajoute une entrée absente des données livrées", () => {
@@ -60,7 +60,7 @@ describe("appliquerContenuEdite", () => {
 
   it("conserve l'IDENTITÉ des tables (les modules qui les ont importées voient la mise à jour)", () => {
     const reference = SORTS; // ce que combat.ts détient depuis son import
-    appliquerContenuEdite({ sorts: { ...sortsLivres, zenith: { ...SORTS.zenith, scaling: 7 } } as never });
-    expect(reference.zenith.scaling).toBe(7);
+    appliquerContenuEdite({ sorts: { ...sortsLivres, zenith: { ...SORTS.zenith, baseMax: 77 } } as never });
+    expect(reference.zenith.baseMax).toBe(77);
   });
 });

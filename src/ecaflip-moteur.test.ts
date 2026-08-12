@@ -106,7 +106,7 @@ describe("reduitCoutSiCrit / coutEffectif", () => {
     cible.pvMax = 1000; cible.pvActuels = 1000; // survit aux deux Pile ou Face
     const FINISSEUR: Spell = {
       id: "test_finisseur", nom: "Finisseur", type: "degats", cible: "ennemi_ligne",
-      coutPA: 1, baseMin: 5000, baseMax: 5000, scaling: 0, // achève la cible pour clore le combat
+      coutPA: 1, baseMin: 5000, baseMax: 5000, // achève la cible pour clore le combat
     };
     const cs = [eca, cible];
 
@@ -199,7 +199,7 @@ describe("PA avant paiement (bonusParPADispo) lit le coût EFFECTIF, pas sort.co
     // seul bonusParPADispo fasse varier le résultat.
     const spell: Spell = {
       id: "test_remise_padispo", nom: "Syn Remise+PADispo", type: "degats", cible: "ennemi_ligne",
-      coutPA: 5, baseMin: 10, baseMax: 10, scaling: 0, bonusParPADispo: 0.1, reduitCoutSiCrit: 2,
+      coutPA: 5, baseMin: 10, baseMax: 10, bonusParPADispo: 0.1, reduitCoutSiCrit: 2,
     };
     const lanceur = ecaflip();
     lanceur.stats = { ...lanceur.stats, intelligence: 0 }; // multOffensif neutre (×1)

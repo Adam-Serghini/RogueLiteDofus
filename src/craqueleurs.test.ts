@@ -7,6 +7,7 @@ import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } 
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { controllerIA, lancerSort } from "./combat";
 import type { Combatant } from "./types";
+import { multStatFrappe } from "./progression";
 
 /** Un héros de sonde au niveau OÙ LA ZONE SE JOUE (≈ 70, stat dominante ≈ 150).
  *  `fabriquerEquipe()` sort une équipe de niveau 1 dont les coups tournent à ~19
@@ -336,7 +337,7 @@ describe("budget de PA et jouabilité", () => {
       const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
       const coup = (s: string) => {
         const sort = SORTS[s];
-        const direct = ((sort.baseMin + sort.baseMax) / 2 + dom * sort.scaling) * mult;
+        const direct = ((sort.baseMin + sort.baseMax) / 2) * multStatFrappe(dom) * mult;
         return direct * (sort.zoneLigne ? cibles : 1);
       };
       const cycle = (dispo: string[]) => {

@@ -387,7 +387,7 @@ describe("Égide — interception pour la rangée", () => {
     egide.pvMax = 10; egide.pvActuels = 10; egide.pvBase = 10; // petite Égide, facile à percer
 
     // Un coup qui dépasse largement ses PV la tue — entièrement absorbé, rien ne déborde.
-    lancerSort(ennemi, { ...SORTS.morsure, baseMin: 999, baseMax: 999, scaling: 0 }, allie.ref, cs, ctx());
+    lancerSort(ennemi, { ...SORTS.morsure, baseMin: 999, baseMax: 999 }, allie.ref, cs, ctx());
     expect(egide.pvActuels).toBe(0);
     expect(allie.pvActuels).toBe(allie.pvMax);
 
@@ -545,7 +545,7 @@ describe("Égide — interception pour la rangée", () => {
       baseMin: 0, baseMax: 0, coutPA: 1, invoqueEgide: { tours: 1 },
     };
     const spellTue: Spell = {
-      ...SORTS.morsure, id: "test_tue_ennemi", baseMin: 999, baseMax: 999, scaling: 0, coutPA: 1,
+      ...SORTS.morsure, id: "test_tue_ennemi", baseMin: 999, baseMax: 999, coutPA: 1,
     };
 
     // Plan de Féca : round 1 → pose l'Égide ; round 2 → passe (le minuteur tombe à 0
@@ -583,7 +583,7 @@ describe("Égide — interception pour la rangée", () => {
     // conséquence ASSUMÉE, pas un bug : ce test la FIGE, pour que le jour où les sorts de zone
     // filtreraient les invocations, la régression (fonte ×1,33 qui disparaît en silence) se
     // voie dans un test plutôt que d'être découverte en playtest.
-    const zoneLigne: Spell = { ...SORTS.morsure, id: "test_zone_egide", zoneLigne: true, scaling: 0 };
+    const zoneLigne: Spell = { ...SORTS.morsure, id: "test_zone_egide", zoneLigne: true };
 
     // Témoin : le MÊME sort, sur une cible UNIQUE (pas de zone, pas d'Égide), même rng
     // déterministe (pas de crit/esquive) → la référence « un seul coup ».
@@ -639,7 +639,7 @@ describe("l'Égide n'est jamais un ALLIÉ pour les effets automatiques (soins/bo
 
     const soinTous: Spell = {
       ...SORTS.morsure, id: "test_soin_tous", type: "soin", cible: "allie_tous",
-      baseMin: 50, baseMax: 50, scaling: 0,
+      baseMin: 50, baseMax: 50,
     };
     lancerSort(feca, soinTous, feca.ref, cs, ctx());
 
@@ -655,7 +655,7 @@ describe("l'Égide n'est jamais un ALLIÉ pour les effets automatiques (soins/bo
     const egide = invoquerEgide(feca, allie, 5, cs, ctx())!;
     // L'Égide encaisse un très gros coup direct — sans la correction, elle deviendrait
     // « la plus blessée » et siphonnerait le soin dérivé de dégâts.
-    lancerSort(ennemi, { ...SORTS.morsure, baseMin: 400, baseMax: 400, scaling: 0 }, allie.ref, cs, ctx());
+    lancerSort(ennemi, { ...SORTS.morsure, baseMin: 400, baseMax: 400 }, allie.ref, cs, ctx());
     expect(egide.pvActuels).toBeLessThan(egide.pvMax / 2); // témoin : très blessée
     allie.pvActuels = allie.pvMax; // l'allié protégé, lui, n'a subi AUCUN dégât (interception)
     // On blesse légèrement l'allié pour qu'il soit éligible au soin (pvActuels < pvMax).
@@ -663,7 +663,7 @@ describe("l'Égide n'est jamais un ALLIÉ pour les effets automatiques (soins/bo
     const pvEgideAvant = egide.pvActuels;
 
     const soinAvant: Spell = {
-      ...SORTS.morsure, id: "test_soin_avant", soinAvantBlesseRatio: 1, scaling: 0, baseMin: 20, baseMax: 20,
+      ...SORTS.morsure, id: "test_soin_avant", soinAvantBlesseRatio: 1, baseMin: 20, baseMax: 20,
     };
     lancerSort(feca, soinAvant, ennemi.ref, cs, ctx());
 
@@ -680,7 +680,7 @@ describe("l'Égide n'est jamais un ALLIÉ pour les effets automatiques (soins/bo
 
     const roulette: Spell = {
       ...SORTS.morsure, id: "test_roulette_egide", type: "buff", cible: "soi",
-      baseMin: 0, baseMax: 0, scaling: 0,
+      baseMin: 0, baseMax: 0,
       facesAleatoires: [{ portee: "rangee_avant", bouclierPct: 0.5, effet: { stat: "crit", valeur: 10, duree: 2 } }],
     };
     lancerSort(feca, roulette, feca.ref, cs, ctx());
@@ -722,7 +722,7 @@ describe("la garde de non-cumul du buff de rangée ne touche que SES PROPRES eff
 
     const spell: Spell = {
       ...SORTS.morsure, id: "test_fortif_etranger", type: "buff", cible: "soi",
-      baseMin: 0, baseMax: 0, scaling: 0,
+      baseMin: 0, baseMax: 0,
       effetRangeeAlliee: { rangee: "avant", effets: [{ stat: "resAll", valeur: 0.10, valeurSiDeuxDevant: 0.15, duree: 2 }] },
     };
     lancerSort(lanceur, spell, lanceur.ref, cs, ctx());
@@ -804,6 +804,6 @@ describe("Fortification (buff pur) grisée si sa rangée cible est vide", () => 
  *  rangée avant — calque exact de Fortification, pour le garde-fou de rangée vide. */
 const SORTS_FORTIFICATION_LIKE: Spell = {
   ...SORTS.morsure, id: "test_fortification_like", type: "buff", cible: "soi",
-  baseMin: 0, baseMax: 0, scaling: 0,
+  baseMin: 0, baseMax: 0,
   effetRangeeAlliee: { rangee: "avant", effets: [{ stat: "resAll", valeur: 0.10, valeurSiDeuxDevant: 0.15, duree: 2 }] },
 };

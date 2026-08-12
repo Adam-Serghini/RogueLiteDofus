@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { validerContenu } from "./content-validate.mjs";
 
 const base = () => ({
-  sorts: { morsure: { id: "morsure", nom: "Morsure", type: "degats", coutPA: 3, cible: "ennemi_ligne", baseMin: 4, baseMax: 7, scaling: 0.5 } },
+  sorts: { morsure: { id: "morsure", nom: "Morsure", type: "degats", coutPA: 3, cible: "ennemi_ligne", baseMin: 4, baseMax: 7 } },
   classes: { iop: { id: "iop", nom: "Iop", pvBase: 60, archetype: "melee", elements: ["terre", "feu"], stats: { force: 0, intelligence: 0, agilite: 0, vitalite: 0 }, pa: 6, initiative: 8, sorts: ["morsure"] } },
   monstres: { bouftou: { id: "bouftou", nom: "Bouftou", pv: 20, stats: { force: 10, intelligence: 0, agilite: 2, vitalite: 5 }, pa: 4, initiative: 7, resistances: {}, sorts: ["morsure"], ia: "agressif" } },
   combats: { c1: { nom: "Troupeau", ennemis: [{ monstre: "bouftou", position: 0 }] } },
@@ -23,7 +23,7 @@ describe("passe 1 — schéma", () => {
     expect(validerContenu(modif((c) => { c.monstres.bouftou.pv = -3; }), base())).not.toEqual([]);
   });
   it("refuse min > max sur une attaque d'arme", () => {
-    const err = validerContenu(modif((c) => { c.items.anneau_test.tiers.commun.attaque = { coutPA: 3, baseMin: 9, baseMax: 5, scaling: 0.3 }; }), base());
+    const err = validerContenu(modif((c) => { c.items.anneau_test.tiers.commun.attaque = { coutPA: 3, baseMin: 9, baseMax: 5 }; }), base());
     expect(err.some((e) => e.includes("baseMin"))).toBe(true);
   });
   it("refuse une stat qui DÉCROÎT avec la rareté", () => {

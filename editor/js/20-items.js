@@ -48,8 +48,8 @@ function grilleRaretes(item) {
     lignes.push(ligne(`résist. ${e}`, (t) => t.resistances?.[e], (t, v) => { t.resistances ??= {}; if (v === undefined) delete t.resistances[e]; else t.resistances[e] = v; }));
   lignes.push(ligne("PA bonus", (t) => t.pa, (t, v) => { if (v === undefined) delete t.pa; else t.pa = v; }));
   if (item.slot === "arme")
-    for (const [cle, lib] of [["coutPA", "arme : coût PA"], ["baseMin", "arme : min"], ["baseMax", "arme : max"], ["scaling", "arme : scaling"]])
-      lignes.push(ligne(lib, (t) => t.attaque?.[cle], (t, v) => { t.attaque ??= { coutPA: 3, baseMin: 1, baseMax: 2, scaling: 0.3 }; t.attaque[cle] = v; }));
+    for (const [cle, lib] of [["coutPA", "arme : coût PA"], ["baseMin", "arme : min"], ["baseMax", "arme : max"]])
+      lignes.push(ligne(lib, (t) => t.attaque?.[cle], (t, v) => { t.attaque ??= { coutPA: 3, baseMin: 1, baseMax: 2 }; t.attaque[cle] = v; }));
   return el("table", { class: "raretes" },
     el("tr", {}, el("th", {}, "Stat"), ...RARETES_ED.map((r) =>
       el("th", { class: `r-${r}` }, r, " ", el("input", { type: "checkbox", checked: !!item.tiers[r],

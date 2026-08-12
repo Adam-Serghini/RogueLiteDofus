@@ -5,7 +5,7 @@
 // =============================================================================
 import { DOFUS, CLASSES, ITEMS, RARETE_INFO, ASCENSION, ASCENSION_MAX } from "../data";
 import { chanceCrit, chanceCritEffective, bonusDegatsCrit, CRIT_CAP, statsEffectives, elementDeFrappe, multiplicateurEscaladeSort, coutEffectif } from "../combat";
-import { statElement, multSoin, multOffensif, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
+import { statElement, multSoin, multOffensif, multStatFrappe, VITA_PAR_FORCE, PROSP_PAR_CHANCE, GAINS_ARCHETYPE } from "../progression";
 import type { PersoState } from "../run";
 import type { Archetype, Combatant, Element, EquipSlot, ItemInstance, Meta, Spell, Stats } from "../types";
 import { A, elementAsset, archetypeAsset, classe_img, ICON_KAMAS, BTN_RETOUR, BTN_CONTINUER, FOND_TRANCHE, FOND_ACCUEIL } from "./assets";
@@ -51,9 +51,9 @@ export function setFondTranche(trancheId: string | null): void {
 
 /**
  * Contenu du tooltip d'un sort : fourchette de dégâts/soin **calculée pour le
- * lanceur courant** (jet + élément × scaling × puissance, hors crit/résistance),
- * ou jets de BASE si `acteur` est null (encyclopédie, hors combat) ; puis effet
- * et cible.
+ * lanceur courant** (fourchette × caractéristique de frappe × puissance, hors
+ * crit/résistance), ou jets de BASE si `acteur` est null (encyclopédie, hors
+ * combat) ; puis effet et cible.
  */
 export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
   let principal = "";
@@ -72,9 +72,11 @@ export function sortTooltipHtml(s: Spell, acteur: Combatant | null): string {
       // absente ici — donc on ne l'affiche plus : nommer un élément qu'un autre coup
       // choisira serait le même mensonge que l'ancien indicateur au niveau 1.
       const stat = statElement(se, elementDeFrappe(acteur));
-      const mult = multOffensif(se) * multiplicateurEscaladeSort(s, acteur);
-      const min = Math.round((s.baseMin + stat * s.scaling) * mult);
-      const max = Math.round((s.baseMax + stat * s.scaling) * mult);
+      // `multStatFrappe` est la formule DU MOTEUR (progression.ts) : l'infobulle ne
+      // recopie pas le taux, sinon les deux finiraient par raconter deux histoires.
+      const mult = multStatFrappe(stat) * multOffensif(se) * multiplicateurEscaladeSort(s, acteur);
+      const min = Math.round(s.baseMin * mult);
+      const max = Math.round(s.baseMax * mult);
       principal = `<span class="tip-val dgt">⚔ ${min} – ${max}</span><span class="tip-el">selon la cible</span>`;
     }
   } else if (s.baseMax > 0) {

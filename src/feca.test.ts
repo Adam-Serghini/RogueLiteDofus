@@ -69,7 +69,6 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(8);
     expect(s.baseMax).toBe(11);
-    expect(s.scaling).toBeCloseTo(0.28);
     expect(s.cooldownTours).toBe(3);
     expect(s.effetRangeeAlliee).toEqual({
       rangee: "arriere",
@@ -87,7 +86,6 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(8);
     expect(s.baseMax).toBe(11);
-    expect(s.scaling).toBeCloseTo(0.28);
     expect(s.cooldownTours).toBeUndefined();
     expect(s.effetRangeeAlliee).toEqual({
       rangee: "avant",
@@ -102,7 +100,6 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.cible).toBe("ennemi_tous");
     expect(s.baseMin).toBe(8);
     expect(s.baseMax).toBe(11);
-    expect(s.scaling).toBeCloseTo(0.28);
     expect(s.effet).toEqual({ stat: "tetanise", valeur: 1, duree: 1 });
     expect(s.type).toBe("degats");
   });
@@ -113,7 +110,6 @@ describe("valeurs des 6 sorts (coûts, jets, scalings, cibles, recharges)", () =
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(5);
     expect(s.baseMax).toBe(9);
-    expect(s.scaling).toBeCloseTo(0.22);
     expect(s.cooldownTours).toBe(2);
     expect(s.retraitPAProchainTour).toBe(2);
     expect(s.type).toBe("degats");

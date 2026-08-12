@@ -522,7 +522,7 @@ describe("paImmediat — des PA pour le tour EN COURS (Précipitation)", () => {
     };
     // 8 PA > paMax (6) : injouable sans le crédit de Précipitation.
     const sortCher: Spell = {
-      ...SORTS.morsure, id: "test_sort_cher", coutPA: 8, baseMin: 999, baseMax: 999, scaling: 0,
+      ...SORTS.morsure, id: "test_sort_cher", coutPA: 8, baseMin: 999, baseMax: 999,
     };
     expect(l.paMax).toBeLessThan(sortCher.coutPA); // témoin : le sort est bien hors de portée au départ
 
@@ -567,7 +567,7 @@ describe("paImmediat — des PA pour le tour EN COURS (Précipitation)", () => {
       baseMin: 0, baseMax: 0, coutPA: 0, paImmediat: 3,
     };
     const sortTue: Spell = {
-      ...SORTS.morsure, id: "test_tue_fin_tour", coutPA: 0, baseMin: 999, baseMax: 999, scaling: 0,
+      ...SORTS.morsure, id: "test_tue_fin_tour", coutPA: 0, baseMin: 999, baseMax: 999,
     };
 
     let appel = 0;

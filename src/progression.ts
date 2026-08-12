@@ -28,6 +28,22 @@ export const STAT_PAR_ELEMENT: Record<Element, keyof Stats> = {
 export const statElement = (stats: Stats, el: Element): number =>
   stats[STAT_PAR_ELEMENT[el]] ?? 0;
 
+/** Dégâts : chaque point de la caractéristique de frappe majore la FOURCHETTE de base
+ *  de ce ratio (à 3 %, 100 points de stat font ×4, 200 points ×7).
+ *
+ *  Taux UNIQUE de tout le jeu, joueurs et monstres. Il a remplacé le `scaling` réglé
+ *  sort par sort et la formule ADDITIVE `jet + stat × scaling` : un sort se règle
+ *  désormais par sa seule fourchette, ce qui rend la lecture directe (« telle
+ *  fourchette one-shot telle tranche de PV »). Conséquence à connaître : le bonus de
+ *  stat est maintenant PROPORTIONNEL à la fourchette, donc élargir une fourchette
+ *  majore aussi tout le scaling du sort — ce n'était pas le cas avant. */
+export const DEGATS_PAR_POINT = 0.03;
+
+/** Multiplicateur de fourchette apporté par la caractéristique de frappe.
+ *  Source UNIQUE : le pipeline de dégâts, le classement des éléments et les
+ *  infobulles la partagent (une copie approchée finirait par diverger). */
+export const multStatFrappe = (stat: number): number => 1 + DEGATS_PAR_POINT * stat;
+
 /** terre : +1 vitalité par N de force (passif, PAR-DESSUS le tarif). */
 export const VITA_PAR_FORCE = 5;
 /** eau : +1 prospection par N de chance (passif, PAR-DESSUS le tarif). */

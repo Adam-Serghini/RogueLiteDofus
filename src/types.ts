@@ -26,7 +26,6 @@ export interface AttaqueArme {
   coutPA: number;
   baseMin: number;
   baseMax: number;
-  scaling: number;
   cible?: "ennemi_ligne" | "ennemi_tous"; // ennemi_tous = l'arme atteint la ligne arrière (Arc)
   vampirisme?: number; // fraction des dégâts rendue en PV au porteur (Ergot Mina)
 }
@@ -138,7 +137,6 @@ export interface Spell {
   cible: SpellTarget;
   baseMin: number;
   baseMax: number;
-  scaling: number; // multiplie la stat de l'élément de frappe
   desc?: string;
   img?: string; // icône explicite (attaque d'arme) ; sinon dérivée de l'id via sortIcon
   // effets spéciaux (optionnels, un sort peut en cumuler) :

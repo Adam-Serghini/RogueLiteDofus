@@ -7,6 +7,7 @@ import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } 
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { controllerIA, lancerSort } from "./combat";
 import type { Combatant } from "./types";
+import { multStatFrappe } from "./progression";
 
 const ELEMENT_DE = {
   dragoeuf_calcaire: "terre", dragoeuf_argile: "terre",
@@ -112,10 +113,9 @@ describe("les sorts de la zone", () => {
     expect(s, "souffle_regenerant manquant").toBeTruthy();
     expect(s.type).toBe("soin");   // sinon `iaSoutien` ne le trouverait pas
     expect(s.cible).toBe("allie");
+    // la puissance d'un soin se règle uniquement par baseMin/baseMax (la
+    // caractéristique de frappe passe par `multSoin`, jamais par la voie des dégâts)
     expect(s.baseMin).toBeGreaterThan(0);
-    // `scaling` est IGNORÉ pour les soins (combat.ts:1451) : la puissance se règle
-    // uniquement par baseMin/baseMax. Le mettre à autre chose que 0 induirait en erreur.
-    expect(s.scaling).toBe(0);
   });
 
   it("le souffle draconique balaie une rangée", () => {
@@ -381,7 +381,7 @@ describe("budget de PA et domination", () => {
     const offensifs = m.sorts.filter((s) => SORTS[s].type === "degats");
     const coup = (s: string) => {
       const sort = SORTS[s];
-      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      const direct = ((sort.baseMin + sort.baseMax) / 2) * multStatFrappe(d) * mult;
       return direct * (sort.zoneLigne ? cibles : 1);
     };
     const cycle = (dispo: string[]) => {

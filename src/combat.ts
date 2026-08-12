@@ -4,7 +4,7 @@
 //  Pilotable sans UI : voir test.ts (deux IA qui s'affrontent en console).
 // =============================================================================
 import { SORTS, MONSTRES } from "./data";
-import { multOffensif, multSoin, statElement } from "./progression";
+import { multOffensif, multSoin, multStatFrappe, statElement } from "./progression";
 import {
   crochetDebutTour, crochetDegatsInfliges, crochetFinTour, crochetMortEnnemi, marquerSeuilArgente,
   type IntentionsDofus,
@@ -457,7 +457,6 @@ export interface ResultatDegats {
 interface BaseDegats {
   baseMin: number;
   baseMax: number;
-  scaling: number;
   ignoreResistances?: boolean;
   perceResistances?: number; // fraction des résistances ignorée (Dagues Aj'Deh'La)
   bonusParPADispo?: number; // Flèche Punitive : +X % par PA dispo AVANT paiement (opts.paAvant)
@@ -595,42 +594,37 @@ function resistanceEffective(cible: Combatant, el: Element, base: BaseDegats, la
 }
 
 /** Éléments candidats classés par dégâts attendus DÉCROISSANTS contre CETTE cible : le
- *  premier est donc l'élément de frappe du coup. `jetTire` est le jet DÉJÀ obtenu, donc le
- *  choix est exact et ne consomme aucun tirage. `Array.prototype.sort` est stable : à
- *  égalité, l'ordre des candidats est conservé, donc le résultat reste déterministe. */
-function elementsClasses(lanceur: Combatant, cible: Combatant, base: BaseDegats, jetTire: number): Element[] {
+ *  premier est donc l'élément de frappe du coup.
+ *
+ *  Le jet N'INTERVIENT PAS : depuis que la caractéristique de frappe MULTIPLIE la
+ *  fourchette (`multStatFrappe`) au lieu de s'y ajouter, il est un facteur commun à
+ *  tous les candidats, donc sans effet sur leur ordre. Le classement ne dépend plus que
+ *  du couple (stat, résistance) — d'où un choix exact sans tirage, et un `elementContre`
+ *  d'affichage qui n'approxime plus rien.
+ *
+ *  `Array.prototype.sort` est stable : à égalité, l'ordre des candidats est conservé,
+ *  donc le résultat reste déterministe. */
+function elementsClasses(lanceur: Combatant, cible: Combatant, base: BaseDegats): Element[] {
   const se = statsEffectives(lanceur);
   return elementsCandidats(lanceur)
     .map((el): [Element, number] =>
-      [el, (jetTire + statElement(se, el) * base.scaling) * (1 - resistanceEffective(cible, el, base, lanceur))])
+      [el, multStatFrappe(statElement(se, el)) * (1 - resistanceEffective(cible, el, base, lanceur))])
     .sort((a, b) => b[1] - a[1])
     .map(([el]) => el);
 }
 
 /** Élément qu'un combattant emploierait contre une cible — entrée publique de l'AFFICHAGE.
- *  Deux approximations : le jet moyen à défaut d'un jet réel, et la limite
- *  `stat × (1 − résistance)` quand aucun sort n'est visé. Les deux sont EXACTES tant
- *  que les 2 caractéristiques du lanceur sont égales, et s'écartent dès qu'un buff ou
- *  un équipement les désaccorde : à intelligence 203 / chance 196 avec 3 % de
- *  résistance feu par exemple, l'affichage peut annoncer « eau » alors que le coup
- *  réel part tantôt en feu, tantôt en eau selon le jet — un écart mineur, assumé pour
- *  un simple affichage. */
+ *  EXACTE : elle applique la formule du moteur, qui ne dépend plus du jet (voir
+ *  `elementsClasses`). Seules les deux options du sort qui touchent aux résistances
+ *  comptent encore ; sans sort visé, le classement se fait sur les résistances pleines. */
 export function elementContre(lanceur: Combatant, cible: Combatant, sort?: Spell): Element {
-  // Base de repli SANS sort visé : { baseMin:1, baseMax:1 } et non { 0, 0 } — à caractéristique
-  // nulle (niveau 1, avant tout gain), un jet moyen nul rendrait le score `(jet + stat ×
-  // scaling) × (1 − résistance)` égal à 0 pour TOUS les candidats, et l'égalité ferait toujours
-  // gagner le premier élément déclaré, quelle que soit la résistance de la cible — l'indicateur
-  // mentirait au niveau 1, l'état le plus courant du jeu (premier combat de chaque run). Un jet
-  // plancher de 1 fait dégénérer le score en `1 × (1 − résistance)` (départage par la seule
-  // résistance) à caractéristique nulle, et reste négligeable dès qu'une caractéristique existe.
-  const base: BaseDegats = sort
-    ? {
-      baseMin: sort.baseMin ?? 0, baseMax: sort.baseMax ?? 0, scaling: sort.scaling ?? 0,
-      ignoreResistances: sort.ignoreResistances, perceResistances: sort.perceResistances,
-    }
-    : { baseMin: 1, baseMax: 1, scaling: 1 };
-  const jetMoyen = (base.baseMin + base.baseMax) / 2;
-  const classes = elementsClasses(lanceur, cible, base, jetMoyen);
+  const base: BaseDegats = {
+    baseMin: sort?.baseMin ?? 0,
+    baseMax: sort?.baseMax ?? 0,
+    ignoreResistances: sort?.ignoreResistances,
+    perceResistances: sort?.perceResistances,
+  };
+  const classes = elementsClasses(lanceur, cible, base);
   // Bluff (elementPire) frappe dans le DERNIER du classement, pas le premier — l'indicateur
   // doit suivre le même choix que le moteur, sinon il désigne la mauvaise résistance.
   return sort?.elementPire ? classes[classes.length - 1] : classes[0];
@@ -668,16 +662,16 @@ function degatsAvec(
   // jet (max si buff "maxRoll" actif)
   let dmg = opts.useMax ? base.baseMax : jet(base.baseMin, base.baseMax, ctx.rng);
 
-  // élément de frappe : CALCULÉ pour cette cible, avec le jet déjà tiré (donc exact, et
-  // sans consommer de tirage). Le `dmg` courant EST ce jet — ne pas déplacer ces lignes
-  // avant le tirage, le choix perdrait son exactitude.
+  // élément de frappe : CALCULÉ pour cette cible, sans consommer de tirage.
   // Bluff mise sur la MALCHANCE : il frappe dans l'élément le moins avantageux — son
   // second coup (sur critique) repart avec elementPire DÉSACTIVÉ, donc retombe ici
   // même sur le meilleur élément (le comportement par défaut), d'où le classement
   // plutôt que le simple max.
-  const classes = elementsClasses(lanceur, cible, base, dmg);
+  const classes = elementsClasses(lanceur, cible, base);
   const el = base.elementPire ? classes[classes.length - 1] : classes[0];
-  dmg += statElement(se, el) * base.scaling;
+  // la caractéristique de frappe MULTIPLIE la fourchette (taux unique du jeu) — elle ne
+  // s'y ajoute plus, et aucun sort ne porte plus de coefficient propre.
+  dmg *= multStatFrappe(statElement(se, el));
 
   // critique : chance via Agilité (≤ 35 % + crit plat), bonus de dégâts via Agilité (+25 % à +45 %).
   // Le tirage lui-même est borné à 35 % (chanceCritEffective) : le crit plat excédentaire
@@ -981,7 +975,7 @@ export function infligerDegats(
     pRiposte > 0 && // ne consomme le RNG que si une riposte est possible
     ctx.rng() < pRiposte
   ) {
-    const r = degatsAvec(cible, { baseMin: 8, baseMax: 12, scaling: 0.3 }, attaquant, { useMax: false, mult: 1, ctx });
+    const r = degatsAvec(cible, { baseMin: 8, baseMax: 12 }, attaquant, { useMax: false, mult: 1, ctx });
     // pas d'attaquant → pas de contre-riposte ; pas de ctx non plus, donc la redirection
     // (Étreinte) ne s'applique jamais ici — les deux camps peuvent riposter (les Wobots du
     // Terrier du Wa Wabbit en sont la preuve côté monstre, voir CLAUDE.md).
@@ -1838,7 +1832,7 @@ function lancerFlecheEnflammee(
   lanceur: Combatant, sort: Spell, cible: Combatant, cs: Combatant[], ctx: CombatCtx, paAvant: number,
 ): void {
   ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
-  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling };
+  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax };
   const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
   const opts = { useMax: false, mult: mp * multConjuration(lanceur, cible, cs), ctx, paAvant };
   frappe(lanceur, base, cible, opts, sort.nom);
@@ -1871,7 +1865,7 @@ function lancerFlecheDeRecul(
   lanceur: Combatant, sort: Spell, cible: Combatant, cs: Combatant[], ctx: CombatCtx, paAvant: number,
 ): void {
   ctx.log(`${lanceur.nom} lance ${sort.nom}.`);
-  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, scaling: sort.scaling, ignoreResistances: true };
+  const base: BaseDegats = { baseMin: sort.baseMin, baseMax: sort.baseMax, ignoreResistances: true };
   const mp = multPortails(lanceur, cs); // aura des portails (Éliotrope), même hors handler générique
   const optsPour = (t: Combatant) => ({ useMax: false, mult: mp * multConjuration(lanceur, t, cs), ctx, paAvant });
 

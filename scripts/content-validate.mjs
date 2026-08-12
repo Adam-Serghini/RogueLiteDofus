@@ -54,7 +54,6 @@ export function validerContenu(contenu, base) {
     if (!estEntier(a.coutPA) || a.coutPA < 1 || a.coutPA > 12) E(coll, id, `${ou} : coutPA doit être un entier entre 1 et 12`);
     if (!estNombre(a.baseMin) || !estNombre(a.baseMax) || a.baseMin > a.baseMax)
       E(coll, id, `${ou} : baseMin doit être ≤ baseMax (reçu : ${a.baseMin}-${a.baseMax})`);
-    if (!estNombre(a.scaling) || a.scaling < 0) E(coll, id, `${ou} : scaling doit être un nombre ≥ 0`);
   };
 
   for (const [id, it] of Object.entries(contenu.items)) {
@@ -96,7 +95,6 @@ export function validerContenu(contenu, base) {
       E("sorts", id, "un sort à 0 PA doit déclarer maxParTour ou cooldownTours");
     if (!estNombre(s.baseMin) || !estNombre(s.baseMax) || s.baseMin > s.baseMax)
       E("sorts", id, `baseMin doit être ≤ baseMax (reçu : ${s.baseMin}-${s.baseMax})`);
-    if (!estNombre(s.scaling) || s.scaling < 0) E("sorts", id, "scaling doit être un nombre ≥ 0");
     // reduitCoutSiCrit (Pile ou Face) : remise de PA sur le PROCHAIN lancer, gagnée
     // sur critique et cumulative — un non-entier ou un négatif désynchroniserait
     // silencieusement coutEffectif() de ce que la boucle de tour débite réellement.

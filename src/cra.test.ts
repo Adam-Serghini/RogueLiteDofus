@@ -217,7 +217,7 @@ describe("Tir Puissant", () => {
     // excédent = (0.05 + 0.55) − 0.35 (plafond) = 0.25, converti en dégâts finaux
     expect(critExcedent(se)).toBeCloseTo(0.25);
 
-    const syn: Spell = { id: "syn_neutre", nom: "Syn", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+    const syn: Spell = { id: "syn_neutre", nom: "Syn", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10 };
     lancerSort(c, syn, e.ref, [c, e], ctx()); // rng max → pas de crit déclenché, seul l'excédent joue
     expect(500 - e.pvActuels).toBe(Math.round(10 * 1.25));
   });

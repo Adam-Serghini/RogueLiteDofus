@@ -7,6 +7,7 @@ import { MONSTRES, SORTS, ZONES, TRANCHES, COMBATS, localiserZone, butinToile } 
 import { fabriquerEquipe, fabriquerEnnemis } from "./run";
 import { controllerIA, lancerSort } from "./combat";
 import type { Combatant } from "./types";
+import { multStatFrappe } from "./progression";
 
 const ELEMENT_DE = {
   kanniboul_ark: "terre", kanniboul_eth: "feu", kanniboul_jav: "air",
@@ -414,7 +415,7 @@ describe("budget de PA et jouabilité", () => {
     const mult = 1 + Math.min(0.5, (stats.intelligence ?? 0) * 0.005);
     const coup = (s: string) => {
       const sort = SORTS[s];
-      const direct = ((sort.baseMin + sort.baseMax) / 2 + d * sort.scaling) * mult;
+      const direct = ((sort.baseMin + sort.baseMax) / 2) * multStatFrappe(d) * mult;
       return direct * (sort.zoneLigne ? cibles : 1);
     };
     const cycle = (dispo: string[]) => {

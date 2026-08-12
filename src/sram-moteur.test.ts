@@ -59,7 +59,7 @@ const sortPosePiege = (id: string, extra: Partial<Spell> = {}): Spell => ({
 /** Sort synthétique qui déplace la cible (aucun dégât propre : baseMax à 0 pour
  *  isoler le déplacement — comme le fait déjà `sauteJetDegats` pour Pendule/Roublabot). */
 const sortDeplace = (id: string, mode: "toggle" | "arriere"): Spell => ({
-  ...SORTS.morsure, id, baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: mode,
+  ...SORTS.morsure, id, baseMin: 0, baseMax: 0, deplaceCible: mode,
 });
 
 describe("le piège n'occupe aucune case", () => {
@@ -357,7 +357,7 @@ describe("un piège peut tuer la cible AVANT que l'appelant ait fini son travail
 
     const sortRecul: Spell = {
       ...SORTS.morsure, id: "test_recul_mortel",
-      degatsPoussee: true, baseMin: 5, baseMax: 5, scaling: 0, ignoreResistances: true,
+      degatsPoussee: true, baseMin: 5, baseMax: 5, ignoreResistances: true,
     };
     const lignes: string[] = [];
     lancerSort(lanceurRecul, sortRecul, victime.ref, cs, ctx({ log: (m) => lignes.push(m) }));
@@ -381,7 +381,7 @@ describe("un piège peut tuer la cible AVANT que l'appelant ait fini son travail
 
     const sortPendule: Spell = {
       ...SORTS.morsure, id: "test_pendule_mortel",
-      baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: "toggle", telefragSiOccupee: true,
+      baseMin: 0, baseMax: 0, deplaceCible: "toggle", telefragSiOccupee: true,
     };
     lancerSort(lanceurPendule, sortPendule, victime.ref, cs, ctx());
 
@@ -399,7 +399,7 @@ describe("pose d'un piège : aucun dégât au lancer", () => {
     const poseur = heros();
     const [cible] = ennemisProbes(1);
     const cs = [poseur, cible];
-    const sort = sortPosePiege("test_pose_sans_degats", { baseMin: 50, baseMax: 50, scaling: 1 });
+    const sort = sortPosePiege("test_pose_sans_degats", { baseMin: 50, baseMax: 50 });
 
     const avant = cible.pvActuels;
     lancerSort(poseur, sort, cible.ref, cs, ctx());
@@ -564,13 +564,13 @@ describe("plafond et Chausse-Trappe", () => {
 /** Sort de soutien synthétique qui pose Chakra sur le LANCEUR (cible: "soi"). */
 const sortChakra = (id: string, valeur: number, duree: number): Spell => ({
   ...SORTS.morsure, id, type: "buff", cible: "soi", coutPA: 1,
-  baseMin: 0, baseMax: 0, scaling: 0, bonusPieges: valeur, bonusPiegesDuree: duree,
+  baseMin: 0, baseMax: 0, bonusPieges: valeur, bonusPiegesDuree: duree,
 });
 
 /** Sort de soutien synthétique qui pose Brume (cible: "allie"). */
 const sortBrume = (id: string, duree: number): Spell => ({
   ...SORTS.morsure, id, type: "buff", cible: "allie", coutPA: 1,
-  baseMin: 0, baseMax: 0, scaling: 0, esquivePartageeRangee: { duree },
+  baseMin: 0, baseMax: 0, esquivePartageeRangee: { duree },
 });
 
 describe("Concentration de Chakra : majoration temporaire des pièges", () => {
@@ -595,7 +595,7 @@ describe("Concentration de Chakra : majoration temporaire des pièges", () => {
     const cs = [lanceur, allieCible];
     const sort: Spell = {
       ...SORTS.morsure, id: "test_chakra_pas_soi", type: "buff", cible: "allie", coutPA: 1,
-      baseMin: 0, baseMax: 0, scaling: 0, bonusPieges: 0.5, bonusPiegesDuree: 1,
+      baseMin: 0, baseMax: 0, bonusPieges: 0.5, bonusPiegesDuree: 1,
     };
 
     lancerSort(lanceur, sort, allieCible.ref, cs, ctx());
@@ -737,7 +737,7 @@ describe("Concentration de Chakra : majoration temporaire des pièges", () => {
       victime.position = 0; // avant ; sera togglée en arrière au 2e tour du Sram
 
       const chakraSort = sortChakra("test_retombe_chakra", 0.5, 1);
-      const deplaceSort: Spell = { ...SORTS.morsure, id: "test_retombe_deplace", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: "toggle" };
+      const deplaceSort: Spell = { ...SORTS.morsure, id: "test_retombe_deplace", coutPA: 1, baseMin: 0, baseMax: 0, deplaceCible: "toggle" };
       poseur.pieges = [{ sortId: "morsure", camp: "ennemi", avant: false }];
 
       const cs: Combatant[] = [poseur, victime];
@@ -952,7 +952,7 @@ describe("Brume : esquive partagée", () => {
     const cs = [lanceur, a2, a3, a4];
     const sortTous: Spell = {
       ...SORTS.morsure, id: "test_brume_tous", type: "buff", cible: "allie_tous", coutPA: 1,
-      baseMin: 0, baseMax: 0, scaling: 0, esquivePartageeRangee: { duree: 2 },
+      baseMin: 0, baseMax: 0, esquivePartageeRangee: { duree: 2 },
     };
 
     lancerSort(lanceur, sortTous, "ref_introuvable_dans_cs", cs, ctx());

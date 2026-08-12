@@ -28,10 +28,10 @@ const ctx = (over: Partial<CombatCtx> = {}): CombatCtx => ({
 // pour tester les mécaniques GÉNÉRIQUES du moteur, indépendamment de tout contenu réel.
 // Mêmes valeurs de jet que les sorts d'origine → les nombres attendus ne changent pas.
 const SYN_DEGATS: Spell = { // ex-Flèche magique (baseMin9/baseMax13/scaling0.35, ennemi_ligne)
-  id: "syn_degats", nom: "Syn Dégâts", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 9, baseMax: 13, scaling: 0.35,
+  id: "syn_degats", nom: "Syn Dégâts", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 9, baseMax: 13,
 };
 const SYN_IGNORE_RES: Spell = { // ex-Flèche intrusive (baseMin5/baseMax7/scaling0.2, ennemi_tous, ignoreResistances+ignoreBouclier)
-  id: "syn_ignore_res", nom: "Syn Ignore Résistances", type: "degats", cible: "ennemi_tous", coutPA: 3, baseMin: 5, baseMax: 7, scaling: 0.2,
+  id: "syn_ignore_res", nom: "Syn Ignore Résistances", type: "degats", cible: "ennemi_tous", coutPA: 3, baseMin: 5, baseMax: 7,
   ignoreResistances: true, ignoreBouclier: true,
 };
 
@@ -79,7 +79,7 @@ describe("élément de frappe", () => {
 });
 
 describe("degatsCible", () => {
-  it("applique jet max + scaling + résistance + puissance offensive", () => {
+  it("applique jet max × caractéristique de frappe, puis résistance et puissance offensive", () => {
     const [iop] = fabriquerEquipe();
     iop.elements = ["terre", "feu"]; // Iop est air+eau depuis le rework 2026-08-07 : la
     // paire terre+feu est forcée ici pour isoler la formule testée, sans dépendre du kit réel.
@@ -87,8 +87,9 @@ describe("degatsCible", () => {
     const [cible] = fabriquerEnnemis("combat_1");
     cible.resistances = { terre: 0.15 }; // résiste +15 % à la Terre
     const r = degatsCible(iop, SYN_DEGATS, cible, { useMax: true, mult: 1, ctx: ctx() });
-    // (13 + 60*0.35) * (1 - 0.15) * multOffensif(Int 10 = 1.01) = 34 * 0.85 * 1.01 = 29.189 → 29
-    expect(r.dmg).toBe(29);
+    // 13 * multStatFrappe(force 60 = 2.8) * (1 - 0.15) * multOffensif(Int 10 = 1.01)
+    // = 36.4 * 0.85 * 1.01 = 31.249 → 31
+    expect(r.dmg).toBe(31);
     expect(r.esquive).toBe(false);
     expect(r.crit).toBe(false);
   });
@@ -108,8 +109,9 @@ describe("degatsCible", () => {
     cra.stats = { ...cra.stats, agilite: 55, intelligence: 20 };
     const [bouftou] = fabriquerEnnemis("combat_1");
     const r = degatsCible(cra, SYN_IGNORE_RES, bouftou, { useMax: true, mult: 1, ctx: ctx() });
-    // (7 + 55*0.2) * multOffensif(Int 20 = 1.02) = 18 * 1.02 = 18.36 → 18, aucune résistance
-    expect(r.dmg).toBe(18);
+    // 7 * multStatFrappe(agilité 55 = 2.65) * multOffensif(Int 20 = 1.02) = 18.55 * 1.02
+    // = 18.921 → 19, aucune résistance
+    expect(r.dmg).toBe(19);
   });
 
   it("esquive (Agilité) annule les dégâts", () => {
@@ -226,7 +228,7 @@ describe("socle — mécaniques génériques (ex-fixtures Iop)", () => {
   const rngK = (k: number): (() => number) => () => k;
 
   it("zoneLigne : frappe toute la rangée ciblée", () => {
-    const synZone: Spell = { id: "syn_zone_ligne", nom: "Syn Zone", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 6, baseMax: 10, scaling: 0.25, zoneLigne: true };
+    const synZone: Spell = { id: "syn_zone_ligne", nom: "Syn Zone", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 6, baseMax: 10, zoneLigne: true };
     const [iop] = fabriquerEquipe();
     const ennemis = fabriquerEnnemis("combat_2"); // 0,1 (avant) + 4 (arrière)
     ennemis.forEach((e) => { e.pvActuels = 500; e.pvMax = 500; e.resistances = {}; });
@@ -238,7 +240,7 @@ describe("socle — mécaniques génériques (ex-fixtures Iop)", () => {
   });
 
   it("cooldownTours rend le sort indisponible puis disponible", () => {
-    const synCd: Spell = { id: "syn_cooldown", nom: "Syn CD", type: "degats", cible: "ennemi_ligne", coutPA: 6, baseMin: 18, baseMax: 24, scaling: 0.5, cooldownTours: 2 };
+    const synCd: Spell = { id: "syn_cooldown", nom: "Syn CD", type: "degats", cible: "ennemi_ligne", coutPA: 6, baseMin: 18, baseMax: 24, cooldownTours: 2 };
     const [iop] = fabriquerEquipe();
     iop.cooldowns = {};
     const [e] = fabriquerEnnemis("combat_1");
@@ -253,7 +255,7 @@ describe("socle — mécaniques génériques (ex-fixtures Iop)", () => {
 
   it("effetLanceur : applique un buff de résistances au LANCEUR (pas à la cible)", () => {
     const synEffetLanceur: Spell = {
-      id: "syn_effet_lanceur", nom: "Syn Effet Lanceur", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 12, baseMax: 16, scaling: 0.4, cooldownTours: 2,
+      id: "syn_effet_lanceur", nom: "Syn Effet Lanceur", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 12, baseMax: 16, cooldownTours: 2,
       effetLanceur: { duree: 2, stat: "resAll", valeur: 0.05 },
     };
     const [iop] = fabriquerEquipe();
@@ -276,7 +278,7 @@ describe("socle — mécaniques génériques (ex-fixtures Iop)", () => {
   });
 
   it("retraitPA : le retrait de PA (30 % de chance par défaut) est IMMÉDIAT et visible", () => {
-    const synRetraitPA: Spell = { id: "syn_retrait_pa", nom: "Syn Retrait PA", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 18, baseMax: 24, scaling: 0.5, retraitPA: 3 };
+    const synRetraitPA: Spell = { id: "syn_retrait_pa", nom: "Syn Retrait PA", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 18, baseMax: 24, retraitPA: 3 };
     const [iop] = fabriquerEquipe();
     const mkEnnemi = (ref: string) => {
       const [e] = fabriquerEnnemis("combat_1");
@@ -321,7 +323,7 @@ describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
   });
 
   it("poison (DoT) : le sort applique une brûlure sur la cible", () => {
-    const synPoison: Spell = { id: "syn_poison", nom: "Syn Poison", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 12, baseMax: 16, scaling: 0.4, poison: { degats: 6, duree: 2 } };
+    const synPoison: Spell = { id: "syn_poison", nom: "Syn Poison", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 12, baseMax: 16, poison: { degats: 6, duree: 2 } };
     const [, cra] = fabriquerEquipe();
     const e = mkEnnemi("e");
     lancerSort(cra, synPoison, "e", [cra, e], ctx());
@@ -330,7 +332,7 @@ describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
   });
 
   it("effet reductionDegats négatif : applique une vulnérabilité (+10 % dégâts subis)", () => {
-    const synVulnerabilite: Spell = { id: "syn_vulnerabilite", nom: "Syn Vulnérabilité", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 6, baseMax: 9, scaling: 0.25, effet: { duree: 2, stat: "reductionDegats", valeur: -0.1 } };
+    const synVulnerabilite: Spell = { id: "syn_vulnerabilite", nom: "Syn Vulnérabilité", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 6, baseMax: 9, effet: { duree: 2, stat: "reductionDegats", valeur: -0.1 } };
     const [, cra] = fabriquerEquipe();
     const e = mkEnnemi("e");
     lancerSort(cra, synVulnerabilite, "e", [cra, e], ctx());
@@ -338,7 +340,7 @@ describe("socle — mécaniques génériques (ex-fixtures Cra)", () => {
   });
 
   it("rebond : touche la cible primaire puis rebondit, +X % de dégâts par saut", () => {
-    const synRebond: Spell = { id: "syn_rebond", nom: "Syn Rebond", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 9, baseMax: 13, scaling: 0.4, rebond: { sauts: 2, bonusParSaut: 0.2 } };
+    const synRebond: Spell = { id: "syn_rebond", nom: "Syn Rebond", type: "degats", cible: "ennemi_ligne", coutPA: 5, baseMin: 9, baseMax: 13, rebond: { sauts: 2, bonusParSaut: 0.2 } };
     const [, cra] = fabriquerEquipe();
     const e0 = mkEnnemi("e0"); e0.position = 0;
     const e1 = mkEnnemi("e1"); e1.position = 1;
@@ -530,7 +532,7 @@ describe("ordre des tours alterné (allié/ennemi)", () => {
 
 describe("limites de lancer par tour", () => {
   const sortLimite: Spell = { id: "syn_limite", nom: "Syn", type: "degats", cible: "ennemi_ligne",
-    coutPA: 1, baseMin: 1, baseMax: 1, scaling: 0, maxParTour: 2, maxParCibleParTour: 1 };
+    coutPA: 1, baseMin: 1, baseMax: 1, maxParTour: 2, maxParCibleParTour: 1 };
   it("maxParTour bloque le 3e lancer, maxParCibleParTour exclut la cible déjà visée", () => {
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     const ennemis = fabriquerEnnemis("combat_1").map((e) => { e.pvActuels = 999; e.pvMax = 999; e.stats = { ...e.stats, agilite: 0 }; return e; });
@@ -556,7 +558,7 @@ describe("limites de lancer par tour", () => {
 describe("socle nouvelles classes — déplacement / nullification / PA / ligne de vue", () => {
   const ctx = () => ({ rng: () => 0.99, log: () => {}, playerDamageBonus: 1 });
   it("deplaceCible 'toggle' envoie l'ennemi sur la rangée opposée (même colonne si libre)", () => {
-    const syn: Spell = { id: "syn_dep", nom: "S", type: "degats", cible: "ennemi_tous", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, deplaceCible: "toggle" };
+    const syn: Spell = { id: "syn_dep", nom: "S", type: "degats", cible: "ennemi_tous", coutPA: 1, baseMin: 0, baseMax: 0, deplaceCible: "toggle" };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     const pack = fabriquerEnnemis("combat_1");
     const devant = pack.find((e) => e.position < 4)!;
@@ -565,7 +567,7 @@ describe("socle nouvelles classes — déplacement / nullification / PA / ligne 
     expect(devant.position).toBe(colonne + 4);
   });
   it("nullifieProchain annule UN coup direct mais pas un poison", () => {
-    const buff: Spell = { id: "syn_null", nom: "N", type: "buff", cible: "soi", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, nullifieProchain: true };
+    const buff: Spell = { id: "syn_null", nom: "N", type: "buff", cible: "soi", coutPA: 1, baseMin: 0, baseMax: 0, nullifieProchain: true };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     iop.pvActuels = 500; iop.pvMax = 500; iop.stats = { ...iop.stats, agilite: 0 };
     const ennemi = fabriquerEnnemis("combat_1")[0];
@@ -576,7 +578,7 @@ describe("socle nouvelles classes — déplacement / nullification / PA / ligne 
     expect(iop.pvActuels).toBeLessThan(500); // flag consommé
   });
   it("paParTourLigne crédite +2 PA au début des tours de la rangée, pendant la durée", () => {
-    const cadranSyn: Spell = { id: "syn_cadran", nom: "C", type: "buff", cible: "allie", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, paParTourLigne: { valeur: 2, duree: 2 } };
+    const cadranSyn: Spell = { id: "syn_cadran", nom: "C", type: "buff", cible: "allie", coutPA: 1, baseMin: 0, baseMax: 0, paParTourLigne: { valeur: 2, duree: 2 } };
     const equipe = equipeCombattante(nouvelleRun(["iop", "cra"]));
     const [iop] = equipe; // les persos de départ partagent-ils une rangée ? forcer : iop.position = 0 ; cra.position = 1
     equipe[1].position = 1;
@@ -586,7 +588,7 @@ describe("socle nouvelles classes — déplacement / nullification / PA / ligne 
     expect(iop.paActuels).toBe(paAvant + 2);
   });
   it("l'effet ignoreLigne ouvre la rangée arrière aux sorts ennemi_ligne", () => {
-    const acuiteSyn: Spell = { id: "syn_acuite", nom: "A", type: "buff", cible: "soi", coutPA: 1, baseMin: 0, baseMax: 0, scaling: 0, effet: { duree: 2, stat: "ignoreLigne", valeur: 1 } };
+    const acuiteSyn: Spell = { id: "syn_acuite", nom: "A", type: "buff", cible: "soi", coutPA: 1, baseMin: 0, baseMax: 0, effet: { duree: 2, stat: "ignoreLigne", valeur: 1 } };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     const pack = fabriquerEnnemis("gob_elite"); // pack avec rangée arrière
     const arriere = pack.filter((e) => e.position >= 4);
@@ -596,7 +598,7 @@ describe("socle nouvelles classes — déplacement / nullification / PA / ligne 
     expect(ciblesValides(iop, SORTS.morsure, [iop, ...pack]).some((c) => c.position >= 4)).toBe(true);
   });
   it("retraitPAChance: 1 retire les PA à coup sûr", () => {
-    const sablierSyn: Spell = { id: "syn_sablier", nom: "S", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 1, baseMax: 1, scaling: 0, retraitPA: 2, retraitPAChance: 1 };
+    const sablierSyn: Spell = { id: "syn_sablier", nom: "S", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 1, baseMax: 1, retraitPA: 2, retraitPAChance: 1 };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     const ennemi = fabriquerEnnemis("combat_1")[0];
     ennemi.stats = { ...ennemi.stats, agilite: 0 };
@@ -631,7 +633,7 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     expect(e.bombes).toBe(1);
   });
   it("bonusParPADispo utilise les PA d'AVANT le paiement", () => {
-    const syn: Spell = { id: "syn_pa", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 10, baseMax: 10, scaling: 0, bonusParPADispo: 0.08 };
+    const syn: Spell = { id: "syn_pa", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 4, baseMin: 10, baseMax: 10, bonusParPADispo: 0.08 };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     iop.stats = { ...iop.stats, force: 0, agilite: 0 };
     const cible = fabriquerEnnemis("combat_1")[0];
@@ -644,7 +646,7 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     expect(500 - cible.pvActuels).toBe(Math.round(10 * (1 + 0.08 * 6))); // 6 PA dispo, pas 2
   });
   it("bonusParTelefrag multiplie par les téléfrags de la cible", () => {
-    const syn: Spell = { id: "syn_ray", nom: "R", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0, bonusParTelefrag: 0.5 };
+    const syn: Spell = { id: "syn_ray", nom: "R", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, bonusParTelefrag: 0.5 };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     iop.stats = { ...iop.stats, force: 0, agilite: 0 };
     const cible = fabriquerEnnemis("combat_1")[0];
@@ -659,7 +661,7 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     iop.stats = { ...iop.stats, force: 0, agilite: 0, crit: 45 };
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
-    const syn: Spell = { id: "syn_crit", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+    const syn: Spell = { id: "syn_crit", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10 };
     lancerSort(iop, syn, cible.ref, [iop, cible], { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 }); // 0.99 > 0.35 : pas de crit
     expect(500 - cible.pvActuels).toBe(Math.round(10 * 1.15));
   });
@@ -683,7 +685,7 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     iop.stats = { ...iop.stats, force: 0, agilite: 0, crit: 45 }; // chanceCrit brute = 0.05 + 0.45 = 0.50
     const cible = fabriquerEnnemis("combat_1")[0];
     cible.pvActuels = 500; cible.pvMax = 500; cible.resistances = {}; cible.stats = { ...cible.stats, agilite: 0 };
-    const syn: Spell = { id: "syn_crit_borne", nom: "CB", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+    const syn: Spell = { id: "syn_crit_borne", nom: "CB", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10 };
 
     // dans la fenêtre [0.35, 0.50) : pas de critique — seul le plafonnage à 0.35 l'évite
     const dansLaFenetre = degatsCible(iop, syn, cible, { useMax: true, mult: 1, ctx: { rng: () => 0.4, log: () => {}, playerDamageBonus: 1 } });
@@ -694,7 +696,7 @@ describe("socle — compteurs et modificateurs de dégâts", () => {
     expect(sousLePlafond.crit).toBe(true);
   });
   it("bonusParAllieLigne (signature Grunob) ignore la Lance dans le compte d'alliés de rangée", () => {
-    const syn: Spell = { id: "syn_grunob", nom: "G", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10, scaling: 0 };
+    const syn: Spell = { id: "syn_grunob", nom: "G", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 10, baseMax: 10 };
     const grunob = fabriquerEnnemis("combat_1")[0];
     grunob.bonusParAllieLigne = 0.15;
     grunob.position = 0;
@@ -734,7 +736,7 @@ describe("portails (Éliotrope) et Conjuration — moteur", () => {
     expect(multPortails(cra, [iop, cra])).toBeCloseTo(1);
   });
   it("l'aura de portails multiplie les dégâts du porteur", () => {
-    const syn: Spell = { id: "syn_p", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 100, baseMax: 100, scaling: 0 };
+    const syn: Spell = { id: "syn_p", nom: "P", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 100, baseMax: 100 };
     const [iop] = equipeCombattante(nouvelleRun(["iop"]));
     iop.stats = { ...iop.stats, force: 0, agilite: 0 };
     const monte = () => { const c = fabriquerEnnemis("combat_1")[0]; c.pvActuels = 500; c.pvMax = 500; c.resistances = {}; c.stats = { ...c.stats, agilite: 0 }; return c; };
@@ -747,7 +749,7 @@ describe("portails (Éliotrope) et Conjuration — moteur", () => {
     expect(500 - avec.pvActuels).toBe(Math.round(base * 1.08));
   });
   it("Conjuration : +pct seulement pour le marqueur et sa rangée, s'éteint au bout de N tours du marqueur", () => {
-    const syn: Spell = { id: "syn_c", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 100, baseMax: 100, scaling: 0 };
+    const syn: Spell = { id: "syn_c", nom: "C", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 100, baseMax: 100 };
     const [iop, cra] = equipeCombattante(nouvelleRun(["iop", "cra"]));
     iop.position = 0; cra.position = 4; // rangées différentes
     for (const c of [iop, cra]) c.stats = { ...c.stats, force: 0, agilite: 0 };
@@ -786,7 +788,7 @@ describe("la Lance (Forgelance) et la redirection — moteur", () => {
     expect(lance.position).toBeLessThan(4);
     expect(invoquerLance(iop, devant, cs, ctx() as CombatCtx)).toBeNull(); // une seule lance vivante à la fois
 
-    const syn: Spell = { id: "syn_l", nom: "L", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 50, baseMax: 50, scaling: 0 };
+    const syn: Spell = { id: "syn_l", nom: "L", type: "degats", cible: "ennemi_ligne", coutPA: 1, baseMin: 50, baseMax: 50 };
     lancerSort(iop, syn, lance.ref, cs, ctx() as CombatCtx);
     expect(lance.pvActuels).toBe(LANCE_DURABILITE - 1); // −1 quel que soit le montant du coup
     expect(iop.bouclier).toBe(0); // pas encore détruite

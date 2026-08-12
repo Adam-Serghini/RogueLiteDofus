@@ -88,16 +88,17 @@ describe("l'élément de frappe suit la cible", () => {
     expect(elementContre(buffAgilite, cibleNue)).toBe("air");
   });
 
-  it("un monstre garde exactement l'élément qu'il avait", () => {
-    // 177 espèces sur 187 sont mono-élément : la règle doit être INERTE pour elles,
-    // sinon l'équilibrage de 24 zones bouge en silence. abr_elite (Domaine Ancestral)
-    // est choisie précisément parce qu'AUCUNE de ses 5 espèces n'a de véritable
-    // égalité de caractéristiques (contrairement à tai_1, dont le Boufton Blanc a
-    // FORCE = AGILITÉ = 24 : ce n'est pas un mono-élément, une résistance de 50 % sur
-    // l'élément arbitrairement choisi par le tri y basculerait légitimement vers
-    // l'autre — la règle du test voisin, pas un bug). Sur les 181 espèces du jeu,
-    // seules 6 ont une telle égalité : Boufton Blanc, le Kwakwa et ses 4 Kwakere —
-    // aucune n'est dans ce pack, donc aucune exclusion à faire ici.
+  it("un monstre garde son élément face à une résistance ORDINAIRE", () => {
+    // 177 espèces sur 187 sont mono-élément : la règle doit être INERTE pour elles aux
+    // résistances qu'un héros porte réellement (l'équipement en donne quelques points
+    // par élément), sinon l'équilibrage de 24 zones bouge en silence. abr_elite
+    // (Domaine Ancestral) est choisie précisément parce qu'AUCUNE de ses 5 espèces n'a
+    // de véritable égalité de caractéristiques (contrairement à tai_1, dont le Boufton
+    // Blanc a FORCE = AGILITÉ = 24 : ce n'est pas un mono-élément, une résistance sur
+    // l'élément arbitrairement choisi par le tri y basculerait légitimement vers l'autre
+    // — la règle du test voisin, pas un bug). Sur les 181 espèces du jeu, seules 6 ont
+    // une telle égalité : Boufton Blanc, le Kwakwa et ses 4 Kwakere — aucune n'est dans
+    // ce pack, donc aucune exclusion à faire ici.
     const pack = fabriquerEnnemis("abr_elite");
     expect(pack.length).toBeGreaterThan(0); // le garde-fou ne doit jamais tourner à vide
     for (const m of pack) {
@@ -105,8 +106,31 @@ describe("l'élément de frappe suit la cible", () => {
       const se = statsEffectives(m);
       expect(statElement(se, p)).not.toBe(statElement(se, s)); // garde contre une future égalité silencieuse
       const avant = elementDeFrappe(m);
-      expect(elementContre(m, cible({ [avant]: 0.5 }))).toBe(avant);
+      expect(elementContre(m, cible({ [avant]: 0.2 })), m.nom).toBe(avant);
     }
+  });
+
+  it("à 50 % de résistance, un écart de caractéristique trop faible fait BASCULER l'élément", () => {
+    // Depuis que la caractéristique de frappe MULTIPLIE la fourchette (au lieu de s'y
+    // ajouter), son poids relatif face à une résistance a baissé : une résistance de
+    // 50 % — le bestiaire en porte réellement, les Blops Royaux de la toile 13 — peut
+    // rendre le second élément MEILLEUR, et le moteur a raison de basculer.
+    //
+    // Le seuil se lit sur la formule : le premier élément ne reste gagnant que si
+    // `multStatFrappe(P) × 0.5 > multStatFrappe(S)`. L'Araknotron (agilité 95 / chance
+    // 34) est du mauvais côté, ses quatre camarades du même pack (135 / 34) du bon.
+    // Ce test EXISTE pour que ce basculement soit un choix visible et non une surprise :
+    // s'il tombe, c'est que le taux de dégâts par point a bougé (DEGATS_PAR_POINT).
+    const pack = fabriquerEnnemis("abr_elite");
+    const araknotron = pack.find((m) => m.nom.includes("Araknotron"))!;
+    expect(araknotron, "l'espèce visée doit être dans le pack").toBeTruthy();
+    const [p, s] = elementsForts(araknotron);
+    expect(elementContre(araknotron, cible({ [p]: 0.5 }))).toBe(s);
+
+    const nefileuse = pack.find((m) => m.nom.includes("Néfileuse"))!;
+    expect(nefileuse, "l'espèce visée doit être dans le pack").toBeTruthy();
+    const [pn] = elementsForts(nefileuse);
+    expect(elementContre(nefileuse, cible({ [pn]: 0.5 })), "écart suffisant : pas de bascule").toBe(pn);
   });
 
   it("le Kwakwaffe élargit le choix aux quatre éléments", () => {

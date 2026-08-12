@@ -63,7 +63,6 @@ describe("Pile ou Face", () => {
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(6);
     expect(s.baseMax).toBe(10);
-    expect(s.scaling).toBeCloseTo(0.27);
     expect(s.maxParTour).toBe(4);
     expect(s.reduitCoutSiCrit).toBe(1);
     expect(s.type).toBe("degats");
@@ -161,7 +160,6 @@ describe("Bluff", () => {
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(7);
     expect(s.baseMax).toBe(11);
-    expect(s.scaling).toBeCloseTo(0.28);
     expect(s.maxParTour).toBe(1); // retour d'équilibrage : un seul lancer par tour (était 2)
     expect(s.elementPire).toBe(true);
     expect(s.secondCoupSiCrit).toBe(true);
@@ -223,7 +221,6 @@ describe("Langue râpeuse", () => {
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(5);
     expect(s.baseMax).toBe(9);
-    expect(s.scaling).toBeCloseTo(0.24);
     expect(s.maxParTour).toBe(2);
     expect(s.soinAvantBlesseRatio).toBeCloseTo(0.65);
     expect(s.type).toBe("degats");
@@ -254,7 +251,6 @@ describe("Griffe joueuse", () => {
     expect(s.cible).toBe("ennemi_ligne");
     expect(s.baseMin).toBe(8);
     expect(s.baseMax).toBe(11);
-    expect(s.scaling).toBeCloseTo(0.29);
     expect(s.effetLigneCible).toEqual({ stat: "degatsCritSubis", valeur: 0.05, duree: 2 });
     expect(s.type).toBe("degats");
     // le vol de vie de l'ancien kit a bien disparu

@@ -371,7 +371,11 @@ describe("toiles 5-6 : mécaniques spéciales & source mixte", () => {
     iop.stats = { ...iop.stats, agilite: 0 };
     iop.pvActuels = 500; iop.pvMax = 500;
     const ennemi = fabriquerEnnemis("combat_1")[0];
-    ennemi.stats = { ...ennemi.stats, force: 999 }; // gros coup → la récup arrondit à ≥ 1
+    // Gros coup pour que la récup de 2 % arrondisse à ≥ 1, mais qui laisse le Iop VIVANT :
+    // depuis que la caractéristique de frappe multiplie la fourchette, 999 de force ferait
+    // ×30 sur la Morsure (18 max) et tuerait la cible, ce qui plafonnerait ses PV à 0 et
+    // testerait la mort plutôt que la récupération.
+    ennemi.stats = { ...ennemi.stats, force: 200 };
     const ctx = { rng: () => 0.99, log: () => {}, playerDamageBonus: 1 };
     // même rng constant → mêmes jets : on pré-calcule les dégâts attendus sur un clone
     const dmg = degatsCible(ennemi, SORTS.morsure, { ...iop, effets: [] }, { useMax: true, mult: 1, ctx }).dmg;
@@ -565,7 +569,7 @@ describe("toiles 13-24 : nouvelles mécaniques d'objet (objets SYNTHÉTIQUES)", 
 
   const SYN_KAISER: Item = {
     id: "syn_marteau_kaiser", nom: "Marteau Kaiser (syn)", slot: "arme", assome: 0.05,
-    tiers: { commun: { stats: {}, attaque: { coutPA: 3, baseMin: 10, baseMax: 10, scaling: 0 } } },
+    tiers: { commun: { stats: {}, attaque: { coutPA: 3, baseMin: 10, baseMax: 10 } } },
   };
   const SYN_BAGUETTE: Item = {
     id: "syn_baguette_limbes", nom: "Baguette des Limbes (syn)", slot: "arme",
@@ -668,7 +672,7 @@ describe("toiles 13-24 : nouvelles mécaniques d'objet (objets SYNTHÉTIQUES)", 
   it("recupPASort : PA crédités IMMÉDIATEMENT après un sort payé (rng < chance), rien sinon, jamais sur un sort gratuit", async () => {
     const { nouvelleRun, combattantDepuisPerso, fabriquerEnnemis } = await import("./run");
     const { runCombat } = await import("./combat");
-    const COUP: Spell = { id: "syn_coup", nom: "Coup (syn)", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 1, baseMax: 1, scaling: 0 };
+    const COUP: Spell = { id: "syn_coup", nom: "Coup (syn)", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 1, baseMax: 1 };
     const GRATUIT: Spell = { ...COUP, id: "syn_coup_gratuit", coutPA: 0, maxParTour: 1 };
     const jouer = async (rngVal: number, sort: Spell) => {
       const run = nouvelleRun(["iop"]);

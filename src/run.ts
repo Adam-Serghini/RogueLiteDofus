@@ -304,7 +304,7 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
       id: "arme_attaque", nom: armeItem.nom, type: "degats",
       cible: attaque.cible ?? "ennemi_ligne", // ennemi_tous : l'arme atteint la ligne arrière
       coutPA: attaque.coutPA, baseMin: attaque.baseMin,
-      baseMax: attaque.baseMax, scaling: attaque.scaling,
+      baseMax: attaque.baseMax,
       ...(attaque.vampirisme ? { vampirismeRatio: attaque.vampirisme } : {}),
       ...(armeItem.perceResistances ? { perceResistances: armeItem.perceResistances } : {}),
       ...(armeItem.frappeDerriere ? { toucheDerriere: true } : {}),
