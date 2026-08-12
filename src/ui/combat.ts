@@ -416,6 +416,9 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
       badges.push(`⚔️ Contre ${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
     else if (e.stat === "proie") badges.push(`🎯 Proie (vol ${Math.round(e.valeur * 100)} %)`);
     else if (e.stat === "tetanise") badges.push(`🦴 Tétanisé (${e.toursRestants})`);
+    // Assome (Marteau Kaiser) : le porteur passera son prochain tour — sans ce badge,
+    // le tour sauté se lirait comme un bug (même règle que les annulations du Meulou).
+    else if (e.stat === "assome") badges.push(`💫 Assommé`);
     else if (e.stat === "armure") badges.push(`🪨 Armure +${e.valeur} (${e.toursRestants})`);
     else if (e.stat === "degatsCritSubis")
       badges.push(`🃏 Crit subis +${Math.round(e.valeur * 100)} % (${e.toursRestants})`);

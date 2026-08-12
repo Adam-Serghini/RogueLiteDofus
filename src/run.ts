@@ -311,6 +311,7 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
       ...(armeItem.poisonArme ? { poison: armeItem.poisonArme } : {}),
       ...(armeItem.soinAllieBlesse ? { soinAllieBlesseRatio: armeItem.soinAllieBlesse } : {}),
       ...(armeItem.retraitPA ? { retraitPA: armeItem.retraitPA } : {}),
+      ...(armeItem.assome ? { assome: armeItem.assome } : {}),
       img: `/assets/items/${armeItem.id}.png`,
       desc: attaque.cible === "ennemi_tous"
         ? "Attaque d'arme — atteint la ligne arrière."
@@ -324,11 +325,28 @@ export function combattantDepuisPerso(state: PersoState): Combatant {
   // Dagues Eurfolles : l'objet confère le sort « Changer de ligne »
   const sortsEquipement = special("changeLigne") ? ["changer_ligne"] : [];
   const renaissance = special("renaissance");
+  // Esquive PLATE d'équipement : bonus inconditionnel (`esquiveBonus`, premier porteur)
+  // + bonus de panoplie (`esquiveParPiece` : pour chaque panoplie dont au moins une pièce
+  // ÉQUIPÉE déclare le champ, valeur × nb de pièces de CETTE panoplie équipées — s'ajoute
+  // au +1 PA standard des 4 pièces, il ne le remplace pas). Les deux se replient dans un
+  // seul champ du combattant : la plomberie finale (`chanceEsquive`, source unique) n'a
+  // pas à connaître leur origine.
+  const panos = comptePanoplies(state);
+  const esquiveParPano: Record<string, number> = {};
+  for (const inst of Object.values(state.equipement)) {
+    const item = inst && ITEMS[inst.id];
+    if (item?.panoplie && item.esquiveParPiece)
+      esquiveParPano[item.panoplie] = Math.max(esquiveParPano[item.panoplie] ?? 0, item.esquiveParPiece);
+  }
+  const esquivePlate = (special("esquiveBonus") ?? 0) +
+    Object.entries(esquiveParPano).reduce((s, [pano, v]) => s + v * (panos[pano] ?? 0), 0);
   return {
     armeSort,
     paGamble: special("paGamble"),
+    recupPASort: special("recupPASort"),
     riposteAvant: special("riposteAvant"),
     esquiveArriere: special("esquiveArriere"),
+    esquiveBonus: esquivePlate || undefined,
     soinDegatsRecus: special("soinDegatsRecus"),
     elementLibre: special("elementLibre"),
     renaissance,

@@ -217,6 +217,7 @@ function appliquerConditionnels(heros: Combatant, cibles: Combatant[], c: Condit
  *  en mesure, ce compteur ne varie jamais ici), `riposteAvant`, `armure`
  *  (native), `nullifieParTour` (allocation, distincte de son compteur
  *  `coupsAnnulesRestants`, réinitialisé plus bas), `esquiveArriere`,
+ *  `esquiveBonus`, `recupPASort`,
  *  `soinDegatsRecus`, `bonusParAllieLigne`, `elements`, `armeSort`,
  *  `mueElementaire`. Également laissés intacts :
  *  `estInvocation`/`joueTour`/`provoque`/`estLance`/`estEgide`/`lanceurRef`/

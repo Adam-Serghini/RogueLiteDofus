@@ -182,8 +182,13 @@ export function chanceEsquive(
   options?: { sansBonusPosition?: boolean; sansViaBrume?: boolean; sansPlafond?: boolean },
 ): number {
   const se = statsEffectives(c);
-  const esquiveEquip =
-    !options?.sansBonusPosition && !estAvant(c) ? (c.esquiveArriere ?? 0) : 0; // Baguette Rikiki
+  // Bonus d'ÉQUIPEMENT : `esquiveArriere` (Baguette Rikiki, hors ligne avant seulement)
+  // + `esquiveBonus` (esquive plate d'objet/panoplie, inconditionnelle). Les deux sont
+  // exclus par `sansBonusPosition` : un bonus d'équipement appartient au PORTEUR de
+  // l'objet, il n'a pas de sens à être partagé par la Brume.
+  const esquiveEquip = options?.sansBonusPosition
+    ? 0
+    : (c.esquiveBonus ?? 0) + (!estAvant(c) ? (c.esquiveArriere ?? 0) : 0);
   const effetsEsquive = c.effets
     .filter((e) => e.stat === "esquive" && !(options?.sansViaBrume && e.viaBrume))
     .reduce((s, e) => s + e.valeur, 0);
@@ -2331,6 +2336,17 @@ export function lancerSort(
           t.paBonusNextTurn -= sort.retraitPAProchainTour;
           ctx.log(`${t.nom} commencera son prochain tour amputé de ${sort.retraitPAProchainTour} PA (Tétanie).`);
         }
+        // Marteau Kaiser : l'attaque d'arme peut assommer — la cible PASSERA son
+        // prochain tour. Même position que les riders ci-dessus : coup non esquivé
+        // (branche `!r.esquive`) qui laisse la cible vivante (`t.pvActuels > 0`).
+        // Jet PAR CIBLE touchée, comme retraitPA ; jamais sur une Lance (elle n'a
+        // pas de tour à passer — l'effet n'aurait aucun consommateur et resterait
+        // affiché à jamais). L'effet est consommé EXPLICITEMENT par runCombat, pas
+        // par la décrémentation de fin de tour (un assommé n'agit pas).
+        if (sort.assome && !t.estLance && ctx.rng() < sort.assome) {
+          appliquerEffet(t, { stat: "assome", valeur: 1, duree: 1 });
+          ctx.log(`💫 ${t.nom} est assommé : il passera son prochain tour !`);
+        }
         if (sort.procAleatoire && sort.procAleatoire.length) {
           const proc = sort.procAleatoire[Math.floor(ctx.rng() * sort.procAleatoire.length)];
           if (proc.dissipePositifs) dissiperPositifs(t, ctx);
@@ -2709,20 +2725,42 @@ export async function runCombat(combatants: Combatant[], hooks: CombatHooks): Pr
       appliquerIntentions(intentions, combatants, ctx);
       acteur.degatsPctDofus = intentions.degatsPct;
 
-      ctx.log(`▶ Tour de ${acteur.nom} (${acteur.paActuels} PA).`);
-      await hooks.onUpdate?.();
-
-      let secu = 0;
-      while (acteur.pvActuels > 0 && !combatTermine(combatants)) {
-        if (++secu > 50) break;
-        const action = await hooks.controllers[acteur.camp](acteur, combatants);
-        if (!action) break; // fin de tour volontaire
-        const cout = coutEffectif(action.sort, acteur);
-        if (acteur.paActuels < cout) break;
-        acteur.paActuels -= cout;
-        lancerSort(acteur, action.sort, action.cibleRef, combatants, ctx);
-        purgerInvocationsOrphelines(combatants, ctx); // un invocateur vient-il de tomber ?
+      // Marteau Kaiser (`assome`) : un assommé PASSE son tour — son contrôleur n'est
+      // jamais consulté. Consommation EXPLICITE de TOUTES ses entrées `assome` (deux
+      // coups d'arme entre ses tours ne valent qu'UN tour sauté) : ne pas compter sur
+      // la décrémentation de fin de tour, elle laisserait la porte ouverte à un futur
+      // chemin où l'effet survivrait au tour qu'il devait faire sauter. La passe de
+      // fin de tour ci-dessous (crochets Dofus, decrementerEffets, recharge des PA)
+      // s'exécute normalement — seule l'ACTION est confisquée. Une invocation liée
+      // (`invoquePar`) a son propre créneau : seul le porteur de l'effet saute.
+      const assome = acteur.effets.some((e) => e.stat === "assome");
+      if (assome) {
+        acteur.effets = acteur.effets.filter((e) => e.stat !== "assome");
+        ctx.log(`💫 ${acteur.nom} est assommé et passe son tour !`);
         await hooks.onUpdate?.();
+      } else {
+        ctx.log(`▶ Tour de ${acteur.nom} (${acteur.paActuels} PA).`);
+        await hooks.onUpdate?.();
+
+        let secu = 0;
+        while (acteur.pvActuels > 0 && !combatTermine(combatants)) {
+          if (++secu > 50) break;
+          const action = await hooks.controllers[acteur.camp](acteur, combatants);
+          if (!action) break; // fin de tour volontaire
+          const cout = coutEffectif(action.sort, acteur);
+          if (acteur.paActuels < cout) break;
+          acteur.paActuels -= cout;
+          lancerSort(acteur, action.sort, action.cibleRef, combatants, ctx);
+          // Baguette des Limbes (`recupPASort`) : après CHAQUE sort PAYÉ (coût > 0),
+          // chance de récupérer des PA immédiatement — utilisables dans ce même tour.
+          // Un sort gratuit ne déclenche rien : la récup rembourse une dépense.
+          if (acteur.recupPASort && cout > 0 && ctx.rng() < acteur.recupPASort.chance) {
+            acteur.paActuels += acteur.recupPASort.pa;
+            ctx.log(`✨ ${acteur.nom} récupère ${acteur.recupPASort.pa} PA.`);
+          }
+          purgerInvocationsOrphelines(combatants, ctx); // un invocateur vient-il de tomber ?
+          await hooks.onUpdate?.();
+        }
       }
 
       // Émeraude, Veilleurs : décrits par `dofus-effets.ts`, exécutés ici par

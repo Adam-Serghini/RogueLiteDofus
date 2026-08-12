@@ -24,6 +24,10 @@ const SPECIAUX = [
   ["retraitPA", "L'arme retire des PA (Arc des Rivages)", 1],
   ["elementLibre", "Élément de frappe libre (Kwakwaffe)", true],
   ["renaissance", "Renaissance 1×/combat (Kwakwanneau)", 0.3],
+  ["assome", "L'arme assomme : la cible passe son tour (Kaiser)", 0.05],
+  ["recupPASort", "Récup. de PA après chaque sort (Baguette des Limbes)", { chance: 0.1, pa: 1 }],
+  ["esquiveBonus", "Esquive plate, toute ligne", 0.05],
+  ["esquiveParPiece", "Esquive par pièce de SA panoplie équipée", 0.025],
 ];
 
 function grilleRaretes(item) {

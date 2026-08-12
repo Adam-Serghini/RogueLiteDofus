@@ -63,6 +63,10 @@ export interface Item {
   retraitPA?: number; // Arc des Rivages : 30 % de chance de retirer N PA (réutilise Spell.retraitPA)
   elementLibre?: boolean; // Kwakwaffe : frappe dans N'IMPORTE quel élément (plus limité au top 2)
   renaissance?: number; // Kwakwanneau : renaît une fois par combat à cette fraction des PV max
+  assome?: number; // Marteau Kaiser : chance que l'attaque d'arme assomme la cible touchée (elle passe son prochain tour)
+  recupPASort?: { chance: number; pa: number }; // Baguette des Limbes : après chaque sort payé (coût > 0), chance de récupérer des PA
+  esquiveBonus?: number; // esquive PLATE inconditionnelle du porteur (quelle que soit sa ligne — contrairement à esquiveArriere)
+  esquiveParPiece?: number; // bonus de panoplie : +esquive × nb de pièces de SA panoplie équipées (s'AJOUTE au +1 PA des 4 pièces)
   pvBonus?: number; // PV max plats (fixe)
   resistances?: Partial<Record<Element, number>>;
   img?: string;
@@ -106,6 +110,7 @@ export type EffetStat =
   | "friction" // bloque soins ET boucliers du porteur (flag : valeur ignorée)
   | "proie" // marque de l'Ouginak : valeur = vol de vie d'ÉQUIPE contre le porteur (unique)
   | "tetanise" // Tétanisation : le porteur ne peut pas viser la ligne arrière (flag)
+  | "assome" // Marteau Kaiser : le porteur PASSE son prochain tour (flag, consommé explicitement par runCombat)
   | "ignoreLigne" // le porteur ignore la règle de ligne : ses sorts ennemi_ligne visent aussi l'arrière (flag)
   | "paParTour" // crédite ce nombre de PA à chaque début de tour du porteur, tant que l'effet dure
   | "aiguille" // Xélor : chaque Téléfrag reçu par le porteur le reblesse (écho d'Aiguille)
@@ -170,6 +175,7 @@ export interface Spell {
   perceResistances?: number; // fraction des résistances ignorée par ce sort (attaque d'arme)
   toucheDerriere?: boolean; // l'attaque touche aussi l'ennemi juste derrière la cible (Masse Aj Taye)
   soinAllieBlesseRatio?: number; // soigne l'allié le plus blessé d'une fraction des dégâts infligés (Masse du Corailleur)
+  assome?: number; // Marteau Kaiser (attaque d'arme) : chance d'assommer la cible touchée et vivante — elle passe son prochain tour
   // --- mécaniques de l'Ouginak ---
   marqueProie?: number; // Proie : marque UNIQUE sur un ennemi — l'équipe vole cette fraction des dégâts qu'elle lui inflige
   rage?: boolean; // le sort confère 1 état de Rage au lanceur (cap RAGE_MAX)
@@ -445,6 +451,8 @@ export interface Combatant {
   nullifieParTour?: number; // allocation par tour (Meulou) — voir Monstre.nullifieParTour
   coupsAnnulesRestants?: number; // annulations encore disponibles ce tour-ci
   esquiveArriere?: number; // esquive d'équipement (Baguette Rikiki), active si ligne arrière
+  esquiveBonus?: number; // esquive PLATE d'équipement, quelle que soit la ligne (Item.esquiveBonus + Item.esquiveParPiece repliés ensemble)
+  recupPASort?: { chance: number; pa: number }; // Baguette des Limbes portée : chance de récupérer des PA après chaque sort payé
   soinDegatsRecus?: number; // récupération d'équipement (Goyave) : % des dégâts subis rendus en PV
   bonusParAllieLigne?: number; // signature de Grunob (cf. Monstre.bonusParAllieLigne)
   invoquePar?: string; // ref de l'invocateur (monstres invoqués en combat)

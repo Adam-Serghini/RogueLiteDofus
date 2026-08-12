@@ -7,7 +7,7 @@ import {
   equiper, desequiper, tenterButin, rollItem, tirerRarete, meilleurItemToile,
 } from "./run";
 import { butinToile, itemsDeToile, ITEMS } from "./data";
-import type { Meta } from "./types";
+import type { Combatant, Item, Meta, Spell } from "./types";
 
 const MIN = () => 0;     // jet au minimum de la fourchette (déterministe)
 
@@ -79,7 +79,7 @@ describe("bonus de panoplie (4 pièces de la même panoplie = +1 PA)", () => {
     for (const it of Object.values(ITEMS)) {
       if (it.panoplie) (parPano[it.panoplie] ??= []).push(it.id);
     }
-    expect(Object.keys(parPano).length).toBe(12); // une par zone de t1 (la toile 13 attend ses objets)
+    expect(Object.keys(parPano).length).toBe(24); // une par zone : 12 en t1 + 12 en t2 (toiles 13-24)
     for (const [nom, ids] of Object.entries(parPano)) {
       expect(ids.length, nom).toBe(4);
       const slots = new Set(ids.map((id) => ITEMS[id].slot));
@@ -550,5 +550,234 @@ describe("meilleurItemToile", () => {
   it("rend null quand le pool n'a aucun objet du slot demandé", () => {
     expect(meilleurItemToile([], "arme", "force")).toBeNull();
     expect(meilleurItemToile(["chapeau_de_l_aventurier"], "arme", "force")).toBeNull();
+  });
+});
+
+describe("toiles 13-24 : nouvelles mécaniques d'objet (objets SYNTHÉTIQUES)", () => {
+  // Aucun objet de contenu ne porte encore ces champs (les objets de la T2 arrivent) :
+  // les tests enregistrent des objets synthétiques dans ITEMS le temps d'un `it`, puis
+  // les retirent — sans quoi le test « chaque panoplie compte exactement 4 pièces »
+  // (plus haut dans CE fichier, qui itère TOUT ITEMS) compterait la panoplie synthétique.
+  const enregistrer = (items: Item[]): (() => void) => {
+    for (const it of items) ITEMS[it.id] = it;
+    return () => { for (const it of items) delete ITEMS[it.id]; };
+  };
+
+  const SYN_KAISER: Item = {
+    id: "syn_marteau_kaiser", nom: "Marteau Kaiser (syn)", slot: "arme", assome: 0.05,
+    tiers: { commun: { stats: {}, attaque: { coutPA: 3, baseMin: 10, baseMax: 10, scaling: 0 } } },
+  };
+  const SYN_BAGUETTE: Item = {
+    id: "syn_baguette_limbes", nom: "Baguette des Limbes (syn)", slot: "arme",
+    recupPASort: { chance: 0.1, pa: 1 }, tiers: { commun: { stats: {} } },
+  };
+  const SYN_CAPE: Item = {
+    id: "syn_cape_limbes", nom: "Cape des Limbes (syn)", slot: "cape",
+    esquiveBonus: 0.05, tiers: { commun: { stats: {} } },
+  };
+  const PANO = "Limbes (syn)";
+  const SYN_PANO: Item[] = [
+    { id: "syn_pano_coiffe", nom: "Coiffe (syn)", slot: "coiffe", panoplie: PANO, esquiveParPiece: 0.025, tiers: { commun: { stats: {} } } },
+    { id: "syn_pano_cape", nom: "Cape (syn)", slot: "cape", panoplie: PANO, tiers: { commun: { stats: {} } } },
+    { id: "syn_pano_anneau", nom: "Anneau (syn)", slot: "anneau", panoplie: PANO, tiers: { commun: { stats: {} } } },
+    { id: "syn_pano_arme", nom: "Arme (syn)", slot: "arme", panoplie: PANO, tiers: { commun: { stats: {} } } },
+  ];
+  const CTX = (rng: () => number) => ({ rng, log: () => {}, playerDamageBonus: 1 });
+
+  // --- assome (Marteau Kaiser) -----------------------------------------------
+  it("assome : le coup d'arme non esquivé peut assommer la cible — jamais un coup qui la tue", async () => {
+    const retirer = enregistrer([SYN_KAISER]);
+    try {
+      const { nouvelleRun, combattantDepuisPerso, rollItemRarete, fabriquerEnnemis } = await import("./run");
+      const { lancerSort } = await import("./combat");
+      const run = nouvelleRun(["iop"]);
+      run.persos[0].equipement.arme = rollItemRarete("syn_marteau_kaiser", () => 0)!;
+      const iop = combattantDepuisPerso(run.persos[0]);
+      expect(iop.armeSort?.assome).toBeCloseTo(0.05); // replié depuis l'objet
+      const monteEnnemi = () => {
+        const e = fabriquerEnnemis("combat_1")[0];
+        e.pvActuels = 500; e.pvMax = 500;
+        e.stats = { ...e.stats, agilite: 0 }; // pas d'esquive parasite
+        return e;
+      };
+      const aAssome = (c: Combatant) => c.effets.some((e) => e.stat === "assome");
+      // tirage raté (0.99 > 0.05) : pas d'assome
+      let ennemi = monteEnnemi();
+      lancerSort(iop, iop.armeSort!, ennemi.ref, [iop, ennemi], CTX(() => 0.99) as never);
+      expect(aAssome(ennemi)).toBe(false);
+      // tirage réussi (0.01 < 0.05) : la cible touchée et vivante est assommée
+      ennemi = monteEnnemi();
+      lancerSort(iop, iop.armeSort!, ennemi.ref, [iop, ennemi], CTX(() => 0.01) as never);
+      expect(aAssome(ennemi)).toBe(true);
+      // un coup qui TUE n'assomme pas (le rider exige une cible vivante)
+      ennemi = monteEnnemi();
+      ennemi.pvActuels = 1;
+      lancerSort(iop, iop.armeSort!, ennemi.ref, [iop, ennemi], CTX(() => 0.01) as never);
+      expect(ennemi.pvActuels).toBe(0);
+      expect(aAssome(ennemi)).toBe(false);
+    } finally { retirer(); }
+  });
+
+  it("assommé : passe son tour dans runCombat, TOUTES les entrées consommées pour UN seul tour sauté", async () => {
+    const { nouvelleRun, combattantDepuisPerso, fabriquerEnnemis } = await import("./run");
+    const { runCombat } = await import("./combat");
+    const run = nouvelleRun(["iop"]);
+    const iop = combattantDepuisPerso(run.persos[0]);
+    iop.initiative = 999; // le joueur ouvre, déroulé déterministe
+    const ennemi = fabriquerEnnemis("combat_1")[0];
+    // DEUX entrées (deux coups d'arme encaissés entre ses tours) : un SEUL tour sauté
+    ennemi.effets.push(
+      { stat: "assome", valeur: 1, toursRestants: 1 },
+      { stat: "assome", valeur: 1, toursRestants: 1 },
+    );
+    const toursEnnemi: number[] = [];
+    const logs: string[] = [];
+    let round = 0;
+    const gagne = await runCombat([iop, ennemi], {
+      rng: () => 0.99,
+      log: (m: string) => logs.push(m),
+      controllers: {
+        joueur: () => {
+          round += 1;
+          if (round >= 3) ennemi.pvActuels = 0; // met fin au combat
+          return null;
+        },
+        ennemi: () => { toursEnnemi.push(round); return null; },
+      },
+    });
+    expect(gagne).toBe(true);
+    // round 1 : assommé (contrôleur jamais consulté) ; round 2 : il rejoue normalement
+    expect(toursEnnemi).toEqual([2]);
+    expect(logs.some((m) => m.includes("est assommé et passe son tour"))).toBe(true);
+    // consommation explicite : plus AUCUNE entrée assome après le tour sauté
+    expect(ennemi.effets.some((e) => e.stat === "assome")).toBe(false);
+  });
+
+  // --- recupPASort (Baguette des Limbes) ---------------------------------------
+  it("recupPASort : le champ de l'objet se replie dans le combattant (premier porteur)", async () => {
+    const retirer = enregistrer([SYN_BAGUETTE]);
+    try {
+      const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+      const run = nouvelleRun(["iop"]);
+      run.persos[0].equipement.arme = rollItemRarete("syn_baguette_limbes", () => 0)!;
+      expect(combattantDepuisPerso(run.persos[0]).recupPASort).toEqual({ chance: 0.1, pa: 1 });
+      expect(combattantDepuisPerso(nouvelleRun(["iop"]).persos[0]).recupPASort).toBeUndefined();
+    } finally { retirer(); }
+  });
+
+  it("recupPASort : PA crédités IMMÉDIATEMENT après un sort payé (rng < chance), rien sinon, jamais sur un sort gratuit", async () => {
+    const { nouvelleRun, combattantDepuisPerso, fabriquerEnnemis } = await import("./run");
+    const { runCombat } = await import("./combat");
+    const COUP: Spell = { id: "syn_coup", nom: "Coup (syn)", type: "degats", cible: "ennemi_ligne", coutPA: 3, baseMin: 1, baseMax: 1, scaling: 0 };
+    const GRATUIT: Spell = { ...COUP, id: "syn_coup_gratuit", coutPA: 0, maxParTour: 1 };
+    const jouer = async (rngVal: number, sort: Spell) => {
+      const run = nouvelleRun(["iop"]);
+      const iop = combattantDepuisPerso(run.persos[0]);
+      iop.recupPASort = { chance: 0.1, pa: 1 };
+      iop.initiative = 999;
+      iop.paMax = 6; iop.paActuels = 6;
+      const ennemi = fabriquerEnnemis("combat_1")[0];
+      ennemi.pvActuels = 100000; ennemi.pvMax = 100000; // survit au coup mesuré
+      ennemi.stats = { ...ennemi.stats, agilite: 0 };
+      const observes: number[] = [];
+      let n = 0;
+      await runCombat([iop, ennemi], {
+        rng: () => rngVal,
+        controllers: {
+          joueur: (acteur) => {
+            n += 1;
+            if (n === 1) return { sort, cibleRef: ennemi.ref };
+            observes.push(acteur.paActuels); // PA restants DANS le même tour, après le lancer
+            ennemi.pvActuels = 0; // met fin au combat
+            return null;
+          },
+          ennemi: () => null,
+        },
+      });
+      return observes[0];
+    };
+    expect(await jouer(0.05, COUP)).toBe(6 - 3 + 1); // 0.05 < 0.1 → +1 PA, utilisable dans le tour
+    expect(await jouer(0.5, COUP)).toBe(6 - 3); // tirage raté : rien
+    expect(await jouer(0.05, GRATUIT)).toBe(6); // coût 0 : la récup ne rembourse qu'une dépense
+  });
+
+  // --- esquiveBonus / esquiveParPiece -----------------------------------------
+  it("esquiveBonus : esquive PLATE quelle que soit la ligne, lue par chanceEsquive (source unique)", async () => {
+    const retirer = enregistrer([SYN_CAPE]);
+    try {
+      const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+      const { chanceEsquive } = await import("./combat");
+      const monte = (position: number) => {
+        const run = nouvelleRun(["iop"]);
+        run.persos[0].position = position;
+        run.persos[0].equipement.cape = rollItemRarete("syn_cape_limbes", () => 0)!;
+        const c = combattantDepuisPerso(run.persos[0]);
+        c.stats = { ...c.stats, agilite: 0 }; // seule l'esquive d'équipement joue
+        return c;
+      };
+      expect(chanceEsquive(monte(0))).toBeCloseTo(0.05); // ligne avant
+      expect(chanceEsquive(monte(5))).toBeCloseTo(0.05); // ligne arrière : identique (inconditionnel)
+      // équipement du porteur : jamais partagé par la Brume, comme esquiveArriere
+      expect(chanceEsquive(monte(0), { sansBonusPosition: true })).toBe(0);
+    } finally { retirer(); }
+  });
+
+  it("esquiveBonus : se cumule avec esquiveArriere et reste sous le plafond de 50 %", async () => {
+    const retirer = enregistrer([SYN_CAPE]);
+    try {
+      const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+      const { chanceEsquive } = await import("./combat");
+      const monte = (position: number) => {
+        const run = nouvelleRun(["iop"]);
+        run.persos[0].position = position;
+        run.persos[0].equipement.cape = rollItemRarete("syn_cape_limbes", () => 0)!; // +0.05 plat
+        run.persos[0].equipement.arme = rollItemRarete("baguette_rikiki", () => 0)!; // +0.10 arrière
+        const c = combattantDepuisPerso(run.persos[0]);
+        c.stats = { ...c.stats, agilite: 0 };
+        return c;
+      };
+      expect(chanceEsquive(monte(5))).toBeCloseTo(0.15); // arrière : 0.05 + 0.10
+      expect(chanceEsquive(monte(0))).toBeCloseTo(0.05); // avant : le plat seul
+      const plafonne = monte(0);
+      plafonne.esquiveBonus = 0.6; // au-delà du plafond partagé
+      expect(chanceEsquive(plafonne)).toBe(0.5);
+    } finally { retirer(); }
+  });
+
+  it("esquiveParPiece : +valeur × pièces de SA panoplie équipées, et le +1 PA des 4 pièces est CONSERVÉ", async () => {
+    const retirer = enregistrer(SYN_PANO);
+    try {
+      const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+      const { chanceEsquive } = await import("./combat");
+      const monte = (ids: string[]) => {
+        const run = nouvelleRun(["iop"]);
+        for (const id of ids) run.persos[0].equipement[ITEMS[id].slot] = rollItemRarete(id, () => 0)!;
+        const c = combattantDepuisPerso(run.persos[0]);
+        c.stats = { ...c.stats, agilite: 0 };
+        return c;
+      };
+      const paNu = combattantDepuisPerso(nouvelleRun(["iop"]).persos[0]).paMax;
+      // 2 pièces (dont la déclarante) → 0.025 × 2
+      expect(monte(["syn_pano_coiffe", "syn_pano_cape"]).esquiveBonus).toBeCloseTo(0.05);
+      // 4 pièces → 0.025 × 4, ET le +1 PA standard de panoplie complète s'ajoute
+      const complet = monte(SYN_PANO.map((i) => i.id));
+      expect(complet.esquiveBonus).toBeCloseTo(0.1);
+      expect(chanceEsquive(complet)).toBeCloseTo(0.1); // même plomberie finale qu'esquiveBonus
+      expect(complet.paMax).toBe(paNu + 1);
+      // aucune pièce ÉQUIPÉE ne déclare le champ → aucun bonus (3 pièces comptent pour rien)
+      expect(monte(["syn_pano_cape", "syn_pano_anneau", "syn_pano_arme"]).esquiveBonus).toBeUndefined();
+    } finally { retirer(); }
+  });
+
+  it("esquiveParPiece et esquiveBonus se CUMULENT dans le même champ du combattant", async () => {
+    const retirer = enregistrer([...SYN_PANO, SYN_CAPE]);
+    try {
+      const { nouvelleRun, combattantDepuisPerso, rollItemRarete } = await import("./run");
+      const run = nouvelleRun(["iop"]);
+      run.persos[0].equipement.coiffe = rollItemRarete("syn_pano_coiffe", () => 0)!; // déclarante
+      run.persos[0].equipement.anneau = rollItemRarete("syn_pano_anneau", () => 0)!; // 2 pièces → 0.05
+      run.persos[0].equipement.cape = rollItemRarete("syn_cape_limbes", () => 0)!; // hors panoplie : +0.05 plat
+      expect(combattantDepuisPerso(run.persos[0]).esquiveBonus).toBeCloseTo(0.1);
+    } finally { retirer(); }
   });
 });
