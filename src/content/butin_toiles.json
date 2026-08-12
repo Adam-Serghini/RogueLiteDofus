@@ -183,5 +183,201 @@
       "kwakanneau_de_terre",
       "kwaklame_de_vent"
     ]
+  },
+  "13": {
+    "boss": [
+      "crystal_o_boul",
+      "kryst_o_boul",
+      "cape_du_desir_o_boul"
+    ],
+    "elites": [
+      "anneau_merta",
+      "makroute_sombre"
+    ],
+    "normales": [
+      "casque_du_roks_or",
+      "cape_du_roks_or",
+      "anneau_du_roks_or",
+      "pelle_du_roks_or"
+    ]
+  },
+  "14": {
+    "boss": [
+      "ares",
+      "anneau_bsene"
+    ],
+    "elites": [
+      "dagues_ruyeres",
+      "cape_flotteuse"
+    ],
+    "normales": [
+      "chapeau_de_barbroussa",
+      "cape_irate",
+      "annopirate",
+      "pelle_ripate"
+    ]
+  },
+  "15": {
+    "boss": [
+      "gelano",
+      "couronne_du_roi_gelax",
+      "arc_du_pecheur"
+    ],
+    "elites": [
+      "anneau_nime",
+      "la_pelle_du_large"
+    ],
+    "normales": [
+      "gelocoiffe",
+      "gelocape",
+      "canne_de_mamie_bonbon",
+      "gelano_rouille"
+    ]
+  },
+  "16": {
+    "boss": [
+      "perruque_de_iop",
+      "cape_hucine"
+    ],
+    "elites": [
+      "pic_a_glace",
+      "anneau_de_qil_bil"
+    ],
+    "normales": [
+      "coiffe_du_scorbute",
+      "cape_du_scorbute",
+      "anneau_du_scorbute",
+      "racine_du_scorbute"
+    ]
+  },
+  "17": {
+    "boss": [
+      "sabre_sandawa",
+      "couronne_du_wa_wobot",
+      "cape_du_wa_wobot"
+    ],
+    "elites": [
+      "oreilles_du_wabbit",
+      "sac_cawotte"
+    ],
+    "normales": [
+      "couronne_du_wa_wabbit",
+      "cape_du_wa_wabbit",
+      "sceptre_du_wa_wabbit",
+      "bracelet_du_wa_wabbit"
+    ]
+  },
+  "18": {
+    "boss": [
+      "coiffe_du_craqueleur_legendaire",
+      "cape_du_craqueleur_legendaire"
+    ],
+    "elites": [
+      "anneau_du_mineur_gogorifiant",
+      "anneau_de_loopine"
+    ],
+    "normales": [
+      "coiffe_du_craqueleur",
+      "cape_du_craqueleur",
+      "anneau_du_craqueleur",
+      "lame_du_craqueleur"
+    ]
+  },
+  "19": {
+    "boss": [
+      "dagues_lutination",
+      "cape_d_elya_wood"
+    ],
+    "elites": [
+      "blessdagues",
+      "la_bertheuze"
+    ],
+    "normales": [
+      "coiffe_du_capitaine_pirate",
+      "cape_du_capitaine_pirate",
+      "alliance_du_capitaine_pirate",
+      "dagues_du_pirate"
+    ]
+  },
+  "20": {
+    "boss": [
+      "billreole",
+      "cape_du_gorgouille"
+    ],
+    "elites": [
+      "casque_de_maitre_nabur",
+      "anneau_k_tuelle"
+    ],
+    "normales": [
+      "coiffe_dragon_cochon",
+      "cape_du_dragon_cochon",
+      "anneau_du_dragon_cochon",
+      "kaiser"
+    ]
+  },
+  "21": {
+    "boss": [
+      "le_kikoularc",
+      "bracelet_tmotiv",
+      "la_brouteuse"
+    ],
+    "elites": [
+      "dragocoiffe_charbon",
+      "dragocoiffe_blanche"
+    ],
+    "normales": [
+      "casque_du_commandant_dragoeuf",
+      "cape_du_commandant_dragoeuf",
+      "anneau_du_commandant_dragoeuf",
+      "lame_du_commandant_dragoeuf"
+    ]
+  },
+  "22": {
+    "boss": [
+      "coiffe_du_meulou",
+      "cape_du_meulou",
+      "griffe_rose"
+    ],
+    "elites": [
+      "alliance_de_farle",
+      "cape_houte"
+    ],
+    "normales": [
+      "coiffe_du_muloubard",
+      "cape_du_muloubard",
+      "anneau_du_muloubard",
+      "griffe_du_muloubard"
+    ]
+  },
+  "23": {
+    "boss": [
+      "coiffe_de_l_abraknyde_ancestral",
+      "cape_de_l_abraknyde_ancestral",
+      "baguette_des_limbes"
+    ],
+    "elites": [
+      "alliance_des_forestiers",
+      "baton_de_marie_aigue"
+    ],
+    "normales": [
+      "coiffe_tissee",
+      "capraignee",
+      "anneau_tisse",
+      "racine_istre"
+    ]
+  },
+  "24": {
+    "boss": [],
+    "elites": [
+      "marteau_m_pouce",
+      "coiffe_du_gaddie"
+    ],
+    "normales": [
+      "fourbacoiffe",
+      "fourbacape",
+      "fourballiance",
+      "fourbaton"
+    ]
   }
 }
+

@@ -112,8 +112,11 @@ describe("zone Gelaxième Dimension", () => {
     }
   });
 
-  it("la zone n'a pas encore de butin (les objets de la toile 15 viendront plus tard)", () => {
-    expect(butinToile("gelaxieme_dimension")).toBeNull();
+  it("la toile 15 lâche la Panoplie Gelée, ses élites et ses boss (dont LE Gelano)", () => {
+    const pool = butinToile("gelaxieme_dimension")!;
+    expect(pool.normales).toEqual(["gelocoiffe", "gelocape", "canne_de_mamie_bonbon", "gelano_rouille"]);
+    expect(pool.elites).toEqual(["anneau_nime", "la_pelle_du_large"]);
+    expect(pool.boss).toEqual(["gelano", "couronne_du_roi_gelax", "arc_du_pecheur"]);
   });
 });
 

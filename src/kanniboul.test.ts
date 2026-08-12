@@ -178,8 +178,11 @@ describe("la zone Bateau du Chouque", () => {
     }
   });
 
-  it("la toile 19 ne lâche rien pour l'instant", () => {
-    expect(butinToile("bateau_du_chouque")).toBeNull();
+  it("la toile 19 lâche la Panoplie du Capitaine, ses élites et ses boss", () => {
+    const pool = butinToile("bateau_du_chouque")!;
+    expect(pool.normales).toEqual(["coiffe_du_capitaine_pirate", "cape_du_capitaine_pirate", "alliance_du_capitaine_pirate", "dagues_du_pirate"]);
+    expect(pool.elites).toEqual(["blessdagues", "la_bertheuze"]);
+    expect(pool.boss).toEqual(["dagues_lutination", "cape_d_elya_wood"]);
   });
 });
 

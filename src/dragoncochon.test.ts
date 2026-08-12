@@ -174,8 +174,11 @@ describe("la zone Antre du Dragon Cochon", () => {
     }
   });
 
-  it("la toile 20 ne lâche rien pour l'instant", () => {
-    expect(butinToile("antre_dragon_cochon")).toBeNull();
+  it("la toile 20 lâche la Panoplie du Dragon Cochon, ses élites et ses boss", () => {
+    const pool = butinToile("antre_dragon_cochon")!;
+    expect(pool.normales).toEqual(["coiffe_dragon_cochon", "cape_du_dragon_cochon", "anneau_du_dragon_cochon", "kaiser"]);
+    expect(pool.elites).toEqual(["casque_de_maitre_nabur", "anneau_k_tuelle"]);
+    expect(pool.boss).toEqual(["billreole", "cape_du_gorgouille"]);
   });
 });
 

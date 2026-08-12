@@ -8,7 +8,7 @@ import {
   mesurerTour, MAX_COMPTEURS, PV_MANNEQUIN, REPETITIONS,
 } from "./banc";
 import { SORTS } from "./data";
-import { CLASSES, butinToile } from "./data";
+import { CLASSES } from "./data";
 import { statsFinales } from "./progression";
 import { instanceDuTier } from "./run";
 
@@ -63,10 +63,11 @@ describe("construireHerosDetaille", () => {
   });
 
   it("rend une liste VIDE sur une toile sans aucun objet, même en « Set complet »", () => {
-    // la toile 13 (Clos des Blops) n'a aucun objet : les colonnes NU/MI/SET y
-    // sont identiques par construction, et c'est ce que l'écran doit pouvoir dire
-    expect(butinToile("clos_des_blops"), "l'assertion suivante suppose une toile sans butin").toBeNull();
-    const d = construireHerosDetaille({ classeId: "iop", niveau: 50, toile: 13, equipement: "set", rarete: "commun" });
+    // la toile 99 n'existe dans aucune tranche : pool vide, donc les colonnes
+    // NU/MI/SET y sont identiques par construction, et c'est ce que l'écran
+    // doit pouvoir dire. (Les toiles 13-24 ont reçu leurs objets — plus aucune
+    // toile RÉELLE n'est vide, on passe par une toile inconnue.)
+    const d = construireHerosDetaille({ classeId: "iop", niveau: 50, toile: 99, equipement: "set", rarete: "commun" });
     expect(d.slotsEquipes).toEqual([]);
   });
 

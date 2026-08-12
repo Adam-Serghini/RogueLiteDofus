@@ -172,8 +172,13 @@ describe("la zone Arbre de Moon", () => {
     }
   });
 
-  it("la toile 24 ne lâche rien pour l'instant", () => {
-    expect(butinToile("arbre_de_moon")).toBeNull();
+  it("la toile 24 lâche la Panoplie Fourbe et ses élites — mais AUCUN objet de boss", () => {
+    const pool = butinToile("arbre_de_moon")!;
+    expect(pool.normales).toEqual(["fourbacoiffe", "fourbacape", "fourballiance", "fourbaton"]);
+    expect(pool.elites).toEqual(["marteau_m_pouce", "coiffe_du_gaddie"]);
+    // le tableau d'Adam ne fournit pas d'objets de boss pour Moon : liste vide
+    // ASSUMÉE (comme la toile 1 en t1) — ce test tombera le jour où ils arrivent.
+    expect(pool.boss).toEqual([]);
   });
 });
 

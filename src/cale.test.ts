@@ -156,7 +156,10 @@ describe("zone Cale de l'Arche", () => {
     }
   });
 
-  it("la zone n'a pas encore de butin (les objets de la toile 14 viendront plus tard)", () => {
-    expect(butinToile("cale_de_l_arche")).toBeNull();
+  it("la toile 14 lâche la Panoplie Ripate, ses élites et ses boss", () => {
+    const pool = butinToile("cale_de_l_arche")!;
+    expect(pool.normales).toEqual(["chapeau_de_barbroussa", "cape_irate", "annopirate", "pelle_ripate"]);
+    expect(pool.elites).toEqual(["dagues_ruyeres", "cape_flotteuse"]);
+    expect(pool.boss).toEqual(["ares", "anneau_bsene"]);
   });
 });

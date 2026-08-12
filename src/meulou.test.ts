@@ -239,8 +239,11 @@ describe("la zone Tanière du Meulou", () => {
     }
   });
 
-  it("la toile 22 ne lâche rien pour l'instant", () => {
-    expect(butinToile("taniere_meulou")).toBeNull();
+  it("la toile 22 lâche la Panoplie du Muloubard, ses élites et ses boss", () => {
+    const pool = butinToile("taniere_meulou")!;
+    expect(pool.normales).toEqual(["coiffe_du_muloubard", "cape_du_muloubard", "anneau_du_muloubard", "griffe_du_muloubard"]);
+    expect(pool.elites).toEqual(["alliance_de_farle", "cape_houte"]);
+    expect(pool.boss).toEqual(["coiffe_du_meulou", "cape_du_meulou", "griffe_rose"]);
   });
 });
 

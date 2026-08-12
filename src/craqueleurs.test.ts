@@ -220,8 +220,11 @@ describe("la zone Pitons Rocheux", () => {
     }
   });
 
-  it("la toile 18 ne lâche rien pour l'instant", () => {
-    expect(butinToile("pitons_rocheux")).toBeNull();
+  it("la toile 18 lâche la Panoplie du Craqueleur, ses élites et ses boss", () => {
+    const pool = butinToile("pitons_rocheux")!;
+    expect(pool.normales).toEqual(["coiffe_du_craqueleur", "cape_du_craqueleur", "anneau_du_craqueleur", "lame_du_craqueleur"]);
+    expect(pool.elites).toEqual(["anneau_du_mineur_gogorifiant", "anneau_de_loopine"]);
+    expect(pool.boss).toEqual(["coiffe_du_craqueleur_legendaire", "cape_du_craqueleur_legendaire"]);
   });
 });
 

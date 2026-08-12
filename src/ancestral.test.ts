@@ -192,8 +192,11 @@ describe("la zone Domaine Ancestral", () => {
     }
   });
 
-  it("la toile 23 ne lâche rien pour l'instant", () => {
-    expect(butinToile("domaine_ancestral")).toBeNull();
+  it("la toile 23 lâche la Panoplie Tissée, ses élites et ses boss", () => {
+    const pool = butinToile("domaine_ancestral")!;
+    expect(pool.normales).toEqual(["coiffe_tissee", "capraignee", "anneau_tisse", "racine_istre"]);
+    expect(pool.elites).toEqual(["alliance_des_forestiers", "baton_de_marie_aigue"]);
+    expect(pool.boss).toEqual(["coiffe_de_l_abraknyde_ancestral", "cape_de_l_abraknyde_ancestral", "baguette_des_limbes"]);
   });
 });
 

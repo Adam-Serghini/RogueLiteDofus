@@ -154,8 +154,11 @@ describe("zone Laboratoire de Brumen Tinctorias", () => {
     }
   });
 
-  it("la zone n'a pas encore de butin (les objets de la toile 16 viendront plus tard)", () => {
-    expect(butinToile("laboratoire_brumen")).toBeNull();
+  it("la toile 16 lâche la Panoplie du Scorbute, ses élites et ses boss", () => {
+    const pool = butinToile("laboratoire_brumen")!;
+    expect(pool.normales).toEqual(["coiffe_du_scorbute", "cape_du_scorbute", "anneau_du_scorbute", "racine_du_scorbute"]);
+    expect(pool.elites).toEqual(["pic_a_glace", "anneau_de_qil_bil"]);
+    expect(pool.boss).toEqual(["perruque_de_iop", "cape_hucine"]);
   });
 });
 

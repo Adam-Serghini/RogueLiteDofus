@@ -143,8 +143,11 @@ describe("la zone Terrier du Wa Wabbit", () => {
     }
   });
 
-  it("la toile 17 ne lâche rien pour l'instant", () => {
-    expect(butinToile("terrier_wa_wabbit")).toBeNull();
+  it("la toile 17 lâche la Panoplie du Wa Wabbit, ses élites et ses boss", () => {
+    const pool = butinToile("terrier_wa_wabbit")!;
+    expect(pool.normales).toEqual(["couronne_du_wa_wabbit", "cape_du_wa_wabbit", "sceptre_du_wa_wabbit", "bracelet_du_wa_wabbit"]);
+    expect(pool.elites).toEqual(["oreilles_du_wabbit", "sac_cawotte"]);
+    expect(pool.boss).toEqual(["sabre_sandawa", "couronne_du_wa_wobot", "cape_du_wa_wobot"]);
   });
 });
 

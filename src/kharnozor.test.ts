@@ -187,8 +187,11 @@ describe("la zone Repaire du Kharnozor", () => {
     }
   });
 
-  it("la toile 21 ne lâche rien pour l'instant", () => {
-    expect(butinToile("repaire_kharnozor")).toBeNull();
+  it("la toile 21 lâche la Panoplie du Commandant, ses élites et ses boss", () => {
+    const pool = butinToile("repaire_kharnozor")!;
+    expect(pool.normales).toEqual(["casque_du_commandant_dragoeuf", "cape_du_commandant_dragoeuf", "anneau_du_commandant_dragoeuf", "lame_du_commandant_dragoeuf"]);
+    expect(pool.elites).toEqual(["dragocoiffe_charbon", "dragocoiffe_blanche"]);
+    expect(pool.boss).toEqual(["le_kikoularc", "bracelet_tmotiv", "la_brouteuse"]);
   });
 });
 
