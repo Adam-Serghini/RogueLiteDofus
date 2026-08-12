@@ -2,48 +2,55 @@
 //  sim.ts — Harnais d'ÉQUILIBRAGE (headless, hors `npm test`).
 //  Lancer : `npm run sim`  (vitest --config vitest.sim.config.ts)
 //
-//  Rejoue chaque rencontre N fois (IA des deux côtés, RNG graine reproductible)
-//  et sort un tableau : taux de victoire, tours joués, PV restants sur victoire.
-//  Équipe de référence : 4 classes par défaut, montée au NIVEAU ATTENDU de la
-//  zone (dérivé de la courbe d'XP). Deux scénarios de stuff : « nu » et « set
-//  de zone » (toile, palier commun).
+//  Il mesure un PARCOURS DE ZONE, pas une rencontre isolée : c'est l'attrition
+//  qui fait la difficulté de ce jeu (les PV persistent d'un nœud au suivant, la
+//  taverne est le seul soin). Un boss gagné à 100 % depuis des PV pleins peut
+//  être un wipe quand on y arrive à 45 % après six nœuds et une élite — ce que la
+//  mesure par rencontre ne pouvait pas voir.
 //
-//  LIMITES (à garder en tête) : `controllerIA` ne joue pas de façon optimale
-//  (spam du sort le plus cher, focus PV le plus bas ; seul le soin est géré via
-//  ia="soutien"). L'élément de frappe se calcule automatiquement coup par coup
-//  (le plus fort des deux éléments de la classe, par cible) — même moteur qu'en
-//  jeu. C'est une BASELINE RELATIVE, pas le ressenti réel.
+//  MODÈLE DE PARCOURS (par zone, calqué sur `main.ts`) : 6 combats normaux + 1
+//  élite dans un ordre tiré, UNE taverne à position tirée, puis le donjon. Les PV
+//  se reportent de combat en combat, l'équipe entre à 100 % (soin de fin de zone
+//  précédente), l'XP monte en route, et rencontres comme salle de boss sont tirées
+//  dans les pools de la zone à chaque parcours.
+//
+//  LOADOUTS : plus de colonne « nu » — personne n'est nu à un boss, et elle
+//  pilotait les drapeaux. À la place, deux cas RÉALISTES qui encadrent la vérité :
+//  ATTENDU (4 pièces de la toile, rareté tirée aux vrais poids 60/25/12/3) et
+//  MALCHANCE (2 pièces, commun seulement).
+//
+//  LIMITES : `controllerIA` ne joue que les sorts de dégâts (le plus cher d'abord)
+//  et soigne de façon optimale — il ignore buffs, placements et séquences de PA,
+//  c'est-à-dire l'essentiel des onze kits reworkés. Le sim est donc un PLANCHER,
+//  informatif dans UN SEUL SENS : un `clear` élevé prouve que la zone est facile,
+//  un `clear` bas ne prouve pas qu'elle est trop dure.
 // =============================================================================
 import { describe, it, expect } from "vitest";
 import {
-  TRANCHES, zonesDeTranche, offsetToile, COMBATS, MONSTRES, CLASSES, ITEMS, XP_PAR_TYPE, xpEffective, SORTS, butinToile,
+  ASCENSION, TRANCHES, zonesDeTranche, offsetToile, CLASSES, XP_PAR_TYPE,
+  xpEffective, SORTS, butinToile,
   type TrancheDef, type ZoneDef,
 } from "./data";
 
 import { runCombat, controllerIA } from "./combat";
-import { progressionInitiale, gagnerXP, STAT_PAR_ELEMENT } from "./progression";
+import { progressionInitiale, STAT_PAR_ELEMENT } from "./progression";
 import {
-  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateursElite, instanceDuTier,
-  effetsAscension, appliquerAscensionEnnemis, especesNormalesDeZone, meilleurItemToile,
+  nouvelleRun, equipeCombattante, fabriquerEnnemis, pvMaxPerso, appliquerModificateursElite,
+  instanceDuTier, rollItemRarete, persoAuNiveau, effetsAscension, appliquerAscensionEnnemis,
+  especesNormalesDeZone, meilleurItemToile, synchroniserPV, soignerEquipe,
+  tavernePctAscension, gagnerXPPerso, sansNoeudsDeZone,
   type RunState,
 } from "./run";
 import { mulberry32 } from "./rng";
-import type { ItemInstance, Rarete } from "./types";
+import type { EquipSlot } from "./types";
 
-// Tranches mesurées par le banc, dans l'ordre d'affichage du rapport. T1 doit
-// TOUJOURS rester mesurée en premier et à l'identique (garde-fou anti-régression :
-// ses chiffres ne doivent jamais bouger d'un run de sim à l'autre) ; ajouter d'autres
-// ids ici pour les faire apparaître à la suite (ex. T2 pour mesurer le Clos des Blops).
+// Tranches mesurées, dans l'ordre d'affichage. T1 doit TOUJOURS rester mesurée en
+// premier (garde-fou anti-régression : ses chiffres servent de référence d'un run
+// de sim à l'autre) ; ajouter des ids ici pour en mesurer d'autres.
 const TRANCHES_MESUREES: TrancheDef[] = [TRANCHES[0], TRANCHES[1]];
 
-// --- Paramètres du sim (tunables) --------------------------------------------
-// Les classes portent désormais leurs deux éléments (voir CLASSES-ELEMENTS.md), et
-// l'élément de frappe se calcule automatiquement coup par coup (le plus fort des
-// deux) : il n'y a plus rien à choisir côté banc. On garde les quatre mêmes
-// classes, qui couvrent les quatre éléments — nécessaire pour juger honnêtement
-// les zones à puzzle élémentaire.
-// SIM_TANK=1 → config « tortue » positionnelle : Feca seul en ligne avant, le reste
-// derrière (l'exploit full-vitalité, lui, n'existe plus : l'allocation est automatique).
+// --- Paramètres (tunables) ---------------------------------------------------
+// SIM_TANK=1 → config « tortue » positionnelle : Feca seul devant, le reste derrière.
 const TANK = !!(globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.SIM_TANK;
 const TEAM: Array<{ classe: string; pos?: number }> = TANK
   ? [
@@ -56,222 +63,257 @@ const TEAM: Array<{ classe: string; pos?: number }> = TANK
     { classe: "iop" },
     { classe: "cra" },
     { classe: "eniripsa" },
-    { classe: "ecaflip" }, // le sadida est désactivé
+    { classe: "ecaflip" }, // la sadida est désactivée
   ];
 const IDS = TEAM.map((t) => t.classe);
-const N = 200; // combats par (rencontre × scénario de stuff)
-const NORMAUX_PAR_ZONE = 6; // path moyen supposé pour la courbe d'XP (plateau Pokelike ~10 nœuds)
+
+const N = 100;             // parcours par (zone × loadout) pour le rapport principal
+const N_ASC = 60;          // parcours par (zone × cran) pour le tableau d'Ascension
+const COMBATS_PAR_ZONE = 6; // nœuds « combat » d'un parcours moyen (plateau ~10-12 rangées)
 const ELITES_PAR_ZONE = 1;
-// Palier d'Ascension mesuré par le sim (0 = jeu de base). Le sim ne rejoue que des
-// RENCONTRES ISOLÉES, pas des runs entières : la taverne réduite (tavernePct) et la
-// mort définitive, ainsi que les tavernes coupées à l'équipe complète, ne s'appliquent
-// qu'entre/au début des runs réelles et restent donc HORS scope de cette mesure —
-// seuls les effets qui modifient directement les ennemis (renfort de meute, PV,
-// multiplicateur de dégâts) sont appliqués ici via
-// `appliquerAscensionEnnemis`/`appliquerModificateursElite` et le `enemyDamageBonus`
-// passé à `runCombat`.
-const ASCENSION = 0;
-const EFF_ASCENSION = effetsAscension(ASCENSION);
 
-// --- PRNG reproductible : `mulberry32` vit dans `./rng`, partagé avec le banc
-// d'essai de l'éditeur — deux générateurs différents, ce serait deux qualités de
-// tirage pour deux chiffres censés se comparer.
+const SLOTS_SIM: EquipSlot[] = ["arme", "coiffe", "cape", "anneau"];
 
-// --- Construction de l'équipe de référence -----------------------------------
+type Loadout = "attendu" | "malchance";
+const NB_PIECES: Record<Loadout, number> = { attendu: 4, malchance: 2 };
+
 const estSoutien = (classeId: string): boolean =>
   CLASSES[classeId].sorts.some((id) => SORTS[id]?.type === "soin");
 
-const SLOTS_SIM = ["arme", "coiffe", "cape", "anneau"] as const;
-
-/** Exemplaire d'un objet à rareté au palier demandé (repli : premier palier défini). */
-function itemPalier(id: string, rarete: "commun" | "rare"): ItemInstance {
-  const tiers = ITEMS[id].tiers!;
-  const r = tiers[rarete] ? rarete : (Object.keys(tiers)[0] as Rarete);
-  return instanceDuTier(id, r)!;
-}
-
-/** Niveaux attendus par zone d'une tranche donnée : à l'ENTRÉE (normales/élites)
- *  et en FIN de zone (le donjon se joue après les combats de la zone — mesurer le
- *  boss au niveau d'entrée le rendait artificiellement injouable en début de
- *  tranche). Départ/cap/xpMult viennent tous de `TrancheDef` — mêmes formules que
- *  le jeu réel (`xpEffective`, partagée), la numérotation de toile continue d'une
- *  tranche à l'autre via `offsetToile`. Pour t1 (départ niveau 1, xpMult absent,
- *  offset 0) ceci reproduit EXACTEMENT l'ancien calcul figé sur "t1"/cap 50. */
-function courbeNiveaux(tranche: TrancheDef, zones: ZoneDef[]): { entree: number[]; fin: number[] } {
-  const p = progressionInitiale();
-  p.niveau = tranche.niveaux[0];
-  const niveauMax = tranche.niveaux[1];
+/** Niveau d'ENTRÉE de chaque zone d'une tranche. Le niveau ne se fige plus en
+ *  sortie de zone : le parcours simulé fait monter l'XP lui-même, exactement comme
+ *  le jeu. Départ, cap et xpMult viennent tous de `TrancheDef`, la numérotation de
+ *  toile est continue via `offsetToile` — mêmes formules que le jeu réel, et le
+ *  donjon ne rapporte PAS d'XP (voir `case "donjon"` de `resoudreType`, main.ts). */
+function niveauxDEntree(tranche: TrancheDef, zones: ZoneDef[]): number[] {
+  const sonde = persoAuNiveau(IDS[0], tranche.niveaux[0], 0);
   const offset = offsetToile(tranche.id);
   const entree: number[] = [];
-  const fin: number[] = [];
   for (let z = 0; z < zones.length; z++) {
-    entree.push(p.niveau);
+    entree.push(sonde.progression.niveau);
     const toile = offset + z + 1;
-    for (let i = 0; i < NORMAUX_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat, toile, tranche.id), niveauMax);
-    for (let i = 0; i < ELITES_PAR_ZONE; i++) gagnerXP(p, xpEffective(XP_PAR_TYPE.combat_dur, toile, tranche.id), niveauMax);
-    fin.push(p.niveau);
+    for (let i = 0; i < COMBATS_PAR_ZONE; i++)
+      gagnerXPPerso(sonde, xpEffective(XP_PAR_TYPE.combat, toile, tranche.id), tranche.id);
+    for (let i = 0; i < ELITES_PAR_ZONE; i++)
+      gagnerXPPerso(sonde, xpEffective(XP_PAR_TYPE.combat_dur, toile, tranche.id), tranche.id);
   }
-  return { entree, fin };
+  return entree;
 }
 
-/**
- * Équipe de référence au niveau `niveau`, éventuellement stuffée des
- * `nbPieces` premières pièces du pool de toile de la zone (2 = mi-set
- * réaliste ; défaut = set complet).
- */
-function equipeReference(niveau: number, zoneId?: string, nbPieces = 4): RunState {
-  const run = nouvelleRun(IDS);
-  const pool = zoneId ? (butinToile(zoneId)?.normales ?? null) : null;
+/** Équipe de référence au niveau donné, équipée selon le loadout.
+ *
+ *  ATTENDU tire la rareté de chaque pièce au vrai tirage (`rollItemRarete`, poids
+ *  60/25/12/3) : le stuff varie donc d'un parcours à l'autre, et la moyenne sur N
+ *  intègre la chance de drop au lieu de figer tout le monde en commun — l'ancien
+ *  banc mesurait le PIRE palier en l'appelant « set complet ». */
+function equipeReference(niveau: number, zoneId: string, loadout: Loadout, ascension: number, trancheId: string, rng: () => number): RunState {
+  const run = nouvelleRun(IDS, ascension, trancheId);
+  const pool = butinToile(zoneId)?.normales ?? null;
   run.persos.forEach((perso, i) => {
     perso.progression = { ...progressionInitiale(), niveau };
     if (TEAM[i].pos !== undefined) perso.position = TEAM[i].pos!;
     if (pool) {
-      // zone à toile : chaque membre porte le meilleur objet COMMUN de sa stat
-      // par slot (arme et coiffe d'abord pour le mi-set) — plancher réaliste,
-      // les paliers rare/épique/légendaire rendent le vrai jeu plus facile. Les
-      // 2 éléments de la classe montent tous les deux (allocation automatique) :
-      // `statPref` ne départage en réalité RIEN — aucun objet du jeu ne porte de
-      // ligne de caractéristique élémentaire sèche (voir Archétypes & éléments,
-      // CLAUDE.md), donc ce tri par premier élément déclaré n'a jamais l'occasion
-      // de s'exercer sur le stuff non-adaptatif.
+      // `statPref` ne départage en réalité rien (aucun objet ne porte de ligne de
+      // caractéristique élémentaire sèche) mais reste la clé de `meilleurItemToile`.
       const statPref = STAT_PAR_ELEMENT[CLASSES[TEAM[i].classe].elements[0]];
-      for (const slot of SLOTS_SIM.slice(0, nbPieces)) {
+      for (const slot of SLOTS_SIM.slice(0, NB_PIECES[loadout])) {
         const id = meilleurItemToile(pool, slot, statPref);
-        if (id) perso.equipement[slot] = itemPalier(id, "commun");
+        if (!id) continue;
+        const inst = loadout === "attendu" ? rollItemRarete(id, rng) : instanceDuTier(id, "commun");
+        if (inst) perso.equipement[slot] = inst;
       }
     }
-    perso.pvActuels = pvMaxPerso(perso);
+    perso.pvActuels = pvMaxPerso(perso); // l'équipe entre dans la zone à 100 %
   });
   return run;
 }
 
-// --- Simulation d'une rencontre ----------------------------------------------
-interface Bilan { win: number; turns: number; hpWin: number; maxTurns: number; }
-
-/** Rôle d'une rencontre dans le rapport, tel qu'il est imprimé dans la colonne. */
-type RoleRencontre = "normale" | "élite" | "boss";
-
-interface OptsRencontre {
-  type: "combat" | "combat_dur" | "donjon";
-  especesZone?: string[];
+// --- Simulation d'un PARCOURS de zone ----------------------------------------
+interface BilanZone {
+  clear: number;        // fraction de parcours menés jusqu'au bout
+  pvDonjon: number;     // PV d'équipe moyens à l'entrée du donjon (parcours qui y arrivent)
+  pvFin: number;        // PV d'équipe moyens après le donjon (parcours réussis)
+  koDonjon: number;     // héros à 0 PV en moyenne à l'entrée du donjon
+  wipes: Map<string, number>; // où ça casse, par étiquette d'étape
 }
 
-/** Rôle affiché → type de NŒUD du jeu, celui que lisent `appliquerAscensionEnnemis`
- *  et `appliquerModificateursElite`. */
-const NOEUD_PAR_ROLE: Record<RoleRencontre, OptsRencontre["type"]> = {
-  normale: "combat",
-  "élite": "combat_dur",
-  boss: "donjon",
-};
+type Etape =
+  | { genre: "combat" | "combat_dur" | "donjon"; combatId: string }
+  | { genre: "taverne" };
 
-async function simuler(run: RunState, combatId: string, seed0: number, opts: OptsRencontre): Promise<Bilan> {
-  let wins = 0, turnsTot = 0, hpWinTot = 0, maxTurns = 0;
-  for (let i = 0; i < N; i++) {
-    const equipe = equipeCombattante(run);
-    run.persos.forEach((p, j) => { if (estSoutien(p.classeId)) equipe[j].ia = "soutien"; });
-    const rng = mulberry32((seed0 + i * 0x9e3779b9) >>> 0);
-    const ennemis = fabriquerEnnemis(combatId);
-    // comme en jeu : le renfort d'Ascension rejoint la meute AVANT le
-    // modificateur d'élite, sinon il y échapperait
-    appliquerAscensionEnnemis(ennemis, EFF_ASCENSION, {
-      type: opts.type, especesZone: opts.especesZone, rng,
-    });
-    if (opts.type === "combat_dur") {
-      // comme en jeu : la meute élite est modifiée
-      appliquerModificateursElite(ennemis, rng, undefined);
-    }
-    const cs = [...equipe, ...ennemis];
-    let turns = 0;
-    const win = await runCombat(cs, {
-      controllers: { joueur: controllerIA, ennemi: controllerIA },
-      rng,
-      log: (m) => { if (m.charCodeAt(0) === 0x25b6) turns++; }, // « ▶ Tour de … »
-      enemyDamageBonus: EFF_ASCENSION.degatsMult ?? 1,
-    });
-    turnsTot += turns;
-    if (turns > maxTurns) maxTurns = turns;
-    if (win) {
-      wins++;
-      const cur = equipe.reduce((s, c) => s + Math.max(0, c.pvActuels), 0);
-      const max = equipe.reduce((s, c) => s + c.pvMax, 0);
-      hpWinTot += max ? cur / max : 0;
-    }
+/** Construit le parcours d'un tirage : 6 combats + 1 élite dans un ordre tiré, une
+ *  taverne à position tirée (sauf si l'Ascension la supprime), puis le donjon.
+ *  Les rencontres sont tirées dans les pools, comme la génération de carte le fait. */
+function construireParcours(zone: ZoneDef, run: RunState, rng: () => number): Etape[] {
+  const pioche = (pool: readonly string[]): string => pool[Math.floor(rng() * pool.length)];
+  const combats: Etape[] = [];
+  for (let i = 0; i < COMBATS_PAR_ZONE; i++)
+    combats.push({ genre: "combat", combatId: pioche(zone.pools.normales) });
+  for (let i = 0; i < ELITES_PAR_ZONE; i++) {
+    const pool = zone.pools.elite.length ? zone.pools.elite : zone.pools.normales;
+    // l'élite se place à un rang tiré : la rencontrer tôt ou tard ne coûte pas pareil
+    combats.splice(Math.floor(rng() * (combats.length + 1)), 0, { genre: "combat_dur", combatId: pioche(pool) });
   }
-  return { win: wins / N, turns: turnsTot / N, hpWin: wins ? hpWinTot / wins : 0, maxTurns };
+  // `sansNoeudsDeZone` est la SOURCE UNIQUE lue aussi par la génération de carte :
+  // à l'Ultime, une équipe au complet n'a plus aucune taverne.
+  if (!sansNoeudsDeZone(run, zone).includes("taverne"))
+    combats.splice(Math.floor(rng() * (combats.length + 1)), 0, { genre: "taverne" });
+  combats.push({ genre: "donjon", combatId: pioche(zone.pools.boss) });
+  return combats;
+}
+
+async function simulerZone(
+  zone: ZoneDef, tranche: TrancheDef, niveau: number, toile: number,
+  loadout: Loadout, ascension: number, seed0: number, nbParcours: number,
+): Promise<BilanZone> {
+  const eff = effetsAscension(ascension);
+  const especesZone = especesNormalesDeZone(zone);
+  let clears = 0, pvDonjonTot = 0, nbArrivesDonjon = 0, pvFinTot = 0, koTot = 0;
+  const wipes = new Map<string, number>();
+
+  for (let i = 0; i < nbParcours; i++) {
+    const rng = mulberry32((seed0 + i * 0x9e3779b9) >>> 0);
+    const run = equipeReference(niveau, zone.id, loadout, ascension, tranche.id, rng);
+    const parcours = construireParcours(zone, run, rng);
+
+    const pvEquipe = (): number => {
+      const cur = run.persos.reduce((s, p) => s + Math.max(0, p.pvActuels), 0);
+      const max = run.persos.reduce((s, p) => s + pvMaxPerso(p), 0);
+      return max ? cur / max : 0;
+    };
+
+    let vivant = true;
+    for (const etape of parcours) {
+      if (etape.genre === "taverne") {
+        soignerEquipe(run, tavernePctAscension(ascension));
+        continue;
+      }
+      if (etape.genre === "donjon") {
+        nbArrivesDonjon++;
+        pvDonjonTot += pvEquipe();
+        koTot += run.persos.filter((p) => p.pvActuels <= 0).length;
+      }
+      const equipe = equipeCombattante(run);
+      run.persos.forEach((p, j) => { if (estSoutien(p.classeId)) equipe[j].ia = "soutien"; });
+      const ennemis = fabriquerEnnemis(etape.combatId);
+      // comme en jeu : le renfort d'Ascension rejoint la meute AVANT le modificateur
+      // d'élite, sinon il y échapperait
+      appliquerAscensionEnnemis(ennemis, eff, { type: etape.genre, especesZone, rng });
+      if (etape.genre === "combat_dur") appliquerModificateursElite(ennemis, rng, undefined);
+      const cs = [...equipe, ...ennemis];
+      const win = await runCombat(cs, {
+        controllers: { joueur: controllerIA, ennemi: controllerIA },
+        rng,
+        log: () => {},
+        enemyDamageBonus: eff.degatsMult ?? 1,
+      });
+      synchroniserPV(run, cs);
+      if (!win) {
+        const cle = etape.genre === "donjon" ? "donjon" : `${etape.genre}:${etape.combatId}`;
+        wipes.set(cle, (wipes.get(cle) ?? 0) + 1);
+        vivant = false;
+        break;
+      }
+      // le donjon ne rapporte pas d'XP en jeu, et la zone s'arrête juste après
+      if (etape.genre !== "donjon") {
+        const xp = xpEffective(XP_PAR_TYPE[etape.genre], toile, tranche.id);
+        for (const p of run.persos) gagnerXPPerso(p, xp, tranche.id);
+      }
+    }
+    if (vivant) { clears++; pvFinTot += pvEquipe(); }
+  }
+
+  return {
+    clear: clears / nbParcours,
+    pvDonjon: nbArrivesDonjon ? pvDonjonTot / nbArrivesDonjon : 0,
+    pvFin: clears ? pvFinTot / clears : 0,
+    koDonjon: nbArrivesDonjon ? koTot / nbArrivesDonjon : 0,
+    wipes,
+  };
 }
 
 // --- Helpers d'affichage -----------------------------------------------------
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`.padStart(4);
-const f1 = (x: number) => x.toFixed(1).padStart(5);
-function labelEnnemis(combatId: string): string {
-  const cptr: Record<string, number> = {};
-  for (const e of COMBATS[combatId].ennemis) cptr[e.monstre] = (cptr[e.monstre] ?? 0) + 1;
-  return Object.entries(cptr)
-    .map(([m, n]) => `${n}×${MONSTRES[m]?.nom ?? m}`)
-    .join(", ");
-}
-function drapeaux(role: RoleRencontre, nu: Bilan, mi: Bilan, set: Bilan): string {
-  const f: string[] = [];
-  if (nu.win < 0.5 || set.win < 0.5) f.push("⚠ DUR");
-  if (role === "boss" && set.win > 0.9) f.push("· facile");
-  if (role === "normale" && nu.win > 0.98 && nu.hpWin > 0.85) f.push("· trivial");
-  if (set.win - mi.win > 0.5) f.push("· falaise 2→4p"); // le saut se joue entre mi-set et full set
-  if (Math.max(nu.maxTurns, mi.maxTurns, set.maxTurns) >= 90) f.push("· stalemate?");
-  return f.join(" ");
+const pireWipe = (w: Map<string, number>): string => {
+  if (!w.size) return "";
+  const [cle, n] = [...w.entries()].reduce((a, b) => (b[1] > a[1] ? b : a));
+  return `${cle} (${n})`;
+};
+
+/** Verdict par rapport à la CIBLE : « clairable simplement, mais pas autowin ».
+ *  Un clear parfait sans entamer les PV n'offre aucune tension ; un clear qui
+ *  s'effondre est un mur que ce plancher d'IA ne peut de toute façon pas juger. */
+function verdict(b: BilanZone): string {
+  if (b.clear >= 0.995 && b.pvFin > 0.6) return "· AUTOWIN";
+  if (b.clear < 0.6) return "⚠ MUR";
+  if (b.clear >= 0.9) return "· ok";
+  return "· serré";
 }
 
 // --- Rapport -----------------------------------------------------------------
-describe("équilibrage — simulation par rencontre", () => {
+describe("équilibrage — simulation par parcours de zone", () => {
   it("rapport", async () => {
     const out: string[] = [];
-    out.push(`\n=== ÉQUILIBRAGE · sim par rencontre · N=${N}/scénario · IA des 2 côtés ===`);
+    out.push(`\n=== ÉQUILIBRAGE · parcours de ZONE · N=${N} parcours/scénario · IA des 2 côtés ===`);
     out.push(`Équipe: ${TEAM.map((t) => `${t.classe}(${CLASSES[t.classe].elements.join("/")})`).join(" ")}`);
-    out.push(`Colonnes — NU (sans stuff) | MI (2 pièces, toile commun) | SET (4 pièces, toile commun) : win% · tours · PV%restant(sur victoire)\n`);
+    out.push(`Parcours : ${COMBATS_PAR_ZONE} combats + ${ELITES_PAR_ZONE} élite (ordre tiré) + 1 taverne (position tirée) + le donjon.`);
+    out.push(`PV reportés d'un combat au suivant, entrée de zone à 100 %, XP en route, rencontres tirées dans les pools.`);
+    out.push(`ATTENDU = 4 pièces de la toile, rareté tirée (60/25/12/3) · MALCHANCE = 2 pièces commun.`);
+    out.push(`clear = parcours menés au bout · PVdon = PV d'équipe à l'entrée du donjon · PVfin = après le donjon · KO = héros à 0 PV au donjon\n`);
 
     for (const tranche of TRANCHES_MESUREES) {
-    const ZONES_SIM = zonesDeTranche(tranche);
-    const { entree: niveaux, fin: niveauxFin } = courbeNiveaux(tranche, ZONES_SIM);
-    out.push(`\n### ${tranche.nom} ###`);
-    out.push(`Niveau attendu/zone: ${ZONES_SIM.map((z, i) => `${z.nom.split(" ").pop()} L${niveaux[i]}`).join(" · ")}`);
+      const zones = zonesDeTranche(tranche);
+      const niveaux = niveauxDEntree(tranche, zones);
+      const offset = offsetToile(tranche.id);
+      out.push(`\n### ${tranche.nom} ###`);
+      out.push(
+        "toile zone                          niv | ATTENDU  clear PVdon PVfin  KO  | MALCH clear PVdon | verdict     ça casse à",
+      );
 
-    for (let z = 0; z < ZONES_SIM.length; z++) {
-      const zone = ZONES_SIM[z];
-      const niveau = niveaux[z];
-      const runNu = equipeReference(niveau);
-      const runMi = equipeReference(niveau, zone.id, 2);
-      const runSet = equipeReference(niveau, zone.id);
-      out.push(`── ${zone.nom} (niv ${niveau}, toile (objets communs)) ──`);
-      const lignes: Array<{ id: string; role: RoleRencontre }> = [
-        ...zone.pools.normales.map((id) => ({ id, role: "normale" as const })),
-        ...zone.pools.elite.map((id) => ({ id, role: "élite" as const })),
-        ...zone.pools.boss.map((id) => ({ id, role: "boss" as const })),
-      ];
-      // le donjon se joue en FIN de zone : équipes de boss au niveau de sortie
-      const runNuBoss = equipeReference(niveauxFin[z]);
-      const runMiBoss = equipeReference(niveauxFin[z], zone.id, 2);
-      const runSetBoss = equipeReference(niveauxFin[z], zone.id);
-      const especesZone = especesNormalesDeZone(zone);
-      for (const { id, role } of lignes) {
-        const seed = z * 100000 + id.split("").reduce((s, c) => s + c.charCodeAt(0), 0) * 7;
-        const boss = role === "boss";
-        const opts: OptsRencontre = { type: NOEUD_PAR_ROLE[role], especesZone };
-        const nu = await simuler(boss ? runNuBoss : runNu, id, seed, opts);
-        const mi = await simuler(boss ? runMiBoss : runMi, id, seed, opts);
-        const set = await simuler(boss ? runSetBoss : runSet, id, seed, opts);
-        const dr = drapeaux(role, nu, mi, set);
+      for (let z = 0; z < zones.length; z++) {
+        const zone = zones[z];
+        const toile = offset + z + 1;
+        const seed = z * 100000 + toile * 7717;
+        const att = await simulerZone(zone, tranche, niveaux[z], toile, "attendu", 0, seed, N);
+        const mal = await simulerZone(zone, tranche, niveaux[z], toile, "malchance", 0, seed, N);
         out.push(
-          `  ${role.padEnd(7)} ${id.padEnd(10)} ` +
-          `NU ${pct(nu.win)} ${f1(nu.turns)}t ${pct(nu.hpWin)} | ` +
-          `MI ${pct(mi.win)} ${f1(mi.turns)}t ${pct(mi.hpWin)} | ` +
-          `SET ${pct(set.win)} ${f1(set.turns)}t ${pct(set.hpWin)}  ` +
-          `${dr}   [${labelEnnemis(id)}]`,
+          String(toile).padEnd(6) +
+          zone.nom.slice(0, 29).padEnd(30) +
+          String(niveaux[z]).padEnd(4) + "|  " +
+          `${pct(att.clear)} ${pct(att.pvDonjon)} ${pct(att.pvFin)} ${att.koDonjon.toFixed(1)}` + " | " +
+          `      ${pct(mal.clear)} ${pct(mal.pvDonjon)}` + " | " +
+          verdict(att).padEnd(11) + " " + pireWipe(att.wipes),
         );
       }
-      out.push("");
     }
-    expect(niveaux.length).toBe(ZONES_SIM.length);
-    expect(niveauxFin.length).toBe(ZONES_SIM.length);
+
+    // --- Échelle d'Ascension --------------------------------------------------
+    // La cible de conception : ★1 clairable sans être un autowin, et Cauchemar /
+    // Ultime HORS DE PORTÉE en l'état — la méta-progression à venir (Dofus,
+    // parchotage) aplanira tout ça, il faut donc de la marge au-dessus.
+    out.push(`\n\n=== ÉCHELLE D'ASCENSION · clear% du parcours de zone · loadout ATTENDU · N=${N_ASC} ===`);
+    for (const tranche of TRANCHES_MESUREES) {
+      const zones = zonesDeTranche(tranche);
+      const niveaux = niveauxDEntree(tranche, zones);
+      const offset = offsetToile(tranche.id);
+      out.push(`\n### ${tranche.nom} ###`);
+      out.push(
+        "toile zone                          " +
+        ASCENSION.map((a, i) => `★${i + 1} ${a.nom}`.padStart(14)).join(""),
+      );
+      for (let z = 0; z < zones.length; z++) {
+        const zone = zones[z];
+        const toile = offset + z + 1;
+        const cols: string[] = [];
+        for (let cran = 0; cran < ASCENSION.length; cran++) {
+          const b = await simulerZone(zone, tranche, niveaux[z], toile, "attendu", cran, z * 7919 + cran * 104729, N_ASC);
+          cols.push(pct(b.clear).padStart(14));
+        }
+        out.push(String(toile).padEnd(6) + zone.nom.slice(0, 29).padEnd(30) + cols.join(""));
+      }
     }
+
+    expect(TRANCHES_MESUREES.length).toBeGreaterThan(0);
     // eslint-disable-next-line no-console
     console.log(out.join("\n"));
   });
