@@ -71,14 +71,30 @@ describe("Donjon des Scarafeuilles — la poussière aveugle", () => {
     expect(s, "le sort poussiere_incandescente doit exister").toBeTruthy();
     expect(s.type).toBe("degats"); // sinon `iaAgressif` ne le jouerait jamais
     expect(s.effet?.stat).toBe("echecCritique");
-    expect(s.effet!.duree).toBe(2);
     expect(MONSTRES.scarafeuille_rouge.sorts).toContain("poussiere_incandescente");
   });
 
-  it("la signature culmine sur le boss", () => {
+  it("la durée DOIT rester à 1 tour : l'échec critique se cumule", () => {
+    // `appliquerEffet` EMPILE (il ne remplace pas l'entrée existante) et
+    // `sommeEffet` ADDITIONNE, et le tirage n'a aucun plafond. À `duree: 2`, un
+    // seul porteur qui relance chaque tour installe donc un régime permanent à
+    // 2 × valeur, et deux porteurs peuvent dépasser 1,0 : le héros ne lance plus
+    // jamais rien tout en payant ses PA. Le taux effectif se raisonne toujours
+    // « valeur × nombre de porteurs qui tirent sur la même cible ».
+    expect(SORTS.poussiere_incandescente.effet!.duree).toBe(1);
+    expect(SORTS.poussiere_incandescente.effet!.valeur).toBeLessThanOrEqual(0.2);
+  });
+
+  it("la signature culmine sur le boss, et il la lance VRAIMENT", () => {
     // Une signature de zone portée par une seule escorte se lit comme une
     // bizarrerie ; portée aussi par le boss, elle se lit comme l'identité du lieu.
     expect(MONSTRES.scarabosse_dore.sorts).toContain("poussiere_incandescente");
+    // Mais la porter ne suffit pas : `iaAgressif` trie les sorts de dégâts par
+    // coût DÉCROISSANT avec un tri STABLE, donc à coût égal c'est l'ordre du
+    // tableau qui tranche. Tant que `morsure` (4 PA) précédait la poussière
+    // (4 PA), le boss ne l'a jamais lancée une seule fois — signature morte.
+    const sorts = MONSTRES.scarabosse_dore.sorts;
+    expect(sorts.indexOf("poussiere_incandescente")).toBeLessThan(sorts.indexOf("morsure"));
   });
 
   it("le Scarafeuille Noir peut enfin lancer sa charge", () => {

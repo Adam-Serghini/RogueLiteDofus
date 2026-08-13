@@ -2943,7 +2943,7 @@
     "initiative": 8,
     "nom": "Larve Bleue",
     "pa": 5,
-    "pv": 118,
+    "pv": 105,
     "resistances": {
       "eau": 0.3,
       "feu": -0.25
@@ -2954,7 +2954,7 @@
     ],
     "stats": {
       "agilite": 10,
-      "chance": 40,
+      "chance": 45,
       "force": 8,
       "intelligence": 8,
       "vitalite": 54
@@ -2968,7 +2968,7 @@
     "initiative": 8,
     "nom": "Larve Champêtre",
     "pa": 5,
-    "pv": 118,
+    "pv": 105,
     "resistances": {
       "air": 0.1,
       "eau": 0.1,
@@ -2982,7 +2982,7 @@
     "stats": {
       "agilite": 10,
       "chance": 8,
-      "force": 40,
+      "force": 45,
       "intelligence": 8,
       "vitalite": 54
     }
@@ -2994,7 +2994,7 @@
     "initiative": 8,
     "nom": "Larve Dorée",
     "pa": 6,
-    "pv": 215,
+    "pv": 190,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -3007,7 +3007,7 @@
     ],
     "stats": {
       "agilite": 14,
-      "force": 38,
+      "force": 43,
       "intelligence": 15,
       "vitalite": 88
     }
@@ -3019,7 +3019,7 @@
     "initiative": 9,
     "nom": "Larve Émeraude",
     "pa": 5,
-    "pv": 114,
+    "pv": 102,
     "resistances": {
       "air": -0.3,
       "terre": 0.4
@@ -3030,7 +3030,7 @@
     ],
     "stats": {
       "agilite": 10,
-      "force": 37,
+      "force": 42,
       "intelligence": 8,
       "vitalite": 60
     }
@@ -3043,7 +3043,7 @@
     "initiative": 8,
     "nom": "Larve Jaune",
     "pa": 5,
-    "pv": 118,
+    "pv": 105,
     "resistances": {
       "air": 0.3,
       "terre": -0.25
@@ -3053,7 +3053,7 @@
       "grignotage"
     ],
     "stats": {
-      "agilite": 40,
+      "agilite": 45,
       "chance": 8,
       "force": 8,
       "intelligence": 8,
@@ -3068,7 +3068,7 @@
     "initiative": 8,
     "nom": "Larve Orange",
     "pa": 5,
-    "pv": 118,
+    "pv": 105,
     "resistances": {
       "eau": -0.25,
       "feu": 0.3
@@ -3080,7 +3080,7 @@
     "stats": {
       "agilite": 10,
       "force": 8,
-      "intelligence": 40,
+      "intelligence": 45,
       "vitalite": 54
     }
   },
@@ -3091,7 +3091,7 @@
     "initiative": 9,
     "nom": "Larve Rubis",
     "pa": 5,
-    "pv": 138,
+    "pv": 122,
     "resistances": {
       "eau": -0.3,
       "feu": 0.4
@@ -3103,7 +3103,7 @@
     "stats": {
       "agilite": 10,
       "force": 8,
-      "intelligence": 44,
+      "intelligence": 46,
       "vitalite": 60
     }
   },
@@ -3114,7 +3114,7 @@
     "initiative": 9,
     "nom": "Larve Saphir",
     "pa": 5,
-    "pv": 138,
+    "pv": 122,
     "resistances": {
       "eau": 0.4,
       "feu": -0.3
@@ -3125,7 +3125,7 @@
     ],
     "stats": {
       "agilite": 10,
-      "chance": 44,
+      "chance": 46,
       "force": 8,
       "intelligence": 8,
       "vitalite": 60
@@ -3139,7 +3139,7 @@
     "initiative": 8,
     "nom": "Larve Verte",
     "pa": 5,
-    "pv": 118,
+    "pv": 105,
     "resistances": {
       "air": -0.25,
       "terre": 0.3
@@ -3150,7 +3150,7 @@
     ],
     "stats": {
       "agilite": 10,
-      "force": 40,
+      "force": 45,
       "intelligence": 8,
       "vitalite": 54
     }
@@ -3939,7 +3939,7 @@
     "initiative": 10,
     "nom": "Scarabosse Doré",
     "pa": 10,
-    "pv": 1050,
+    "pv": 700,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -3950,13 +3950,13 @@
       "carapace_doree",
       "ecrasement",
       "charge",
-      "morsure",
-      "poussiere_incandescente"
+      "poussiere_incandescente",
+      "morsure"
     ],
     "stats": {
       "agilite": 12,
       "chance": 11,
-      "force": 36,
+      "force": 34,
       "intelligence": 11,
       "vitalite": 132
     }
@@ -3969,7 +3969,7 @@
     "initiative": 11,
     "nom": "Scarafeuille Blanc",
     "pa": 5,
-    "pv": 147,
+    "pv": 82,
     "resistances": {
       "air": 0.5,
       "terre": -0.4
@@ -3979,7 +3979,7 @@
       "grignotage"
     ],
     "stats": {
-      "agilite": 34,
+      "agilite": 42,
       "force": 6,
       "intelligence": 6,
       "vitalite": 48
@@ -3993,7 +3993,7 @@
     "initiative": 10,
     "nom": "Scarafeuille Bleu",
     "pa": 5,
-    "pv": 147,
+    "pv": 82,
     "resistances": {
       "eau": 0.5,
       "feu": -0.4
@@ -4004,7 +4004,7 @@
     ],
     "stats": {
       "agilite": 8,
-      "chance": 34,
+      "chance": 42,
       "force": 6,
       "intelligence": 6,
       "vitalite": 48
@@ -4017,7 +4017,7 @@
     "initiative": 8,
     "nom": "Scarafeuille Immature",
     "pa": 4,
-    "pv": 103,
+    "pv": 58,
     "resistances": {
       "air": -0.15,
       "eau": -0.15,
@@ -4030,7 +4030,7 @@
     ],
     "stats": {
       "agilite": 4,
-      "force": 22,
+      "force": 27,
       "intelligence": 4,
       "vitalite": 34
     }
@@ -4042,7 +4042,7 @@
     "initiative": 9,
     "nom": "Scarafeuille Noir",
     "pa": 6,
-    "pv": 200,
+    "pv": 112,
     "resistances": {
       "air": 0.15,
       "eau": 0.15,
@@ -4055,7 +4055,7 @@
     ],
     "stats": {
       "agilite": 12,
-      "force": 27,
+      "force": 35,
       "intelligence": 12,
       "vitalite": 60
     }
@@ -4068,7 +4068,7 @@
     "initiative": 10,
     "nom": "Scarafeuille Rouge",
     "pa": 5,
-    "pv": 147,
+    "pv": 82,
     "resistances": {
       "eau": -0.4,
       "feu": 0.5
@@ -4080,7 +4080,7 @@
     "stats": {
       "agilite": 8,
       "force": 6,
-      "intelligence": 34,
+      "intelligence": 42,
       "vitalite": 48
     }
   },
@@ -4092,7 +4092,7 @@
     "initiative": 10,
     "nom": "Scarafeuille Vert",
     "pa": 5,
-    "pv": 147,
+    "pv": 82,
     "resistances": {
       "air": -0.4,
       "terre": 0.5
@@ -4103,7 +4103,7 @@
     ],
     "stats": {
       "agilite": 8,
-      "force": 34,
+      "force": 42,
       "intelligence": 6,
       "vitalite": 48
     }

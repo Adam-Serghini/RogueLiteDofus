@@ -142,19 +142,37 @@ un `clear` élevé prouve qu'une zone est facile, un `clear` bas ne prouve pas q
 Plusieurs rencontres sont structurellement **sous-lues** par lui et ne doivent pas être nerfées pour lui
 plaire : la mue du Kwakwa, les annulations par tour du Meulou, la toile du Domaine Ancestral.
 
-**`PVfin` n'est PAS un levier de réglage** : il ne moyenne que les **parcours réussis**
-(`pvFin: clears ? pvFinTot / clears : 0`). Durcir une zone en retire les parcours exsangues au lieu de
-faire baisser la moyenne — mesuré : +60 % de PV aux escortes des Larves a fait *monter* `PVfin` de 84 à
-93 % en faisant tomber le `clear`. Le soigneur optimal du bot achève de l'épingler haut. Donc **viser un
-`PVfin` cible est vain** : on ne pilote que le `clear` et l'échelle d'Ascension, et `PVfin` ne se lit que
-comme le drapeau d'autowin que `verdict()` en fait (`clear ≥ 99,5 %` **et** `PVfin > 60 %`).
+**L'attrition se lit sur `PVdon`, jamais sur `PVfin`.** Les deux colonnes n'ont pas la même
+conditionnelle : `pvFin` ne moyenne que les parcours **gagnés** (`clears`), alors que `pvDonjon` moyenne
+ceux qui **atteignent** le donjon (`nbArrivesDonjon`). Donc `PVfin` est biaisé par la survie — durcir une
+zone en retire les parcours exsangues au lieu de faire baisser la moyenne, et il *monte* : mesuré, +60 %
+de PV aux escortes des Larves l'a fait passer de 84 à 93 % en faisant tomber le `clear`. **`PVdon`, lui,
+est non biaisé dès que les wipes se concentrent au donjon** — ce que la colonne « ça casse à » permet de
+vérifier d'un coup d'œil : si elle lit `donjon (n)`, tous les parcours ont atteint le boss et `PVdon` dit
+exactement l'usure des sept nœuds d'avant-boss. C'est **la** lecture d'attrition du projet, et la cible de
+conception (arriver au boss visiblement entamé) s'écrit sur elle. `PVfin` ne sert plus qu'au drapeau
+d'autowin de `verdict()` (`clear ≥ 99,5 %` **et** `PVfin > 60 %`).
 
-**Les crans hauts se règlent par les PV des monstres, le ★1 par leurs dégâts.** L'Ascension multiplie PV
-*et* dégâts : allonger un combat compose les deux, donc gonfler les PV effondre Cauchemar/Ultime en
-laissant le ★1 clairable, tandis qu'élargir une fourchette fait surtout tomber le ★1. Corollaire mesuré
-sur T1 : les stats élémentaires des monstres sont **plates** (~16-34) sur toute la tranche alors que les
-PV des héros montent avec le niveau — c'est pourquoi la seconde moitié de T1 s'aplanit, et pourquoi les
-PV sont le seul vrai levier sur ses zones tardives.
+**Deux plafonds tiennent `PVdon` haut, et il faut les connaître avant de viser un chiffre** : la taverne
+rend **50 %** des PV max (`TAVERNE_PCT`) au milieu du parcours, et le soigneur du banc est optimal — donc
+allonger les combats lui donne surtout **plus de tours de soin**. Conséquence contre-intuitive et
+mesurée : gonfler les PV des monstres fait *monter* `PVdon`.
+
+**Les crans hauts se règlent par les PV des monstres, le ★1 par leurs dégâts** — et les deux tirent en
+sens opposés sur `PVdon`. L'Ascension multiplie PV *et* dégâts : allonger un combat compose les deux,
+donc gonfler les PV effondre Cauchemar/Ultime tout en laissant le ★1 clairable, au prix d'un `PVdon` qui
+remonte. Élargir une fourchette fait surtout tomber le ★1 et bouge peu les crans hauts. **Mesuré sur la
+toile 8** : PV des escortes ×2,1 → ★4 de 85 % à 20 % ; à PV de famille, +35 % de stat élémentaire → ★4
+seulement de 67 % à 55 %. L'axe PV domine l'axe dégâts, parce que le facteur limitant est le **nombre de
+tours** que l'ennemi survit, pas ce qu'il frappe.
+
+**Le vrai plafond de T1 est sa courbe de stats, pas ses zones.** Médianes de stat élémentaire des
+escortes relevées avant la passe des trois zones : t7 33 · t8 34 · t9 33 · t10 40 · t11 46 · t12 42 — un
+plateau de t7 à t9 alors que les PV des héros, eux, montent avec le niveau. C'est la cause du
+ramollissement de la seconde moitié de T1, et une zone n'y échappe pas sans sortir de sa famille : la
+remise à plat de cette courbe est un chantier de **tranche**, pas de zone. **Familles à respecter**
+(médianes de PV d'escorte : t7 69 · t9 81 · t10 105 · t11 116 · t12 190) — les gonfler pour faire tomber
+un cran d'Ascension crée une marche que le joueur lit comme un bug de progression.
 
 **Cible de conception** (lue par `verdict()`) : ★1 doit être **clairable simplement sans être un autowin**
 — un clear parfait qui n'entame pas les PV n'offre aucune tension. Il faut de la marge au-dessus, parce
