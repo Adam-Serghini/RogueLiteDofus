@@ -418,6 +418,23 @@ aveugle » (`echecCritique`, jusque-là dormante dans le moteur), Donjon des Lar
 drainent » (`vampirismeRatio`). Elles ne dépensent **aucune leçon de T2** : `friction`, `tetanise`,
 `contre`, `armure`, `poison` et `dissipePositifs` restent la pédagogie des zones 13-24.
 
+**Dette assumée sur les crans hauts de T1** : Cauchemar et Ultime restent **clairables** sur le Donjon
+des Scarafeuilles (~60 %) et le Donjon des Larves (~38 %), contre la cible de conception. C'est une
+**décision, pas un oubli** : les atteindre demandait de sortir ces zones de la famille de leur toile, et
+la cause n'est pas locale. Elle est écrite plus haut (*Outils de mesure*) — les **caractéristiques
+élémentaires des monstres de T1 sont plates** (~33 de la toile 7 à la toile 9) alors que les PV des héros
+montent avec le niveau, donc **toute la seconde moitié de la tranche s'aplanit d'elle-même**. Le correctif
+est une **courbe de stats sur toute la T1**, chantier de tranche qui règlera du même coup les autres zones
+tardives ; ni les Scarafeuilles ni les Larves ne doivent être re-nerfées ou re-gonflées en attendant.
+
+**Un réglage qui sort une zone de la progression de sa tranche n'est pas un réglage, c'est une dette
+maquillée.** Le raccourci existait et il atteignait la cible : gonfler les seuls PV de la toile 8
+(escortes à 147 quand la toile 9 est à 88, boss à 1050 — le plus gras de toute la T1) faisait tomber
+Cauchemar à 20 %. Il a été refusé, parce qu'un joueur qui traverse deux zones consécutives lit cette
+marche comme un bug de progression, et parce que le chiffre du banc aurait caché la cause réelle au lieu
+de la révéler. **Avant de gonfler une valeur pour satisfaire le banc, comparer la zone à ses voisines de
+toile** : si le réglage la fait sortir du rang, le problème est ailleurs.
+
 **Dette assumée sur `charge`** : douze espèces **hors de ces trois zones** portent encore `charge` (6 PA)
 avec un budget de 5, donc un sort qu'elles ne lanceront jamais (`bandit_roublard`,
 `boostache_prepubere`, `crustorail_morito`, `forgeron_sombre`, `gobaladee`, les quatre `kwakere_de_*`,
