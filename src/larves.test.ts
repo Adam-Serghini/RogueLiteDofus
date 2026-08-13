@@ -63,3 +63,49 @@ describe("Donjon des Larves — hygiène des kits", () => {
     }
   });
 });
+
+describe("Donjon des Larves — elles drainent", () => {
+  it("les larves d'EAU portent la signature, sur un sort de DÉGÂTS", () => {
+    const s = SORTS.succion;
+    expect(s, "le sort succion doit exister").toBeTruthy();
+    expect(s.type).toBe("degats"); // sinon `iaAgressif` ne le jouerait jamais
+    expect(s.vampirismeRatio).toBeGreaterThan(0);
+    for (const id of ["larve_bleue", "larve_saphir"]) {
+      expect(MONSTRES[id].sorts, `${id} doit drainer`).toContain("succion");
+    }
+  });
+
+  it("l'eau est bien l'élément qui draine — cohérence couleur/mécanique", () => {
+    // La couleur décide qui porte la signature : c'est ce qui rend la salle
+    // lisible d'un coup d'œil. Une larve de terre qui drainerait casserait
+    // la grammaire de la zone.
+    for (const id of ["larve_bleue", "larve_saphir"]) {
+      const st = MONSTRES[id].stats as unknown as Record<string, number>;
+      const dominante = Object.entries(st)
+        .filter(([k]) => k !== "vitalite")
+        .sort((a, b) => b[1] - a[1])[0][0];
+      expect(dominante, `${id} doit dominer en chance (eau)`).toBe("chance");
+    }
+  });
+
+  it("les six autres larves restent nues — neuf mécaniques seraient illisibles", () => {
+    for (const id of ["larve_verte", "larve_orange", "larve_rubis",
+      "larve_champetre", "larve_emeraude", "larve_jaune"]) {
+      // `[...x].sort()` : `sort` mute, et `MONSTRES` est partagé par toute la suite.
+      expect([...MONSTRES[id].sorts].sort(), `${id} doit rester simple`)
+        .toEqual(["grignotage", "morsure"]);
+    }
+  });
+
+  it("la ponte du boss peut faire naître une larve qui draine", () => {
+    // Le design se referme tout seul : le pool de `ponte_larvaire` contient la
+    // Larve Bleue, donc le combat de boss devient une course contre son propre
+    // soutien — sans une ligne de contenu de plus.
+    expect(SORTS.ponte_larvaire.invoqueMonstre!.pool).toContain("larve_bleue");
+  });
+
+  it("la Larve Dorée peut enfin lancer sa charge", () => {
+    expect(MONSTRES.larve_doree.pa).toBe(6);
+    expect(SORTS.charge.coutPA).toBeLessThanOrEqual(MONSTRES.larve_doree.pa);
+  });
+});

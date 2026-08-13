@@ -2949,8 +2949,8 @@
       "feu": -0.25
     },
     "sorts": [
-      "morsure",
-      "grignotage"
+      "grignotage",
+      "succion"
     ],
     "stats": {
       "agilite": 10,
@@ -3120,8 +3120,8 @@
       "feu": -0.3
     },
     "sorts": [
-      "morsure",
-      "grignotage"
+      "grignotage",
+      "succion"
     ],
     "stats": {
       "agilite": 10,
