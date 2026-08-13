@@ -496,6 +496,17 @@
     },
     "type": "invocation"
   },
+  "epouvante": {
+    "baseMax": 15,
+    "baseMin": 10,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "deplaceCible": "toggle",
+    "desc": "L'épouvantail terrifie sa cible, qui bascule dans la rangée opposée.",
+    "id": "epouvante",
+    "nom": "Épouvante",
+    "type": "degats"
+  },
   "etreinte_de_valkyr": {
     "baseMax": 0,
     "baseMin": 0,

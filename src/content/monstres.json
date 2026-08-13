@@ -1835,8 +1835,8 @@
       "feu": -0.1
     },
     "sorts": [
-      "morsure",
-      "grignotage"
+      "grignotage",
+      "epouvante"
     ],
     "stats": {
       "agilite": 12,
