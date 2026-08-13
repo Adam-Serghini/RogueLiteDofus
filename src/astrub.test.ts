@@ -14,18 +14,32 @@ const especesDeLaZone = (): Set<string> => {
     .flatMap((id) => COMBATS[id].ennemis.map((e) => e.monstre)));
 };
 
-/** PA perdus par tour, en simulant `iaAgressif` : le plus cher d'abord, sans
- *  mémoire du tour. Un budget non dépensable est un monstre qui frappe moins
- *  fort que son fiche ne le laisse croire — c'est le piège « PA orphelins ». */
+/** PA perdus par tour, en simulant le VRAI contrôleur (`src/combat.ts`) :
+ *  - `ia: "agressif"` → `iaAgressif` seul : le sort `degats`/`invocation` le
+ *    plus cher payable d'abord, sans mémoire du tour. Il ne joue JAMAIS de
+ *    `soin` — un monstre agressif qui en porterait un le gaspillerait
+ *    entièrement, ce que ce helper reflète en excluant `soin` de son calcul.
+ *  - `ia: "soutien"` → `iaSoutien` : tente D'ABORD un `soin` payable (un seul,
+ *    comme le vrai contrôleur qui le retenterait mais n'a en pratique droit
+ *    qu'à un lancer avant que son coût n'excède le budget restant), puis
+ *    retombe sur `iaAgressif` pour le reste du budget.
+ *  Un budget non dépensable est un monstre qui frappe moins fort que sa
+ *  fiche ne le laisse croire — c'est le piège « PA orphelins ». */
 const paPerdus = (id: string): number => {
   const mo = MONSTRES[id];
-  const couts = mo.sorts
-    .map((sid) => SORTS[sid])
-    .filter((s) => s && ["degats", "invocation", "soin"].includes(s.type))
-    .map((s) => s.coutPA)
-    .filter((c) => c <= mo.pa)
-    .sort((a, b) => b - a);
+  const sorts = mo.sorts.map((sid) => SORTS[sid]).filter((s) => s);
   let reste = mo.pa;
+
+  if (mo.ia === "soutien") {
+    const soin = sorts.find((s) => s.type === "soin" && s.coutPA <= reste);
+    if (soin) reste -= soin.coutPA;
+  }
+
+  const couts = sorts
+    .filter((s) => ["degats", "invocation"].includes(s.type))
+    .map((s) => s.coutPA)
+    .filter((c) => c <= reste)
+    .sort((a, b) => b - a);
   for (let garde = 0; garde < 30; garde++) {
     const c = couts.find((x) => x <= reste);
     if (c === undefined) break;
