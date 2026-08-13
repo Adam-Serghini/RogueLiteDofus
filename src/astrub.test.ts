@@ -81,7 +81,9 @@ describe("Champs d'Astrub — la peur déplace", () => {
     // 5 PA, un sort à 4 et un à 1 : le budget passe entier. Garder `morsure`
     // (4 PA) à côté d'Épouvante (4 PA) ferait jouer l'un OU l'autre au hasard
     // de l'ordre de tri, et la signature deviendrait intermittente.
-    expect(MONSTRES.epouvanteur.sorts.sort()).toEqual(["epouvante", "grignotage"]);
+    // `.sort()` mute en place : trier une COPIE, jamais `MONSTRES.epouvanteur.sorts`
+    // directement — `MONSTRES` est l'objet de contenu partagé par toute la suite.
+    expect([...MONSTRES.epouvanteur.sorts].sort()).toEqual(["epouvante", "grignotage"]);
     expect(MONSTRES.epouvanteur.pa).toBe(5);
   });
 
