@@ -419,6 +419,11 @@ function carteCombattant(c: Combatant, clickable: boolean): string {
     // Assome (Marteau Kaiser) : le porteur passera son prochain tour — sans ce badge,
     // le tour sauté se lirait comme un bug (même règle que les annulations du Meulou).
     else if (e.stat === "assome") badges.push(`💫 Assommé`);
+    // Échec critique : le sort du porteur peut rater alors que les PA sont
+    // DÉJÀ payés (combat.ts). Sans badge, le joueur ne comprendrait pas
+    // pourquoi son soin vient de ne rien faire.
+    else if (e.stat === "echecCritique")
+      badges.push(`🌀 Échec ${Math.round(e.valeur * 100)} % (${e.toursRestants})`);
     else if (e.stat === "armure") badges.push(`🪨 Armure +${e.valeur} (${e.toursRestants})`);
     else if (e.stat === "degatsCritSubis")
       badges.push(`🃏 Crit subis +${Math.round(e.valeur * 100)} % (${e.toursRestants})`);

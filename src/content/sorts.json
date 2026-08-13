@@ -1119,6 +1119,21 @@
     "nom": "Poupée de garde",
     "type": "invocation"
   },
+  "poussiere_incandescente": {
+    "baseMax": 16,
+    "baseMin": 11,
+    "cible": "ennemi_ligne",
+    "coutPA": 4,
+    "desc": "Un souffle de poussière brûlante : pendant 2 tours, les sorts de la cible ont 25 % de chances d'échouer.",
+    "effet": {
+      "duree": 2,
+      "stat": "echecCritique",
+      "valeur": 0.25
+    },
+    "id": "poussiere_incandescente",
+    "nom": "Poussière incandescente",
+    "type": "degats"
+  },
   "precipitation": {
     "baseMax": 0,
     "baseMin": 0,

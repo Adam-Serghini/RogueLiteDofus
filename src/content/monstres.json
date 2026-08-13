@@ -3950,7 +3950,8 @@
       "carapace_doree",
       "ecrasement",
       "charge",
-      "morsure"
+      "morsure",
+      "poussiere_incandescente"
     ],
     "stats": {
       "agilite": 12,
@@ -4073,8 +4074,8 @@
       "feu": 0.5
     },
     "sorts": [
-      "morsure",
-      "grignotage"
+      "grignotage",
+      "poussiere_incandescente"
     ],
     "stats": {
       "agilite": 8,

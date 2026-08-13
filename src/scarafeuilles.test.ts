@@ -3,6 +3,7 @@
 //  La poussière aveugle : ton soin n'est pas garanti.
 // =============================================================================
 import { describe, it, expect } from "vitest";
+import combatUiSrc from "./ui/combat.ts?raw";
 import { MONSTRES, SORTS, ZONES, COMBATS } from "./data";
 
 const zone = () => ZONES.find((z) => z.id === "scarafeuilles")!;
@@ -61,5 +62,54 @@ describe("Donjon des Scarafeuilles — hygiène des kits", () => {
     for (const id of especesDeLaZone()) {
       expect(paPerdus(id), `${id} gaspille des PA chaque tour`).toBe(0);
     }
+  });
+});
+
+describe("Donjon des Scarafeuilles — la poussière aveugle", () => {
+  it("le Rouge porte la signature, sur un sort de DÉGÂTS", () => {
+    const s = SORTS.poussiere_incandescente;
+    expect(s, "le sort poussiere_incandescente doit exister").toBeTruthy();
+    expect(s.type).toBe("degats"); // sinon `iaAgressif` ne le jouerait jamais
+    expect(s.effet?.stat).toBe("echecCritique");
+    expect(s.effet!.duree).toBe(2);
+    expect(MONSTRES.scarafeuille_rouge.sorts).toContain("poussiere_incandescente");
+  });
+
+  it("la signature culmine sur le boss", () => {
+    // Une signature de zone portée par une seule escorte se lit comme une
+    // bizarrerie ; portée aussi par le boss, elle se lit comme l'identité du lieu.
+    expect(MONSTRES.scarabosse_dore.sorts).toContain("poussiere_incandescente");
+  });
+
+  it("le Scarafeuille Noir peut enfin lancer sa charge", () => {
+    // Il la portait avec 5 PA pour un coût de 6 : elle ne partait jamais.
+    expect(MONSTRES.scarafeuille_noir.pa).toBe(6);
+    expect(SORTS.charge.coutPA).toBeLessThanOrEqual(MONSTRES.scarafeuille_noir.pa);
+  });
+
+  it("aucune leçon de la Tranche 2 n'est dépensée ici", () => {
+    // friction, tetanise, contre, armure, poison et dissipePositifs sont la
+    // pédagogie des zones 13-24 : les utiliser en T1 la grillerait.
+    const RESERVES = ["friction", "tetanise", "contre", "armure", "poison"];
+    for (const id of especesDeLaZone()) {
+      for (const sid of MONSTRES[id].sorts) {
+        const s = SORTS[sid];
+        expect(RESERVES, `${sid} dépense une leçon de T2`).not.toContain(s.effet?.stat);
+        expect(s.poison, `${sid} dépense la leçon poison de T2`).toBeUndefined();
+        expect(s.dissipePositifs, `${sid} dépense la leçon dissipePositifs de T2`).toBeFalsy();
+      }
+    }
+  });
+});
+
+describe("l'échec critique est visible en combat", () => {
+  it("le badge existe dans la carte de combattant", () => {
+    // Jurisprudence : « une réduction ou un compteur invisible se lit comme un
+    // bug ». Un sort qui rate sans rien afficher serait illisible.
+    // `?raw` (import statique Vite) plutôt que `node:fs` : même raison que le
+    // test des icônes du Sram — pas de déclaration ambiante pour `node:fs` qui
+    // rendrait `readFileSync` légal depuis n'importe quel module de src/.
+    expect(combatUiSrc, "carteCombattant doit afficher un badge pour echecCritique")
+      .toContain('e.stat === "echecCritique"');
   });
 });
