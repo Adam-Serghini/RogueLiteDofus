@@ -1120,15 +1120,15 @@
     "type": "invocation"
   },
   "poussiere_incandescente": {
-    "baseMax": 16,
-    "baseMin": 11,
+    "baseMax": 27,
+    "baseMin": 20,
     "cible": "ennemi_ligne",
     "coutPA": 4,
-    "desc": "Un souffle de poussière brûlante : pendant 2 tours, les sorts de la cible ont 25 % de chances d'échouer.",
+    "desc": "Un souffle de poussière brûlante : pendant 2 tours, les sorts de la cible ont 35 % de chances d'échouer.",
     "effet": {
       "duree": 2,
       "stat": "echecCritique",
-      "valeur": 0.25
+      "valeur": 0.35
     },
     "id": "poussiere_incandescente",
     "nom": "Poussière incandescente",
@@ -1532,8 +1532,8 @@
     "type": "degats"
   },
   "succion": {
-    "baseMax": 17,
-    "baseMin": 12,
+    "baseMax": 24,
+    "baseMin": 18,
     "cible": "ennemi_ligne",
     "coutPA": 4,
     "desc": "La larve aspire les fluides de sa cible et se soigne de la moitié des dégâts infligés.",

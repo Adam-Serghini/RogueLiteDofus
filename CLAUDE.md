@@ -142,6 +142,20 @@ un `clear` élevé prouve qu'une zone est facile, un `clear` bas ne prouve pas q
 Plusieurs rencontres sont structurellement **sous-lues** par lui et ne doivent pas être nerfées pour lui
 plaire : la mue du Kwakwa, les annulations par tour du Meulou, la toile du Domaine Ancestral.
 
+**`PVfin` n'est PAS un levier de réglage** : il ne moyenne que les **parcours réussis**
+(`pvFin: clears ? pvFinTot / clears : 0`). Durcir une zone en retire les parcours exsangues au lieu de
+faire baisser la moyenne — mesuré : +60 % de PV aux escortes des Larves a fait *monter* `PVfin` de 84 à
+93 % en faisant tomber le `clear`. Le soigneur optimal du bot achève de l'épingler haut. Donc **viser un
+`PVfin` cible est vain** : on ne pilote que le `clear` et l'échelle d'Ascension, et `PVfin` ne se lit que
+comme le drapeau d'autowin que `verdict()` en fait (`clear ≥ 99,5 %` **et** `PVfin > 60 %`).
+
+**Les crans hauts se règlent par les PV des monstres, le ★1 par leurs dégâts.** L'Ascension multiplie PV
+*et* dégâts : allonger un combat compose les deux, donc gonfler les PV effondre Cauchemar/Ultime en
+laissant le ★1 clairable, tandis qu'élargir une fourchette fait surtout tomber le ★1. Corollaire mesuré
+sur T1 : les stats élémentaires des monstres sont **plates** (~16-34) sur toute la tranche alors que les
+PV des héros montent avec le niveau — c'est pourquoi la seconde moitié de T1 s'aplanit, et pourquoi les
+PV sont le seul vrai levier sur ses zones tardives.
+
 **Cible de conception** (lue par `verdict()`) : ★1 doit être **clairable simplement sans être un autowin**
 — un clear parfait qui n'entame pas les PV n'offre aucune tension. Il faut de la marge au-dessus, parce
 que la méta-progression à venir (reliques Dofus, parchotage) aplanira le jeu : **Cauchemar et Ultime ne
@@ -379,6 +393,18 @@ boucliers et résistances (16), riposte `contre` (17), armure plate (18), curare
 boucliers bloqués (19), désenvoûtement `dissipePositifs` (20), premier soigneur ennemi `ia: "soutien"`
 (21), annulations par tour (22), toile `tetanise` (23), examen final tirant une des quatre leçons au
 hasard (24).
+
+**Trois zones de T1 portent une signature**, posée pour qu'elles cessent d'être des autowins :
+Champs d'Astrub (2) « la peur déplace » (`deplaceCible`), Donjon des Scarafeuilles (8) « la poussière
+aveugle » (`echecCritique`, jusque-là dormante dans le moteur), Donjon des Larves (10) « elles
+drainent » (`vampirismeRatio`). Elles ne dépensent **aucune leçon de T2** : `friction`, `tetanise`,
+`contre`, `armure`, `poison` et `dissipePositifs` restent la pédagogie des zones 13-24.
+
+**Dette assumée sur `charge`** : douze espèces **hors de ces trois zones** portent encore `charge` (6 PA)
+avec un budget de 5, donc un sort qu'elles ne lanceront jamais (`bandit_roublard`,
+`boostache_prepubere`, `crustorail_morito`, `forgeron_sombre`, `gobaladee`, les quatre `kwakere_de_*`,
+`palmifleur_morito`, `sakarien`, `tofu_ventripotent`). Les réparer déplacerait l'équilibrage de zones
+qui n'était pas dans ce chantier — à traiter avec la passe de la zone concernée, pas isolément.
 
 **Deux chantiers ouverts sur T2** : (1) la **passe d'équilibrage** — les objets des toiles 13 à 24 sont
 en place, donc les chiffres du banc sont désormais exploitables, et ils disent que la tranche est un
