@@ -48,6 +48,74 @@ const paPerdus = (id: string): number => {
   return reste;
 };
 
+/** Sorts qu'un kit peut RÉELLEMENT lancer, en rejouant la boucle de décision de
+ *  `iaAgressif`/`iaSoutien` sur plusieurs tours (cooldowns compris).
+ *
+ *  `paPerdus` ne voit qu'une chose : le budget part-il en entier ? Il ne voit pas
+ *  qu'un sort peut être payable et pourtant n'être JAMAIS choisi. `iaAgressif`
+ *  trie par coût DÉCROISSANT avec un tri STABLE puis renvoie le PREMIER sort dont
+ *  la cible est valide : à coût égal, l'ordre du tableau `sorts` tranche
+ *  définitivement, et un sort qui consomme tout le budget masque tous les autres.
+ *  Un sort inatteignable est du contenu qui ment — il s'affiche sur la fiche, il
+ *  ne part jamais.
+ *
+ *  L'union des quatre scénarios rend la mesure PESSIMISTE sur le verdict « mort » :
+ *  un sort n'est signalé que s'il reste injouable dans TOUS les cas de figure.
+ *  - `avecInvocation` : `iaAgressif` ne joue une invocation que si `invocationUtile`
+ *    l'autorise (terrain plein → non). Les deux branches existent en jeu.
+ *  - `avecSoin` : `iaSoutien` ne consomme son soin que s'il a un allié blessé.
+ *  Le coût lu est `coutPA` et non `coutEffectif` : c'est une garde de CONTENU, elle
+ *  ne connaît ni buff ni réduction de coût en cours de combat. */
+const TOURS_SIMULES = 12; // > au plus long cooldown des kits, marge comprise
+
+const sortsJoues = (id: string, avecInvocation: boolean, avecSoin: boolean): Set<string> => {
+  const mo = MONSTRES[id];
+  const sorts = mo.sorts.map((sid) => SORTS[sid]).filter((s) => s);
+  const atteints = new Set<string>();
+  const cooldowns: Record<string, number> = {};
+
+  for (let tour = 0; tour < TOURS_SIMULES; tour++) {
+    let reste = mo.pa;
+    const posesCeTour = new Set<string>();
+    const dispo = (s: typeof sorts[number]) => !cooldowns[s.id] && s.coutPA <= reste;
+    const jouer = (s: typeof sorts[number]) => {
+      atteints.add(s.id);
+      reste -= s.coutPA;
+      // le cooldown prend effet IMMÉDIATEMENT, donc dès la décision suivante
+      if (s.cooldownTours) { cooldowns[s.id] = s.cooldownTours; posesCeTour.add(s.id); }
+    };
+
+    if (mo.ia === "soutien" && avecSoin) {
+      const soin = sorts.find((s) => s.type === "soin" && dispo(s));
+      if (soin) jouer(soin);
+    }
+    for (let garde = 0; garde < 30; garde++) {
+      const invoc = avecInvocation
+        ? sorts.find((s) => s.type === "invocation" && dispo(s))
+        : undefined;
+      const choisi = invoc ?? sorts
+        .filter((s) => s.type === "degats" && dispo(s))
+        .sort((a, b) => b.coutPA - a.coutPA)[0]; // tri STABLE : à coût égal, l'ordre du kit tranche
+      if (!choisi) break;
+      jouer(choisi);
+    }
+    // fin de tour : un cooldown posé PENDANT ce tour n'est pas décompté ici
+    for (const k of Object.keys(cooldowns)) {
+      if (posesCeTour.has(k)) continue;
+      if (--cooldowns[k] <= 0) delete cooldowns[k];
+    }
+  }
+  return atteints;
+};
+
+const sortsMorts = (id: string): string[] => {
+  const atteignables = new Set([
+    ...sortsJoues(id, true, true), ...sortsJoues(id, true, false),
+    ...sortsJoues(id, false, true), ...sortsJoues(id, false, false),
+  ]);
+  return MONSTRES[id].sorts.filter((sid) => !atteignables.has(sid));
+};
+
 describe("Donjon des Scarafeuilles — hygiène des kits", () => {
   it("aucune espèce ne porte un sort qu'elle ne peut pas payer", () => {
     for (const id of especesDeLaZone()) {
@@ -61,6 +129,16 @@ describe("Donjon des Scarafeuilles — hygiène des kits", () => {
   it("chaque espèce peut dépenser tout son budget de PA", () => {
     for (const id of especesDeLaZone()) {
       expect(paPerdus(id), `${id} gaspille des PA chaque tour`).toBe(0);
+    }
+  });
+
+  it("aucun sort d'un kit n'est inatteignable par le contrôleur IA", () => {
+    // Troisième occurrence du même piège dans ce dépôt, et il est PUREMENT
+    // mécanique, donc entièrement testable : un sort masqué par un autre de coût
+    // égal (l'ordre du tableau tranche) ou par un sort qui avale le budget entier
+    // ne part jamais. Le kit ment alors sur ce que l'espèce sait faire.
+    for (const id of especesDeLaZone()) {
+      expect(sortsMorts(id), `${id} porte un sort que l'IA ne lancera jamais`).toEqual([]);
     }
   });
 });
@@ -91,16 +169,23 @@ describe("Donjon des Scarafeuilles — la poussière aveugle", () => {
     expect(MONSTRES.scarabosse_dore.sorts).toContain("poussiere_incandescente");
     // Mais la porter ne suffit pas : `iaAgressif` trie les sorts de dégâts par
     // coût DÉCROISSANT avec un tri STABLE, donc à coût égal c'est l'ordre du
-    // tableau qui tranche. Tant que `morsure` (4 PA) précédait la poussière
-    // (4 PA), le boss ne l'a jamais lancée une seule fois — signature morte.
-    const sorts = MONSTRES.scarabosse_dore.sorts;
-    expect(sorts.indexOf("poussiere_incandescente")).toBeLessThan(sorts.indexOf("morsure"));
+    // tableau qui tranche. Tant que `morsure` (4 PA) côtoyait la poussière
+    // (4 PA), l'une des deux était morte — signature ou pas, au hasard de
+    // l'ordre. `morsure` a donc été RETIRÉE du kit, et la garde générique
+    // « aucun sort inatteignable » (plus haut) surveille désormais tous les
+    // kits de la zone au lieu de ce seul couple.
+    expect(sortsMorts("scarabosse_dore")).toEqual([]);
   });
 
-  it("le Scarafeuille Noir peut enfin lancer sa charge", () => {
+  it("le Scarafeuille Noir peut enfin lancer sa charge — et il ne porte QU'elle", () => {
     // Il la portait avec 5 PA pour un coût de 6 : elle ne partait jamais.
     expect(MONSTRES.scarafeuille_noir.pa).toBe(6);
     expect(SORTS.charge.coutPA).toBeLessThanOrEqual(MONSTRES.scarafeuille_noir.pa);
+    // Passer à 6 PA a inversé le problème : `charge` avale le budget ENTIER
+    // chaque tour, donc `morsure` était devenue le sort mort. Un kit d'un seul
+    // sort n'est pas un appauvrissement — c'est la description honnête de ce
+    // que l'espèce faisait déjà en combat.
+    expect(MONSTRES.scarafeuille_noir.sorts).toEqual(["charge"]);
   });
 
   it("aucune leçon de la Tranche 2 n'est dépensée ici", () => {

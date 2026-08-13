@@ -3002,7 +3002,6 @@
       "terre": 0.15
     },
     "sorts": [
-      "morsure",
       "charge"
     ],
     "stats": {
@@ -3950,8 +3949,7 @@
       "carapace_doree",
       "ecrasement",
       "charge",
-      "poussiere_incandescente",
-      "morsure"
+      "poussiere_incandescente"
     ],
     "stats": {
       "agilite": 12,
@@ -4050,7 +4048,6 @@
       "terre": 0.15
     },
     "sorts": [
-      "morsure",
       "charge"
     ],
     "stats": {

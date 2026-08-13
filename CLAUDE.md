@@ -167,12 +167,14 @@ seulement de 67 % à 55 %. L'axe PV domine l'axe dégâts, parce que le facteur 
 tours** que l'ennemi survit, pas ce qu'il frappe.
 
 **Le vrai plafond de T1 est sa courbe de stats, pas ses zones.** Médianes de stat élémentaire des
-escortes relevées avant la passe des trois zones : t7 33 · t8 34 · t9 33 · t10 40 · t11 46 · t12 42 — un
+escortes, **avant** la passe des trois zones : t7 33 · t8 34 · t9 33 · t10 40 · t11 46 · t12 42 — un
 plateau de t7 à t9 alors que les PV des héros, eux, montent avec le niveau. C'est la cause du
 ramollissement de la seconde moitié de T1, et une zone n'y échappe pas sans sortir de sa famille : la
 remise à plat de cette courbe est un chantier de **tranche**, pas de zone. **Familles à respecter**
-(médianes de PV d'escorte : t7 69 · t9 81 · t10 105 · t11 116 · t12 190) — les gonfler pour faire tomber
-un cran d'Ascension crée une marche que le joueur lit comme un bug de progression.
+(médianes de PV d'escorte **après** la passe : t7 69 · t8 82 · t9 81 · t10 105 · t11 116 · t12 190) — les
+gonfler pour faire tomber un cran d'Ascension crée une marche que le joueur lit comme un bug de
+progression. La médiane se relève sur **toutes** les espèces des pools normal, élite et de la salle de
+boss, **boss exclu** ; c'est la définition à réutiliser, sinon deux relevés ne se comparent pas.
 
 **Cible de conception** (lue par `verdict()`) : ★1 doit être **clairable simplement sans être un autowin**
 — un clear parfait qui n'entame pas les PV n'offre aucune tension. Il faut de la marge au-dessus, parce
@@ -412,28 +414,44 @@ boucliers bloqués (19), désenvoûtement `dissipePositifs` (20), premier soigne
 (21), annulations par tour (22), toile `tetanise` (23), examen final tirant une des quatre leçons au
 hasard (24).
 
-**Trois zones de T1 portent une signature**, posée pour qu'elles cessent d'être des autowins :
-Champs d'Astrub (2) « la peur déplace » (`deplaceCible`), Donjon des Scarafeuilles (8) « la poussière
-aveugle » (`echecCritique`, jusque-là dormante dans le moteur), Donjon des Larves (10) « elles
-drainent » (`vampirismeRatio`). Elles ne dépensent **aucune leçon de T2** : `friction`, `tetanise`,
-`contre`, `armure`, `poison` et `dissipePositifs` restent la pédagogie des zones 13-24.
+**Trois zones de T1 portent une signature** : Champs d'Astrub (2) « la peur déplace » (`deplaceCible`),
+Donjon des Scarafeuilles (8) « la poussière aveugle » (`echecCritique`, jusque-là dormante dans le
+moteur), Donjon des Larves (10) « elles drainent » (`vampirismeRatio`). Elles ne dépensent **aucune
+leçon de T2** : `friction`, `tetanise`, `contre`, `armure`, `poison` et `dissipePositifs` restent la
+pédagogie des zones 13-24.
+
+**Ce que la passe a réellement obtenu, c'est l'effondrement des crans hauts, pas la fin des autowins.**
+Mesuré (★1 → ★5, avant → après) : Scarafeuilles 100/100/100/85/85 → **100/98/93/60/63**, Larves
+100/95/82/63/57 → **98/92/73/38/42**, Astrub inchangée (97/72/50/10/8, elle était déjà dans la cible).
+Le ★1 n'a donc quasiment pas bougé, et **le Donjon des Scarafeuilles reste au drapeau `AUTOWIN` du
+banc** (`clear` 100 %, `PVfin` 82 % — les deux conditions de `verdict()`). C'est un état livré en
+connaissance de cause, pas un objectif atteint : la cause est celle décrite juste en dessous, et elle
+n'est pas locale à ces trois zones.
 
 **Dette assumée sur les crans hauts de T1** : Cauchemar et Ultime restent **clairables** sur le Donjon
 des Scarafeuilles (~60 %) et le Donjon des Larves (~38 %), contre la cible de conception. C'est une
 **décision, pas un oubli** : les atteindre demandait de sortir ces zones de la famille de leur toile, et
 la cause n'est pas locale. Elle est écrite plus haut (*Outils de mesure*) — les **caractéristiques
-élémentaires des monstres de T1 sont plates** (~33 de la toile 7 à la toile 9) alors que les PV des héros
-montent avec le niveau, donc **toute la seconde moitié de la tranche s'aplanit d'elle-même**. Le correctif
+élémentaires des monstres de T1 sont plates** (~33 aux toiles 7 et 9 ; seule la toile 8 en sort, à 42, et
+c'est cette passe qui l'y a mise) alors que les PV des héros montent avec le niveau, donc **toute la
+seconde moitié de la tranche s'aplanit d'elle-même**. Le correctif
 est une **courbe de stats sur toute la T1**, chantier de tranche qui règlera du même coup les autres zones
 tardives ; ni les Scarafeuilles ni les Larves ne doivent être re-nerfées ou re-gonflées en attendant.
 
 **Un réglage qui sort une zone de la progression de sa tranche n'est pas un réglage, c'est une dette
 maquillée.** Le raccourci existait et il atteignait la cible : gonfler les seuls PV de la toile 8
-(escortes à 147 quand la toile 9 est à 88, boss à 1050 — le plus gras de toute la T1) faisait tomber
-Cauchemar à 20 %. Il a été refusé, parce qu'un joueur qui traverse deux zones consécutives lit cette
-marche comme un bug de progression, et parce que le chiffre du banc aurait caché la cause réelle au lieu
-de la révéler. **Avant de gonfler une valeur pour satisfaire le banc, comparer la zone à ses voisines de
-toile** : si le réglage la fait sortir du rang, le problème est ailleurs.
+(escortes à 147 quand la médiane d'escorte de la toile 9 est à 81, boss à 1050 — le plus gras de toute la
+T1) faisait tomber Cauchemar à 20 %. Il a été refusé, parce qu'un joueur qui traverse deux zones
+consécutives lit cette marche comme un bug de progression, et parce que le chiffre du banc aurait caché la
+cause réelle au lieu de la révéler. **Avant de gonfler une valeur pour satisfaire le banc, comparer la
+zone à ses voisines de toile** : si le réglage la fait sortir du rang, le problème est ailleurs.
+
+**La comparaison se fait sur les DEUX axes, et la dette a migré sur le second.** Les PV sont bien rentrés
+dans le rang (t7 69 · **t8 82** · t9 81), mais la toile 8 sort désormais du rang sur les
+**caractéristiques élémentaires** : médianes d'escorte t7 33 · **t8 42** · t9 32,5, quand elle était à 34
+avant la passe. La toile 10 a bougé de même (40 → 45). C'est le même arbitrage assumé que ci-dessus,
+simplement déplacé d'un axe à l'autre : à corriger par la courbe de stats de toute la T1, pas en
+re-nerfant ces deux zones.
 
 **Dette assumée sur `charge`** : douze espèces **hors de ces trois zones** portent encore `charge` (6 PA)
 avec un budget de 5, donc un sort qu'elles ne lanceront jamais (`bandit_roublard`,
@@ -464,6 +482,13 @@ de porteur** (celui-là doit tomber le jour où une classe reprend une purge).
   à 6 gaspille 2 PA par tour, et un sort au même coût qu'un autre ne part jamais. **Un kit de monstre doit
   pouvoir consommer tout son budget** ; un sort à rider répétable a besoin de `maxParTour` sinon il
   s'empile.
+- **Le jumeau du PA orphelin : le SORT orphelin.** `iaAgressif` trie par coût **décroissant** avec un tri
+  **stable** et renvoie le **premier** sort ciblable — donc à coût égal, l'ordre du tableau `sorts`
+  tranche définitivement, et un sort qui avale le budget entier masque tous les autres. Un sort peut ainsi
+  être payable et n'être **jamais** joué : le kit ment sur ce que l'espèce sait faire. `paPerdus` ne le
+  voit pas (le budget part bien en entier) ; la garde générique « aucun sort inatteignable » des tests de
+  zone (`astrub`/`scarafeuilles`/`larves`) le voit, en rejouant la boucle de décision sur plusieurs tours,
+  cooldowns compris. **Un sort qui ne peut jamais partir se retire**, il ne se réordonne pas.
 - **Un sort à 0 PA doit déclarer `maxParTour` ou `cooldownTours`** (imposé par
   `scripts/content-validate.mjs`). `maxParCibleParTour` **ne suffit pas** : l'IA le relancerait sur une
   autre cible à chaque décision du même tour, PA jamais débités.
