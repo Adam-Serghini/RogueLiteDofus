@@ -120,11 +120,12 @@ describe("la zone Arbre de Moon", () => {
     expect(loc.index + 1 + 12).toBe(24); // 12 toiles consommées par la t1
   });
 
-  it("la Tranche 2 reste EN CHANTIER malgré ses 12 zones", () => {
-    // Le contenu existe, l'équilibrage non : la tranche doit rester non lançable jusqu'à
-    // ce qu'Adam la juge prête. Retirer `enChantier` est un choix, pas un effet de bord
-    // de la complétion du contenu — d'où ce test.
-    expect(TRANCHES.find((t) => t.id === "t2")!.enChantier).toBe(true);
+  it("la Tranche 2 est LANÇABLE — le drapeau de chantier est retiré", () => {
+    // Retiré sur décision d'Adam : on ne peut pas équilibrer une tranche à laquelle on
+    // n'a pas le droit de jouer, et le banc est aveugle aux buffs et aux placements, donc
+    // incapable de trancher seul. La tranche part donc au playtest AVANT d'être équilibrée
+    // — c'est un choix assumé, pas un signe qu'elle est prête (voir « État courant »).
+    expect(TRANCHES.find((t) => t.id === "t2")!.enChantier).toBeUndefined();
   });
 
   it("les espèces des pools sont exactement celles déclarées ici", () => {

@@ -192,19 +192,17 @@ describe("déverrouillage des tranches", () => {
     expect(trancheDeverrouillee(meta, "t2")).toBe(false);
   });
 
-  it("une tranche EN CHANTIER reste déverrouillable mais n'est pas lançable", async () => {
-    // t2 a du contenu mais son équilibrage n'est pas fini : on la laisse visible
-    // et mesurable au banc, sans permettre de la lancer. Le drapeau se retire
-    // quand la tranche est prête, sans autre changement.
+  it("plus AUCUNE tranche n'est en chantier : t2 se lance dès que t1 est battue", async () => {
+    // `enChantier` reste dans le modèle (`TrancheDef`) et `trancheJouable` le lit
+    // toujours : le mécanisme sert au prochain lot de zones. Ce test garde le fait
+    // qu'aucune tranche ne le porte AUJOURD'HUI — le reposer est un choix explicite.
     const { TRANCHES, trancheDe } = await import("./data");
     const meta = metaVide();
     meta.ascension = { t1: 0 };
-    expect(trancheDe("t2").enChantier, "t2 doit être marquée en chantier").toBe(true);
-    expect(trancheDeverrouillee(meta, "t2")).toBe(true); // le clear de t1 la déverrouille toujours
-    expect(trancheJouable(meta, "t2")).toBe(false); // mais elle ne se lance pas
-    // le drapeau ne doit pas fuiter sur les autres tranches
+    expect(trancheDeverrouillee(meta, "t2")).toBe(true); // le clear de t1 la déverrouille
+    expect(trancheJouable(meta, "t2")).toBe(true); // et elle se lance désormais
     expect(trancheDe("t1").enChantier).toBeUndefined();
-    expect(TRANCHES.filter((t) => t.enChantier).map((t) => t.id)).toEqual(["t2"]);
+    expect(TRANCHES.filter((t) => t.enChantier).map((t) => t.id)).toEqual([]);
   });
 
   it("une tranche sans zone est déverrouillable mais pas jouable", () => {

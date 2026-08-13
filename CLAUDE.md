@@ -402,10 +402,19 @@ sauvegardes, mais filtrée hors de `classesDisponibles()` en attendant sa refont
 à 2, on recrute/soigne aux tavernes, équipe de 4 maximum.
 
 **Tranche 1 = 12 zones** (toiles 1-12), équilibrée et pourvue en objets.
-**Tranche 2 = 12 zones** (toiles 13-24), **complète en contenu mais `enChantier: true`** — donc visible,
-déverrouillable et mesurée par le banc, mais **non lançable**. t3-t5 ont `zones: []` et s'affichent
+**Tranche 2 = 12 zones** (toiles 13-24), complète en contenu et **lançable** : `enChantier` a été retiré
+de `TRANCHES[1]`, et **plus aucune tranche ne porte ce drapeau** (le champ reste dans `TrancheDef` et
+`trancheJouable` le lit toujours — il servira au prochain lot). t3-t5 ont `zones: []` et s'affichent
 « en construction ». Les donjons événementiels (Nowel, Halouine, Pwak) sont réservés et ne doivent jamais
 entrer dans une liste de zones de tranche.
+
+**T2 est lançable, pas équilibrée, et l'écart est énorme.** Le déblocage est un choix de *playtest*, pas
+un certificat : on ne peut pas régler une tranche à laquelle on n'a pas le droit de jouer, et le banc —
+aveugle aux buffs et aux placements — est incapable de trancher seul. Ce qu'il mesure en l'état : sept
+zones sur douze en `⚠ MUR` dès ★1, dont cinq sous 10 % de clear (Wabbit 1 %, Chouque 1 %, Meulou 1 %,
+Moon 1 %, Ancestral 6 %). Comme **une run est une tranche entière**, le produit des douze taux donne
+~10⁻⁹ % de chance d'aller au bout : la tranche est aujourd'hui **infinissable**, pas seulement difficile.
+Les élites y tuent plus souvent que les boss — c'est là qu'il faudra regarder en premier.
 
 Chaque zone de T2 enseigne une leçon en réveillant une mécanique que le moteur savait déjà faire :
 résistances élémentaires (13), formation et `ennemi_tous` (14), absorption (15), poison qui ignore
@@ -459,10 +468,10 @@ avec un budget de 5, donc un sort qu'elles ne lanceront jamais (`bandit_roublard
 `palmifleur_morito`, `sakarien`, `tofu_ventripotent`). Les réparer déplacerait l'équilibrage de zones
 qui n'était pas dans ce chantier — à traiter avec la passe de la zone concernée, pas isolément.
 
-**Deux chantiers ouverts sur T2** : (1) la **passe d'équilibrage** — les objets des toiles 13 à 24 sont
-en place, donc les chiffres du banc sont désormais exploitables, et ils disent que la tranche est un
-**mur** presque partout dès ★1 ; (2) **retirer `enChantier: true`** de `TRANCHES[1]` (un test verrouille
-sa présence tant que ce n'est pas décidé).
+**Le chantier ouvert sur T2 est sa passe d'équilibrage.** Les objets des toiles 13 à 24 sont en place et
+la tranche est lançable, donc les deux sources sont enfin disponibles : les chiffres du banc *et* le
+ressenti manette en main, seul juge des mécaniques que le bot ne sait pas jouer. Commencer par les nœuds
+élite, qui concentrent les wipes.
 
 **Mécaniques qui ont quitté le camp du joueur** (elles vivent encore côté monstres, sauf mention) :
 `dissipePositifs`, poison transmissible (`poison.transmet`), taunt (`provoqueTours`), riposte
